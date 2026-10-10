@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "pvpduels",
+  "version": "${version}",
+  "name": "PvP Duels",
+  "description": "Kits, duels and hotbar layouts for PvP with friends (made to be used with Essential).",
+  "authors": [],
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.pvpduels.PvpDuelsMod"],
+    "client": ["com.pvpduels.client.PvpDuelsClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
