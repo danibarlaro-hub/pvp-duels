@@ -35,3 +35,8 @@ net.minecraft.network.PacketListener
 net.minecraft.server.level.ServerLevel
 net.minecraft.world.entity.player.Inventory
 net.minecraft.world.level.storage.PlayerDataStorage
+net.minecraft.commands.Commands
+net.minecraft.world.damagesource.DamageSources
+net.minecraft.world.entity.EquipmentSlot
+net.minecraft.world.phys.BlockHitResult
+net.minecraft.world.entity.LivingEntity

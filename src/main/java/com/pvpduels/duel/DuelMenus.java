@@ -221,7 +221,7 @@ public final class DuelMenus {
 			"Kit: " + config.kit(), "Arena: " + config.arenaName(), "Mode: " + config.modeName()));
 		b.set(11, icon(Items.EMERALD, "Send the challenge", ChatFormatting.GREEN), who -> {
 			who.closeContainer();
-			ServerPlayer target = DuelManager.lookup(who.level().getServer(), setup.opponent);
+			ServerPlayer target = who.level().getServer().getPlayerList().getPlayer(setup.opponent);
 			if (target == null) {
 				who.sendSystemMessage(Msg.err(setup.opponentName + " is no longer online."));
 				return;

@@ -78,7 +78,7 @@ public final class Duel {
 	// ------------------------------------------------------------------ helpers
 
 	ServerPlayer player(int i) {
-		return DuelManager.lookup(server, ids[i]);
+		return server.getPlayerList().getPlayer(ids[i]);
 	}
 
 	int indexOf(UUID id) {
