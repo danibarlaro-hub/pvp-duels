@@ -509,8 +509,10 @@ public final class SelfTest {
 		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
 		step("Bob's connection drops", () -> {
 			b.connection.onDisconnect(new DisconnectionDetails(Component.literal("selftest disconnect")));
+		}, () -> phaseIs(a, Duel.Phase.ENDED), 100);
+		step("after the disconnect", () -> {
 			Duel d = duel(a);
-			check("Alice wins by forfeit", d != null && d.winner == 0 && d.phase == Duel.Phase.ENDED);
+			check("Alice wins by forfeit", d != null && d.winner == 0, d == null ? "no duel" : d.phase + " winner=" + d.winner);
 			check("Bob's backup stays on disk", PlayerBackup.exists(b.getUUID()));
 		}, () -> noDuel(a), 600);
 		step("Bob joins again", () -> {
@@ -522,6 +524,22 @@ public final class SelfTest {
 				&& b.getInventory().getItem(20).is(Items.DIRT) && b.getInventory().getItem(0).isEmpty(), where(b));
 			check("Bob heard that his inventory was restored", b.heard("were restored"));
 		});
+
+		step("unlimited duel", () -> {
+			invite(a, b, new DuelConfig("testkit", false, WinMode.ROUNDS, 0));
+			check("unlimited duel started", duel(a) != null && duel(a).config.unlimited());
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("unlimited: Alice scores, the duel goes on", () -> {
+			hit(a, b);
+			Duel d = duel(a);
+			check("the duel is not decided after one round", d.phase == Duel.Phase.ROUND_END && d.winner == -2, d.phase + " winner=" + d.winner);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("unlimited: Bob leaves", () -> {
+			run(b, "leave");
+			Duel d = duel(a);
+			check("leaving an unlimited duel is decided by score (Alice ahead)", d != null && d.winner == 0 && d.phase == Duel.Phase.ENDED,
+				d == null ? "no duel" : d.phase + " winner=" + d.winner);
+		}, () -> noDuel(a) && noDuel(b), 600);
 
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
