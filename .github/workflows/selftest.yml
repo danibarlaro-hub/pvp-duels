@@ -51,4 +51,5 @@ jobs:
           git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "selftest results for ${GITHUB_SHA}"
           git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" selftest-out
       - name: Fail when the test failed
-        run: grep -q "RESULT: PASS" run/selftest-result.txt
+        run: |
+          grep -q "RESULT: PASS" run/selftest-result.txt
