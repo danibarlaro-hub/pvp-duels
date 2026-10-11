@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.pvpduels.duel.DuelManager;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutStore;
 import com.pvpduels.util.Msg;
@@ -106,6 +107,10 @@ public final class KitCommands {
 
 	/** Loads a kit into the player's inventory (used by /kit load and the Quick kit keys). */
 	public static boolean loadKit(MinecraftServer server, ServerPlayer p, String name) {
+		if (DuelManager.isInDuel(p.getUUID())) {
+			p.sendSystemMessage(Msg.err("You can't change kits during a duel."));
+			return false;
+		}
 		try {
 			Optional<KitStore.Kit> kit = KitStore.read(server, p.getUUID(), name);
 			if (kit.isEmpty()) {

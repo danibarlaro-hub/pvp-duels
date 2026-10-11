@@ -1,5 +1,7 @@
 package com.pvpduels;
 
+import com.pvpduels.duel.DuelCommands;
+import com.pvpduels.duel.DuelManager;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutCommands;
@@ -43,10 +45,13 @@ public class PvpDuelsMod implements ModInitializer {
 			KitCommands.register(dispatcher);
 			LayoutCommands.register(dispatcher);
 			GuideCommand.register(dispatcher);
+			DuelCommands.register(dispatcher);
 		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
 			handler.getPlayer().sendSystemMessage(Msg.info("PvP Duels is active. Type /guide to see the commands.")));
+
+		DuelManager.register();
 
 		LOGGER.info("PvP Duels loaded.");
 	}

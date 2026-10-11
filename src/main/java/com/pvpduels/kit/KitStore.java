@@ -61,12 +61,9 @@ public final class KitStore {
 		return Files.exists(file(owner, name));
 	}
 
-	/** Saves the player's current inventory as a kit. Keeps the kit's layout profile if it already existed. */
-	public static void save(MinecraftServer server, ServerPlayer player, String name) throws IOException {
-		UUID owner = player.getUUID();
-		Inventory inv = player.getInventory();
+	/** Encodes slots 0-40 (inventory, armor, offhand) of an inventory as a JSON array. */
+	public static JsonArray encodeInventory(MinecraftServer server, Inventory inv) {
 		RegistryOps<JsonElement> ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
-
 		JsonArray slots = new JsonArray();
 		int available = inv.getContainerSize();
 		for (int i = 0; i < SLOTS; i++) {
@@ -74,6 +71,37 @@ public final class KitStore {
 			JsonElement encoded = ItemStack.OPTIONAL_CODEC.encodeStart(ops, stack).result().orElseGet(JsonObject::new);
 			slots.add(encoded);
 		}
+		return slots;
+	}
+
+	public static ItemStack[] decodeInventory(MinecraftServer server, JsonArray arr) {
+		RegistryOps<JsonElement> ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
+		ItemStack[] stacks = new ItemStack[SLOTS];
+		for (int i = 0; i < SLOTS; i++) {
+			if (arr != null && i < arr.size()) {
+				stacks[i] = ItemStack.OPTIONAL_CODEC.parse(ops, arr.get(i)).result().orElse(ItemStack.EMPTY);
+			} else {
+				stacks[i] = ItemStack.EMPTY;
+			}
+		}
+		return stacks;
+	}
+
+	/** Replaces the whole inventory with the given 41 stacks. */
+	public static void setInventory(ServerPlayer player, ItemStack[] stacks) {
+		Inventory inv = player.getInventory();
+		inv.clearContent();
+		int max = Math.min(inv.getContainerSize(), SLOTS);
+		for (int i = 0; i < max; i++) {
+			inv.setItem(i, stacks[i].copy());
+		}
+	}
+
+	/** Saves the player's current inventory as a kit. Keeps the kit's layout profile if it already existed. */
+	public static void save(MinecraftServer server, ServerPlayer player, String name) throws IOException {
+		UUID owner = player.getUUID();
+		Inventory inv = player.getInventory();
+		JsonArray slots = encodeInventory(server, inv);
 
 		JsonObject root = new JsonObject();
 		root.addProperty("name", name);
@@ -100,17 +128,7 @@ public final class KitStore {
 	public static Optional<Kit> read(MinecraftServer server, UUID owner, String name) throws IOException {
 		if (!exists(owner, name)) return Optional.empty();
 		JsonObject root = JsonParser.parseString(Files.readString(file(owner, name))).getAsJsonObject();
-		RegistryOps<JsonElement> ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
-
-		ItemStack[] stacks = new ItemStack[SLOTS];
-		JsonArray arr = root.getAsJsonArray("slots");
-		for (int i = 0; i < SLOTS; i++) {
-			if (arr != null && i < arr.size()) {
-				stacks[i] = ItemStack.OPTIONAL_CODEC.parse(ops, arr.get(i)).result().orElse(ItemStack.EMPTY);
-			} else {
-				stacks[i] = ItemStack.EMPTY;
-			}
-		}
+		ItemStack[] stacks = decodeInventory(server, root.getAsJsonArray("slots"));
 		String profile = root.has("profile") ? root.get("profile").getAsString() : null;
 		return Optional.of(new Kit(name, profile, stacks));
 	}
@@ -127,12 +145,7 @@ public final class KitStore {
 
 	/** Replaces the player's whole inventory with the kit. */
 	public static void give(ServerPlayer player, Kit kit) {
-		Inventory inv = player.getInventory();
-		inv.clearContent();
-		int max = Math.min(inv.getContainerSize(), SLOTS);
-		for (int i = 0; i < max; i++) {
-			inv.setItem(i, kit.slots()[i].copy());
-		}
+		setInventory(player, kit.slots());
 	}
 
 	public static boolean delete(UUID owner, String name) throws IOException {
