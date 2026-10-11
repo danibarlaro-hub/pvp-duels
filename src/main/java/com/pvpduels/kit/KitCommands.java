@@ -5,7 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.pvpduels.layout.HotbarSorter;
+import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutStore;
 import com.pvpduels.util.Msg;
 import net.minecraft.commands.CommandSourceStack;
@@ -87,7 +87,7 @@ public final class KitCommands {
 			if (profileName != null) {
 				LayoutStore.Profile profile = LayoutStore.get(p.getUUID()).profiles.get(profileName);
 				if (profile != null) {
-					HotbarSorter.sort(p, profile);
+					InventorySorter.sort(p, profile);
 				}
 			}
 			ctx.getSource().sendSuccess(() -> Msg.ok("Loaded kit '" + name + "'. Your old inventory was replaced."), false);

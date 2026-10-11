@@ -1,4 +1,6 @@
 {
   "key.category.pvpduels.main": "PvP Duels",
-  "key.pvpduels.sort": "Sort hotbar"
+  "key.pvpduels.sort": "Sort inventory",
+  "key.pvpduels.layout_prev": "Previous layout",
+  "key.pvpduels.layout_next": "Next layout"
 }

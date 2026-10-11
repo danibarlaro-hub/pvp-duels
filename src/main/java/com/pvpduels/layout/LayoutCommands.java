@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public final class LayoutCommands {
@@ -26,32 +27,98 @@ public final class LayoutCommands {
 	private static final SuggestionProvider<CommandSourceStack> PROFILES = (ctx, builder) -> {
 		ServerPlayer p = ctx.getSource().getPlayer();
 		if (p == null) return builder.buildFuture();
-		return SharedSuggestionProvider.suggest(LayoutStore.profileNames(p.getUUID()), builder);
+		return SharedSuggestionProvider.suggest(LayoutStore.orderedNames(p.getUUID()), builder);
 	};
+
+	private static final SuggestionProvider<CommandSourceStack> SLOTS = (ctx, builder) ->
+		SharedSuggestionProvider.suggest(List.of("offhand"), builder);
+
+	private static final SuggestionProvider<CommandSourceStack> CLEAR_TARGETS = (ctx, builder) ->
+		SharedSuggestionProvider.suggest(List.of("all", "offhand"), builder);
 
 	private LayoutCommands() {}
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(Commands.literal("layout")
 			.then(Commands.literal("slot")
-				.then(Commands.argument("slot", IntegerArgumentType.integer(1, 9))
+				.then(Commands.argument("slot", StringArgumentType.word()).suggests(SLOTS)
 					.then(Commands.argument("rules", StringArgumentType.greedyString())
 						.executes(LayoutCommands::setSlot))))
+			.then(Commands.literal("level")
+				.then(Commands.argument("slot", StringArgumentType.word()).suggests(SLOTS)
+					.then(Commands.argument("level", IntegerArgumentType.integer(1, LayoutStore.MAX_LEVELS))
+						.then(Commands.argument("rule", StringArgumentType.word())
+							.executes(LayoutCommands::setLevel)))))
 			.then(Commands.literal("clear")
-				.then(Commands.literal("all").executes(LayoutCommands::clearAll))
-				.then(Commands.argument("slot", IntegerArgumentType.integer(1, 9)).executes(LayoutCommands::clearSlot)))
+				.then(Commands.argument("target", StringArgumentType.word()).suggests(CLEAR_TARGETS)
+					.executes(LayoutCommands::clear)))
 			.then(Commands.literal("show").executes(LayoutCommands::show))
 			.then(Commands.literal("list").executes(LayoutCommands::list))
 			.then(Commands.literal("new")
 				.then(Commands.argument("name", StringArgumentType.word()).executes(LayoutCommands::newProfile)))
 			.then(Commands.literal("use")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(PROFILES).executes(LayoutCommands::use)))
+			.then(Commands.literal("copy")
+				.then(Commands.argument("from", StringArgumentType.word()).suggests(PROFILES)
+					.then(Commands.argument("to", StringArgumentType.word()).executes(LayoutCommands::copy))))
 			.then(Commands.literal("delete")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(PROFILES).executes(LayoutCommands::delete)))
 			.then(Commands.literal("sort").executes(ctx -> {
-				HotbarSorter.sortAndReport(ctx.getSource().getPlayerOrException());
+				InventorySorter.sortAndReport(ctx.getSource().getPlayerOrException());
 				return 1;
 			})));
+	}
+
+	/** Called by the "Next layout" / "Previous layout" keys: switches the active layout and sorts with it. */
+	public static void cycle(ServerPlayer p, boolean forward) {
+		LayoutStore.Data data = LayoutStore.get(p.getUUID());
+		List<String> names = LayoutStore.orderedNames(p.getUUID());
+		int idx = names.indexOf(data.active);
+		if (idx < 0) idx = 0;
+		int next = (idx + (forward ? 1 : -1) + names.size()) % names.size();
+		data.active = names.get(next);
+		try {
+			LayoutStore.save(p.getUUID());
+		} catch (IOException e) {
+			p.sendSystemMessage(Msg.err("Could not save your layout file: " + e.getMessage()));
+		}
+		InventorySorter.sortAndReport(p);
+	}
+
+	// ---------- helpers ----------
+
+	private static int parseSlot(String s) {
+		if (s.equalsIgnoreCase("offhand")) return LayoutStore.OFFHAND;
+		try {
+			int n = Integer.parseInt(s);
+			if (n >= 1 && n <= LayoutStore.MAX_SLOT) return n;
+		} catch (NumberFormatException ignored) {
+			// fall through
+		}
+		return -1;
+	}
+
+	private static String slotName(int slot) {
+		if (slot == LayoutStore.OFFHAND) return "offhand";
+		if (slot <= 9) return "hotbar " + slot;
+		return "inventory " + slot;
+	}
+
+	private static String parseRule(ServerPlayer p, String token, CommandContext<CommandSourceStack> ctx) {
+		if (token.equals("hand")) {
+			ItemStack held = p.getMainHandItem();
+			if (held.isEmpty()) {
+				ctx.getSource().sendFailure(Msg.err("Your hand is empty, so 'hand' can't be used."));
+				return null;
+			}
+			return BuiltInRegistries.ITEM.getKey(held.getItem()).toString();
+		}
+		String rule = ItemMatcher.normalize(token);
+		if (rule == null) {
+			ctx.getSource().sendFailure(Msg.err("Unknown item or category: " + token
+				+ ". Categories: " + String.join(", ", ItemMatcher.CATEGORIES.stream().sorted().toList())));
+		}
+		return rule;
 	}
 
 	private static void saveQuietly(ServerPlayer p, CommandContext<CommandSourceStack> ctx) {
@@ -62,51 +129,95 @@ public final class LayoutCommands {
 		}
 	}
 
+	private static int badSlot(CommandContext<CommandSourceStack> ctx) {
+		ctx.getSource().sendFailure(Msg.err("Slot must be 1-" + LayoutStore.MAX_SLOT
+			+ " (1-9 hotbar, 10-36 backpack) or 'offhand'."));
+		return 0;
+	}
+
+	// ---------- commands ----------
+
 	private static int setSlot(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
-		int slot = IntegerArgumentType.getInteger(ctx, "slot");
+		int slot = parseSlot(StringArgumentType.getString(ctx, "slot"));
+		if (slot < 0) return badSlot(ctx);
+
 		String raw = StringArgumentType.getString(ctx, "rules").trim().toLowerCase(Locale.ROOT);
+		String[] tokens = raw.split("\\s+");
+		if (tokens.length > LayoutStore.MAX_LEVELS) {
+			ctx.getSource().sendFailure(Msg.err("A slot can have at most " + LayoutStore.MAX_LEVELS + " priority levels."));
+			return 0;
+		}
 
 		List<String> rules = new ArrayList<>();
-		for (String token : raw.split("\\s+")) {
-			if (token.equals("hand")) {
-				ItemStack held = p.getMainHandItem();
-				if (held.isEmpty()) {
-					ctx.getSource().sendFailure(Msg.err("Your hand is empty, so 'hand' can't be used."));
-					return 0;
-				}
-				rules.add(BuiltInRegistries.ITEM.getKey(held.getItem()).toString());
-				continue;
-			}
-			String rule = ItemMatcher.normalize(token);
-			if (rule == null) {
-				ctx.getSource().sendFailure(Msg.err("Unknown item or category: " + token
-					+ ". Categories: " + String.join(", ", ItemMatcher.CATEGORIES.stream().sorted().toList())));
-				return 0;
-			}
+		for (String token : tokens) {
+			String rule = parseRule(p, token, ctx);
+			if (rule == null) return 0;
 			if (!rules.contains(rule)) rules.add(rule);
 		}
 
 		LayoutStore.active(p.getUUID()).slots.put(slot, rules);
 		saveQuietly(p, ctx);
-		ctx.getSource().sendSuccess(() -> Msg.ok("Slot " + slot + ": " + String.join(" > ", rules)), false);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Slot " + slotName(slot) + ": " + String.join(" > ", rules)), false);
 		return 1;
 	}
 
-	private static int clearSlot(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+	private static int setLevel(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
-		int slot = IntegerArgumentType.getInteger(ctx, "slot");
-		LayoutStore.active(p.getUUID()).slots.remove(slot);
+		int slot = parseSlot(StringArgumentType.getString(ctx, "slot"));
+		if (slot < 0) return badSlot(ctx);
+		int level = IntegerArgumentType.getInteger(ctx, "level");
+		String token = StringArgumentType.getString(ctx, "rule").toLowerCase(Locale.ROOT);
+
+		Map<Integer, List<String>> slots = LayoutStore.active(p.getUUID()).slots;
+		List<String> rules = new ArrayList<>(slots.getOrDefault(slot, List.of()));
+
+		if (token.equals("none")) {
+			if (level > rules.size()) {
+				ctx.getSource().sendFailure(Msg.err("Level " + level + " of " + slotName(slot) + " is already empty."));
+				return 0;
+			}
+			rules.remove(level - 1);
+		} else {
+			String rule = parseRule(p, token, ctx);
+			if (rule == null) return 0;
+			if (level > rules.size() + 1) {
+				ctx.getSource().sendFailure(Msg.err("Fill level " + (rules.size() + 1) + " first."));
+				return 0;
+			}
+			if (level == rules.size() + 1) {
+				rules.add(rule);
+			} else {
+				rules.set(level - 1, rule);
+			}
+		}
+
+		if (rules.isEmpty()) {
+			slots.remove(slot);
+		} else {
+			slots.put(slot, rules);
+		}
 		saveQuietly(p, ctx);
-		ctx.getSource().sendSuccess(() -> Msg.ok("Cleared slot " + slot + "."), false);
+		String text = rules.isEmpty() ? "(empty)" : String.join(" > ", rules);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Slot " + slotName(slot) + ": " + text), false);
 		return 1;
 	}
 
-	private static int clearAll(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+	private static int clear(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
-		LayoutStore.active(p.getUUID()).slots.clear();
+		String target = StringArgumentType.getString(ctx, "target").toLowerCase(Locale.ROOT);
+		LayoutStore.Profile profile = LayoutStore.active(p.getUUID());
+		if (target.equals("all")) {
+			profile.slots.clear();
+			saveQuietly(p, ctx);
+			ctx.getSource().sendSuccess(() -> Msg.ok("Cleared every slot of the active layout."), false);
+			return 1;
+		}
+		int slot = parseSlot(target);
+		if (slot < 0) return badSlot(ctx);
+		profile.slots.remove(slot);
 		saveQuietly(p, ctx);
-		ctx.getSource().sendSuccess(() -> Msg.ok("Cleared all slots of the active profile."), false);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Cleared slot " + slotName(slot) + "."), false);
 		return 1;
 	}
 
@@ -114,13 +225,16 @@ public final class LayoutCommands {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
 		LayoutStore.Profile profile = data.profiles.get(data.active);
-		ctx.getSource().sendSuccess(() -> Msg.title("Layout profile: " + data.active), false);
+		ctx.getSource().sendSuccess(() -> Msg.title("Layout: " + data.active), false);
 		boolean any = false;
-		for (int slot = 1; slot <= 9; slot++) {
+		List<Integer> order = new ArrayList<>();
+		for (int s = 1; s <= LayoutStore.MAX_SLOT; s++) order.add(s);
+		order.add(LayoutStore.OFFHAND);
+		for (int slot : order) {
 			List<String> rules = profile.slots.get(slot);
 			if (rules != null && !rules.isEmpty()) {
 				any = true;
-				String line = "  " + slot + ": " + String.join(" > ", rules);
+				String line = "  " + slotName(slot) + ": " + String.join(" > ", rules);
 				ctx.getSource().sendSuccess(() -> Msg.info(line), false);
 			}
 		}
@@ -134,12 +248,15 @@ public final class LayoutCommands {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
 		StringBuilder sb = new StringBuilder();
-		for (String name : data.profiles.keySet()) {
+		for (String name : LayoutStore.orderedNames(p.getUUID())) {
 			if (sb.length() > 0) sb.append(", ");
-			sb.append(name.equals(data.active) ? name + " (active)" : name);
+			int filled = (int) data.profiles.get(name).slots.values().stream().filter(l -> !l.isEmpty()).count();
+			sb.append(name).append(" [").append(filled).append(" slots]");
+			if (name.equals(data.active)) sb.append(" (active)");
 		}
 		String text = sb.toString();
-		ctx.getSource().sendSuccess(() -> Msg.info("Profiles: " + text), false);
+		int used = LayoutStore.customCount(data);
+		ctx.getSource().sendSuccess(() -> Msg.info("Layouts (" + used + "/" + LayoutStore.MAX_PROFILES + "): " + text), false);
 		return 1;
 	}
 
@@ -147,18 +264,22 @@ public final class LayoutCommands {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
 		String name = StringArgumentType.getString(ctx, "name").toLowerCase(Locale.ROOT);
 		if (!NAME.matcher(name).matches()) {
-			ctx.getSource().sendFailure(Msg.err("Profile names can only use a-z, 0-9, _ and - (max 24)."));
+			ctx.getSource().sendFailure(Msg.err("Layout names can only use a-z, 0-9, _ and - (max 24)."));
 			return 0;
 		}
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
 		if (data.profiles.containsKey(name)) {
-			ctx.getSource().sendFailure(Msg.err("A profile named '" + name + "' already exists."));
+			ctx.getSource().sendFailure(Msg.err("A layout named '" + name + "' already exists."));
+			return 0;
+		}
+		if (LayoutStore.customCount(data) >= LayoutStore.MAX_PROFILES) {
+			ctx.getSource().sendFailure(Msg.err("You already have " + LayoutStore.MAX_PROFILES + " layouts (the maximum). Delete one first."));
 			return 0;
 		}
 		data.profiles.put(name, new LayoutStore.Profile());
 		data.active = name;
 		saveQuietly(p, ctx);
-		ctx.getSource().sendSuccess(() -> Msg.ok("Created profile '" + name + "' and made it active."), false);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Created layout '" + name + "' and made it active."), false);
 		return 1;
 	}
 
@@ -167,12 +288,52 @@ public final class LayoutCommands {
 		String name = StringArgumentType.getString(ctx, "name").toLowerCase(Locale.ROOT);
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
 		if (!data.profiles.containsKey(name)) {
-			ctx.getSource().sendFailure(Msg.err("No profile named '" + name + "'. Use /layout list."));
-			return 0;
+			Integer n = LayoutStore.asNumber(name);
+			boolean numbered = n != null && n >= 1 && n <= LayoutStore.MAX_PROFILES;
+			if (numbered && LayoutStore.customCount(data) < LayoutStore.MAX_PROFILES) {
+				data.profiles.put(name, new LayoutStore.Profile());
+				ctx.getSource().sendSuccess(() -> Msg.info("Created new empty layout '" + name + "'."), false);
+			} else {
+				ctx.getSource().sendFailure(Msg.err("No layout named '" + name + "'. Use /layout list."));
+				return 0;
+			}
 		}
 		data.active = name;
 		saveQuietly(p, ctx);
-		ctx.getSource().sendSuccess(() -> Msg.ok("Active profile: " + name), false);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Active layout: " + name), false);
+		return 1;
+	}
+
+	private static int copy(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		String from = StringArgumentType.getString(ctx, "from").toLowerCase(Locale.ROOT);
+		String to = StringArgumentType.getString(ctx, "to").toLowerCase(Locale.ROOT);
+		LayoutStore.Data data = LayoutStore.get(p.getUUID());
+		LayoutStore.Profile source = data.profiles.get(from);
+		if (source == null) {
+			ctx.getSource().sendFailure(Msg.err("No layout named '" + from + "'."));
+			return 0;
+		}
+		if (!NAME.matcher(to).matches()) {
+			ctx.getSource().sendFailure(Msg.err("Layout names can only use a-z, 0-9, _ and - (max 24)."));
+			return 0;
+		}
+		if (from.equals(to)) {
+			ctx.getSource().sendFailure(Msg.err("Pick a different name for the copy."));
+			return 0;
+		}
+		boolean existed = data.profiles.containsKey(to);
+		if (!existed && LayoutStore.customCount(data) >= LayoutStore.MAX_PROFILES) {
+			ctx.getSource().sendFailure(Msg.err("You already have " + LayoutStore.MAX_PROFILES + " layouts (the maximum). Delete one first."));
+			return 0;
+		}
+		LayoutStore.Profile copy = new LayoutStore.Profile();
+		for (Map.Entry<Integer, List<String>> e : source.slots.entrySet()) {
+			copy.slots.put(e.getKey(), new ArrayList<>(e.getValue()));
+		}
+		data.profiles.put(to, copy);
+		saveQuietly(p, ctx);
+		ctx.getSource().sendSuccess(() -> Msg.ok((existed ? "Overwrote layout '" : "Copied into new layout '") + to + "' from '" + from + "'."), false);
 		return 1;
 	}
 
@@ -181,16 +342,16 @@ public final class LayoutCommands {
 		String name = StringArgumentType.getString(ctx, "name").toLowerCase(Locale.ROOT);
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
 		if (name.equals("default")) {
-			ctx.getSource().sendFailure(Msg.err("The 'default' profile can't be deleted (use /layout clear all to empty it)."));
+			ctx.getSource().sendFailure(Msg.err("The 'default' layout can't be deleted (use /layout clear all to empty it)."));
 			return 0;
 		}
 		if (data.profiles.remove(name) == null) {
-			ctx.getSource().sendFailure(Msg.err("No profile named '" + name + "'."));
+			ctx.getSource().sendFailure(Msg.err("No layout named '" + name + "'."));
 			return 0;
 		}
 		if (data.active.equals(name)) data.active = "default";
 		saveQuietly(p, ctx);
-		ctx.getSource().sendSuccess(() -> Msg.ok("Deleted profile '" + name + "'."), false);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Deleted layout '" + name + "'."), false);
 		return 1;
 	}
 }

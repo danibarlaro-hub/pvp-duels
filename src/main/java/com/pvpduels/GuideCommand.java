@@ -11,11 +11,14 @@ public final class GuideCommand {
 		"/kit load <name>  - replace your inventory with a kit",
 		"/kit list  - list your kits",
 		"/kit delete <name>  - delete a kit",
-		"/kit profile <kit> <profile|none>  - sort a kit with a layout profile when it is loaded",
-		"/layout slot <1-9> <rules...>  - set the priority list of a hotbar slot (e.g. sword spear)",
-		"/layout clear <1-9|all>  - clear one slot or the whole profile",
-		"/layout show | list | new <name> | use <name> | delete <name>  - manage profiles",
-		"/layout sort  - sort your hotbar now (same as the Sort hotbar key, set in Controls)",
+		"/kit profile <kit> <layout|none>  - sort a kit with a layout when it is loaded",
+		"Layouts sort your WHOLE inventory. Slots: 1-9 hotbar, 10-36 backpack (left to right, top to bottom), offhand.",
+		"/layout slot <1-36|offhand> <rules...>  - up to 4 priority levels, e.g. /layout slot 1 sword spear",
+		"/layout level <slot> <1-4> <rule|none>  - change just one priority level",
+		"/layout use <1-21|name>  - switch layout (numbers 1-21 are created on demand)",
+		"/layout copy <from> <to>  - copy a layout; /layout new <name>  - create one",
+		"/layout show | list | clear <slot|all> | delete <name>  - manage layouts (max 21)",
+		"/layout sort  - sort now. Keys (set in Controls): Sort inventory, Next layout, Previous layout",
 		"Rules can be categories (sword, spear, axe, mace, bow, crossbow, shield, totem, crystal, obsidian, gapple, pearl, potion, food, block...), exact item ids, or 'hand'."
 	};
 

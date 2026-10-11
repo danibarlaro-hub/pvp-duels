@@ -15,10 +15,16 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 /**
- * Hotbar layout profiles, one JSON file per player (.minecraft/pvpduels/layouts/UUID.json).
- * A profile maps hotbar slots 1-9 to an ordered priority list of rules (categories like "sword" or exact item ids).
+ * Inventory layouts, one JSON file per player (.minecraft/pvpduels/layouts/UUID.json).
+ * A layout (profile) maps slots to an ordered priority list of rules (categories like "sword" or exact item ids).
+ * Slots 1-9 are the hotbar, 10-36 the backpack (left to right, top to bottom), 37 is the offhand.
  */
 public final class LayoutStore {
+	public static final int MAX_PROFILES = 21; // not counting the built-in "default"
+	public static final int MAX_LEVELS = 4;
+	public static final int MAX_SLOT = 36;
+	public static final int OFFHAND = 37;
+
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Map<UUID, Data> CACHE = new HashMap<>();
 
@@ -70,7 +76,42 @@ public final class LayoutStore {
 		Files.writeString(file(owner), GSON.toJson(d));
 	}
 
+	/** How many layouts the player created (the built-in "default" does not count toward the limit). */
+	public static int customCount(Data d) {
+		int n = 0;
+		for (String k : d.profiles.keySet()) {
+			if (!k.equals("default")) n++;
+		}
+		return n;
+	}
+
+	public static Integer asNumber(String s) {
+		try {
+			return Integer.valueOf(s);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	private static int compareNames(String a, String b) {
+		if (a.equals("default")) return b.equals("default") ? 0 : -1;
+		if (b.equals("default")) return 1;
+		Integer na = asNumber(a);
+		Integer nb = asNumber(b);
+		if (na != null && nb != null) return Integer.compare(na, nb);
+		if (na != null) return -1;
+		if (nb != null) return 1;
+		return a.compareTo(b);
+	}
+
+	/** Layout names in a friendly order: default first, then 1, 2, 3..., then named ones. */
+	public static List<String> orderedNames(UUID owner) {
+		List<String> names = new ArrayList<>(get(owner).profiles.keySet());
+		names.sort(LayoutStore::compareNames);
+		return names;
+	}
+
 	public static List<String> profileNames(UUID owner) {
-		return new ArrayList<>(get(owner).profiles.keySet());
+		return orderedNames(owner);
 	}
 }

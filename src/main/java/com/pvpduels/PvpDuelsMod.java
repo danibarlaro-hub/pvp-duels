@@ -1,8 +1,9 @@
 package com.pvpduels;
 
 import com.pvpduels.kit.KitCommands;
-import com.pvpduels.layout.HotbarSorter;
+import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutCommands;
+import com.pvpduels.net.CycleLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
 import com.pvpduels.util.Msg;
 import net.fabricmc.api.ModInitializer;
@@ -19,10 +20,14 @@ public class PvpDuelsMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// Client -> server packet used by the "Sort hotbar" key.
+		// Client -> server packets used by the keys.
 		PayloadTypeRegistry.serverboundPlay().register(SortRequestPayload.TYPE, SortRequestPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(CycleLayoutPayload.TYPE, CycleLayoutPayload.CODEC);
+
 		ServerPlayNetworking.registerGlobalReceiver(SortRequestPayload.TYPE, (payload, context) ->
-			context.server().execute(() -> HotbarSorter.sortAndReport(context.player())));
+			context.server().execute(() -> InventorySorter.sortAndReport(context.player())));
+		ServerPlayNetworking.registerGlobalReceiver(CycleLayoutPayload.TYPE, (payload, context) ->
+			context.server().execute(() -> LayoutCommands.cycle(context.player(), payload.forward())));
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			KitCommands.register(dispatcher);

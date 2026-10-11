@@ -7,11 +7,14 @@ esta parte sirve para comprobar que todo compila y para probar kits y el ordenad
 - `/kit save <nombre>`  guarda tu inventario como kit (se guardan en la carpeta `.minecraft/pvpduels`, no dentro del mundo)
 - `/kit load <nombre>`, `/kit list`, `/kit delete <nombre>`
 - `/kit profile <kit> <perfil|none>`  hace que ese kit se ordene con un perfil de layout al cargarlo
-- `/layout slot <1-9> <reglas...>`  prioridades por slot. Ejemplo: `/layout slot 1 sword spear`
+- Layouts ordenan TODO el inventario: slots 1-9 hotbar, 10-36 mochila (izquierda a derecha, arriba a abajo) y `offhand`
+- `/layout slot <1-36|offhand> <reglas...>`  hasta 4 niveles de prioridad por slot. Ejemplo: `/layout slot 1 sword spear`
   (reglas: categorias como sword, spear, axe, mace, bow, crossbow, shield, totem, crystal, obsidian,
   gapple, pearl, potion, food, block... o un item exacto, o `hand` para el item que tenes en la mano)
-- `/layout clear <1-9|all>`, `/layout show`, `/layout list`, `/layout new <nombre>`, `/layout use <nombre>`, `/layout delete <nombre>`
-- `/layout sort` o la tecla **Sort hotbar** (R por defecto, se cambia en Options > Controls > Key Binds > PvP Duels)
+- `/layout level <slot> <1-4> <regla|none>`  cambia un solo nivel
+- `/layout use <1-21|nombre>` cambia de layout (los numeros 1 a 21 se crean solos), `/layout copy <de> <a>`, `/layout new <nombre>`,
+  `/layout show`, `/layout list`, `/layout clear <slot|all>`, `/layout delete <nombre>` (maximo 21 layouts)
+- `/layout sort` o la tecla **Sort inventory** (R por defecto). Teclas **Next layout** y **Previous layout** (sin asignar, se eligen en Controls)
 - `/guide`  muestra los comandos en el chat
 
 ## Como conseguir el .jar (GitHub arma el archivo por vos, no instalas nada)
