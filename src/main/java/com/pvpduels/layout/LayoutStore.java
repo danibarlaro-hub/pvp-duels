@@ -17,13 +17,13 @@ import java.util.UUID;
 /**
  * Inventory layouts, one JSON file per player (.minecraft/pvpduels/layouts/UUID.json).
  * A layout (profile) maps slots to an ordered priority list of rules (categories like "sword" or exact item ids).
- * Slots 1-9 are the hotbar, 10-36 the backpack (left to right, top to bottom), 37 is the offhand.
+ * Slots 1-9 are the hotbar, 10-36 the backpack (left to right, top to bottom).
  */
 public final class LayoutStore {
 	public static final int MAX_PROFILES = 21; // not counting the built-in "default"
 	public static final int MAX_LEVELS = 4;
 	public static final int MAX_SLOT = 36;
-	public static final int OFFHAND = 37;
+	public static final int QUICK_KEYS = 3;
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Map<UUID, Data> CACHE = new HashMap<>();
@@ -37,6 +37,8 @@ public final class LayoutStore {
 	public static class Data {
 		public String active = "default";
 		public Map<String, Profile> profiles = new TreeMap<>();
+		/** Layout triggered by each of the 3 quick keys (null = the layout named "1", "2", "3"). */
+		public List<String> keys = new ArrayList<>();
 	}
 
 	private static Path file(UUID owner) {
@@ -59,6 +61,8 @@ public final class LayoutStore {
 		if (data == null) data = new Data();
 		if (data.profiles == null) data.profiles = new TreeMap<>();
 		if (data.active == null) data.active = "default";
+		if (data.keys == null) data.keys = new ArrayList<>();
+		while (data.keys.size() < QUICK_KEYS) data.keys.add(String.valueOf(data.keys.size() + 1));
 		data.profiles.computeIfAbsent("default", k -> new Profile());
 		data.profiles.computeIfAbsent(data.active, k -> new Profile());
 		CACHE.put(owner, data);

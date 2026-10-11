@@ -8,12 +8,10 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
- * Fills each slot of the layout (hotbar, backpack and offhand) with the first item that matches its
+ * Fills each slot of the layout (hotbar and backpack) with the first item that matches its
  * priority list (level 1, then 2, 3, 4), searching the whole inventory. Items are swapped, never lost.
  */
 public final class InventorySorter {
-	private static final int OFFHAND_INDEX = 40;
-
 	private InventorySorter() {}
 
 	/** Returns how many swaps were made. */
@@ -36,14 +34,6 @@ public final class InventorySorter {
 			}
 		}
 
-		List<String> offhandRules = profile.slots.get(LayoutStore.OFFHAND);
-		if (offhandRules != null && !offhandRules.isEmpty() && inv.getContainerSize() > OFFHAND_INDEX) {
-			int found = findMatch(inv, offhandRules, OFFHAND_INDEX, locked);
-			if (found >= 0 && found != OFFHAND_INDEX) {
-				swap(inv, OFFHAND_INDEX, found);
-				moves++;
-			}
-		}
 		return moves;
 	}
 

@@ -30,22 +30,19 @@ public final class LayoutCommands {
 		return SharedSuggestionProvider.suggest(LayoutStore.orderedNames(p.getUUID()), builder);
 	};
 
-	private static final SuggestionProvider<CommandSourceStack> SLOTS = (ctx, builder) ->
-		SharedSuggestionProvider.suggest(List.of("offhand"), builder);
-
 	private static final SuggestionProvider<CommandSourceStack> CLEAR_TARGETS = (ctx, builder) ->
-		SharedSuggestionProvider.suggest(List.of("all", "offhand"), builder);
+		SharedSuggestionProvider.suggest(List.of("all"), builder);
 
 	private LayoutCommands() {}
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(Commands.literal("layout")
 			.then(Commands.literal("slot")
-				.then(Commands.argument("slot", StringArgumentType.word()).suggests(SLOTS)
+				.then(Commands.argument("slot", StringArgumentType.word())
 					.then(Commands.argument("rules", StringArgumentType.greedyString())
 						.executes(LayoutCommands::setSlot))))
 			.then(Commands.literal("level")
-				.then(Commands.argument("slot", StringArgumentType.word()).suggests(SLOTS)
+				.then(Commands.argument("slot", StringArgumentType.word())
 					.then(Commands.argument("level", IntegerArgumentType.integer(1, LayoutStore.MAX_LEVELS))
 						.then(Commands.argument("rule", StringArgumentType.word())
 							.executes(LayoutCommands::setLevel)))))
@@ -63,6 +60,11 @@ public final class LayoutCommands {
 					.then(Commands.argument("to", StringArgumentType.word()).executes(LayoutCommands::copy))))
 			.then(Commands.literal("delete")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(PROFILES).executes(LayoutCommands::delete)))
+			.then(Commands.literal("key")
+				.then(Commands.argument("key", IntegerArgumentType.integer(1, LayoutStore.QUICK_KEYS))
+					.then(Commands.argument("layout", StringArgumentType.word()).suggests(PROFILES)
+						.executes(LayoutCommands::setKey))))
+			.then(Commands.literal("keys").executes(LayoutCommands::showKeys))
 			.then(Commands.literal("sort").executes(ctx -> {
 				InventorySorter.sortAndReport(ctx.getSource().getPlayerOrException());
 				return 1;
@@ -85,10 +87,34 @@ public final class LayoutCommands {
 		InventorySorter.sortAndReport(p);
 	}
 
+	/** Called by the 3 "Quick layout" keys: switches to the layout bound to that key and sorts with it. */
+	public static void quick(ServerPlayer p, int index) {
+		if (index < 0 || index >= LayoutStore.QUICK_KEYS) return;
+		LayoutStore.Data data = LayoutStore.get(p.getUUID());
+		String name = data.keys.get(index);
+		if (!data.profiles.containsKey(name)) {
+			Integer n = LayoutStore.asNumber(name);
+			boolean numbered = n != null && n >= 1 && n <= LayoutStore.MAX_PROFILES;
+			if (numbered && LayoutStore.customCount(data) < LayoutStore.MAX_PROFILES) {
+				data.profiles.put(name, new LayoutStore.Profile());
+			} else {
+				p.sendSystemMessage(Msg.err("Quick layout key " + (index + 1) + " points to '" + name
+					+ "', which doesn't exist. Use /layout key " + (index + 1) + " <layout>."));
+				return;
+			}
+		}
+		data.active = name;
+		try {
+			LayoutStore.save(p.getUUID());
+		} catch (IOException e) {
+			p.sendSystemMessage(Msg.err("Could not save your layout file: " + e.getMessage()));
+		}
+		InventorySorter.sortAndReport(p);
+	}
+
 	// ---------- helpers ----------
 
 	private static int parseSlot(String s) {
-		if (s.equalsIgnoreCase("offhand")) return LayoutStore.OFFHAND;
 		try {
 			int n = Integer.parseInt(s);
 			if (n >= 1 && n <= LayoutStore.MAX_SLOT) return n;
@@ -99,7 +125,6 @@ public final class LayoutCommands {
 	}
 
 	private static String slotName(int slot) {
-		if (slot == LayoutStore.OFFHAND) return "offhand";
 		if (slot <= 9) return "hotbar " + slot;
 		return "inventory " + slot;
 	}
@@ -131,7 +156,7 @@ public final class LayoutCommands {
 
 	private static int badSlot(CommandContext<CommandSourceStack> ctx) {
 		ctx.getSource().sendFailure(Msg.err("Slot must be 1-" + LayoutStore.MAX_SLOT
-			+ " (1-9 hotbar, 10-36 backpack) or 'offhand'."));
+			+ " (1-9 hotbar, 10-36 backpack)."));
 		return 0;
 	}
 
@@ -229,7 +254,6 @@ public final class LayoutCommands {
 		boolean any = false;
 		List<Integer> order = new ArrayList<>();
 		for (int s = 1; s <= LayoutStore.MAX_SLOT; s++) order.add(s);
-		order.add(LayoutStore.OFFHAND);
 		for (int slot : order) {
 			List<String> rules = profile.slots.get(slot);
 			if (rules != null && !rules.isEmpty()) {
@@ -334,6 +358,35 @@ public final class LayoutCommands {
 		data.profiles.put(to, copy);
 		saveQuietly(p, ctx);
 		ctx.getSource().sendSuccess(() -> Msg.ok((existed ? "Overwrote layout '" : "Copied into new layout '") + to + "' from '" + from + "'."), false);
+		return 1;
+	}
+
+	private static int setKey(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		int key = IntegerArgumentType.getInteger(ctx, "key");
+		String name = StringArgumentType.getString(ctx, "layout").toLowerCase(Locale.ROOT);
+		if (!NAME.matcher(name).matches()) {
+			ctx.getSource().sendFailure(Msg.err("Layout names can only use a-z, 0-9, _ and - (max 24)."));
+			return 0;
+		}
+		LayoutStore.Data data = LayoutStore.get(p.getUUID());
+		data.keys.set(key - 1, name);
+		saveQuietly(p, ctx);
+		boolean exists = data.profiles.containsKey(name);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Quick layout key " + key + " now uses layout '" + name + "'."
+			+ (exists ? "" : " (It doesn't exist yet - create it with /layout new " + name + ".)")), false);
+		return 1;
+	}
+
+	private static int showKeys(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		LayoutStore.Data data = LayoutStore.get(p.getUUID());
+		ctx.getSource().sendSuccess(() -> Msg.title("Quick layout keys"), false);
+		for (int i = 0; i < LayoutStore.QUICK_KEYS; i++) {
+			String line = "  Quick layout " + (i + 1) + " -> '" + data.keys.get(i) + "'";
+			ctx.getSource().sendSuccess(() -> Msg.info(line), false);
+		}
+		ctx.getSource().sendSuccess(() -> Msg.info("Bind the keys in Options > Controls > Key Binds > PvP Duels. Change what they use with /layout key <1-3> <layout>."), false);
 		return 1;
 	}
 

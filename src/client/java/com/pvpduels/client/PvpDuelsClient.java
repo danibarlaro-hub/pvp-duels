@@ -3,7 +3,9 @@ package com.pvpduels.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.net.CycleLayoutPayload;
+import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
+import com.pvpduels.net.TotemPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -12,50 +14,53 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
+/** All keys are normal Minecraft key binds: change them in Options > Controls > Key Binds > PvP Duels. */
 public class PvpDuelsClient implements ClientModInitializer {
 	private static KeyMapping sortKey;
+	private static KeyMapping totemKey;
 	private static KeyMapping prevLayoutKey;
 	private static KeyMapping nextLayoutKey;
+	private static final KeyMapping[] QUICK_KEYS = new KeyMapping[3];
+
+	private static KeyMapping register(String name, int defaultKey, KeyMapping.Category category) {
+		return KeyMappingHelper.registerKeyMapping(new KeyMapping(
+			name, InputConstants.Type.KEYSYM, defaultKey, category));
+	}
 
 	@Override
 	public void onInitializeClient() {
 		KeyMapping.Category category = KeyMapping.Category.register(
 			Identifier.fromNamespaceAndPath(PvpDuelsMod.MOD_ID, "main"));
 
-		sortKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-			"key.pvpduels.sort",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_R,
-			category));
+		sortKey = register("key.pvpduels.sort", GLFW.GLFW_KEY_R, category);
+		totemKey = register("key.pvpduels.totem", GLFW.GLFW_KEY_G, category);
 
 		// Unbound by default so they never clash with your other keys; set them in Controls.
-		prevLayoutKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-			"key.pvpduels.layout_prev",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_UNKNOWN,
-			category));
-
-		nextLayoutKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-			"key.pvpduels.layout_next",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_UNKNOWN,
-			category));
+		for (int i = 0; i < QUICK_KEYS.length; i++) {
+			QUICK_KEYS[i] = register("key.pvpduels.quick_layout_" + (i + 1), GLFW.GLFW_KEY_UNKNOWN, category);
+		}
+		prevLayoutKey = register("key.pvpduels.layout_prev", GLFW.GLFW_KEY_UNKNOWN, category);
+		nextLayoutKey = register("key.pvpduels.layout_next", GLFW.GLFW_KEY_UNKNOWN, category);
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			boolean inGame = client.player != null;
 			while (sortKey.consumeClick()) {
-				if (client.player != null) {
-					ClientPlayNetworking.send(new SortRequestPayload());
+				if (inGame) ClientPlayNetworking.send(new SortRequestPayload());
+			}
+			// One packet per press, so spamming the totem key refills your offhand as fast as you tap.
+			while (totemKey.consumeClick()) {
+				if (inGame) ClientPlayNetworking.send(new TotemPayload());
+			}
+			for (int i = 0; i < QUICK_KEYS.length; i++) {
+				while (QUICK_KEYS[i].consumeClick()) {
+					if (inGame) ClientPlayNetworking.send(new QuickLayoutPayload(i));
 				}
 			}
 			while (prevLayoutKey.consumeClick()) {
-				if (client.player != null) {
-					ClientPlayNetworking.send(new CycleLayoutPayload(false));
-				}
+				if (inGame) ClientPlayNetworking.send(new CycleLayoutPayload(false));
 			}
 			while (nextLayoutKey.consumeClick()) {
-				if (client.player != null) {
-					ClientPlayNetworking.send(new CycleLayoutPayload(true));
-				}
+				if (inGame) ClientPlayNetworking.send(new CycleLayoutPayload(true));
 			}
 		});
 	}

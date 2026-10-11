@@ -1,6 +1,10 @@
 {
   "key.category.pvpduels.main": "PvP Duels",
   "key.pvpduels.sort": "Sort inventory",
+  "key.pvpduels.totem": "Totem to offhand",
+  "key.pvpduels.quick_layout_1": "Quick layout 1",
+  "key.pvpduels.quick_layout_2": "Quick layout 2",
+  "key.pvpduels.quick_layout_3": "Quick layout 3",
   "key.pvpduels.layout_prev": "Previous layout",
   "key.pvpduels.layout_next": "Next layout"
 }
