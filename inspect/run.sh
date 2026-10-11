@@ -4,7 +4,11 @@ OUT=inspect-out
 rm -rf $OUT; mkdir -p $OUT/javap $OUT/data
 find / -name "*.jar" -size +100k 2>/dev/null | grep -v -E "^/(proc|sys|usr/lib/jvm|opt/hostedtoolcache)" > $OUT/all-jars.txt
 grep -i -E "minecraft|fabric-api|fabric-.*-v[0-9]|fabric-loader|brigadier|datafixer|mojang|netty-buffer" $OUT/all-jars.txt | grep -v -E "sources|javadoc" > $OUT/jars.txt
-CP=$(tr '\n' ':' < $OUT/jars.txt)
+# Fabric API is a jar-in-jar bundle: unpack the nested modules so javap can see them
+mkdir -p /tmp/fabnested
+for j in $(grep -E "/fabric-api-[0-9]" $OUT/jars.txt); do unzip -q -o "$j" 'META-INF/jars/*.jar' -d /tmp/fabnested 2>/dev/null; done
+ls /tmp/fabnested/META-INF/jars 2>/dev/null > $OUT/fabric-modules.txt
+CP=$(tr '\n' ':' < $OUT/jars.txt)$(ls /tmp/fabnested/META-INF/jars/*.jar 2>/dev/null | tr '\n' ':')
 echo "$CP" > $OUT/classpath.txt
 
 # Main Minecraft jar = the biggest jar that contains net/minecraft/server/MinecraftServer.class

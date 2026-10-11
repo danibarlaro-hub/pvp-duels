@@ -1,0 +1,3 @@
+net.minecraft.world.entity.projectile
+\.Projectile$|AbstractArrow|Arrow$|Pearl|FishingHook
+net.minecraft.world.entity.vehicle.*TNT|PrimedTnt
