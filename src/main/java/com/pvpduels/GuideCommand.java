@@ -7,6 +7,11 @@ import net.minecraft.commands.Commands;
 
 public final class GuideCommand {
 	private static final String[] LINES = {
+		"DUELS: /duel <player>  - choose kit, arena, version and how the duel is decided, then send the challenge",
+		"/accept [player] or /duel accept [player]  - accept a challenge (you can also click [ACCEPT] in the chat); /deny [player]  - deny it. Requests expire after 60 seconds",
+		"/leave  - quit your duel (you lose, or it ends in a draw/by score if it was unlimited). /again  - ask for a rematch with the same settings",
+		"In a duel both players use the challenger's kit, your own inventory is saved and given back, and /kit load + the Quick kit keys are blocked. 5 minutes without hitting each other teleports one player next to the other.",
+		"Arena: flat 21x21 bedrock platform over the void (with or without walls). Only entities and block entities (chests, shulkers, crystals, boats...) can be placed. Falling off loses the round.",
 		"/kit save <name>  - save your current inventory as a kit",
 		"/kit load <name>  - replace your inventory with a kit",
 		"/kit list  - list your kits",

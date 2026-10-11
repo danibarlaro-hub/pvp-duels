@@ -1,79 +1,44 @@
-# PvP Duels - Parte 1 (primera prueba)
+# PvP Duels (Fabric, Minecraft 26.2)
 
-Esta es la base del mod para Minecraft 26.2 con Fabric. Todavia NO tiene duelos ni arenas:
-esta parte sirve para comprobar que todo compila y para probar kits y el ordenador del hotbar.
+Mod de duelos PvP con kits, para jugar con Essential (el mundo corre en la PC del host).
+Todo lo que se ve dentro del juego esta en ingles.
 
-## Que incluye
-- `/kit save <nombre>`  guarda tu inventario como kit (se guardan en la carpeta `.minecraft/pvpduels`, no dentro del mundo)
-- `/kit load <nombre>`, `/kit list`, `/kit delete <nombre>`
-- `/kit key <a|b|c> <kit|none>` asigna un kit a las teclas **Quick kit A / B / C** (sin asignar por defecto; se eligen en Controls). Al apretar la tecla se carga el kit como `/kit load`. `/kit keys` las muestra
-- `/kit profile <kit> <perfil|none>`  hace que ese kit se ordene con un perfil de layout al cargarlo
-- Layouts ordenan TODO el inventario: slots 1-9 hotbar, 10-36 mochila (izquierda a derecha, arriba a abajo)
-- `/layout slot <1-36> <reglas...>`  hasta 32 niveles de prioridad por slot. Ejemplo: `/layout slot 1 sword spear`
-  (reglas: categorias como sword, spear, axe, mace, bow, crossbow, shield, totem, crystal, obsidian,
-  gapple, pearl, potion, food, block... o un item exacto, o `hand` para el item que tenes en la mano)
-- `/layout level <slot> <1-32> <regla|none>`  cambia un solo nivel
-- `/layout inventorycopy [layout] [prioridad]` (tambien `/layout sort inventorycopy ...`) copia lo que tenes en el inventario (hotbar + mochila)
-  al layout como items exactos en ese nivel de prioridad. Sin layout usa el activo; sin prioridad usa el proximo nivel libre.
-  Asi podes meter varios kits en un solo layout: prioridad 1 = kit A, 2 = kit B, 3 = kit C...
-- `/layout use <1-21|nombre>` cambia de layout (los numeros 1 a 21 se crean solos), `/layout copy <de> <a>`, `/layout new <nombre>`,
-  `/layout show`, `/layout list`, `/layout clear <slot|all>`, `/layout delete <nombre>` (maximo 21 layouts)
-- `/layout sort` o la tecla **Sort inventory** (R por defecto)
-- 3 teclas **Quick layout 1/2/3**: cada una cambia a un layout y ordena (por defecto usan los layouts 1, 2 y 3;
-  se cambia con `/layout key <1-3> <layout>`, se ve con `/layout keys`). Tambien **Next/Previous layout**
-- Todas las teclas se cambian en Opciones > Controles > Combinaciones de teclas > PvP Duels
-- `/guide`  muestra los comandos en el chat
+## Descargar
+El `.jar` siempre actualizado esta aca (lo arma GitHub solo en cada cambio):
+https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0.1.0.jar
 
-## Como conseguir el .jar (GitHub arma el archivo por vos, no instalas nada)
-1. Crea una cuenta gratis en https://github.com
-2. Arriba a la derecha: **+** > **New repository**. Nombre: `pvpduels`. Dejalo en **Public**. **Create repository**.
-3. En la pagina del repositorio nuevo, click en **uploading an existing file**.
-4. Descomprimi este zip y arrastra **todo el contenido de la carpeta** (no el zip) a la pagina,
-   incluida la carpeta `.github`. Abajo: **Commit changes**.
-5. Entra a la pestana **Actions**. Hay un trabajo llamado **build** que arranca solo (tarda unos 3 a 8 minutos).
-6. Cuando termine con un tilde verde, abrilo y abajo de todo, en **Artifacts**, descarga `pvpduels-jar`.
-   Adentro del zip esta el `.jar` (usa el que NO dice `-sources`).
-
-### Si algo sale mal
-- **Cruz roja en Actions:** abri el trabajo, entra a **build**, copia las lineas que dicen `error:` y pegamelas en el chat.
-  Es normal que haya que arreglar cosas: no pude compilar el mod en mi entorno.
-- **No aparece ningun trabajo en Actions:** probablemente no se subio la carpeta `.github`. Anda a **Add file > Create new file**,
-  en el nombre escribi `.github/workflows/build.yml` y pega el contenido que esta al final de este README. **Commit changes**.
-
-## Instalar el mod
-- Todos necesitan: Minecraft 26.2, Fabric Loader, **Fabric API**, Essential y este mismo `.jar` en la carpeta `mods`.
+## Instalar
+- Todos los que juegan necesitan: Minecraft 26.2, Fabric Loader, **Fabric API**, Essential y este mismo `.jar` en la carpeta `mods`.
 - Todos con exactamente la misma version del `.jar`.
+- Para actualizar: borra el `.jar` viejo de `mods`, pone el nuevo y reinicia el juego/mundo.
+
+## Duelos
+- `/duel <jugador>` abre menus de cofre: kit -> arena -> version (con/sin paredes) -> como se decide -> cantidad -> enviar desafio.
+- El otro jugador recibe el desafio en el chat con botones **[ACCEPT]** / **[DENY]** (tambien `/accept [jugador]`, `/duel accept`, `/deny`). Vence a los 60 segundos.
+- Los dos usan el kit de quien desafia. Tu inventario se guarda en disco antes de empezar y se devuelve al terminar, al hacer `/leave`, al desconectarte (cuando vuelvas a entrar) o si se cierra el servidor.
+- Modos: **rondas fijas** (1 a 100, o ilimitadas hasta `/leave`), **primero en N puntos** (o ilimitado), **por tiempo** (3 a 30 min; se termina la ronda en curso, desempate con ronda extra).
+- Caerse al vacio = perder la ronda. 5 minutos sin pegarse = a uno de los dos lo teletransportan al lado del otro (sin quitar vida).
+- Arena: plataforma plana de bedrock 21x21 sobre el vacio, con o sin paredes. Solo se pueden poner entidades y bloques con entidad (cofres, shulkers, cristales, botes...). TNT, agua, lava y fuego no.
+- Durante un duelo `/kit load` y las teclas Quick kit estan bloqueadas.
+- `/leave` salir del duelo, `/again` pedir revancha con la misma configuracion.
+- Hasta 3 duelos al mismo tiempo en el mundo.
+- Arena circular y arena ilimitada aparecen como "Coming soon".
+
+## Kits y layouts
+- `/kit save|load|list|delete <nombre>` (se guardan en `.minecraft/pvpduels`, no dentro del mundo)
+- `/kit key <a|b|c> <kit|none>` asigna un kit a las teclas **Quick kit A / B / C**; `/kit keys` las muestra
+- `/kit profile <kit> <layout|none>` ordena ese kit con un layout al cargarlo
+- Los layouts ordenan los slots 1-36 (hotbar + mochila): `/layout slot <1-36> <reglas...>` con hasta 32 niveles de prioridad,
+  `/layout level`, `/layout inventorycopy [layout] [prioridad]`, `/layout use|copy|new|show|list|clear|delete|sort|key|keys`
+- Teclas (Opciones > Controles > PvP Duels): Sort inventory (R), Quick kit A/B/C, Quick layout 1/2/3, Next/Previous layout
+- `/guide` muestra los comandos en el chat
 
 ## Que probar primero
-1. Entra a un mundo. Tiene que aparecer el mensaje "PvP Duels is active".
-2. `/guide`
-3. Arma un inventario, `/kit save prueba`, tira todo, `/kit load prueba`.
-4. `/layout slot 1 sword spear`, `/layout slot 2 totem`, desordena el inventario y apreta la tecla R.
+1. Entra a un mundo: tiene que aparecer "PvP Duels is active".
+2. Arma un inventario y `/kit save prueba`.
+3. Con un amigo: `/duel nombre`, elegi `prueba`, la arena, y manda el desafio. El otro hace click en [ACCEPT].
+4. Probar matar, caerse al vacio, `/leave` y `/again`.
 
-## build.yml (por si hay que crearlo a mano)
-```yaml
-name: build
-on:
-  push:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 25
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 9.5.1
-      - name: Build
-        run: gradle build --no-daemon
-      - name: Upload the mod
-        uses: actions/upload-artifact@v4
-        with:
-          name: pvpduels-jar
-          path: build/libs/pvpduels-*.jar
-```
+## Prueba automatica
+Cada vez que se arma el mod, GitHub levanta un servidor de prueba con dos jugadores falsos que juegan duelos completos
+(menus, invitaciones, rondas, vacio, `/leave`, desconexion, reglas de la arena) y publica el resultado en la rama `selftest-out`.
