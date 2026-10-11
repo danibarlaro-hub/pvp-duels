@@ -2,6 +2,7 @@ package com.pvpduels;
 
 import com.pvpduels.duel.DuelCommands;
 import com.pvpduels.duel.DuelManager;
+import com.pvpduels.duel.SelfTest;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutCommands;
@@ -52,6 +53,7 @@ public class PvpDuelsMod implements ModInitializer {
 			handler.getPlayer().sendSystemMessage(Msg.info("PvP Duels is active. Type /guide to see the commands.")));
 
 		DuelManager.register();
+		SelfTest.register();
 
 		LOGGER.info("PvP Duels loaded.");
 	}

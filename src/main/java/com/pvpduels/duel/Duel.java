@@ -53,9 +53,9 @@ public final class Duel {
 	private int phaseTicks;
 	private int countdownTotal = FIRST_COUNTDOWN;
 	int round = 1;
-	private int elapsed;
-	private boolean timedOut;
-	private boolean tiebreak;
+	int elapsed;
+	boolean timedOut;
+	boolean tiebreak;
 	private int noContact;
 	private boolean warnedTeleport;
 	private boolean finishing;

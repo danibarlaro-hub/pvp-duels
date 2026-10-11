@@ -1,0 +1,54 @@
+name: selftest
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.7.0
+      - name: Prepare the server folder
+        run: |
+          mkdir -p run
+          echo "eula=true" > run/eula.txt
+          printf '%s\n' "online-mode=false" "spawn-protection=0" "view-distance=4" "simulation-distance=4" \
+            "max-tick-time=-1" "spawn-monsters=false" "spawn-animals=false" "spawn-npcs=false" \
+            "generate-structures=false" "level-type=minecraft\\:flat" "enable-command-block=false" > run/server.properties
+      - name: First start - world WITHOUT the arena dimension
+        run: |
+          mv src/main/resources/data/pvpduels/dimension/void_arena.json /tmp/void_arena.json
+          PVPDUELS_SELFTEST=stop timeout 900 gradle runServer --no-daemon --console=plain > first.log 2>&1 || true
+          mv /tmp/void_arena.json src/main/resources/data/pvpduels/dimension/void_arena.json
+          ls run run/world 2>/dev/null | head -30
+      - name: Second start - the same world, now with the mod's dimension, plays the test
+        run: |
+          PVPDUELS_SELFTEST=run timeout 900 gradle runServer --no-daemon --console=plain > second.log 2>&1 || true
+      - name: Publish the results to the selftest-out branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/pub && mkdir /tmp/pub
+          cp run/selftest-result.txt /tmp/pub/ 2>/dev/null || echo "no result file was written" > /tmp/pub/selftest-result.txt
+          cp run/logs/latest.log /tmp/pub/server-latest.log 2>/dev/null || true
+          tail -150 first.log > /tmp/pub/first-tail.log || true
+          tail -300 second.log > /tmp/pub/second-tail.log || true
+          echo "${GITHUB_SHA}" > /tmp/pub/commit.txt
+          cd /tmp/pub
+          git init -q -b selftest-out
+          git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "selftest results for ${GITHUB_SHA}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" selftest-out
+      - name: Fail when the test failed
+        run: grep -q "RESULT: PASS" run/selftest-result.txt
