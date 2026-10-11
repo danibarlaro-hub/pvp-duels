@@ -2,6 +2,7 @@ package com.pvpduels.layout;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -12,6 +13,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 import java.io.IOException;
@@ -65,10 +67,24 @@ public final class LayoutCommands {
 					.then(Commands.argument("layout", StringArgumentType.word()).suggests(PROFILES)
 						.executes(LayoutCommands::setKey))))
 			.then(Commands.literal("keys").executes(LayoutCommands::showKeys))
-			.then(Commands.literal("sort").executes(ctx -> {
-				InventorySorter.sortAndReport(ctx.getSource().getPlayerOrException());
-				return 1;
-			})));
+			.then(Commands.literal("sort")
+				.executes(ctx -> {
+					InventorySorter.sortAndReport(ctx.getSource().getPlayerOrException());
+					return 1;
+				})
+				.then(inventoryCopyNode()))
+			.then(inventoryCopyNode()));
+	}
+
+	/** /layout inventorycopy [layout] [priority]  (also reachable as /layout sort inventorycopy ...). */
+	private static LiteralArgumentBuilder<CommandSourceStack> inventoryCopyNode() {
+		return Commands.literal("inventorycopy")
+			.executes(ctx -> inventoryCopy(ctx, null, 0))
+			.then(Commands.argument("layout", StringArgumentType.word()).suggests(PROFILES)
+				.executes(ctx -> inventoryCopy(ctx, StringArgumentType.getString(ctx, "layout"), 0))
+				.then(Commands.argument("priority", IntegerArgumentType.integer(1, LayoutStore.MAX_LEVELS))
+					.executes(ctx -> inventoryCopy(ctx, StringArgumentType.getString(ctx, "layout"),
+						IntegerArgumentType.getInteger(ctx, "priority")))));
 	}
 
 	/** Called by the "Next layout" / "Previous layout" keys: switches the active layout and sorts with it. */
@@ -129,6 +145,15 @@ public final class LayoutCommands {
 		return "inventory " + slot;
 	}
 
+	private static String describe(List<String> rules) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < rules.size(); i++) {
+			if (i > 0) sb.append(" > ");
+			sb.append(LayoutStore.shortName(rules.get(i)));
+		}
+		return sb.toString();
+	}
+
 	private static String parseRule(ServerPlayer p, String token, CommandContext<CommandSourceStack> ctx) {
 		if (token.equals("hand")) {
 			ItemStack held = p.getMainHandItem();
@@ -183,7 +208,7 @@ public final class LayoutCommands {
 
 		LayoutStore.active(p.getUUID()).slots.put(slot, rules);
 		saveQuietly(p, ctx);
-		ctx.getSource().sendSuccess(() -> Msg.ok("Slot " + slotName(slot) + ": " + String.join(" > ", rules)), false);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Slot " + slotName(slot) + ": " + describe(rules)), false);
 		return 1;
 	}
 
@@ -202,20 +227,14 @@ public final class LayoutCommands {
 				ctx.getSource().sendFailure(Msg.err("Level " + level + " of " + slotName(slot) + " is already empty."));
 				return 0;
 			}
-			rules.remove(level - 1);
+			rules.set(level - 1, "");
 		} else {
 			String rule = parseRule(p, token, ctx);
 			if (rule == null) return 0;
-			if (level > rules.size() + 1) {
-				ctx.getSource().sendFailure(Msg.err("Fill level " + (rules.size() + 1) + " first."));
-				return 0;
-			}
-			if (level == rules.size() + 1) {
-				rules.add(rule);
-			} else {
-				rules.set(level - 1, rule);
-			}
+			while (rules.size() < level) rules.add("");
+			rules.set(level - 1, rule);
 		}
+		LayoutStore.trim(rules);
 
 		if (rules.isEmpty()) {
 			slots.remove(slot);
@@ -223,7 +242,7 @@ public final class LayoutCommands {
 			slots.put(slot, rules);
 		}
 		saveQuietly(p, ctx);
-		String text = rules.isEmpty() ? "(empty)" : String.join(" > ", rules);
+		String text = rules.isEmpty() ? "(empty)" : describe(rules);
 		ctx.getSource().sendSuccess(() -> Msg.ok("Slot " + slotName(slot) + ": " + text), false);
 		return 1;
 	}
@@ -258,7 +277,7 @@ public final class LayoutCommands {
 			List<String> rules = profile.slots.get(slot);
 			if (rules != null && !rules.isEmpty()) {
 				any = true;
-				String line = "  " + slotName(slot) + ": " + String.join(" > ", rules);
+				String line = "  " + slotName(slot) + ": " + describe(rules);
 				ctx.getSource().sendSuccess(() -> Msg.info(line), false);
 			}
 		}
@@ -358,6 +377,78 @@ public final class LayoutCommands {
 		data.profiles.put(to, copy);
 		saveQuietly(p, ctx);
 		ctx.getSource().sendSuccess(() -> Msg.ok((existed ? "Overwrote layout '" : "Copied into new layout '") + to + "' from '" + from + "'."), false);
+		return 1;
+	}
+
+	/**
+	 * Copies the items currently in your inventory (hotbar + backpack) into a layout as exact-item rules at one
+	 * priority level. Slots that are empty right now clear that level. Armor and offhand are not copied.
+	 */
+	private static int inventoryCopy(CommandContext<CommandSourceStack> ctx, String layoutArg, int priorityArg) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		Inventory inv = p.getInventory();
+
+		int items = 0;
+		for (int i = 0; i < LayoutStore.MAX_SLOT; i++) {
+			if (!inv.getItem(i).isEmpty()) items++;
+		}
+		if (items == 0) {
+			ctx.getSource().sendFailure(Msg.err("Your hotbar and backpack are empty, so there is nothing to copy."));
+			return 0;
+		}
+
+		LayoutStore.Data data = LayoutStore.get(p.getUUID());
+		String name = layoutArg == null ? data.active : layoutArg.toLowerCase(Locale.ROOT);
+		LayoutStore.Profile profile = data.profiles.get(name);
+		boolean created = false;
+		if (profile == null) {
+			if (!NAME.matcher(name).matches()) {
+				ctx.getSource().sendFailure(Msg.err("Layout names can only use a-z, 0-9, _ and - (max 24)."));
+				return 0;
+			}
+			if (LayoutStore.customCount(data) >= LayoutStore.MAX_PROFILES) {
+				ctx.getSource().sendFailure(Msg.err("You already have " + LayoutStore.MAX_PROFILES + " layouts (the maximum). Delete one first."));
+				return 0;
+			}
+			profile = new LayoutStore.Profile();
+			data.profiles.put(name, profile);
+			created = true;
+		}
+
+		int priority = priorityArg;
+		if (priority == 0) {
+			priority = LayoutStore.usedLevels(profile) + 1;
+			if (priority > LayoutStore.MAX_LEVELS) {
+				ctx.getSource().sendFailure(Msg.err("All " + LayoutStore.MAX_LEVELS + " priority levels of '" + name
+					+ "' are used. Pick one to overwrite: /layout inventorycopy " + name + " <1-" + LayoutStore.MAX_LEVELS + ">"));
+				return 0;
+			}
+		}
+
+		for (int slot = 1; slot <= LayoutStore.MAX_SLOT; slot++) {
+			ItemStack stack = inv.getItem(slot - 1);
+			List<String> rules = new ArrayList<>(profile.slots.getOrDefault(slot, List.of()));
+			if (stack.isEmpty()) {
+				if (rules.size() >= priority) rules.set(priority - 1, "");
+			} else {
+				while (rules.size() < priority) rules.add("");
+				rules.set(priority - 1, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+			}
+			LayoutStore.trim(rules);
+			if (rules.isEmpty()) {
+				profile.slots.remove(slot);
+			} else {
+				profile.slots.put(slot, rules);
+			}
+		}
+		saveQuietly(p, ctx);
+
+		final String layoutName = name;
+		final int level = priority;
+		final int count = items;
+		final boolean isNew = created;
+		ctx.getSource().sendSuccess(() -> Msg.ok("Copied your inventory (" + count + " items) into "
+			+ (isNew ? "new layout '" : "layout '") + layoutName + "' at priority " + level + ". Armor and offhand are not included."), false);
 		return 1;
 	}
 

@@ -8,10 +8,13 @@ esta parte sirve para comprobar que todo compila y para probar kits y el ordenad
 - `/kit load <nombre>`, `/kit list`, `/kit delete <nombre>`
 - `/kit profile <kit> <perfil|none>`  hace que ese kit se ordene con un perfil de layout al cargarlo
 - Layouts ordenan TODO el inventario: slots 1-9 hotbar, 10-36 mochila (izquierda a derecha, arriba a abajo)
-- `/layout slot <1-36> <reglas...>`  hasta 4 niveles de prioridad por slot. Ejemplo: `/layout slot 1 sword spear`
+- `/layout slot <1-36> <reglas...>`  hasta 32 niveles de prioridad por slot. Ejemplo: `/layout slot 1 sword spear`
   (reglas: categorias como sword, spear, axe, mace, bow, crossbow, shield, totem, crystal, obsidian,
   gapple, pearl, potion, food, block... o un item exacto, o `hand` para el item que tenes en la mano)
-- `/layout level <slot> <1-4> <regla|none>`  cambia un solo nivel
+- `/layout level <slot> <1-32> <regla|none>`  cambia un solo nivel
+- `/layout inventorycopy [layout] [prioridad]` (tambien `/layout sort inventorycopy ...`) copia lo que tenes en el inventario (hotbar + mochila)
+  al layout como items exactos en ese nivel de prioridad. Sin layout usa el activo; sin prioridad usa el proximo nivel libre.
+  Asi podes meter varios kits en un solo layout: prioridad 1 = kit A, 2 = kit B, 3 = kit C...
 - `/layout use <1-21|nombre>` cambia de layout (los numeros 1 a 21 se crean solos), `/layout copy <de> <a>`, `/layout new <nombre>`,
   `/layout show`, `/layout list`, `/layout clear <slot|all>`, `/layout delete <nombre>` (maximo 21 layouts)
 - `/layout sort` o la tecla **Sort inventory** (R por defecto)

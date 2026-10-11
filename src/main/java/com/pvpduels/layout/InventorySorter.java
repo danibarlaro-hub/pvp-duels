@@ -40,6 +40,7 @@ public final class InventorySorter {
 	/** Index of the best item for a slot (the slot itself if it already holds the best one), or -1. */
 	private static int findMatch(Inventory inv, List<String> rules, int target, boolean[] locked) {
 		for (String rule : rules) {
+			if (rule.isEmpty()) continue; // empty priority level
 			if (ItemMatcher.matches(rule, inv.getItem(target))) {
 				return target;
 			}
@@ -64,7 +65,7 @@ public final class InventorySorter {
 	public static void sortAndReport(ServerPlayer player) {
 		LayoutStore.Data data = LayoutStore.get(player.getUUID());
 		LayoutStore.Profile profile = data.profiles.get(data.active);
-		boolean hasRules = profile.slots.values().stream().anyMatch(l -> !l.isEmpty());
+		boolean hasRules = LayoutStore.hasRules(profile);
 		if (!hasRules) {
 			player.sendSystemMessage(Msg.err("Layout '" + data.active + "' has no rules yet. Try: /layout slot 1 sword spear"));
 			return;

@@ -21,7 +21,7 @@ import java.util.UUID;
  */
 public final class LayoutStore {
 	public static final int MAX_PROFILES = 21; // not counting the built-in "default"
-	public static final int MAX_LEVELS = 4;
+	public static final int MAX_LEVELS = 32;
 	public static final int MAX_SLOT = 36;
 	public static final int QUICK_KEYS = 3;
 
@@ -87,6 +87,28 @@ public final class LayoutStore {
 			if (!k.equals("default")) n++;
 		}
 		return n;
+	}
+
+	/** Removes empty (blank) levels from the end of a rule list. */
+	public static void trim(List<String> rules) {
+		while (!rules.isEmpty() && rules.get(rules.size() - 1).isEmpty()) {
+			rules.remove(rules.size() - 1);
+		}
+	}
+
+	/** Highest priority level in use in this layout (0 if it has no rules). */
+	public static int usedLevels(Profile profile) {
+		return profile.slots.values().stream().mapToInt(List::size).max().orElse(0);
+	}
+
+	public static boolean hasRules(Profile profile) {
+		return profile.slots.values().stream().anyMatch(l -> l.stream().anyMatch(r -> !r.isEmpty()));
+	}
+
+	/** Friendly text for a rule in chat: blank levels show as "-" and the minecraft: prefix is dropped. */
+	public static String shortName(String rule) {
+		if (rule.isEmpty()) return "-";
+		return rule.startsWith("minecraft:") ? rule.substring("minecraft:".length()) : rule;
 	}
 
 	public static Integer asNumber(String s) {
