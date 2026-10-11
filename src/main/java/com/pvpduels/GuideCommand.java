@@ -11,6 +11,7 @@ public final class GuideCommand {
 		"/kit load <name>  - replace your inventory with a kit",
 		"/kit list  - list your kits",
 		"/kit delete <name>  - delete a kit",
+		"/kit key <a|b|c> <kit|none>  - choose which kit each Quick kit A/B/C key loads; /kit keys  - show them",
 		"/kit profile <kit> <layout|none>  - sort a kit with a layout when it is loaded",
 		"Layouts sort your WHOLE inventory. Slots: 1-9 hotbar, 10-36 backpack (left to right, top to bottom).",
 		"/layout slot <1-36> <rules...>  - up to 32 priority levels, e.g. /layout slot 1 sword spear",
@@ -20,7 +21,7 @@ public final class GuideCommand {
 		"/layout copy <from> <to>  - copy a layout; /layout new <name>  - create one",
 		"/layout show | list | clear <slot|all> | delete <name>  - manage layouts (max 21)",
 		"/layout sort  - sort now. /layout key <1-3> <layout>  - choose which layout each Quick layout key uses (default 1, 2, 3)",
-		"Keys (Options > Controls > PvP Duels): Sort inventory, Quick layout 1/2/3, Next/Previous layout",
+		"Keys (Options > Controls > PvP Duels): Sort inventory, Quick kit A/B/C, Quick layout 1/2/3, Next/Previous layout",
 		"Rules can be categories (sword, spear, axe, mace, bow, crossbow, shield, totem, crystal, obsidian, gapple, pearl, potion, food, block...), exact item ids, or 'hand'."
 	};
 

@@ -4,6 +4,7 @@ import com.pvpduels.kit.KitCommands;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutCommands;
 import com.pvpduels.net.CycleLayoutPayload;
+import com.pvpduels.net.QuickKitPayload;
 import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
 import com.pvpduels.util.Msg;
@@ -25,6 +26,7 @@ public class PvpDuelsMod implements ModInitializer {
 		PayloadTypeRegistry.serverboundPlay().register(SortRequestPayload.TYPE, SortRequestPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(CycleLayoutPayload.TYPE, CycleLayoutPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(QuickLayoutPayload.TYPE, QuickLayoutPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(QuickKitPayload.TYPE, QuickKitPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(SortRequestPayload.TYPE, (payload, context) ->
 			context.server().execute(() -> InventorySorter.sortAndReport(context.player())));
@@ -33,6 +35,9 @@ public class PvpDuelsMod implements ModInitializer {
 
 		ServerPlayNetworking.registerGlobalReceiver(QuickLayoutPayload.TYPE, (payload, context) ->
 			context.server().execute(() -> LayoutCommands.quick(context.player(), payload.index())));
+
+		ServerPlayNetworking.registerGlobalReceiver(QuickKitPayload.TYPE, (payload, context) ->
+			context.server().execute(() -> KitCommands.quick(context.server(), context.player(), payload.index())));
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			KitCommands.register(dispatcher);

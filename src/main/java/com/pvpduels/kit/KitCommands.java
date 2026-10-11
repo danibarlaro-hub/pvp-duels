@@ -11,6 +11,7 @@ import com.pvpduels.util.Msg;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.io.IOException;
@@ -33,6 +34,17 @@ public final class KitCommands {
 		return SharedSuggestionProvider.suggest(names, builder);
 	};
 
+	private static final SuggestionProvider<CommandSourceStack> KEY_LETTERS = (ctx, builder) ->
+		SharedSuggestionProvider.suggest(List.of("a", "b", "c"), builder);
+
+	private static final SuggestionProvider<CommandSourceStack> KITS_OR_NONE = (ctx, builder) -> {
+		ServerPlayer p = ctx.getSource().getPlayer();
+		if (p == null) return builder.buildFuture();
+		List<String> names = new java.util.ArrayList<>(KitStore.list(p.getUUID()));
+		names.add("none");
+		return SharedSuggestionProvider.suggest(names, builder);
+	};
+
 	private KitCommands() {}
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -44,6 +56,11 @@ public final class KitCommands {
 			.then(Commands.literal("delete")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(KitCommands::delete)))
 			.then(Commands.literal("list").executes(KitCommands::list))
+			.then(Commands.literal("key")
+				.then(Commands.argument("key", StringArgumentType.word()).suggests(KEY_LETTERS)
+					.then(Commands.argument("kit", StringArgumentType.word()).suggests(KITS_OR_NONE)
+						.executes(KitCommands::setKey))))
+			.then(Commands.literal("keys").executes(KitCommands::showKeys))
 			.then(Commands.literal("profile")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS)
 					.then(Commands.argument("profile", StringArgumentType.word()).suggests(PROFILES)
@@ -74,12 +91,16 @@ public final class KitCommands {
 
 	private static int load(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
-		String name = kitName(ctx);
+		return loadKit(ctx.getSource().getServer(), p, kitName(ctx)) ? 1 : 0;
+	}
+
+	/** Loads a kit into the player's inventory (used by /kit load and the Quick kit keys). */
+	public static boolean loadKit(MinecraftServer server, ServerPlayer p, String name) {
 		try {
-			Optional<KitStore.Kit> kit = KitStore.read(ctx.getSource().getServer(), p.getUUID(), name);
+			Optional<KitStore.Kit> kit = KitStore.read(server, p.getUUID(), name);
 			if (kit.isEmpty()) {
-				ctx.getSource().sendFailure(Msg.err("You don't have a kit named '" + name + "'. Use /kit list."));
-				return 0;
+				p.sendSystemMessage(Msg.err("You don't have a kit named '" + name + "'. Use /kit list."));
+				return false;
 			}
 			KitStore.give(p, kit.get());
 
@@ -90,12 +111,64 @@ public final class KitCommands {
 					InventorySorter.sort(p, profile);
 				}
 			}
-			ctx.getSource().sendSuccess(() -> Msg.ok("Loaded kit '" + name + "'. Your old inventory was replaced."), false);
-			return 1;
+			p.sendSystemMessage(Msg.ok("Loaded kit '" + name + "'. Your old inventory was replaced."));
+			return true;
 		} catch (IOException | RuntimeException e) {
-			ctx.getSource().sendFailure(Msg.err("Could not load the kit: " + e.getMessage()));
+			p.sendSystemMessage(Msg.err("Could not load the kit: " + e.getMessage()));
+			return false;
+		}
+	}
+
+	/** Called by the Quick kit A/B/C keys. */
+	public static void quick(MinecraftServer server, ServerPlayer p, int index) {
+		if (index < 0 || index >= KitKeys.COUNT) return;
+		String name = KitKeys.get(p.getUUID()).get(index);
+		if (name.isEmpty()) {
+			char letter = KitKeys.letter(index);
+			p.sendSystemMessage(Msg.err("Quick kit " + letter + " has no kit yet. Use /kit key "
+				+ Character.toLowerCase(letter) + " <kit>."));
+			return;
+		}
+		loadKit(server, p, name);
+	}
+
+	private static int setKey(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		int index = KitKeys.indexOf(StringArgumentType.getString(ctx, "key"));
+		if (index < 0) {
+			ctx.getSource().sendFailure(Msg.err("The key must be a, b or c."));
 			return 0;
 		}
+		String kit = StringArgumentType.getString(ctx, "kit").toLowerCase(Locale.ROOT);
+		boolean none = kit.equals("none");
+		if (!none && !KitStore.exists(p.getUUID(), kit)) {
+			ctx.getSource().sendFailure(Msg.err("You don't have a kit named '" + kit + "'. Use /kit list."));
+			return 0;
+		}
+		char letter = KitKeys.letter(index);
+		try {
+			KitKeys.set(p.getUUID(), index, none ? "" : kit);
+		} catch (IOException e) {
+			ctx.getSource().sendFailure(Msg.err("Could not save the key: " + e.getMessage()));
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Msg.ok(none
+			? "Quick kit " + letter + " is now empty."
+			: "Quick kit " + letter + " will load kit '" + kit + "'."), false);
+		return 1;
+	}
+
+	private static int showKeys(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		List<String> keys = KitKeys.get(p.getUUID());
+		ctx.getSource().sendSuccess(() -> Msg.title("Quick kit keys"), false);
+		for (int i = 0; i < KitKeys.COUNT; i++) {
+			String kit = keys.get(i);
+			String line = "  Quick kit " + KitKeys.letter(i) + " -> " + (kit.isEmpty() ? "(empty)" : "'" + kit + "'");
+			ctx.getSource().sendSuccess(() -> Msg.info(line), false);
+		}
+		ctx.getSource().sendSuccess(() -> Msg.info("Bind the keys in Options > Controls > Key Binds > PvP Duels. Assign kits with /kit key <a|b|c> <kit>."), false);
+		return 1;
 	}
 
 	private static int delete(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

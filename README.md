@@ -6,6 +6,7 @@ esta parte sirve para comprobar que todo compila y para probar kits y el ordenad
 ## Que incluye
 - `/kit save <nombre>`  guarda tu inventario como kit (se guardan en la carpeta `.minecraft/pvpduels`, no dentro del mundo)
 - `/kit load <nombre>`, `/kit list`, `/kit delete <nombre>`
+- `/kit key <a|b|c> <kit|none>` asigna un kit a las teclas **Quick kit A / B / C** (sin asignar por defecto; se eligen en Controls). Al apretar la tecla se carga el kit como `/kit load`. `/kit keys` las muestra
 - `/kit profile <kit> <perfil|none>`  hace que ese kit se ordene con un perfil de layout al cargarlo
 - Layouts ordenan TODO el inventario: slots 1-9 hotbar, 10-36 mochila (izquierda a derecha, arriba a abajo)
 - `/layout slot <1-36> <reglas...>`  hasta 32 niveles de prioridad por slot. Ejemplo: `/layout slot 1 sword spear`

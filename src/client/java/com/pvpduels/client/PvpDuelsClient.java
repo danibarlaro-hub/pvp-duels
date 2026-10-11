@@ -3,6 +3,7 @@ package com.pvpduels.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.net.CycleLayoutPayload;
+import com.pvpduels.net.QuickKitPayload;
 import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
 import net.fabricmc.api.ClientModInitializer;
@@ -19,6 +20,7 @@ public class PvpDuelsClient implements ClientModInitializer {
 	private static KeyMapping prevLayoutKey;
 	private static KeyMapping nextLayoutKey;
 	private static final KeyMapping[] QUICK_KEYS = new KeyMapping[3];
+	private static final KeyMapping[] KIT_KEYS = new KeyMapping[3];
 
 	private static KeyMapping register(String name, int defaultKey, KeyMapping.Category category) {
 		return KeyMappingHelper.registerKeyMapping(new KeyMapping(
@@ -36,6 +38,10 @@ public class PvpDuelsClient implements ClientModInitializer {
 		for (int i = 0; i < QUICK_KEYS.length; i++) {
 			QUICK_KEYS[i] = register("key.pvpduels.quick_layout_" + (i + 1), GLFW.GLFW_KEY_UNKNOWN, category);
 		}
+		String[] letters = {"a", "b", "c"};
+		for (int i = 0; i < KIT_KEYS.length; i++) {
+			KIT_KEYS[i] = register("key.pvpduels.quick_kit_" + letters[i], GLFW.GLFW_KEY_UNKNOWN, category);
+		}
 		prevLayoutKey = register("key.pvpduels.layout_prev", GLFW.GLFW_KEY_UNKNOWN, category);
 		nextLayoutKey = register("key.pvpduels.layout_next", GLFW.GLFW_KEY_UNKNOWN, category);
 
@@ -47,6 +53,11 @@ public class PvpDuelsClient implements ClientModInitializer {
 			for (int i = 0; i < QUICK_KEYS.length; i++) {
 				while (QUICK_KEYS[i].consumeClick()) {
 					if (inGame) ClientPlayNetworking.send(new QuickLayoutPayload(i));
+				}
+			}
+			for (int i = 0; i < KIT_KEYS.length; i++) {
+				while (KIT_KEYS[i].consumeClick()) {
+					if (inGame) ClientPlayNetworking.send(new QuickKitPayload(i));
 				}
 			}
 			while (prevLayoutKey.consumeClick()) {
