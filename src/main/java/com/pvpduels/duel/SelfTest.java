@@ -16,6 +16,7 @@ import net.minecraft.network.ProtocolInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
@@ -73,8 +74,16 @@ public final class SelfTest {
 			super(server, level, profile, ClientInformation.createDefault());
 		}
 
+		/** A real client tells the server when it has loaded the world; until then players can't be hurt. */
+		void markLoaded() {
+			if (connection != null && !connection.hasClientLoaded()) {
+				connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
+			}
+		}
+
 		@Override
 		public void tick() {
+			markLoaded();
 			super.tick();
 			doTick();
 		}
@@ -226,7 +235,14 @@ public final class SelfTest {
 		return DuelManager.duelOf(who.getUUID());
 	}
 
+	/** Right-clicks the block with this item in the main hand, like a real client does. */
+	private static void useOn(Bot who, ItemStack stack, BlockHitResult hit) {
+		who.setItemInHand(InteractionHand.MAIN_HAND, stack);
+		who.gameMode.useItemOn(who, (ServerLevel) who.level(), who.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND, hit);
+	}
+
 	private static void hit(Bot attacker, Bot victim) {
+		victim.markLoaded();
 		victim.invulnerableTime = 0;
 		victim.hurtServer((ServerLevel) victim.level(), attacker.damageSources().playerAttack(attacker), 1000f);
 	}
@@ -356,13 +372,14 @@ public final class SelfTest {
 			Vec3 top = new Vec3(cx + 0.5, Arena.FLOOR_Y + 1, 0.5);
 			BlockHitResult hit = new BlockHitResult(top, Direction.UP, floor, false);
 
-			var result = a.gameMode.useItemOn(a, arena, new ItemStack(Items.STONE), InteractionHand.MAIN_HAND, hit);
-			check("placing a normal block is refused", arena.getBlockState(floor.above()).isAir(), "result=" + result);
-			a.gameMode.useItemOn(a, arena, new ItemStack(Items.TNT), InteractionHand.MAIN_HAND, hit);
+			ItemStack sword = a.getItemInHand(InteractionHand.MAIN_HAND).copy();
+			useOn(a, new ItemStack(Items.STONE), hit);
+			check("placing a normal block is refused", arena.getBlockState(floor.above()).isAir(), String.valueOf(arena.getBlockState(floor.above())));
+			useOn(a, new ItemStack(Items.TNT), hit);
 			check("placing TNT is refused", arena.getBlockState(floor.above()).isAir());
-			a.gameMode.useItemOn(a, arena, new ItemStack(Items.WATER_BUCKET), InteractionHand.MAIN_HAND, hit);
-			check("placing water is refused", arena.getBlockState(floor.above()).isAir());
-			a.gameMode.useItemOn(a, arena, new ItemStack(Items.CHEST), InteractionHand.MAIN_HAND, hit);
+			useOn(a, new ItemStack(Items.WATER_BUCKET), hit);
+			check("placing water is refused", arena.getBlockState(floor.above()).isAir() && arena.getFluidState(floor.above()).isEmpty());
+			useOn(a, new ItemStack(Items.CHEST), hit);
 			check("placing a chest (block entity) is allowed", arena.getBlockState(floor.above()).is(Blocks.CHEST),
 				String.valueOf(arena.getBlockState(floor.above())));
 			boolean broke = a.gameMode.destroyBlock(floor);
@@ -370,7 +387,8 @@ public final class SelfTest {
 			boolean brokeChest = a.gameMode.destroyBlock(floor.above());
 			check("breaking the placed chest is allowed", brokeChest && arena.getBlockState(floor.above()).isAir());
 			// leave a chest behind: the next round must clean it
-			a.gameMode.useItemOn(a, arena, new ItemStack(Items.CHEST), InteractionHand.MAIN_HAND, hit);
+			useOn(a, new ItemStack(Items.CHEST), hit);
+			a.setItemInHand(InteractionHand.MAIN_HAND, sword);
 
 			a.getInventory().setItem(5, new ItemStack(Items.DIRT, 7));
 			run(a, "kit load testkit");
