@@ -17,7 +17,6 @@ esta parte sirve para comprobar que todo compila y para probar kits y el ordenad
 - `/layout sort` o la tecla **Sort inventory** (R por defecto)
 - 3 teclas **Quick layout 1/2/3**: cada una cambia a un layout y ordena (por defecto usan los layouts 1, 2 y 3;
   se cambia con `/layout key <1-3> <layout>`, se ve con `/layout keys`). Tambien **Next/Previous layout**
-- Tecla **Totem to offhand** (G por defecto): cada toque pone un totem del inventario en la mano secundaria si no tenes uno. Spameala despues de que te explote un totem
 - Todas las teclas se cambian en Opciones > Controles > Combinaciones de teclas > PvP Duels
 - `/guide`  muestra los comandos en el chat
 

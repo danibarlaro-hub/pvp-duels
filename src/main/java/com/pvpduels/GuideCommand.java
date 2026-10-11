@@ -19,7 +19,7 @@ public final class GuideCommand {
 		"/layout copy <from> <to>  - copy a layout; /layout new <name>  - create one",
 		"/layout show | list | clear <slot|all> | delete <name>  - manage layouts (max 21)",
 		"/layout sort  - sort now. /layout key <1-3> <layout>  - choose which layout each Quick layout key uses (default 1, 2, 3)",
-		"Keys (Options > Controls > PvP Duels): Sort inventory, Quick layout 1/2/3, Next/Previous layout, Totem to offhand (spam it to refill your totem)",
+		"Keys (Options > Controls > PvP Duels): Sort inventory, Quick layout 1/2/3, Next/Previous layout",
 		"Rules can be categories (sword, spear, axe, mace, bow, crossbow, shield, totem, crystal, obsidian, gapple, pearl, potion, food, block...), exact item ids, or 'hand'."
 	};
 

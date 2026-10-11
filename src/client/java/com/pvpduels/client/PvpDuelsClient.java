@@ -5,7 +5,6 @@ import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.net.CycleLayoutPayload;
 import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
-import com.pvpduels.net.TotemPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -17,7 +16,6 @@ import org.lwjgl.glfw.GLFW;
 /** All keys are normal Minecraft key binds: change them in Options > Controls > Key Binds > PvP Duels. */
 public class PvpDuelsClient implements ClientModInitializer {
 	private static KeyMapping sortKey;
-	private static KeyMapping totemKey;
 	private static KeyMapping prevLayoutKey;
 	private static KeyMapping nextLayoutKey;
 	private static final KeyMapping[] QUICK_KEYS = new KeyMapping[3];
@@ -33,7 +31,6 @@ public class PvpDuelsClient implements ClientModInitializer {
 			Identifier.fromNamespaceAndPath(PvpDuelsMod.MOD_ID, "main"));
 
 		sortKey = register("key.pvpduels.sort", GLFW.GLFW_KEY_R, category);
-		totemKey = register("key.pvpduels.totem", GLFW.GLFW_KEY_G, category);
 
 		// Unbound by default so they never clash with your other keys; set them in Controls.
 		for (int i = 0; i < QUICK_KEYS.length; i++) {
@@ -46,10 +43,6 @@ public class PvpDuelsClient implements ClientModInitializer {
 			boolean inGame = client.player != null;
 			while (sortKey.consumeClick()) {
 				if (inGame) ClientPlayNetworking.send(new SortRequestPayload());
-			}
-			// One packet per press, so spamming the totem key refills your offhand as fast as you tap.
-			while (totemKey.consumeClick()) {
-				if (inGame) ClientPlayNetworking.send(new TotemPayload());
 			}
 			for (int i = 0; i < QUICK_KEYS.length; i++) {
 				while (QUICK_KEYS[i].consumeClick()) {

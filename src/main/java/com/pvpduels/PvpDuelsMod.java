@@ -3,11 +3,9 @@ package com.pvpduels;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutCommands;
-import com.pvpduels.layout.TotemSwap;
 import com.pvpduels.net.CycleLayoutPayload;
 import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
-import com.pvpduels.net.TotemPayload;
 import com.pvpduels.util.Msg;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -27,7 +25,6 @@ public class PvpDuelsMod implements ModInitializer {
 		PayloadTypeRegistry.serverboundPlay().register(SortRequestPayload.TYPE, SortRequestPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(CycleLayoutPayload.TYPE, CycleLayoutPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(QuickLayoutPayload.TYPE, QuickLayoutPayload.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(TotemPayload.TYPE, TotemPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(SortRequestPayload.TYPE, (payload, context) ->
 			context.server().execute(() -> InventorySorter.sortAndReport(context.player())));
@@ -36,8 +33,6 @@ public class PvpDuelsMod implements ModInitializer {
 
 		ServerPlayNetworking.registerGlobalReceiver(QuickLayoutPayload.TYPE, (payload, context) ->
 			context.server().execute(() -> LayoutCommands.quick(context.player(), payload.index())));
-		ServerPlayNetworking.registerGlobalReceiver(TotemPayload.TYPE, (payload, context) ->
-			context.server().execute(() -> TotemSwap.swap(context.player())));
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			KitCommands.register(dispatcher);
