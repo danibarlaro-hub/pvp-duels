@@ -36,6 +36,8 @@ public final class Duel {
 	public static int noContactLimit = 5 * 60 * 20;
 	/** The warning starts this many ticks before the teleport. */
 	public static int noContactWarning = 5 * 20;
+	/** Server ticks that count as one minute of a timed duel (1200 normally; the self-test shortens it). */
+	public static int ticksPerMinute = 60 * 20;
 
 	private final MinecraftServer server;
 	final int slot;
@@ -76,7 +78,7 @@ public final class Duel {
 	// ------------------------------------------------------------------ helpers
 
 	ServerPlayer player(int i) {
-		return server.getPlayerList().getPlayer(ids[i]);
+		return DuelManager.lookup(server, ids[i]);
 	}
 
 	int indexOf(UUID id) {
@@ -234,7 +236,7 @@ public final class Duel {
 			}
 		}
 
-		if (config.mode() == WinMode.TIMED && !timedOut && elapsed >= config.limit() * 60 * 20) {
+		if (config.mode() == WinMode.TIMED && !timedOut && elapsed >= config.limit() * ticksPerMinute) {
 			timedOut = true;
 			tell(Component.literal("Time is up!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
 				.append(Msg.info(" This round decides the duel.")));
@@ -271,7 +273,7 @@ public final class Duel {
 			if (p == null) continue;
 			String text = names[i] + " " + score(i) + " " + names[1 - i] + "   |   " + roundLabel();
 			if (config.mode() == WinMode.TIMED && !timedOut) {
-				int left = Math.max(0, config.limit() * 60 - elapsed / 20);
+				int left = Math.max(0, (config.limit() * ticksPerMinute - elapsed) / 20);
 				text += String.format("   |   %d:%02d", left / 60, left % 60);
 			}
 			p.sendOverlayMessage(Component.literal(text).withStyle(ChatFormatting.WHITE));

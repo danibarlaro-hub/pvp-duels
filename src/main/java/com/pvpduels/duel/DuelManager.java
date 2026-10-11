@@ -39,6 +39,8 @@ public final class DuelManager {
 	private static final List<Invite> INVITES = new ArrayList<>();
 	private static final Map<UUID, Last> LAST = new HashMap<>();
 	private static int tickCounter;
+	/** Players that are not in the real player list (only used by the automatic self-test). */
+	static final Map<UUID, ServerPlayer> TEST_PLAYERS = new HashMap<>();
 
 	record Invite(UUID from, String fromName, UUID to, String toName, UUID kitOwner, DuelConfig config, boolean rematch, int createdTick) {}
 
@@ -63,6 +65,11 @@ public final class DuelManager {
 	}
 
 	// ------------------------------------------------------------------ queries
+
+	static ServerPlayer lookup(MinecraftServer server, UUID id) {
+		ServerPlayer p = server.getPlayerList().getPlayer(id);
+		return p != null ? p : TEST_PLAYERS.get(id);
+	}
 
 	public static boolean isInDuel(UUID id) {
 		return BY_PLAYER.containsKey(id);
@@ -172,9 +179,9 @@ public final class DuelManager {
 			Invite i = it.next();
 			if (tickCounter - i.createdTick() >= INVITE_TICKS) {
 				it.remove();
-				ServerPlayer from = server.getPlayerList().getPlayer(i.from());
+				ServerPlayer from = lookup(server, i.from());
 				if (from != null) from.sendSystemMessage(Msg.info("Your duel request to " + i.toName() + " expired."));
-				ServerPlayer to = server.getPlayerList().getPlayer(i.to());
+				ServerPlayer to = lookup(server, i.to());
 				if (to != null) to.sendSystemMessage(Msg.info("The duel request from " + i.fromName() + " expired."));
 			}
 		}
@@ -273,15 +280,15 @@ public final class DuelManager {
 		Invite invite = found.get();
 		INVITES.remove(invite);
 		to.sendSystemMessage(Msg.info("You denied the duel request from " + invite.fromName() + "."));
-		ServerPlayer from = to.level().getServer().getPlayerList().getPlayer(invite.from());
+		ServerPlayer from = lookup(to.level().getServer(), invite.from());
 		if (from != null) from.sendSystemMessage(Msg.err(invite.toName() + " denied your duel request."));
 	}
 
 	// ------------------------------------------------------------------ starting / leaving / again
 
 	private static void start(MinecraftServer server, Invite invite) {
-		ServerPlayer a = server.getPlayerList().getPlayer(invite.from());
-		ServerPlayer b = server.getPlayerList().getPlayer(invite.to());
+		ServerPlayer a = lookup(server, invite.from());
+		ServerPlayer b = lookup(server, invite.to());
 		if (a == null || b == null) {
 			ServerPlayer who = a != null ? a : b;
 			if (who != null) who.sendSystemMessage(Msg.err("The other player is no longer online."));
@@ -372,7 +379,7 @@ public final class DuelManager {
 			p.sendSystemMessage(Msg.err("You are still in a duel. Wait for it to finish."));
 			return;
 		}
-		ServerPlayer opponent = p.level().getServer().getPlayerList().getPlayer(last.opponent());
+		ServerPlayer opponent = lookup(p.level().getServer(), last.opponent());
 		if (opponent == null) {
 			p.sendSystemMessage(Msg.err(last.opponentName() + " is not online."));
 			return;

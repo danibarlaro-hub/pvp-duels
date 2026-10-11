@@ -26,3 +26,12 @@ net.minecraft.world.item.context.BlockPlaceContext
 net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl
 net.minecraft.world.entity.projectile.arrow.AbstractArrow
 net.minecraft.world.entity.projectile.Projectile
+net.minecraft.server.network.CommonListenerCookie
+net.minecraft.network.Connection
+net.minecraft.server.level.ClientInformation
+net.minecraft.network.protocol.PacketFlow
+net.minecraft.network.ProtocolInfo
+net.minecraft.network.PacketListener
+net.minecraft.server.level.ServerLevel
+net.minecraft.world.entity.player.Inventory
+net.minecraft.world.level.storage.PlayerDataStorage

@@ -73,8 +73,25 @@ final class ChoiceMenu extends ChestMenu {
 		}
 	}
 
+	/** The last menu opened for each player (only filled for players without a real client: the self-test). */
+	static final Map<java.util.UUID, ChoiceMenu> LAST_FOR_TEST = new HashMap<>();
+
 	static void open(ServerPlayer player, Component title, int rows, Builder builder) {
-		player.openMenu(new SimpleMenuProvider(
-			(id, inv, p) -> new ChoiceMenu(id, inv, builder.container, rows, builder.actions), title));
+		SimpleMenuProvider provider = new SimpleMenuProvider(
+			(id, inv, p) -> new ChoiceMenu(id, inv, builder.container, rows, builder.actions), title);
+		if (DuelManager.TEST_PLAYERS.containsKey(player.getUUID())) {
+			LAST_FOR_TEST.put(player.getUUID(), new ChoiceMenu(1, player.getInventory(), builder.container, rows, builder.actions));
+			return;
+		}
+		player.openMenu(provider);
+	}
+
+	/** Test helper: clicks a slot of a menu. */
+	void clickForTest(ServerPlayer player, int slot) {
+		clicked(slot, 0, ContainerInput.PICKUP, player);
+	}
+
+	ItemStack itemForTest(int slot) {
+		return getContainer().getItem(slot);
 	}
 }
