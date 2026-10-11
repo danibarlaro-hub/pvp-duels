@@ -76,6 +76,7 @@ public final class SelfTest {
 
 		/** A real client tells the server when it has loaded the world; until then players can't be hurt. */
 		void markLoaded() {
+			if (isChangingDimension()) hasChangedDimension(); // a real client does this with its first movement packet
 			if (connection != null && !connection.hasClientLoaded()) {
 				connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
 			}
