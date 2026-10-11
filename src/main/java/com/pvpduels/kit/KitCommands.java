@@ -67,6 +67,16 @@ public final class KitCommands {
 						.executes(KitCommands::setProfile)))));
 	}
 
+	/** "You don't have a kit named X" plus the kits you do have, or how to save the first one. */
+	private static net.minecraft.network.chat.Component missingKit(ServerPlayer p, String name) {
+		List<String> names = KitStore.list(p.getUUID());
+		if (names.isEmpty()) {
+			return Msg.err("You don't have a kit named '" + name + "' - you have no saved kits yet. Set up your inventory and run /kit save "
+				+ name + " first. (Kits folder: " + KitStore.folder(p.getUUID()) + ")");
+		}
+		return Msg.err("You don't have a kit named '" + name + "'. Your kits: " + String.join(", ", names));
+	}
+
 	private static String kitName(CommandContext<CommandSourceStack> ctx) {
 		return StringArgumentType.getString(ctx, "name").toLowerCase(Locale.ROOT);
 	}
@@ -99,7 +109,7 @@ public final class KitCommands {
 		try {
 			Optional<KitStore.Kit> kit = KitStore.read(server, p.getUUID(), name);
 			if (kit.isEmpty()) {
-				p.sendSystemMessage(Msg.err("You don't have a kit named '" + name + "'. Use /kit list."));
+				p.sendSystemMessage(missingKit(p, name));
 				return false;
 			}
 			KitStore.give(p, kit.get());
@@ -142,7 +152,7 @@ public final class KitCommands {
 		String kit = StringArgumentType.getString(ctx, "kit").toLowerCase(Locale.ROOT);
 		boolean none = kit.equals("none");
 		if (!none && !KitStore.exists(p.getUUID(), kit)) {
-			ctx.getSource().sendFailure(Msg.err("You don't have a kit named '" + kit + "'. Use /kit list."));
+			ctx.getSource().sendFailure(missingKit(p, kit));
 			return 0;
 		}
 		char letter = KitKeys.letter(index);
@@ -191,7 +201,8 @@ public final class KitCommands {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
 		List<String> names = KitStore.list(p.getUUID());
 		if (names.isEmpty()) {
-			ctx.getSource().sendSuccess(() -> Msg.info("You have no kits yet. Set up your inventory and use /kit save <name>."), false);
+			String folder = KitStore.folder(p.getUUID()).toString();
+			ctx.getSource().sendSuccess(() -> Msg.info("You have no kits yet. Set up your inventory and use /kit save <name>. (Kits folder: " + folder + ")"), false);
 		} else {
 			String text = String.join(", ", names);
 			ctx.getSource().sendSuccess(() -> Msg.info("Your kits (" + names.size() + "): " + text), false);
@@ -204,7 +215,7 @@ public final class KitCommands {
 		String name = kitName(ctx);
 		String profile = StringArgumentType.getString(ctx, "profile").toLowerCase(Locale.ROOT);
 		if (!KitStore.exists(p.getUUID(), name)) {
-			ctx.getSource().sendFailure(Msg.err("You don't have a kit named '" + name + "'."));
+			ctx.getSource().sendFailure(missingKit(p, name));
 			return 0;
 		}
 		boolean none = profile.equals("none");

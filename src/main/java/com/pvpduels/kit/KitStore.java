@@ -48,6 +48,11 @@ public final class KitStore {
 		return FabricLoader.getInstance().getGameDir().resolve("pvpduels").resolve("kits").resolve(owner.toString());
 	}
 
+	/** Folder where this player's kits live (shown in messages so it is easy to find). */
+	public static Path folder(UUID owner) {
+		return dir(owner);
+	}
+
 	private static Path file(UUID owner, String name) {
 		return dir(owner).resolve(name + ".json");
 	}
