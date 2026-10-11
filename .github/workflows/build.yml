@@ -16,7 +16,17 @@ jobs:
         with:
           gradle-version: 9.5.1
       - name: Build
-        run: gradle build --no-daemon
+        run: |
+          set +e
+          gradle build --no-daemon --console=plain > build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            errs=$(grep -nE "error:|What went wrong|Could not|Caused by|Unsupported|not found|Exception|FAILED" -A3 build.log | head -80 | cut -c1-400 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=Build errors::${errs}"
+            tailtxt=$(tail -40 build.log | cut -c1-400 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=End of log::${tailtxt}"
+          fi
+          exit $code
       - name: Upload the mod
         uses: actions/upload-artifact@v4
         with:
