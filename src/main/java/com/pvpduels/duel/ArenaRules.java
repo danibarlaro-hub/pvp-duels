@@ -20,18 +20,26 @@ import net.minecraft.world.level.block.EntityBlock;
 final class ArenaRules {
 	private ArenaRules() {}
 
-	/** Only duels in the flat void arena have building rules; the normal arenas can be built and dug freely. */
-	private static boolean duelist(net.minecraft.world.entity.player.Player player) {
-		if (!(player instanceof ServerPlayer sp)) return false;
+	private enum Mode { OFF, FLAT, NO_BUILDING }
+
+	/**
+	 * Duels in the flat void arena have the entity-only rules. In the circular and unlimited arenas you can build
+	 * freely, unless the challenger turned building off for the duel.
+	 */
+	private static Mode mode(net.minecraft.world.entity.player.Player player) {
+		if (!(player instanceof ServerPlayer sp)) return Mode.OFF;
 		Duel duel = DuelManager.duelOf(sp.getUUID());
-		return duel != null && duel.config.arena() == ArenaKind.FLAT;
+		if (duel == null) return Mode.OFF;
+		if (duel.config.arena() == ArenaKind.FLAT) return Mode.FLAT;
+		return duel.config.rules().building() ? Mode.OFF : Mode.NO_BUILDING;
 	}
 
 	static void register() {
 		UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
-			if (!duelist(player)) return InteractionResult.PASS;
+			Mode mode = mode(player);
+			if (mode == Mode.OFF) return InteractionResult.PASS;
 			Item item = player.getItemInHand(hand).getItem();
-			if (item instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof EntityBlock)) {
+			if (item instanceof BlockItem blockItem && (mode == Mode.NO_BUILDING || !(blockItem.getBlock() instanceof EntityBlock))) {
 				return InteractionResult.FAIL;
 			}
 			if (item instanceof BucketItem || item instanceof FlintAndSteelItem || item instanceof FireChargeItem) {
@@ -41,14 +49,15 @@ final class ArenaRules {
 		});
 
 		UseItemCallback.EVENT.register((player, level, hand) -> {
-			if (!duelist(player)) return InteractionResult.PASS;
+			if (mode(player) == Mode.OFF) return InteractionResult.PASS;
 			if (player.getItemInHand(hand).getItem() instanceof BucketItem) return InteractionResult.FAIL;
 			return InteractionResult.PASS;
 		});
 
 		PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> {
-			if (!duelist(player)) return true;
-			return state.getBlock() instanceof EntityBlock;
+			Mode mode = mode(player);
+			if (mode == Mode.OFF) return true;
+			return mode == Mode.FLAT && state.getBlock() instanceof EntityBlock;
 		});
 	}
 }

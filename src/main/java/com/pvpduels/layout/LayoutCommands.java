@@ -67,6 +67,10 @@ public final class LayoutCommands {
 					.then(Commands.argument("layout", StringArgumentType.word()).suggests(PROFILES)
 						.executes(LayoutCommands::setKey))))
 			.then(Commands.literal("keys").executes(LayoutCommands::showKeys))
+			.then(Commands.literal("auto")
+				.executes(ctx -> auto(ctx, "auto"))
+				.then(Commands.argument("name", StringArgumentType.word()).suggests(PROFILES)
+					.executes(ctx -> auto(ctx, StringArgumentType.getString(ctx, "name")))))
 			.then(Commands.literal("sort")
 				.executes(ctx -> {
 					InventorySorter.sortAndReport(ctx.getSource().getPlayerOrException());
@@ -74,6 +78,48 @@ public final class LayoutCommands {
 				})
 				.then(inventoryCopyNode()))
 			.then(inventoryCopyNode()));
+	}
+
+	/** /layout auto [layout]: builds a layout from what all your kits have in common. */
+	private static int auto(CommandContext<CommandSourceStack> ctx, String nameArg) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		String name = nameArg.toLowerCase(Locale.ROOT);
+		if (!NAME.matcher(name).matches()) {
+			ctx.getSource().sendFailure(Msg.err("Layout names can only use a-z, 0-9, _ and - (max 24)."));
+			return 0;
+		}
+		if (com.pvpduels.kit.KitStore.list(p.getUUID()).isEmpty()) {
+			ctx.getSource().sendFailure(Msg.err("You have no kits to look at yet. Save some with /kit save <name> first."));
+			return 0;
+		}
+		LayoutStore.Data data = LayoutStore.get(p.getUUID());
+		LayoutStore.Profile existing = data.profiles.get(name);
+		if (existing != null && LayoutStore.hasRules(existing) && !name.equals("auto")) {
+			ctx.getSource().sendFailure(Msg.err("Layout '" + name + "' already has rules. Use another name, or /layout clear first."));
+			return 0;
+		}
+		if (existing == null && LayoutStore.customCount(data) >= LayoutStore.MAX_PROFILES) {
+			ctx.getSource().sendFailure(Msg.err("You already have " + LayoutStore.MAX_PROFILES + " layouts (the maximum). Delete one first."));
+			return 0;
+		}
+		AutoLayout.Result result;
+		try {
+			result = AutoLayout.analyze(ctx.getSource().getServer(), p.getUUID());
+		} catch (IOException | RuntimeException e) {
+			ctx.getSource().sendFailure(Msg.err("Could not read your kits: " + e.getMessage()));
+			return 0;
+		}
+		if (result.slotsWithRules() == 0) {
+			ctx.getSource().sendFailure(Msg.err("I looked at " + result.kits() + " kit" + (result.kits() == 1 ? "" : "s")
+				+ " but no item is in the same slot in most of them yet, so nothing was created."));
+			return 0;
+		}
+		data.profiles.put(name, result.profile());
+		saveQuietly(p, ctx);
+		ctx.getSource().sendSuccess(() -> Msg.ok("Looked at " + result.kits() + " kit" + (result.kits() == 1 ? "" : "s")
+			+ (result.truncated() ? " (the newest " + AutoLayout.MAX_KITS + ")" : "") + ": layout '" + name + "' now has rules for "
+			+ result.slotsWithRules() + " slots. Use it with /layout use " + name + ", see it with /layout show, sort with your Sort key."), false);
+		return 1;
 	}
 
 	/** /layout inventorycopy [layout] [priority]  (also reachable as /layout sort inventorycopy ...). */

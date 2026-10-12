@@ -67,6 +67,7 @@ public final class Workshop {
 		MinecraftServer server = p.level().getServer();
 		if (isIn(p.getUUID())) return "You are already in the kit workshop. Use /leave to go back.";
 		if (DuelManager.isInDuel(p.getUUID())) return "You can't open the workshop during a duel.";
+		if (com.pvpduels.duel.Spectators.isIn(p.getUUID())) return "You are watching a duel: use /leave first.";
 		ServerLevel level = Arena.level(server);
 		if (level == null) return "The duel world is not loaded. Make sure the mod is up to date, then restart the game.";
 

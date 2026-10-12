@@ -71,7 +71,7 @@ public final class DuelManager {
 
 	/** True while the player can't take a new duel: they are in one that has not finished yet. */
 	public static boolean isBusy(UUID id) {
-		if (Workshop.isIn(id)) return true;
+		if (Workshop.isIn(id) || Spectators.isIn(id)) return true;
 		Duel d = BY_PLAYER.get(id);
 		return d != null && d.phase != Duel.Phase.ENDED;
 	}
@@ -107,6 +107,7 @@ public final class DuelManager {
 		Duel duel = BY_PLAYER.get(victim.getUUID());
 		if (duel == null) return true;
 		if (!duel.canTakeDamage()) return false;
+		if (!duel.config.rules().fallDamage() && source.is(net.minecraft.tags.DamageTypeTags.IS_FALL)) return false;
 
 		Entity attacker = source.getEntity();
 		if (attacker != null) {
@@ -233,6 +234,7 @@ public final class DuelManager {
 			.append(Component.literal(rematch ? " wants a rematch!" : " challenged you to a duel!").withStyle(ChatFormatting.YELLOW)));
 		to.sendSystemMessage(Msg.info("  Kit: " + config.kit() + "   Arena: " + config.arenaName()));
 		to.sendSystemMessage(Msg.info("  Mode: " + config.modeName()));
+		if (!config.rules().isDefault()) to.sendSystemMessage(Msg.info("  Rules: " + config.rules().describe(config.arena())));
 		MutableComponent buttons = Component.literal("  ")
 			.append(button("[ACCEPT]", ChatFormatting.GREEN, "/accept " + fromName, "Click to accept the duel"))
 			.append(Component.literal("   "))

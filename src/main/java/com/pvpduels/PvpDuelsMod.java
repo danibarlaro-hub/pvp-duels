@@ -2,6 +2,8 @@ package com.pvpduels;
 
 import com.pvpduels.duel.DuelCommands;
 import com.pvpduels.duel.DuelManager;
+import com.pvpduels.duel.Lobby;
+import com.pvpduels.duel.Spectators;
 import com.pvpduels.duel.Terrain;
 import com.pvpduels.duel.SelfTest;
 import com.pvpduels.duel.TestDummy;
@@ -57,6 +59,8 @@ public class PvpDuelsMod implements ModInitializer {
 			TestDummy.register(dispatcher);
 			Workshop.registerCommands(dispatcher);
 			Sidebar.registerCommands(dispatcher);
+			Lobby.registerCommands(dispatcher);
+			Spectators.registerCommands(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
 		});
 
@@ -65,6 +69,7 @@ public class PvpDuelsMod implements ModInitializer {
 
 		DuelManager.register();
 		Terrain.register();
+		Spectators.register();
 		TestDummy.registerEvents();
 		Workshop.register();
 		GuideBook.register();

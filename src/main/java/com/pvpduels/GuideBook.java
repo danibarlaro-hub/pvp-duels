@@ -29,11 +29,13 @@ public final class GuideBook {
 		{"How it is decided", "Fixed rounds (max 100, or unlimited), First to N points, or Timed (max 30 min, a tie plays an extra round).\n\nUnlimited duels end when someone uses /leave: most points wins."},
 		{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat terrain inside invisible barriers. Build and dig freely: it resets every round."},
 		{"Unlimited arena", "Flat terrain with no border.\n\nMore than 100 blocks away from your rival for 5 seconds: the one who ran away loses half of their health and is teleported next to the other."},
+		{"Duel rules", "In the /duel menu you can switch off, for that duel only:\nnatural regeneration, fall damage, hunger and building (circular and unlimited arenas)."},
+		{"Spectate, lobby", "/spectate <player> watches a duel. /leave stops.\n\nAfter a duel you are protected for 5 s.\n\n/setlobby (admin) sets the lobby, /lobby goes there. /lobby return off: after duels go back to where you were."},
 		{"Rules", "Falling into the void loses the round.\n\n5 minutes without hitting each other: one random player is teleported next to the other.\n\nIn the flat arena only entities and block entities (chests, shulkers, crystals...) can be placed."},
 		{"Kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit delete <name>\n/kit key a|b|c <kit>  sets the Quick kit keys\n/kit profile <kit> <layout>  sorts a kit when loaded"},
 		{"Sharing kits", "/publicate <kit>: share with everybody\n/kit public: list shared kits\n/kit take <kit>: copy one\n/unpublish <kit>: take yours back\n\n/private <kit> <player>: a locked copy (usable, but not shareable or editable)"},
 		{"Kit workshop", "/kit create [kit] opens a creative void: you can't place or break anything.\n\n/enchant <enchantment> [0-255]\n/infinite <1-99>\n/kit save <name>\n\n/leave or /kit exit brings your inventory back."},
-		{"Layouts", "A layout sorts slots 1-36.\n/layout slot <1-36> <rules...> (32 priority levels)\n/layout inventorycopy\n/layout use <1-21|name>\n/layout sort or press R."},
+		{"Layouts", "A layout sorts slots 1-36.\n/layout slot <1-36> <rules...> (32 priority levels)\n/layout inventorycopy\n/layout use <1-21|name>\n/layout auto builds a layout from your kits.\n/layout sort or press R."},
 		{"Keys", "Options > Controls > PvP Duels:\nSort inventory\nQuick kit A / B / C\nQuick layout 1 / 2 / 3\nNext / Previous layout\n\nAll of them can be changed."},
 		{"Sidebar and stats", "/sidebar turns the scoreboard on the right on or off.\n\nIt shows your wins, losses, streak and rounds, and during a duel the score of both players.\n\n/guide book gives you this book again."}
 	};

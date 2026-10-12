@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.pvpduels.duel.Duel;
 import com.pvpduels.duel.DuelManager;
+import com.pvpduels.duel.Spectators;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.stats.StatsStore;
 import com.pvpduels.util.Msg;
@@ -55,6 +56,8 @@ public final class Sidebar {
 	// ------------------------------------------------------------------ lines
 
 	private static List<String> linesFor(ServerPlayer p) {
+		Duel watched = Spectators.watching(p.getUUID());
+		if (watched != null) return watched.sidebarForSpectator();
 		Duel duel = DuelManager.duelOf(p.getUUID());
 		if (duel != null) {
 			List<String> lines = duel.sidebarFor(p.getUUID());

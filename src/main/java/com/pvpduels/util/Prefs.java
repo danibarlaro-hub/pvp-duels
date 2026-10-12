@@ -20,6 +20,7 @@ public final class Prefs {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Set<UUID> SIDEBAR_OFF = new HashSet<>();
 	private static final Set<UUID> BOOK_GIVEN = new HashSet<>();
+	private static final Set<UUID> LOBBY_OFF = new HashSet<>();
 	private static boolean loaded;
 
 	private Prefs() {}
@@ -36,6 +37,7 @@ public final class Prefs {
 			JsonObject root = JsonParser.parseString(Files.readString(file())).getAsJsonObject();
 			read(root, "sidebarOff", SIDEBAR_OFF);
 			read(root, "bookGiven", BOOK_GIVEN);
+			read(root, "lobbyOff", LOBBY_OFF);
 		} catch (Exception e) {
 			PvpDuelsMod.LOGGER.warn("Could not read the settings file: {}", e.toString());
 		}
@@ -63,6 +65,7 @@ public final class Prefs {
 			JsonObject root = new JsonObject();
 			write(root, "sidebarOff", SIDEBAR_OFF);
 			write(root, "bookGiven", BOOK_GIVEN);
+			write(root, "lobbyOff", LOBBY_OFF);
 			Files.createDirectories(file().getParent());
 			Files.writeString(file(), GSON.toJson(root));
 		} catch (IOException e) {
@@ -78,6 +81,17 @@ public final class Prefs {
 	public static synchronized void setSidebar(UUID id, boolean on) {
 		ensureLoaded();
 		if (on ? SIDEBAR_OFF.remove(id) : SIDEBAR_OFF.add(id)) save();
+	}
+
+	/** Whether this player is sent to the lobby (when there is one) after a duel. On by default. */
+	public static synchronized boolean lobbyReturn(UUID id) {
+		ensureLoaded();
+		return !LOBBY_OFF.contains(id);
+	}
+
+	public static synchronized void setLobbyReturn(UUID id, boolean on) {
+		ensureLoaded();
+		if (on ? LOBBY_OFF.remove(id) : LOBBY_OFF.add(id)) save();
 	}
 
 	public static synchronized boolean bookGiven(UUID id) {

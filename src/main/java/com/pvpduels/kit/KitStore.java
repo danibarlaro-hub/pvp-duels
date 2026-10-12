@@ -182,6 +182,29 @@ public final class KitStore {
 		return Files.deleteIfExists(file(owner, name));
 	}
 
+	/** The newest kits first, at most "limit" of them. */
+	public static List<String> recent(UUID owner, int limit) {
+		Path d = dir(owner);
+		if (!Files.isDirectory(d)) return Collections.emptyList();
+		try (Stream<Path> files = Files.list(d)) {
+			return files.filter(p -> p.getFileName().toString().endsWith(".json"))
+				.sorted((x, y) -> Long.compare(modified(y), modified(x)))
+				.limit(limit)
+				.map(p -> p.getFileName().toString().replaceFirst("\\.json$", ""))
+				.toList();
+		} catch (IOException e) {
+			return Collections.emptyList();
+		}
+	}
+
+	private static long modified(Path p) {
+		try {
+			return Files.getLastModifiedTime(p).toMillis();
+		} catch (IOException e) {
+			return 0;
+		}
+	}
+
 	public static List<String> list(UUID owner) {
 		Path d = dir(owner);
 		if (!Files.isDirectory(d)) return Collections.emptyList();

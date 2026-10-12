@@ -17,7 +17,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Hasta 21 layouts, 32 niveles de prioridad por slot
 - ✅ `/layout inventorycopy` copia tu inventario a un layout; varios kits en un solo layout con prioridades 1, 2, 3...
 - ✅ 3 teclas Quick layout + Next/Previous layout
-- 🟡 Auto-ordenador que mire todos tus kits y detecte que items van casi siempre en el mismo slot (hoy lo hace `inventorycopy` a mano, sin mirar todos los kits solo)
+- ✅ Auto-ordenador: `/layout auto [nombre]` mira todos tus kits y pone cada item (o categoria) en el slot donde esta en la mayoria
 - 🚫 Nada que automatice el offhand/totem (lo consideras trampa, no se toca)
 
 ## Duelos
@@ -32,7 +32,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ `/test_dummy <nombre>` (solo admins): jugador falso que acepta todo, para probar solo
 - ✅ Arena circular: mundo normal, piso plano, circulo de barriers, radio 100/150/200, se resetea sola (5 bloques de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60)
 - ✅ Arena sin limites: si te alejas 100 bloques del rival, cuenta de 5 s, perdes la mitad de la vida y te teletransporta al rival
-- ⏳ `/leave` te lleva a un **spawn que vos decoras** (hoy te devuelve a donde estabas antes del duelo; hay que decidir cual preferis)
+- ✅ Spawn que vos decoras: un admin hace `/setlobby`; al terminar un duelo te manda ahi (con `/lobby return off` volves a donde estabas); `/lobby` te lleva cuando quieras
 - ✅ Puntos de cada uno en el sidebar durante el duelo (hoy salen en la barra de arriba y en titulos)
 
 ## Interfaz y ayuda
@@ -42,7 +42,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 
 ## Ideas extra que te gustaron
 - ✅ Estadisticas guardadas (victorias, derrotas, rondas...)
-- ⏳ Reglas por duelo, `/spectate`, proteccion al aparecer y otras extras que te propuse
+- ✅ Reglas por duelo (regeneracion, dano de caida, hambre, construir), `/spectate`, proteccion de 5 s al volver, lobby (`/setlobby`, `/lobby`)
 - ⏳ Funcionar bien con Essential en todos los casos (host en un mundo alterno, etc.) y quizas un mod de apoyo para tus amigos
 
 ## Principios que pediste

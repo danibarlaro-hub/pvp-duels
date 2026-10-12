@@ -33,6 +33,10 @@ public final class DuelMenus {
 		ArenaKind arena = ArenaKind.FLAT;
 		int radius = 100;
 		boolean walls;
+		boolean regen = true;
+		boolean fallDamage = true;
+		boolean hunger = true;
+		boolean building = true;
 		WinMode mode = WinMode.ROUNDS;
 		int limit = 3;
 
@@ -233,7 +237,7 @@ public final class DuelMenus {
 			stack.setCount(Math.min(value, 64));
 			b.set(slot, stack, who -> {
 				setup.limit = value;
-				confirm(who, setup);
+				rules(who, setup);
 			});
 			slot++;
 		}
@@ -241,7 +245,7 @@ public final class DuelMenus {
 			b.set(22, icon(Items.BOOK, "Unlimited", ChatFormatting.LIGHT_PURPLE, "No limit: the duel lasts until someone uses /leave.",
 				"Only a small score is shown on screen."), who -> {
 				setup.limit = 0;
-				confirm(who, setup);
+				rules(who, setup);
 			});
 		}
 		b.set(27, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> mode(who, setup));
@@ -253,17 +257,54 @@ public final class DuelMenus {
 		ChoiceMenu.open(p, Component.literal("Duel: " + what), 4, b);
 	}
 
-	// ------------------------------------------------------------------ 6. confirm
+	// ------------------------------------------------------------------ 6. rules
+
+	private static ItemStack toggle(Item item, String label, boolean on, String... lore) {
+		return icon(item, label + ": " + (on ? "ON" : "OFF"), on ? ChatFormatting.GREEN : ChatFormatting.RED, lore);
+	}
+
+	private static void rules(ServerPlayer p, Setup setup) {
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
+		b.set(10, toggle(Items.GOLDEN_APPLE, "Natural regeneration", setup.regen,
+			"Off: health only comes back from items and effects.", "Click to switch"), who -> {
+			setup.regen = !setup.regen;
+			rules(who, setup);
+		});
+		b.set(12, toggle(Items.FEATHER, "Fall damage", setup.fallDamage, "Click to switch"), who -> {
+			setup.fallDamage = !setup.fallDamage;
+			rules(who, setup);
+		});
+		b.set(14, toggle(Items.COOKED_BEEF, "Hunger", setup.hunger,
+			"Off: the food bar stays full.", setup.regen ? "Click to switch" : "(Not used while natural regeneration is off.)"), who -> {
+			setup.hunger = !setup.hunger;
+			rules(who, setup);
+		});
+		if (setup.arena == ArenaKind.FLAT) {
+			b.set(16, icon(Items.BEDROCK, "Building", ChatFormatting.GRAY, "The flat arena has its own building rules."));
+		} else {
+			b.set(16, toggle(Items.GRASS_BLOCK, "Building", setup.building,
+				"Off: nobody can place or break blocks.", "Click to switch"), who -> {
+				setup.building = !setup.building;
+				rules(who, setup);
+			});
+		}
+		b.set(22, icon(Items.EMERALD, "Continue", ChatFormatting.GREEN), who -> confirm(who, setup));
+		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> amount(who, setup));
+		ChoiceMenu.open(p, Component.literal("Duel: rules"), 3, b);
+	}
+
+	// ------------------------------------------------------------------ 7. confirm
 
 	private static DuelConfig config(Setup setup) {
-		return new DuelConfig(setup.kit, setup.arena, setup.walls, setup.arena == ArenaKind.CIRCLE ? setup.radius : 0, setup.mode, setup.limit);
+		return new DuelConfig(setup.kit, setup.arena, setup.walls, setup.arena == ArenaKind.CIRCLE ? setup.radius : 0, setup.mode, setup.limit,
+			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
 	}
 
 	private static void confirm(ServerPlayer p, Setup setup) {
 		DuelConfig config = config(setup);
 		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
 		b.set(13, icon(Items.BOOK, "Duel vs " + setup.opponentName, ChatFormatting.GOLD,
-			"Kit: " + config.kit(), "Arena: " + config.arenaName(), "Mode: " + config.modeName()));
+			"Kit: " + config.kit(), "Arena: " + config.arenaName(), "Mode: " + config.modeName(), "Rules: " + config.rules().describe(config.arena())));
 		b.set(11, icon(Items.EMERALD, "Send the challenge", ChatFormatting.GREEN), who -> {
 			who.closeContainer();
 			ServerPlayer target = who.level().getServer().getPlayerList().getPlayer(setup.opponent);
@@ -274,7 +315,7 @@ public final class DuelMenus {
 			DuelManager.sendInvite(who, target, who.getUUID(), config, false);
 		});
 		b.set(15, icon(Items.BARRIER, "Cancel", ChatFormatting.RED), ServerPlayer::closeContainer);
-		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> amount(who, setup));
+		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> rules(who, setup));
 		ChoiceMenu.open(p, Component.literal("Duel: confirm"), 3, b);
 	}
 }

@@ -35,6 +35,12 @@ https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpd
 - `/kit save <nombre>` guarda lo que armaste. `/leave` o `/kit exit` te devuelve tu inventario y tu lugar.
 - `/enchant` e `/infinite` solo funcionan en el taller (los admins los pueden usar en cualquier lado).
 
+## Reglas, espectadores y lobby
+- En el menu de `/duel` hay una pantalla de reglas: regeneracion natural, dano de caida, hambre y construir (en las arenas circular y sin limites), se apagan solo para ese duelo.
+- `/spectate <jugador>` mira un duelo en modo espectador (se guarda tu inventario como en un duelo); `/leave` para salir. Al volver de un duelo tenes 5 segundos de proteccion.
+- Lobby: un admin se para donde quiere y hace `/setlobby`. Al terminar un duelo vas ahi; `/lobby return off` para volver a donde estabas; `/lobby` te lleva cuando quieras; `/lobby clear` lo borra.
+- `/layout auto [nombre]` arma un layout mirando todos tus kits (hasta los 300 mas nuevos): cada item o categoria que esta en el mismo slot en la mayoria de los kits queda en ese slot.
+
 ## Compartir kits
 - `/publicate <kit>` lo deja en el estante publico; todos lo ven con `/kit public` y lo copian con `[TAKE]` o `/kit take <kit>` (queda como un kit propio).
 - `/unpublish <kit>` lo saca del estante (solo el autor o un admin). Las copias que ya se llevaron quedan.

@@ -34,6 +34,8 @@ public final class Duel {
 	static final int ROUND_COUNTDOWN = 60;  // 3 s
 	static final int ROUND_END_TICKS = 60;  // 3 s
 	static final int END_TICKS = 100;       // 5 s
+	/** Resistance after being put back in the world (see restore). */
+	static final int PROTECTION_TICKS = 100;
 
 	/** 5 minutes without any damage between the two players. Public so the self-test can shorten it. */
 	public static int noContactLimit = 5 * 60 * 20;
@@ -86,6 +88,10 @@ public final class Duel {
 	}
 
 	// ------------------------------------------------------------------ helpers
+
+	MinecraftServer server() {
+		return server;
+	}
 
 	ServerPlayer player(int i) {
 		return server.getPlayerList().getPlayer(ids[i]);
@@ -150,6 +156,7 @@ public final class Duel {
 			p.sendSystemMessage(Msg.title("Duel vs " + names[1 - i]));
 			p.sendSystemMessage(Msg.info("  Kit: " + config.kit() + "   Arena: " + config.arenaName()));
 			p.sendSystemMessage(Msg.info("  Mode: " + config.modeName() + "   Use /leave to quit."));
+			if (!config.rules().isDefault()) p.sendSystemMessage(Msg.info("  Rules: " + config.rules().describe(config.arena())));
 		}
 	}
 
@@ -185,6 +192,7 @@ public final class Duel {
 				return;
 			}
 			elapsed++;
+			applyFoodRules();
 		}
 		switch (phase) {
 			case STARTING -> tickStarting(a, b);
@@ -198,6 +206,23 @@ public final class Duel {
 			case ENDED -> {
 				phaseTicks++;
 				if (phaseTicks >= END_TICKS) close();
+			}
+		}
+	}
+
+	/** Rules "no natural regeneration" (food stays at 17: no regeneration, you can still sprint) and "no hunger". */
+	private void applyFoodRules() {
+		DuelConfig.Rules rules = config.rules();
+		if (rules.regen() && rules.hunger()) return;
+		for (int i = 0; i < 2; i++) {
+			ServerPlayer p = player(i);
+			if (p == null || restored[i]) continue;
+			if (!rules.regen()) {
+				p.getFoodData().setFoodLevel(17);
+				p.getFoodData().setSaturation(0f);
+			} else {
+				p.getFoodData().setFoodLevel(20);
+				p.getFoodData().setSaturation(20f);
 			}
 		}
 	}
@@ -453,6 +478,21 @@ public final class Duel {
 		return out;
 	}
 
+	/** The lines of the sidebar for somebody who is watching this duel. */
+	public List<String> sidebarForSpectator() {
+		List<String> out = new ArrayList<>();
+		out.add("vs Spectating");
+		out.add("");
+		out.add(names[0] + ": " + points[0]);
+		out.add(names[1] + ": " + points[1]);
+		out.add("");
+		out.add(roundLabel());
+		out.add(config.arenaName());
+		out.add("");
+		out.add("/leave to stop");
+		return out;
+	}
+
 	private void recordStats() {
 		if (recorded || winner == -2) return;
 		recorded = true;
@@ -490,8 +530,13 @@ public final class Duel {
 		DuelManager.onLeft(ids[i]);
 		ServerPlayer p = player(i);
 		if (p != null) {
-			PlayerBackup.restore(server, p);
-			p.sendSystemMessage(Msg.ok("Your inventory has been restored."));
+			boolean lobby = Lobby.appliesTo(server, p);
+			PlayerBackup.restore(server, p, true);
+			// A few seconds of protection, so nobody is hurt right after being put back.
+			p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, PROTECTION_TICKS, 4, false, false));
+			p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, PROTECTION_TICKS, 0, false, false));
+			p.sendSystemMessage(Msg.ok("Your inventory has been restored." + (lobby ? " Welcome to the lobby." : "")
+				+ " You are protected for " + PROTECTION_TICKS / 20 + " seconds."));
 		}
 	}
 
@@ -500,6 +545,7 @@ public final class Duel {
 		closed = true;
 		restore(0);
 		restore(1);
+		Spectators.release(this);
 		space.end(space.level(server));
 		DuelManager.onClosed(this);
 		PvpDuelsMod.LOGGER.info("Duel {} vs {} closed ({} - {}).", names[0], names[1], points[0], points[1]);

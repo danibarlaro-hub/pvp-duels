@@ -63,8 +63,16 @@ public final class PlayerBackup {
 		Files.writeString(file(p.getUUID()), GSON.toJson(root));
 	}
 
-	/** Gives the player everything back and deletes the backup. Returns false if there was nothing to restore. */
+	/** Gives the player everything back (at the place they were) and deletes the backup. Returns false if there was nothing to restore. */
 	public static boolean restore(MinecraftServer server, ServerPlayer p) {
+		return restore(server, p, false);
+	}
+
+	/**
+	 * Same, but with toLobby the player is sent to the lobby instead of where they were, if there is a lobby and
+	 * they did not turn that off (/lobby return off).
+	 */
+	public static boolean restore(MinecraftServer server, ServerPlayer p, boolean toLobby) {
 		Path f = file(p.getUUID());
 		if (!Files.exists(f)) return false;
 		try {
@@ -77,13 +85,16 @@ public final class PlayerBackup {
 			ItemStack[] stacks = KitStore.decodeInventory(server, root.getAsJsonArray("slots"));
 			KitStore.setInventory(p, stacks);
 
-			ServerLevel target = server.getLevel(ResourceKey.create(Registries.DIMENSION,
-				Identifier.parse(root.get("dimension").getAsString())));
-			if (target == null) target = server.overworld();
-			p.teleportTo(target, root.get("x").getAsDouble(), root.get("y").getAsDouble(), root.get("z").getAsDouble(),
-				Set.of(), root.get("yaw").getAsFloat(), root.get("pitch").getAsFloat(), true);
-			p.setDeltaMovement(0, 0, 0);
-			p.resetFallDistance();
+			boolean lobby = toLobby && Lobby.appliesTo(server, p) && Lobby.teleport(server, p);
+			if (!lobby) {
+				ServerLevel target = server.getLevel(ResourceKey.create(Registries.DIMENSION,
+					Identifier.parse(root.get("dimension").getAsString())));
+				if (target == null) target = server.overworld();
+				p.teleportTo(target, root.get("x").getAsDouble(), root.get("y").getAsDouble(), root.get("z").getAsDouble(),
+					Set.of(), root.get("yaw").getAsFloat(), root.get("pitch").getAsFloat(), true);
+				p.setDeltaMovement(0, 0, 0);
+				p.resetFallDistance();
+			}
 
 			p.setGameMode(gameType(root.get("gamemode").getAsString()));
 			p.setHealth(Math.min(root.get("health").getAsFloat(), p.getMaxHealth()));

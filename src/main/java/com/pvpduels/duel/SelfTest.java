@@ -7,6 +7,7 @@ import com.pvpduels.stats.StatsStore;
 import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
+import com.pvpduels.util.Prefs;
 import com.pvpduels.kit.PublicKits;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -180,6 +181,11 @@ public final class SelfTest {
 	private static final double[] bPos = new double[3];
 
 	private static int circleCx;
+	private static int ruleStartTick;
+	private static float ruleStartHealth;
+	private static int carlTick;
+	private static Dummy carl;
+	private static Dummy dora;
 
 	private static BlockPos at(int x, int y, int z) {
 		return new BlockPos(x, y, z);
@@ -218,6 +224,16 @@ public final class SelfTest {
 				menu.clicked(i, 0, ContainerInput.PICKUP, who);
 				return true;
 			}
+		}
+		return false;
+	}
+
+	private static boolean menuHas(Dummy who, String name) {
+		AbstractContainerMenu menu = who.containerMenu;
+		if (!(menu instanceof ChestMenu chest)) return false;
+		for (int i = 0; i < chest.getRowCount() * 9; i++) {
+			ItemStack stack = menu.getSlot(i).getItem();
+			if (!stack.isEmpty() && stack.getHoverName().getString().equals(name)) return true;
 		}
 		return false;
 	}
@@ -320,6 +336,7 @@ public final class SelfTest {
 		step("menu: version", () -> { menuStep(a, "With walls"); });
 		step("menu: mode", () -> { menuStep(a, "First to N points"); });
 		step("menu: amount", () -> { menuStep(a, "First to 2"); });
+		step("menu: rules", () -> { menuStep(a, "Continue"); });
 		step("menu: confirm and send", () -> {
 			menuStep(a, "Send the challenge");
 			check("Bob got the invitation", DuelManager.pendingFrom(b.getUUID()).contains("Alice"));
@@ -668,6 +685,7 @@ public final class SelfTest {
 		step("circular arena: menu radius", () -> { menuStep(a, "Radius 100"); });
 		step("circular arena: menu mode", () -> { menuStep(a, "First to N points"); });
 		step("circular arena: menu amount", () -> { menuStep(a, "First to 2"); });
+		step("circular arena: menu rules", () -> { menuStep(a, "Continue"); });
 		step("circular arena: send and accept", () -> {
 			menuStep(a, "Send the challenge");
 			check("the invitation names the circular arena", b.heard("Circular arena (radius 100)"));
@@ -863,6 +881,231 @@ public final class SelfTest {
 			check("/kit list marks the gift", b.heard("testkit-2 (given, locked)"));
 			b.getInventory().clearContent();
 			b.getInventory().setItem(20, new ItemStack(Items.DIRT, 5));
+		});
+
+
+		// ---------------------------------------------------------------- per-duel rules
+		step("rules: menu toggles", () -> {
+			run(a, "duel Bob");
+			menuStep(a, "testkit");
+		});
+		step("rules: arena", () -> { menuStep(a, "Circular arena"); });
+		step("rules: radius", () -> { menuStep(a, "Radius 100"); });
+		step("rules: mode", () -> { menuStep(a, "First to N points"); });
+		step("rules: amount", () -> { menuStep(a, "First to 1"); });
+		step("rules: switch regeneration off", () -> { menuStep(a, "Natural regeneration: ON"); });
+		step("rules: switch fall damage off", () -> {
+			check("the regeneration toggle now says OFF", menuHas(a, "Natural regeneration: OFF"));
+			menuStep(a, "Fall damage: ON");
+		});
+		step("rules: switch building off", () -> {
+			menuStep(a, "Building: ON");
+		});
+		step("rules: continue and send", () -> {
+			menuStep(a, "Continue");
+		});
+		step("rules: confirm", () -> {
+			menuStep(a, "Send the challenge");
+			check("the invitation lists the changed rules", b.heard("Rules: No natural regeneration"), "");
+			run(b, "accept Alice");
+			Duel d = duel(a);
+			check("the duel has the rules", d != null && !d.config.rules().regen() && !d.config.rules().fallDamage() && d.config.rules().hunger() && !d.config.rules().building(),
+				d == null ? "no duel" : String.valueOf(d.config.rules()));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("rules: no building, no fall damage, no regeneration", () -> {
+			ServerLevel lvl = Terrain.level(server);
+			BlockPos ground = a.blockPosition().below();
+			ItemStack sword = a.getItemInHand(InteractionHand.MAIN_HAND).copy();
+			BlockPos base = ground.east();
+			useOn(a, new ItemStack(Items.STONE), new BlockHitResult(new Vec3(base.getX() + 0.5, base.getY() + 1, base.getZ() + 0.5), Direction.UP, base, false));
+			check("placing a block is refused when building is off", lvl.getBlockState(base.above()).isAir(), String.valueOf(lvl.getBlockState(base.above())));
+			useOn(a, new ItemStack(Items.CHEST), new BlockHitResult(new Vec3(base.getX() + 0.5, base.getY() + 1, base.getZ() + 0.5), Direction.UP, base, false));
+			check("placing a chest is refused too", lvl.getBlockState(base.above()).isAir());
+			a.setItemInHand(InteractionHand.MAIN_HAND, sword);
+			boolean dug = a.gameMode.destroyBlock(ground.south());
+			check("digging is refused", !dug && lvl.getBlockState(ground.south()).is(Blocks.DIRT));
+
+			a.markLoaded();
+			a.invulnerableTime = 0;
+			float before = a.getHealth();
+			a.hurtServer((ServerLevel) a.level(), a.damageSources().fall(), 6f);
+			check("fall damage does nothing when it is off", a.getHealth() >= before - 0.01f, "health=" + a.getHealth());
+			a.invulnerableTime = 0;
+			a.hurtServer((ServerLevel) a.level(), a.damageSources().generic(), 12f);
+			check("other damage still works", a.getHealth() <= before - 5f, "health=" + a.getHealth());
+
+			ruleStartTick = ticks;
+			ruleStartHealth = a.getHealth();
+		}, () -> ticks - ruleStartTick > 120, 400);
+		step("rules: health does not come back by itself", () -> {
+			check("no natural regeneration for 6 seconds", a.getHealth() <= ruleStartHealth + 0.01f, ruleStartHealth + " -> " + a.getHealth());
+			check("the food bar is held at 17", a.getFoodData().getFoodLevel() == 17, "food=" + a.getFoodData().getFoodLevel());
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("rules: protection after the duel", () -> {
+			check("Alice got a few seconds of protection after being put back", a.hasEffect(MobEffects.RESISTANCE), "");
+			check("Bob too", b.hasEffect(MobEffects.RESISTANCE));
+		});
+
+		step("rules: hunger off in the flat arena", () -> {
+			invite(a, b, new DuelConfig("testkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1, new DuelConfig.Rules(true, true, false, true)));
+			check("the duel started", duel(a) != null && !duel(a).config.rules().hunger());
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("rules: the food bar stays full", () -> {
+			a.getFoodData().setFoodLevel(3);
+		}, () -> a.getFoodData().getFoodLevel() == 20, 100);
+		step("rules: hunger duel ends", () -> {
+			check("the food bar was refilled", a.getFoodData().getFoodLevel() == 20);
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+
+		// ---------------------------------------------------------------- spectating
+		step("spectate: setup", () -> {
+			carl = spawn("Carl");
+			invite(a, b, new DuelConfig("testkit", false, WinMode.FIRST_TO, 1));
+			carlTick = ticks;
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING) && ticks - carlTick > 30, 800);
+		step("spectate: errors", () -> {
+			run(carl, "spectate Nobody");
+			check("an unknown player is refused", carl.heard("No player named 'Nobody'"));
+			run(carl, "spectate Carl");
+			check("you can't watch yourself", carl.heard("can't watch yourself"));
+		});
+		step("spectate: watch the duel", () -> {
+			run(carl, "spectate Alice");
+			check("Carl is watching", Spectators.isIn(carl.getUUID()));
+			check("Carl is in spectator mode", carl.gameMode() == GameType.SPECTATOR);
+			check("Carl is in the duel world", carl.level().dimension().equals(Arena.DIMENSION), where(carl));
+			check("Carl's inventory was backed up", PlayerBackup.exists(carl.getUUID()));
+			run(carl, "duel Alice");
+			check("a spectator can't start a duel", carl.heard("busy"));
+			carlTick = ticks;
+		}, () -> ticks - carlTick > 12, 100);
+		step("spectate: /leave", () -> {
+			check("Carl's sidebar shows the score", sidebarHas(carl, "Spectating") && sidebarHas(carl, "Alice: 0"), String.valueOf(sidebar(carl)));
+			run(carl, "leave");
+			check("Carl is back in the overworld in survival", !Spectators.isIn(carl.getUUID()) && carl.level().dimension().equals(server.overworld().dimension())
+				&& carl.gameMode() == GameType.SURVIVAL, where(carl) + " " + carl.gameMode());
+			check("the backup is deleted", !PlayerBackup.exists(carl.getUUID()));
+			run(carl, "spectate Bob");
+			check("he can watch again (through the other player)", Spectators.isIn(carl.getUUID()));
+		});
+		step("spectate: the duel ends and the spectator goes back by himself", () -> {
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b) && !Spectators.isIn(carl.getUUID()), 800);
+		step("spectate: after the duel", () -> {
+			check("Carl is back in the overworld in survival", carl.level().dimension().equals(server.overworld().dimension())
+				&& carl.gameMode() == GameType.SURVIVAL, where(carl) + " " + carl.gameMode());
+			check("no backup is left", !PlayerBackup.exists(carl.getUUID()));
+		});
+
+		// ---------------------------------------------------------------- lobby
+		step("lobby: only admins can set it", () -> {
+			run(a, "setlobby");
+			check("a normal player can't set the lobby", !Lobby.isSet());
+			run(a, "lobby");
+			check("/lobby without a lobby says so", a.heard("no lobby yet"));
+			carl.teleportTo((ServerLevel) carl.level(), 50.5, carl.getY(), 50.5, java.util.Set.of(), 0f, 0f, true);
+			try {
+				Lobby.set(carl);
+			} catch (java.io.IOException e) {
+				check("the lobby can be saved", false, e.toString());
+			}
+			check("the lobby is set", Lobby.isSet());
+			a.teleportTo((ServerLevel) a.level(), -30.5, a.getY(), -30.5, java.util.Set.of(), 0f, 0f, true);
+			b.teleportTo((ServerLevel) b.level(), -20.5, b.getY(), -30.5, java.util.Set.of(), 0f, 0f, true);
+			invite(a, b, new DuelConfig("testkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("lobby: finishing a duel sends everybody to the lobby", () -> {
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("lobby: both are at the lobby", () -> {
+			check("Alice is at the lobby", Math.abs(a.getX() - 50.5) < 2 && Math.abs(a.getZ() - 50.5) < 2, where(a));
+			check("Bob is at the lobby", Math.abs(b.getX() - 50.5) < 2 && Math.abs(b.getZ() - 50.5) < 2, where(b));
+			check("they were told", a.heard("Welcome to the lobby"));
+			run(a, "lobby return off");
+			check("Alice turned the lobby off for herself", !Prefs.lobbyReturn(a.getUUID()));
+			a.teleportTo((ServerLevel) a.level(), -30.5, a.getY(), -30.5, java.util.Set.of(), 0f, 0f, true);
+			invite(a, b, new DuelConfig("testkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("lobby: with 'return off' you go back to where you were", () -> {
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("lobby: Alice went back, Bob to the lobby", () -> {
+			check("Alice is where she was before the duel", Math.abs(a.getX() + 30.5) < 2 && Math.abs(a.getZ() + 30.5) < 2, where(a));
+			check("Bob is at the lobby again", Math.abs(b.getX() - 50.5) < 2 && Math.abs(b.getZ() - 50.5) < 2, where(b));
+			run(a, "lobby");
+			check("/lobby takes you there", Math.abs(a.getX() - 50.5) < 2 && Math.abs(a.getZ() - 50.5) < 2, where(a));
+			run(a, "lobby return on");
+			check("and Alice turned it on again", Prefs.lobbyReturn(a.getUUID()));
+			try {
+				Lobby.clear();
+			} catch (java.io.IOException e) {
+				check("the lobby can be removed", false, e.toString());
+			}
+			check("the lobby is gone", !Lobby.isSet());
+		});
+
+		// ---------------------------------------------------------------- automatic layout
+		step("auto layout: three kits", () -> {
+			dora = spawn("Dora");
+			carlTick = ticks;
+		}, () -> ticks - carlTick > 20, 200);
+		step("auto layout: /layout auto", () -> {
+			run(carl, "layout auto");
+			check("without kits there is nothing to look at", carl.heard("no kits"));
+
+			net.minecraft.world.entity.player.Inventory inv = dora.getInventory();
+			inv.clearContent();
+			inv.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			inv.setItem(1, new ItemStack(Items.GOLDEN_APPLE, 8));
+			inv.setItem(2, new ItemStack(Items.ENDER_PEARL, 16));
+			inv.setItem(8, new ItemStack(Items.COOKED_BEEF, 32));
+			inv.setItem(20, new ItemStack(Items.STONE, 4));
+			run(dora, "kit save dk1");
+			inv.clearContent();
+			inv.setItem(0, new ItemStack(Items.NETHERITE_SWORD));
+			inv.setItem(1, new ItemStack(Items.GOLDEN_APPLE, 8));
+			inv.setItem(2, new ItemStack(Items.ENDER_PEARL, 16));
+			inv.setItem(8, new ItemStack(Items.COOKED_BEEF, 32));
+			inv.setItem(30, new ItemStack(Items.DIRT, 4));
+			run(dora, "kit save dk2");
+			inv.clearContent();
+			inv.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			inv.setItem(1, new ItemStack(Items.GOLDEN_APPLE, 8));
+			inv.setItem(3, new ItemStack(Items.ENDER_PEARL, 16));
+			inv.setItem(8, new ItemStack(Items.COOKED_BEEF, 32));
+			run(dora, "kit save dk3");
+			check("Dora has three kits", KitStore.list(dora.getUUID()).size() == 3);
+
+			run(dora, "layout auto");
+			var profile = com.pvpduels.layout.LayoutStore.get(dora.getUUID()).profiles.get("auto");
+			check("the layout 'auto' exists", profile != null, dora.heard("Looked at") ? "" : "no answer");
+			if (profile == null) return;
+			check("slot 1 wants the diamond sword first, then any sword", profile.slots.get(1) != null
+				&& profile.slots.get(1).get(0).equals("minecraft:diamond_sword") && profile.slots.get(1).contains("sword"), String.valueOf(profile.slots.get(1)));
+			check("slot 2 wants the golden apple", profile.slots.get(2) != null && profile.slots.get(2).get(0).equals("minecraft:golden_apple")
+				&& profile.slots.get(2).contains("gapple"), String.valueOf(profile.slots.get(2)));
+			check("slot 3 wants the ender pearl (2 of 3 kits)", profile.slots.get(3) != null && profile.slots.get(3).get(0).equals("minecraft:ender_pearl"),
+				String.valueOf(profile.slots.get(3)));
+			check("slot 4 gets nothing (the pearl was there only once)", profile.slots.get(4) == null, String.valueOf(profile.slots.get(4)));
+			check("slot 9 wants the cooked beef", profile.slots.get(9) != null && profile.slots.get(9).get(0).equals("minecraft:cooked_beef"),
+				String.valueOf(profile.slots.get(9)));
+			check("items that are in only one kit get no rule", profile.slots.get(21) == null && profile.slots.get(31) == null);
+
+			// a scrambled inventory is sorted by the new layout
+			inv.clearContent();
+			inv.setItem(5, new ItemStack(Items.DIAMOND_SWORD));
+			inv.setItem(7, new ItemStack(Items.GOLDEN_APPLE, 8));
+			inv.setItem(10, new ItemStack(Items.ENDER_PEARL, 16));
+			inv.setItem(0, new ItemStack(Items.COOKED_BEEF, 32));
+			com.pvpduels.layout.InventorySorter.sort(dora, profile);
+			check("the sorter puts everything where your kits keep it", inv.getItem(0).is(Items.DIAMOND_SWORD) && inv.getItem(1).is(Items.GOLDEN_APPLE)
+				&& inv.getItem(2).is(Items.ENDER_PEARL) && inv.getItem(8).is(Items.COOKED_BEEF));
+			run(dora, "layout auto mine");
+			check("another name makes another layout", com.pvpduels.layout.LayoutStore.get(dora.getUUID()).profiles.containsKey("mine"));
+			run(dora, "layout auto mine");
+			check("an existing layout with rules is not overwritten", dora.heard("already has rules"));
 		});
 
 		step("statistics, sidebar and guide book", () -> {
