@@ -52,6 +52,7 @@ public final class Spectators {
 		MinecraftServer server = p.level().getServer();
 		if (target.getUUID().equals(p.getUUID())) return "You can't watch yourself.";
 		Duel duel = DuelManager.duelOf(target.getUUID());
+		if (duel == null && DuelManager.teamDuelOf(target.getUUID()) != null) return "2v2 duels can't be watched yet.";
 		if (duel == null || duel.closed) return target.getName().getString() + " is not in a duel right now.";
 		if (DuelManager.isInDuel(p.getUUID())) return "You are in a duel yourself.";
 		ServerLevel level = duel.space.level(server);

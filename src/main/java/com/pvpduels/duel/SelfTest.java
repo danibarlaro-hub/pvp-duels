@@ -2819,6 +2819,229 @@ public final class SelfTest {
 			check("her armor slots are back to what she had", a.getItemBySlot(EquipmentSlot.HEAD).isEmpty());
 		});
 
+		// ---------------------------------------------------------------- parties and 2v2
+		final int[] team2v2Before = new int[3];
+		step("party: nobody is in a party at first", () -> {
+			Party.resetForTest();
+			check("all four are free", !DuelManager.isBusy(a.getUUID()) && !DuelManager.isBusy(b.getUUID()) && !DuelManager.isBusy(carl.getUUID()) && !DuelManager.isBusy(dora.getUUID()));
+			check("nobody is in a party", !Party.inParty(a.getUUID()) && !Party.isFull(a.getUUID()) && Party.partnerOf(a.getUUID()) == null);
+			run(a, "party");
+			check("/party says so", a.heard("You are not in a party. /party invite"));
+			run(a, "party accept");
+			check("there is nothing to accept", a.heard("(or it expired)"));
+			run(a, "party invite Alice");
+			check("you can't be your own partner", a.heard("You can't be your own partner."));
+			run(a, "party leave");
+			check("you can't leave what you are not in", a.heard("You are not in a party.") && !Party.inParty(a.getUUID()));
+		});
+		step("party: an invitation can be denied", () -> {
+			run(a, "party invite Bob");
+			check("Alice is told it was sent", a.heard("Party invitation sent to Bob"));
+			check("Bob gets the invitation with buttons", b.heard("wants you as a partner for 2v2 duels") && b.heard("[ACCEPT]") && b.heard("[DENY]"));
+			run(b, "party deny");
+			check("Bob denied", b.heard("You denied the invitation of Alice") && a.heard("Bob denied your party invitation"));
+			check("nobody is in a party", !Party.inParty(a.getUUID()) && !Party.inParty(b.getUUID()));
+			run(b, "party accept");
+			check("a denied invitation is gone", !Party.inParty(b.getUUID()));
+		});
+		step("party: an invitation can be accepted", () -> {
+			run(a, "party invite Bob");
+			run(b, "party accept");
+			check("they are partners", Party.isFull(a.getUUID()) && Party.isFull(b.getUUID()) && Party.partnerOf(a.getUUID()).equals(b.getUUID())
+				&& Party.partnerOf(b.getUUID()).equals(a.getUUID()));
+			check("Alice is the leader", Party.isLeader(a.getUUID()) && !Party.isLeader(b.getUUID()));
+			check("both were told", b.heard("You are in a party with Alice") && a.heard("Bob is your partner now"));
+			run(a, "party");
+			check("/party shows the partner", a.heard("Your party: you and Bob"));
+		});
+		step("party: a third player can't join", () -> {
+			run(carl, "party invite Alice");
+			check("Carl can't invite somebody who has a party", carl.heard("Alice is in a party already."));
+			run(a, "party invite Carl");
+			check("Alice's party is full", a.heard("Your party is full already."));
+			check("Carl got nothing to accept", !carl.heard("wants you as a partner"));
+		});
+		step("party: an invitation runs out after a minute", () -> {
+			long t0 = 5_000_000L;
+			Party.setClockForTest(t0);
+			run(carl, "party invite Dora");
+			check("Dora is invited", dora.heard("Carl") && dora.heard("wants you as a partner"));
+			Party.setClockForTest(t0 + 61_000);
+			run(dora, "party accept");
+			check("too late: no party", !Party.inParty(dora.getUUID()) && !Party.inParty(carl.getUUID()));
+			Party.setClockForTest(t0 + 70_000);
+			run(carl, "party invite Dora");
+			Party.setClockForTest(t0 + 80_000);
+			run(dora, "party accept");
+			check("in time: Carl and Dora are partners", Party.isFull(carl.getUUID()) && Party.partnerOf(carl.getUUID()).equals(dora.getUUID()));
+			Party.setClockForTest(0);
+		});
+		step("party: a party only duels another party", () -> {
+			run(dora, "party leave");
+			check("leaving ends the party for both", !Party.inParty(dora.getUUID()) && !Party.inParty(carl.getUUID()) && carl.heard("Dora left the party, so it is over."));
+			DuelManager.sendInvite(carl, a, carl.getUUID(), new DuelConfig("qkit", false, WinMode.FIRST_TO, 2), false);
+			check("a single player can't challenge a party", carl.heard("Alice is in a party, so they only play 2v2."));
+			DuelManager.sendInvite(a, carl, a.getUUID(), new DuelConfig("qkit", false, WinMode.FIRST_TO, 2), false);
+			check("a party can't challenge a single player", a.heard("You are in a party, so you can only duel another party (2v2). Carl is not in one."));
+			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("qkit", false, WinMode.FIRST_TO, 2), false);
+			check("a player can't challenge their own partner", a.heard("That is your own partner!"));
+			check("nobody got an invitation", !carl.heard("challenged you") && !b.heard("challenged you"));
+			run(carl, "party invite Dora");
+			run(dora, "party accept");
+			check("Carl and Dora are a party again", Party.isFull(carl.getUUID()) && Party.isFull(dora.getUUID()));
+		});
+		step("2v2: Alice challenges Carl, who accepts", () -> {
+			for (Dummy p : new Dummy[] {a, b, carl, dora}) p.getInventory().clearContent();
+			team2v2Before[0] = StatsStore.get(a.getUUID()).elo;
+			team2v2Before[1] = StatsStore.get(carl.getUUID()).elo;
+			team2v2Before[2] = StatsStore.get(a.getUUID()).duels;
+			a.getInventory().setItem(22, new ItemStack(Items.COBBLESTONE, 7));
+			b.getInventory().setItem(22, new ItemStack(Items.COBBLESTONE, 6));
+			carl.getInventory().setItem(22, new ItemStack(Items.COBBLESTONE, 5));
+			dora.getInventory().setItem(22, new ItemStack(Items.COBBLESTONE, 4));
+			DuelManager.sendInvite(a, carl, a.getUUID(), new DuelConfig("qkit", false, WinMode.FIRST_TO, 2), false);
+			check("Carl is told it is a 2v2", carl.heard("and their partner challenged you and your partner to a 2v2 duel!"));
+			run(carl, "accept Alice");
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("a 2v2 exists for the four", t != null && DuelManager.teamDuelOf(b.getUUID()) == t && DuelManager.teamDuelOf(carl.getUUID()) == t && DuelManager.teamDuelOf(dora.getUUID()) == t);
+			check("it is not a 1v1", duel(a) == null && duel(carl) == null);
+			check("team 0 is Alice and Bob, team 1 is Carl and Dora", t != null && t.teamName(0).equals("Alice & Bob") && t.teamName(1).equals("Carl & Dora"));
+			check("they are all in a duel", DuelManager.isInDuel(a.getUUID()) && DuelManager.isInDuel(b.getUUID()) && DuelManager.isInDuel(carl.getUUID()) && DuelManager.isInDuel(dora.getUUID()));
+			check("they were told the rules", a.heard("2v2: Alice & Bob vs Carl & Dora") && dora.heard("No friendly fire."));
+			check("the party can't end while it plays", Party.leave(a) != null);
+		}, () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			return t != null && t.phase == Duel.Phase.FIGHTING;
+		}, 600);
+		step("2v2: the four are in the arena with the kit", () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("all four are in the arena world", a.level().dimension().equals(t.space.dimension()) && b.level().dimension().equals(t.space.dimension())
+				&& carl.level().dimension().equals(t.space.dimension()) && dora.level().dimension().equals(t.space.dimension()), where(a) + " / " + where(carl));
+			check("teammates start next to each other", a.distanceTo(b) > 1.5 && a.distanceTo(b) < 4 && carl.distanceTo(dora) > 1.5 && carl.distanceTo(dora) < 4,
+				a.distanceTo(b) + " / " + carl.distanceTo(dora));
+			check("the teams start far from each other", a.distanceTo(carl) > 6 && b.distanceTo(dora) > 6, "" + a.distanceTo(carl));
+			check("everybody got the sword of the kit", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && b.getInventory().getItem(0).is(Items.DIAMOND_SWORD)
+				&& carl.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && dora.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			check("the cobblestone of their own inventory is not there", a.getInventory().getItem(22).isEmpty() && dora.getInventory().getItem(22).isEmpty());
+			check("score 0 - 0 in round 1", t.points[0] == 0 && t.points[1] == 0 && t.round == 1);
+			check("Alice's sidebar", sidebarHas(a, "2v2 with Bob") && sidebarHas(a, "vs Carl & Dora") && sidebarHas(a, "Alive: 2 vs 2"), String.valueOf(sidebar(a)));
+			check("Carl's sidebar", sidebarHas(carl, "2v2 with Dora") && sidebarHas(carl, "vs Alice & Bob"), String.valueOf(sidebar(carl)));
+			DuelManager.listDuels(b);
+			check("/duels lists the 2v2", b.heard("2v2: Alice & Bob 0 - 0 Carl & Dora"));
+			check("busy players can't be challenged", DuelManager.busyReason(a) != null && DuelManager.busyReason(dora) != null);
+		});
+		step("2v2: no friendly fire", () -> {
+			hit(a, b);
+			hit(carl, dora);
+			check("Bob and Dora are fine", b.getHealth() == b.getMaxHealth() && dora.getHealth() == dora.getMaxHealth()
+				&& b.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL && dora.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL);
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("nobody is out", t.phase == Duel.Phase.FIGHTING && t.points[0] == 0 && t.points[1] == 0);
+		});
+		step("2v2: a partner can't end the party in the middle of a duel", () -> {
+			run(b, "party leave");
+			check("a partner can't leave in the middle of a duel", b.heard("You are in a duel: finish it or use /leave first.") && Party.inParty(b.getUUID()));
+		});
+		step("2v2: Alice knocks Carl out; the round goes on", () -> {
+			hit(a, carl);
+			check("Carl is a spectator now", carl.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SPECTATOR);
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("the round is still on", t.phase == Duel.Phase.FIGHTING && t.points[0] == 0 && t.points[1] == 0);
+			check("they were told who did it", a.heard("Alice defeated Carl.") && dora.heard("Alice defeated Carl."));
+			hit(b, carl);
+			check("a player who is out can't be hit again or lose a round twice", t.phase == Duel.Phase.FIGHTING && t.points[0] == 0);
+		}, () -> sidebarHas(a, "Alive: 2 vs 1"), 200);
+		step("2v2: Bob knocks Dora out; Alice and Bob win round 1", () -> {
+			hit(b, dora);
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("round 1 goes to team 0", t.points[0] == 1 && t.points[1] == 0 && t.phase == Duel.Phase.ROUND_END && t.winner == -2);
+			check("everybody was told", carl.heard("Round 1 goes to Alice & Bob.") && b.heard("Round 1 goes to Alice & Bob.  Score: 1 - 0"));
+			check("Carl's score line is the other way round", dora.heard("Score: 0 - 1"));
+			check("no clutch: nobody of the winners was out", Achievements.counter(a.getUUID(), "team_clutches") == 0 && Achievements.counter(b.getUUID(), "team_clutches") == 0);
+		}, () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			return t != null && t.round == 2 && t.phase == Duel.Phase.FIGHTING;
+		}, 800);
+		step("2v2: round 2 starts with everybody back in the fight", () -> {
+			check("Carl is not a spectator any more", carl.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL && dora.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL);
+			check("all have full health and the kit again", a.getHealth() == a.getMaxHealth() && carl.getHealth() == carl.getMaxHealth()
+				&& carl.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && dora.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			check("teams are apart again", a.distanceTo(carl) > 6, "" + a.distanceTo(carl));
+			hit(carl, a);
+			check("Alice is out", a.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SPECTATOR);
+			hit(dora, b);
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("round 2 goes to Carl and Dora: 1 - 1", t.points[0] == 1 && t.points[1] == 1 && t.phase == Duel.Phase.ROUND_END, t.points[0] + "-" + t.points[1] + " " + t.phase);
+			check("they were told", a.heard("Round 2 goes to Carl & Dora."));
+			check("Carl and Dora clutched nothing: both were alive", Achievements.counter(carl.getUUID(), "team_clutches") == 0);
+		}, () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			return t != null && t.round == 3 && t.phase == Duel.Phase.FIGHTING;
+		}, 800);
+		step("2v2: round 3, Alice wins it alone", () -> {
+			hit(carl, b);
+			check("Bob is out", b.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SPECTATOR);
+			hit(a, carl);
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("one rival to go", t.phase == Duel.Phase.FIGHTING);
+			hit(a, dora);
+			check("the match is decided: team 0 wins 2 - 1", t.points[0] == 2 && t.points[1] == 1 && t.winner == 0, t.points[0] + "-" + t.points[1] + " winner " + t.winner);
+			check("Alice clutched, Bob did not", Achievements.counter(a.getUUID(), "team_clutches") == 1 && Achievements.counter(b.getUUID(), "team_clutches") == 0,
+				Achievements.counter(a.getUUID(), "team_clutches") + " / " + Achievements.counter(b.getUUID(), "team_clutches"));
+		}, () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			return t != null && t.phase == Duel.Phase.ENDED && sidebarHas(a, "You won!") && sidebarHas(dora, "You lost");
+		}, 800);
+		step("2v2: the end of the match", () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("the final score was told", carl.heard("2v2 finished: Alice & Bob 2 - 1 Carl & Dora"));
+			check("the winners have the win, the losers do not", Achievements.counter(a.getUUID(), "team_wins") == 1 && Achievements.counter(b.getUUID(), "team_wins") == 1
+				&& Achievements.counter(carl.getUUID(), "team_wins") == 0 && Achievements.counter(dora.getUUID(), "team_wins") == 0);
+			check("Better Together and Clutch", Achievements.has(a.getUUID(), "team_first") && Achievements.has(b.getUUID(), "team_first") && Achievements.has(a.getUUID(), "clutch_1")
+				&& !Achievements.has(b.getUUID(), "clutch_1") && !Achievements.has(carl.getUUID(), "team_first"));
+			check("a 2v2 does not touch the Elo or the 1v1 numbers", StatsStore.get(a.getUUID()).elo == team2v2Before[0] && StatsStore.get(carl.getUUID()).elo == team2v2Before[1]
+				&& StatsStore.get(a.getUUID()).duels == team2v2Before[2], StatsStore.get(a.getUUID()).elo + " / " + StatsStore.get(carl.getUUID()).elo + " / " + StatsStore.get(a.getUUID()).duels);
+			check("the sidebar says who won", sidebarHas(a, "You won!") && sidebarHas(dora, "You lost"), String.valueOf(sidebar(a)));
+			run(carl, "leave");
+			check("Carl got himself back", !DuelManager.isInDuel(carl.getUUID()) && carl.getInventory().getItem(22).is(Items.COBBLESTONE) && carl.getInventory().getItem(22).getCount() == 5);
+			check("the others are still there until it closes", DuelManager.isInDuel(a.getUUID()) && t.phase == Duel.Phase.ENDED);
+			run(carl, "spectate Alice");
+			check("a 2v2 can't be watched yet", carl.heard("2v2 duels can't be watched yet.") && !Spectators.isIn(carl.getUUID()));
+		}, () -> !DuelManager.isInDuel(a.getUUID()) && !DuelManager.isInDuel(b.getUUID()) && !DuelManager.isInDuel(dora.getUUID()), 800);
+		step("2v2: everybody got their things back", () -> {
+			check("Alice, Bob and Dora have their cobblestone again", a.getInventory().getItem(22).getCount() == 7 && b.getInventory().getItem(22).getCount() == 6
+				&& dora.getInventory().getItem(22).getCount() == 4);
+			check("and the kit is gone", a.getInventory().getItem(0).isEmpty() && b.getInventory().getItem(0).isEmpty() && dora.getInventory().getItem(0).isEmpty());
+			check("all in survival again", a.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL && b.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL);
+			check("no duel is left", DuelManager.activeDuels() == 0 && DuelManager.teamDuelOf(a.getUUID()) == null);
+			check("the parties are still there", Party.isFull(a.getUUID()) && Party.isFull(carl.getUUID()));
+		});
+		step("2v2: a player who leaves makes their team forfeit", () -> {
+			invite(a, carl, new DuelConfig("qkit", false, WinMode.FIRST_TO, 3));
+			check("a new 2v2 started", DuelManager.teamDuelOf(a.getUUID()) != null && DuelManager.teamDuelOf(dora.getUUID()) != null);
+		}, () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			return t != null && t.phase == Duel.Phase.FIGHTING;
+		}, 600);
+		step("2v2: Dora types /leave", () -> {
+			run(dora, "leave");
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("the duel is over", t != null && t.phase == Duel.Phase.ENDED && t.winner == 0);
+			check("Dora is out and the others were told", !DuelManager.isInDuel(dora.getUUID()) && a.heard("Dora left the duel, so Carl & Dora forfeit."));
+			check("Alice and Bob won it", Achievements.counter(a.getUUID(), "team_wins") == 2 && Achievements.counter(b.getUUID(), "team_wins") == 2);
+			check("Carl lost it", Achievements.counter(carl.getUUID(), "team_wins") == 0);
+			run(carl, "leave");
+			check("Carl can leave too", !DuelManager.isInDuel(carl.getUUID()));
+		}, () -> !DuelManager.isInDuel(a.getUUID()) && !DuelManager.isInDuel(b.getUUID()), 800);
+		step("2v2: the parties can be ended", () -> {
+			check("the arena is free", DuelManager.activeDuels() == 0);
+			run(a, "party leave");
+			check("Alice left, so the party is over for both", !Party.inParty(a.getUUID()) && !Party.inParty(b.getUUID()) && b.heard("Alice left the party, so it is over."));
+			Party.resetForTest();
+			check("everything is reset", !Party.inParty(carl.getUUID()) && !Party.inParty(dora.getUUID()));
+			for (Dummy p : new Dummy[] {a, b, carl, dora}) p.getInventory().clearContent();
+		});
+
 		// ---------------------------------------------------------------- achievements and titles
 		step("achievements: the duels, kits and builds of this whole test already counted", () -> {
 			check("Alice has First Steps and First Victory", Achievements.has(a.getUUID(), "first_duel") && Achievements.has(a.getUUID(), "first_win"));

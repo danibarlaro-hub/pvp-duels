@@ -63,6 +63,10 @@ public final class Achievements {
 		new Achievement("arenas_4", DUELS, "Traveler", "Duel in 4 different kinds of arena.", "arena_kinds", 4, "Traveler", ChatFormatting.GREEN, Items.COMPASS),
 		new Achievement("queue_1", DUELS, "Queue Up", "Win a duel from the queue.", "queue_wins", 1, null, ChatFormatting.GREEN, Items.CLOCK),
 		new Achievement("queue_10", DUELS, "Queue Veteran", "Win 10 duels from the queue.", "queue_wins", 10, "Matchmaker", ChatFormatting.GREEN, Items.RECOVERY_COMPASS),
+		new Achievement("team_first", DUELS, "Better Together", "Win a 2v2 duel.", "team_wins", 1, "Teammate", ChatFormatting.GREEN, Items.LEAD),
+		new Achievement("team_10", DUELS, "Dynamic Duo", "Win 10 duels in 2v2.", "team_wins", 10, "Duo", ChatFormatting.GREEN, Items.GOLDEN_CARROT),
+		new Achievement("clutch_1", DUELS, "Clutch", "Win a round alone against both rivals after your partner is out.", "team_clutches", 1, null, ChatFormatting.RED, Items.CLOCK),
+		new Achievement("clutch_5", DUELS, "Clutch Master", "Win 5 rounds alone against both rivals in 2v2.", "team_clutches", 5, "Clutch Master", ChatFormatting.RED, Items.TOTEM_OF_UNDYING),
 		new Achievement("spectate_5", DUELS, "Fan", "Watch 5 duels.", "spectated", 5, null, ChatFormatting.GRAY, Items.SPYGLASS),
 
 		new Achievement("bot_10", PRACTICE, "Bot Buster", "Knock out the practice bot 10 times.", "bot_kos", 10, null, ChatFormatting.GREEN, Items.ZOMBIE_HEAD),

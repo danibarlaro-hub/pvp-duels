@@ -205,7 +205,7 @@ public final class TestDummy {
 	static void disconnect(MinecraftServer server, UUID id) {
 		ServerPlayer p = server.getPlayerList().getPlayer(id);
 		if (p == null) return;
-		if (DuelManager.duelOf(id) != null) DuelManager.leave(p);
+		if (DuelManager.isInDuel(id)) DuelManager.leave(p);
 		if (p.connection != null) p.connection.onDisconnect(new DisconnectionDetails(Component.literal("Test dummy removed")));
 	}
 
@@ -222,8 +222,7 @@ public final class TestDummy {
 				AUTO.remove(key);
 				continue;
 			}
-			Duel duel = DuelManager.duelOf(id);
-			if (duel != null) {
+			if (DuelManager.isInDuel(id)) {
 				// Leaves the duel first so the other player is not left waiting.
 				DuelManager.leave(p);
 			}

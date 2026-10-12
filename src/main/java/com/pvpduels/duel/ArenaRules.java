@@ -28,10 +28,10 @@ final class ArenaRules {
 	 */
 	private static Mode mode(net.minecraft.world.entity.player.Player player) {
 		if (!(player instanceof ServerPlayer sp)) return Mode.OFF;
-		Duel duel = DuelManager.duelOf(sp.getUUID());
-		if (duel == null) return Mode.OFF;
-		if (duel.config.arena() == ArenaKind.FLAT || duel.config.arena() == ArenaKind.BOT) return Mode.FLAT;
-		return duel.config.rules().building() ? Mode.OFF : Mode.NO_BUILDING;
+		DuelConfig config = DuelManager.configOf(sp.getUUID());
+		if (config == null) return Mode.OFF;
+		if (config.arena() == ArenaKind.FLAT || config.arena() == ArenaKind.BOT) return Mode.FLAT;
+		return config.rules().building() ? Mode.OFF : Mode.NO_BUILDING;
 	}
 
 	static void register() {

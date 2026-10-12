@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.pvpduels.duel.Duel;
 import com.pvpduels.duel.DuelManager;
 import com.pvpduels.duel.Spectators;
+import com.pvpduels.duel.TeamDuel;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.stats.StatsStore;
 import com.pvpduels.util.Msg;
@@ -61,6 +62,11 @@ public final class Sidebar {
 		Duel duel = DuelManager.duelOf(p.getUUID());
 		if (duel != null) {
 			List<String> lines = duel.sidebarFor(p.getUUID());
+			if (!lines.isEmpty()) return lines;
+		}
+		TeamDuel team = DuelManager.teamDuelOf(p.getUUID());
+		if (team != null) {
+			List<String> lines = team.sidebarFor(p.getUUID());
 			if (!lines.isEmpty()) return lines;
 		}
 		List<String> lines = new ArrayList<>();

@@ -37,6 +37,9 @@ public final class DuelManager {
 
 	private static final Duel[] SLOTS = new Duel[MAX_DUELS];
 	private static final Map<UUID, Duel> BY_PLAYER = new HashMap<>();
+	/** The 2v2 duels use the same arena slots as the 1v1 ones. */
+	private static final TeamDuel[] TEAM_SLOTS = new TeamDuel[MAX_DUELS];
+	private static final Map<UUID, TeamDuel> TEAM_BY_PLAYER = new HashMap<>();
 	private static final List<Invite> INVITES = new ArrayList<>();
 	private static final Map<UUID, Last> LAST = new HashMap<>();
 	private static int tickCounter;
@@ -69,23 +72,37 @@ public final class DuelManager {
 	// ------------------------------------------------------------------ queries
 
 	public static boolean isInDuel(UUID id) {
-		return BY_PLAYER.containsKey(id);
+		return BY_PLAYER.containsKey(id) || TEAM_BY_PLAYER.containsKey(id);
 	}
 
 	/** True while the player can't take a new duel: they are in one that has not finished yet. */
 	public static boolean isBusy(UUID id) {
 		if (Workshop.isIn(id) || Spectators.isIn(id) || com.pvpduels.arena.ArenaStudio.isIn(id)) return true;
 		Duel d = BY_PLAYER.get(id);
-		return d != null && d.phase != Duel.Phase.ENDED;
+		if (d != null && d.phase != Duel.Phase.ENDED) return true;
+		TeamDuel t = TEAM_BY_PLAYER.get(id);
+		return t != null && t.phase != Duel.Phase.ENDED;
 	}
 
 	public static Duel duelOf(UUID id) {
 		return BY_PLAYER.get(id);
 	}
 
+	public static TeamDuel teamDuelOf(UUID id) {
+		return TEAM_BY_PLAYER.get(id);
+	}
+
+	/** The settings of the duel (1v1 or 2v2) this player is in, or null. */
+	static DuelConfig configOf(UUID id) {
+		Duel d = BY_PLAYER.get(id);
+		if (d != null) return d.config;
+		TeamDuel t = TEAM_BY_PLAYER.get(id);
+		return t == null ? null : t.config;
+	}
 	public static int activeDuels() {
 		int n = 0;
 		for (Duel d : SLOTS) if (d != null) n++;
+		for (TeamDuel t : TEAM_SLOTS) if (t != null) n++;
 		return n;
 	}
 
@@ -102,11 +119,16 @@ public final class DuelManager {
 		for (Duel d : SLOTS.clone()) {
 			if (d != null) d.tick();
 		}
+		for (TeamDuel t : TEAM_SLOTS.clone()) {
+			if (t != null) t.tick();
+		}
 		if (tickCounter % 20 == 0) expireInvites(server);
 	}
 
 	private static boolean allowDamage(LivingEntity entity, DamageSource source, float amount) {
 		if (!(entity instanceof ServerPlayer victim)) return true;
+		TeamDuel team = TEAM_BY_PLAYER.get(victim.getUUID());
+		if (team != null) return team.allowDamage(victim, source);
 		Duel duel = BY_PLAYER.get(victim.getUUID());
 		if (duel == null) return true;
 		if (!duel.canTakeDamage()) return false;
@@ -136,6 +158,11 @@ public final class DuelManager {
 	/** Duelists never really die: the round ends instead. */
 	private static boolean allowDeath(LivingEntity entity, DamageSource source, float amount) {
 		if (!(entity instanceof ServerPlayer p)) return true;
+		TeamDuel team = TEAM_BY_PLAYER.get(p.getUUID());
+		if (team != null) {
+			team.onDeath(p, source);
+			return false;
+		}
 		Duel duel = BY_PLAYER.get(p.getUUID());
 		if (duel == null) return true;
 		countHit(p, source, Math.min(amount, p.getMaxHealth()));
@@ -145,6 +172,8 @@ public final class DuelManager {
 
 	private static void onDisconnect(ServerPlayer p) {
 		INVITES.removeIf(i -> i.from().equals(p.getUUID()) || i.to().equals(p.getUUID()));
+		TeamDuel team = TEAM_BY_PLAYER.get(p.getUUID());
+		if (team != null) team.forfeit(team.indexOf(p.getUUID())); // the backup stays on disk, like in a 1v1
 		Duel duel = BY_PLAYER.get(p.getUUID());
 		if (duel != null) {
 			int i = duel.indexOf(p.getUUID());
@@ -164,6 +193,9 @@ public final class DuelManager {
 	private static void onStopping(MinecraftServer server) {
 		for (Duel d : SLOTS.clone()) {
 			if (d != null) d.abort();
+		}
+		for (TeamDuel t : TEAM_SLOTS.clone()) {
+			if (t != null) t.abort();
 		}
 	}
 
@@ -186,7 +218,18 @@ public final class DuelManager {
 	/** The player got their inventory back, so they are not part of the duel any more. */
 	static void onLeft(UUID id) {
 		BY_PLAYER.remove(id);
+		TEAM_BY_PLAYER.remove(id);
 	}
+
+	static void onTeamClosed(TeamDuel t) {
+		for (int i = 0; i < TEAM_SLOTS.length; i++) {
+			if (TEAM_SLOTS[i] == t) TEAM_SLOTS[i] = null;
+		}
+		for (UUID id : t.ids) TEAM_BY_PLAYER.remove(id, t);
+	}
+
+	/** A 2v2 is decided. There is no /again for it. */
+	static void onTeamFinished(TeamDuel t) {}
 
 	private static void expireInvites(MinecraftServer server) {
 		Iterator<Invite> it = INVITES.iterator();
@@ -219,11 +262,17 @@ public final class DuelManager {
 	public static void listDuels(ServerPlayer to) {
 		List<Duel> running = new ArrayList<>();
 		for (Duel d : SLOTS) if (d != null && !d.practice && !d.closed && d.phase != Duel.Phase.ENDED) running.add(d);
-		if (running.isEmpty()) {
+		List<TeamDuel> teams = new ArrayList<>();
+		for (TeamDuel t : TEAM_SLOTS) if (t != null && !t.closed && t.phase != Duel.Phase.ENDED) teams.add(t);
+		if (running.isEmpty() && teams.isEmpty()) {
 			to.sendSystemMessage(Msg.info("Nobody is dueling right now. Challenge somebody with /duel <player>."));
 			return;
 		}
-		to.sendSystemMessage(Msg.title("Duels right now (" + running.size() + ")"));
+		to.sendSystemMessage(Msg.title("Duels right now (" + (running.size() + teams.size()) + ")"));
+		for (TeamDuel t : teams) {
+			to.sendSystemMessage(Component.literal("  2v2: " + t.teamName(0) + " " + t.points[0] + " - " + t.points[1] + " " + t.teamName(1)).withStyle(ChatFormatting.WHITE)
+				.append(Component.literal("   " + t.config.kit() + ", " + t.config.arenaName() + "  (2v2 can't be watched yet)").withStyle(ChatFormatting.GRAY)));
+		}
 		for (Duel d : running) {
 			Component line = Component.literal("  " + d.names[0] + " " + d.points[0] + " - " + d.points[1] + " " + d.names[1]).withStyle(ChatFormatting.WHITE)
 				.append(Component.literal("   " + d.config.kit() + ", " + d.config.arenaName() + "  ").withStyle(ChatFormatting.GRAY))
@@ -234,7 +283,24 @@ public final class DuelManager {
 
 	/** Why this player can't take part in a new duel right now, or null. */
 	public static String busyReason(ServerPlayer p) {
-		if (BY_PLAYER.containsKey(p.getUUID())) return "is already in a duel";
+		if (BY_PLAYER.containsKey(p.getUUID()) || TEAM_BY_PLAYER.containsKey(p.getUUID())) return "is already in a duel";
+		return null;
+	}
+
+	/** The rules about parties: a party only duels another full party (2v2), and the four must be free. Returns an error text or null. */
+	private static String partyProblem(MinecraftServer server, ServerPlayer from, ServerPlayer to) {
+		boolean f = Party.inParty(from.getUUID());
+		boolean t = Party.inParty(to.getUUID());
+		if (!f && !t) return null;
+		String toName = to.getName().getString();
+		if (f && !t) return "You are in a party, so you can only duel another party (2v2). " + toName + " is not in one. /party leave if you want a 1v1.";
+		if (!f) return toName + " is in a party, so they only play 2v2. Make a party first with /party invite <friend>.";
+		if (from.getUUID().equals(Party.partnerOf(to.getUUID()))) return "That is your own partner!";
+		for (UUID id : new UUID[] {Party.partnerOf(from.getUUID()), Party.partnerOf(to.getUUID())}) {
+			ServerPlayer other = id == null ? null : server.getPlayerList().getPlayer(id);
+			if (other == null) return "A partner is not online.";
+			if (isBusy(id)) return other.getName().getString() + " is busy right now.";
+		}
 		return null;
 	}
 
@@ -252,6 +318,12 @@ public final class DuelManager {
 			from.sendSystemMessage(Msg.err(to.getName().getString() + " is busy right now (in a duel or the kit workshop)."));
 			return;
 		}
+		String partyProblem = partyProblem(server, from, to);
+		if (partyProblem != null) {
+			from.sendSystemMessage(Msg.err(partyProblem));
+			return;
+		}
+		boolean team = Party.inParty(from.getUUID());
 
 		// A rematch request that crosses another one: just start the duel.
 		if (rematch) {
@@ -272,7 +344,8 @@ public final class DuelManager {
 
 		to.sendSystemMessage(Component.literal(""));
 		to.sendSystemMessage(Component.literal(fromName).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-			.append(Component.literal(rematch ? " wants a rematch!" : " challenged you to a duel!").withStyle(ChatFormatting.YELLOW)));
+			.append(Component.literal(team ? " and their partner challenged you and your partner to a 2v2 duel!"
+				: rematch ? " wants a rematch!" : " challenged you to a duel!").withStyle(ChatFormatting.YELLOW)));
 		to.sendSystemMessage(Msg.info("  Kit: " + config.kit() + "   Arena: " + config.arenaName()));
 		to.sendSystemMessage(Msg.info("  Mode: " + config.modeName()));
 		if (!config.rules().isDefault()) to.sendSystemMessage(Msg.info("  Rules: " + config.rules().describe(config.arena())));
@@ -352,18 +425,33 @@ public final class DuelManager {
 			return;
 		}
 		String problem = null;
-		if (isBusy(a.getUUID())) problem = a.getName().getString() + " is busy right now (in a duel or the kit workshop).";
-		else if (isBusy(b.getUUID())) problem = b.getName().getString() + " is busy right now (in a duel or the kit workshop).";
+		// Two full parties make a 2v2: team 0 is a and their partner, team 1 is b and theirs.
+		boolean team = Party.isFull(a.getUUID()) && Party.isFull(b.getUUID());
+		ServerPlayer a2 = team ? server.getPlayerList().getPlayer(Party.partnerOf(a.getUUID())) : null;
+		ServerPlayer b2 = team ? server.getPlayerList().getPlayer(Party.partnerOf(b.getUUID())) : null;
+		if (Party.inParty(a.getUUID()) != Party.inParty(b.getUUID())) problem = "One of you is in a party and the other one is not, so there is no duel. Ask again.";
+		else if (team && (a2 == null || b2 == null)) problem = "A partner is no longer online.";
+		ServerPlayer[] group = team && problem == null ? new ServerPlayer[] {a, a2, b, b2} : new ServerPlayer[] {a, b};
+		if (problem == null) {
+			for (ServerPlayer p : group) {
+				if (isBusy(p.getUUID())) {
+					problem = p.getName().getString() + " is busy right now (in a duel or the kit workshop).";
+					break;
+				}
+			}
+		}
 		if (problem == null) {
 			// Somebody whose last duel just ended but who has not been put back yet: do it now.
-			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
+			for (ServerPlayer p : group) {
 				Duel old = BY_PLAYER.get(p.getUUID());
 				if (old != null) old.restore(old.indexOf(p.getUUID()));
+				TeamDuel oldTeam = TEAM_BY_PLAYER.get(p.getUUID());
+				if (oldTeam != null) oldTeam.restore(oldTeam.indexOf(p.getUUID()));
 			}
 		}
 
 		int slot = -1;
-		for (int i = 0; i < SLOTS.length && slot < 0; i++) if (SLOTS[i] == null) slot = i;
+		for (int i = 0; i < SLOTS.length && slot < 0; i++) if (SLOTS[i] == null && TEAM_SLOTS[i] == null) slot = i;
 		if (problem == null && slot < 0) problem = "All " + MAX_DUELS + " arenas are busy right now. Try again in a minute.";
 
 		ServerLevel arena = slot >= 0 ? Space.of(invite.config(), slot).level(server) : null;
@@ -386,17 +474,35 @@ public final class DuelManager {
 			}
 		}
 		if (problem != null) {
-			a.sendSystemMessage(Msg.err(problem));
-			b.sendSystemMessage(Msg.err(problem));
+			for (ServerPlayer p : group) p.sendSystemMessage(Msg.err(problem));
 			return;
 		}
 
-		// Any other pending requests of these two players are no longer valid.
-		INVITES.removeIf(i -> i.from().equals(a.getUUID()) || i.to().equals(a.getUUID())
-			|| i.from().equals(b.getUUID()) || i.to().equals(b.getUUID()));
+		// Any other pending requests of these players are no longer valid.
+		for (ServerPlayer p : group) {
+			INVITES.removeIf(i -> i.from().equals(p.getUUID()) || i.to().equals(p.getUUID()));
+			Queue.leave(p, false);
+		}
 
-		Queue.leave(a, false);
-		Queue.leave(b, false);
+		if (group.length == 4) {
+			TeamDuel teamDuel = new TeamDuel(server, slot, invite.config(), invite.kitOwner(), kit, group);
+			TEAM_SLOTS[slot] = teamDuel;
+			for (ServerPlayer p : group) TEAM_BY_PLAYER.put(p.getUUID(), teamDuel);
+			try {
+				teamDuel.begin(arena);
+				PvpDuelsMod.LOGGER.info("2v2 started: {} vs {} ({}, slot {})", teamDuel.teamName(0), teamDuel.teamName(1), invite.config(), slot);
+			} catch (IOException | RuntimeException e) {
+				PvpDuelsMod.LOGGER.error("Could not start the 2v2", e);
+				TEAM_SLOTS[slot] = null;
+				for (ServerPlayer p : group) {
+					TEAM_BY_PLAYER.remove(p.getUUID());
+					PlayerBackup.restore(server, p);
+					p.sendSystemMessage(Msg.err("Could not start the duel: " + e.getMessage()));
+				}
+			}
+			return;
+		}
+
 		Duel duel = new Duel(server, slot, invite.config(), invite.kitOwner(), kit, a, b);
 		SLOTS[slot] = duel;
 		BY_PLAYER.put(a.getUUID(), duel);
@@ -417,6 +523,17 @@ public final class DuelManager {
 	}
 
 	public static void leave(ServerPlayer p) {
+		TeamDuel team = TEAM_BY_PLAYER.get(p.getUUID());
+		if (team != null) {
+			int i = team.indexOf(p.getUUID());
+			if (team.phase == Duel.Phase.ENDED) {
+				team.restore(i);
+			} else {
+				team.forfeit(i);
+				team.restore(i);
+			}
+			return;
+		}
 		Duel duel = BY_PLAYER.get(p.getUUID());
 		if (duel == null) {
 			p.sendSystemMessage(Msg.err("You are not in a duel."));
