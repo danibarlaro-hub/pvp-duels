@@ -7,3 +7,7 @@ ItemAttributeModifiers
 EnchantmentEffectComponents
 \.AttributeModifier$
 \.Attributes$
+\.Mannequin$
+\.Villager$
+\.ArmorStand$
+\.Interaction$
