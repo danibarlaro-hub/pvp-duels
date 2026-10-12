@@ -12,6 +12,8 @@ import com.pvpduels.net.QuickKitPayload;
 import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
 import com.pvpduels.util.Msg;
+import com.pvpduels.workshop.ItemCommands;
+import com.pvpduels.workshop.Workshop;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -49,6 +51,8 @@ public class PvpDuelsMod implements ModInitializer {
 			GuideCommand.register(dispatcher);
 			DuelCommands.register(dispatcher);
 			TestDummy.register(dispatcher);
+			Workshop.registerCommands(dispatcher);
+			ItemCommands.register(dispatcher, registryAccess);
 		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
@@ -56,6 +60,7 @@ public class PvpDuelsMod implements ModInitializer {
 
 		DuelManager.register();
 		TestDummy.registerEvents();
+		Workshop.register();
 		SelfTest.register();
 
 		LOGGER.info("PvP Duels loaded.");

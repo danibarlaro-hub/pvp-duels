@@ -124,7 +124,11 @@ public final class Arena {
 	}
 
 	public static void clearEntities(ServerLevel level, int slot) {
-		int cx = centerX(slot);
+		clearEntitiesAround(level, centerX(slot));
+	}
+
+	/** Deletes every non-player entity near this x coordinate (items dropped, crystals, arrows...). */
+	public static void clearEntitiesAround(ServerLevel level, int cx) {
 		AABB box = new AABB(cx - 60, FLOOR_Y - 60, CENTER_Z - 60, cx + 60, FLOOR_Y + SCAN_HEIGHT + 20, CENTER_Z + 60);
 		List<Entity> found = level.getEntities((Entity) null, box, e -> !(e instanceof Player));
 		for (Entity e : found) {

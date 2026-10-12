@@ -3,6 +3,7 @@ package com.pvpduels.duel;
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.util.Msg;
+import com.pvpduels.workshop.Workshop;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -70,6 +71,7 @@ public final class DuelManager {
 
 	/** True while the player can't take a new duel: they are in one that has not finished yet. */
 	public static boolean isBusy(UUID id) {
+		if (Workshop.isIn(id)) return true;
 		Duel d = BY_PLAYER.get(id);
 		return d != null && d.phase != Duel.Phase.ENDED;
 	}
@@ -136,7 +138,7 @@ public final class DuelManager {
 	private static void onJoin(MinecraftServer server, ServerPlayer p) {
 		if (!BY_PLAYER.containsKey(p.getUUID()) && PlayerBackup.exists(p.getUUID())) {
 			if (PlayerBackup.restore(server, p)) {
-				p.sendSystemMessage(Msg.ok("Your inventory and position from before the duel were restored."));
+				p.sendSystemMessage(Msg.ok("Your inventory and position from before the duel or workshop were restored."));
 			}
 		}
 	}
@@ -201,11 +203,11 @@ public final class DuelManager {
 			return;
 		}
 		if (isBusy(from.getUUID())) {
-			from.sendSystemMessage(Msg.err("You are already in a duel."));
+			from.sendSystemMessage(Msg.err("You are busy: finish your duel or leave the kit workshop (/leave) first."));
 			return;
 		}
 		if (isBusy(to.getUUID())) {
-			from.sendSystemMessage(Msg.err(to.getName().getString() + " is already in a duel."));
+			from.sendSystemMessage(Msg.err(to.getName().getString() + " is busy right now (in a duel or the kit workshop)."));
 			return;
 		}
 
@@ -294,8 +296,8 @@ public final class DuelManager {
 			return;
 		}
 		String problem = null;
-		if (isBusy(a.getUUID())) problem = a.getName().getString() + " is already in a duel.";
-		else if (isBusy(b.getUUID())) problem = b.getName().getString() + " is already in a duel.";
+		if (isBusy(a.getUUID())) problem = a.getName().getString() + " is busy right now (in a duel or the kit workshop).";
+		else if (isBusy(b.getUUID())) problem = b.getName().getString() + " is busy right now (in a duel or the kit workshop).";
 		if (problem == null) {
 			// Somebody whose last duel just ended but who has not been put back yet: do it now.
 			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
@@ -375,7 +377,7 @@ public final class DuelManager {
 			return;
 		}
 		if (isBusy(p.getUUID())) {
-			p.sendSystemMessage(Msg.err("You are still in a duel. Wait for it to finish."));
+			p.sendSystemMessage(Msg.err("You are busy: finish your duel or leave the kit workshop first."));
 			return;
 		}
 		ServerPlayer opponent = p.level().getServer().getPlayerList().getPlayer(last.opponent());

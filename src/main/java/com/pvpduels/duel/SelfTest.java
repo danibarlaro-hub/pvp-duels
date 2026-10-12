@@ -2,6 +2,7 @@ package com.pvpduels.duel;
 
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.duel.TestDummy.Dummy;
+import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -513,11 +514,107 @@ public final class SelfTest {
 			check("the dummy is not auto-accepting any more", !TestDummy.accepts(java.util.UUID.nameUUIDFromBytes("OfflinePlayer:dum".getBytes(java.nio.charset.StandardCharsets.UTF_8))));
 		}, () -> noDuel(a), 600);
 
+		step("workshop: enter", () -> {
+			run(a, "kit create");
+			check("Alice is in the workshop world", a.level().dimension().equals(Arena.DIMENSION) && Workshop.isIn(a.getUUID()), where(a));
+			check("she is in creative mode", a.gameMode() == GameType.CREATIVE);
+			check("her own items are out of the way", a.getInventory().getItem(21).isEmpty());
+			check("her inventory was backed up to disk", PlayerBackup.exists(a.getUUID()));
+			check("there is a stone platform under her", Arena.level(server).getBlockState(a.blockPosition().below()).is(Blocks.STONE),
+				String.valueOf(Arena.level(server).getBlockState(a.blockPosition().below())));
+			run(a, "kit create");
+			check("she can't open the workshop twice", a.heard("already in the kit workshop"));
+			DuelManager.sendInvite(b, a, b.getUUID(), new DuelConfig("testkit", false, WinMode.ROUNDS, 1), false);
+			check("a duel request to somebody in the workshop is refused", b.heard("busy") && DuelManager.pendingFrom(a.getUUID()).isEmpty());
+		});
+		step("workshop: nothing can be placed or broken", () -> {
+			ServerLevel arena = Arena.level(server);
+			BlockPos floor = a.blockPosition().below();
+			BlockHitResult hit = new BlockHitResult(new Vec3(floor.getX() + 0.5, floor.getY() + 1, floor.getZ() + 0.5), Direction.UP, floor, false);
+			useOn(a, new ItemStack(Items.STONE), hit);
+			check("placing a block is refused", arena.getBlockState(floor.above()).isAir());
+			useOn(a, new ItemStack(Items.CHEST), hit);
+			check("placing a chest is refused too", arena.getBlockState(floor.above()).isAir());
+			boolean broke = a.gameMode.destroyBlock(floor);
+			check("breaking the platform is refused", !broke && arena.getBlockState(floor).is(Blocks.STONE));
+			a.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+		});
+		step("workshop: /enchant and /infinite", () -> {
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "enchant sharpness 255");
+			String text = a.getMainHandItem().getEnchantments().toString();
+			check("a normal player can enchant with level 255 in the workshop", text.contains("255"), text);
+			run(a, "enchant fire_protection 3");
+			text = a.getMainHandItem().getEnchantments().toString();
+			check("any enchantment goes on any item", text.contains("fire_protection"), text);
+			run(a, "enchant unbreaking 256");
+			check("level 256 is refused", !a.getMainHandItem().getEnchantments().toString().contains("unbreaking"));
+			run(a, "ench smite 7");
+			check("/ench works too", a.getMainHandItem().getEnchantments().toString().contains("smite"));
+
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+			run(a, "infinite 64");
+			check("/infinite 64 on a totem", a.getMainHandItem().getCount() == 64, "count=" + a.getMainHandItem().getCount());
+			run(a, "infinite 99");
+			check("/infinite 99 on a totem", a.getMainHandItem().getCount() == 99, "count=" + a.getMainHandItem().getCount());
+			run(a, "infinite 100");
+			check("more than 99 is refused", a.getMainHandItem().getCount() == 99);
+			a.getInventory().setItem(3, a.getMainHandItem().copy());
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "infinite 5");
+			check("items with durability can't be stacked", a.getMainHandItem().getCount() == 1 && a.heard("durability"));
+			a.getInventory().setItem(0, a.getMainHandItem().copy());
+			run(a, "kit save wk");
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "wk");
+				check("the saved kit keeps the 99 totems", kit.isPresent() && kit.get().slots()[3].getCount() == 99 && kit.get().slots()[3].is(Items.TOTEM_OF_UNDYING),
+					kit.isPresent() ? "count=" + kit.get().slots()[3].getCount() : "no kit");
+				check("the saved kit keeps the enchantments", kit.isPresent() && kit.get().slots()[0].getEnchantments().toString().contains("255"));
+			} catch (java.io.IOException e) {
+				check("the saved kit can be read", false, e.toString());
+			}
+		});
+		step("workshop: leave", () -> {
+			run(a, "leave");
+			check("Alice is back in the overworld with her own items", a.level().dimension().equals(server.overworld().dimension())
+				&& a.getInventory().getItem(21).is(Items.STONE) && a.getInventory().getItem(21).getCount() == 3, where(a));
+			check("her old game mode is back", a.gameMode() == GameType.SURVIVAL);
+			check("the backup was deleted", !PlayerBackup.exists(a.getUUID()));
+			check("the workshop kit stays saved", KitStore.exists(a.getUUID(), "wk"));
+			run(a, "enchant sharpness 5");
+			check("outside the workshop /enchant is refused for normal players", a.heard("only use this in the kit workshop"));
+			run(a, "infinite 5");
+			check("outside the workshop /infinite is refused too", a.heard("only use this in the kit workshop"));
+		});
+		step("workshop: edit an existing kit and leave with /kit exit", () -> {
+			run(a, "kit create testkit");
+			check("the kit was loaded for editing", Workshop.isIn(a.getUUID()) && a.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			run(a, "kit exit");
+			check("/kit exit leaves the workshop", !Workshop.isIn(a.getUUID()) && a.level().dimension().equals(server.overworld().dimension()));
+			run(a, "kit create nokit");
+			check("an unknown kit is refused", !Workshop.isIn(a.getUUID()) && a.heard("no kit named"));
+		});
+		step("workshop: disconnect inside it", () -> {
+			run(a, "kit create");
+			a.connection.onDisconnect(new DisconnectionDetails(Component.literal("selftest disconnect")));
+			check("the session ended and the backup stays on disk", !Workshop.isIn(a.getUUID()) && PlayerBackup.exists(a.getUUID()));
+			a = spawn("Alice");
+		}, () -> !PlayerBackup.exists(a.getUUID()), 200);
+		step("workshop: joining again brings everything back", () -> {
+			check("Alice is in the overworld with her items", a.level().dimension().equals(server.overworld().dimension())
+				&& a.getInventory().getItem(21).is(Items.STONE), where(a));
+			check("and in survival", a.gameMode() == GameType.SURVIVAL);
+		});
+
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
 			check("/leave outside a duel gives an error", a.heard("not in a duel"));
 			run(a, "duel Alice");
 			check("you can't duel yourself", a.heard("can't duel yourself"));
+		});
+		step("shutdown while somebody is in the workshop", () -> {
+			run(a, "kit create");
+			check("Alice is in the workshop when the server stops", Workshop.isIn(a.getUUID()));
 		});
 	}
 }

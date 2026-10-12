@@ -50,7 +50,9 @@ public final class DuelCommands {
 				.executes(ctx -> deny(ctx, StringArgumentType.getString(ctx, "player")))));
 
 		dispatcher.register(Commands.literal("leave").executes(ctx -> {
-			DuelManager.leave(ctx.getSource().getPlayerOrException());
+			ServerPlayer p = ctx.getSource().getPlayerOrException();
+			if (com.pvpduels.workshop.Workshop.isIn(p.getUUID())) com.pvpduels.workshop.Workshop.exit(p);
+			else DuelManager.leave(p);
 			return 1;
 		}));
 
@@ -73,11 +75,11 @@ public final class DuelCommands {
 			return 0;
 		}
 		if (DuelManager.isBusy(me.getUUID())) {
-			ctx.getSource().sendFailure(Msg.err("You are already in a duel."));
+			ctx.getSource().sendFailure(Msg.err("You are busy: finish your duel or leave the kit workshop (/leave) first."));
 			return 0;
 		}
 		if (DuelManager.isBusy(target.getUUID())) {
-			ctx.getSource().sendFailure(Msg.err(target.getName().getString() + " is already in a duel."));
+			ctx.getSource().sendFailure(Msg.err(target.getName().getString() + " is busy right now (in a duel or the kit workshop)."));
 			return 0;
 		}
 		DuelMenus.open(me, target);
