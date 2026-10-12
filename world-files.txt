@@ -1,0 +1,14 @@
+PvP Duels Lobby
+PvP Duels Lobby/data
+PvP Duels Lobby/data/minecraft
+PvP Duels Lobby/datapacks
+PvP Duels Lobby/dimensions
+PvP Duels Lobby/dimensions/minecraft
+PvP Duels Lobby/dimensions/pvpduels
+PvP Duels Lobby/level.dat
+PvP Duels Lobby/level.dat_old
+PvP Duels Lobby/players
+PvP Duels Lobby/players/data
+PvP Duels Lobby/pvpduels
+PvP Duels Lobby/pvpduels/lobby.json
+6.2M	PvP Duels Lobby

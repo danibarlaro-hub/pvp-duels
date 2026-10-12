@@ -1,0 +1,43 @@
+Building the island into minecraft:overworld
+Island generated: 333282 blocks, 122 kinds, seed 1234
+Placed 333282 blocks in 1906 ms
+Woke 3 water blocks
+Lobby at 0.5 101.0 8.5, protected within 105 blocks
+  minecraft:stone 126516
+  minecraft:deepslate 49085
+  minecraft:andesite 42427
+  minecraft:dirt 34694
+  minecraft:tuff 23698
+  minecraft:cobbled_deepslate 13195
+  minecraft:grass_block 9135
+  minecraft:spruce_leaves 6648
+  minecraft:cobblestone 4268
+  minecraft:moss_block 3993
+  minecraft:oak_leaves 3525
+  minecraft:short_grass 1159
+  minecraft:birch_leaves 1049
+  minecraft:polished_deepslate 1040
+  minecraft:spruce_planks 792
+  minecraft:mossy_stone_bricks 785
+  minecraft:oxidized_cut_copper 770
+  minecraft:hanging_roots 764
+  minecraft:stone_bricks 663
+  minecraft:mossy_cobblestone 624
+  minecraft:azalea_leaves 568
+  minecraft:oak_log 462
+  minecraft:polished_andesite 454
+  minecraft:oak_planks 435
+  minecraft:spruce_log 427
+  minecraft:water 405
+  minecraft:tall_grass 404
+  minecraft:oxidized_cut_copper_stairs 348
+  minecraft:rooted_dirt 342
+  minecraft:moss_carpet 340
+Waiting 1500 ticks for the light and the water
+tick 300
+tick 600
+tick 900
+tick 1200
+tick 1500
+Saved after 77427 ms
+RESULT: OK

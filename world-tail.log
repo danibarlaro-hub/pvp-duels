@@ -1,0 +1,193 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: runServer
+
+> Configure project :
+Fabric Loom: 1.18.4
+
+> Task :generateLog4jConfig
+> Task :generateDLIConfig
+> Task :configureLaunch
+> Task :processResources
+
+> Task :compileJava
+Note: /home/runner/work/pvp-duels/pvp-duels/src/main/java/com/pvpduels/duel/DuelManager.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :classes
+
+> Task :runServer
+[14:35:54] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.2 with Fabric Loader 0.19.5
+[14:35:54] [main/INFO] (FabricLoader/Mappings) Mappings not present!
+[14:35:55] [main/INFO] (FabricLoader) Loading 44 mods:
+	- fabric-advancement-api-v1 1.0.0+58719a3b9e
+	- fabric-api 0.161.0+26.2
+	- fabric-api-base 2.0.4+ece063239e
+	- fabric-api-lookup-api-v1 2.0.18+11e1c9a39e
+	- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	- fabric-block-api-v1 3.1.0+53515aab9e
+	- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	- fabric-command-api-v2 3.1.0+00cb03469e
+	- fabric-content-registries-v0 11.3.2+37b1aa249e
+	- fabric-convention-tags-v2 4.7.1+1f023a9e9e
+	- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	- fabric-creative-tab-api-v1 5.0.15+6468574f9e
+	- fabric-data-attachment-api-v1 2.2.19+515ac5339e
+	- fabric-data-generation-api-v1 25.6.0+c0da0b829e
+	- fabric-debug-api-v1 1.0.2+c792624d9e
+	- fabric-dimensions-v1 5.1.12+515ac5339e
+	- fabric-entity-events-v1 5.0.5+06488ac19e
+	- fabric-events-interaction-v0 5.2.8+515ac5339e
+	- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	- fabric-gametest-api-v1 4.0.22+4a7fa0819e
+	- fabric-item-api-v1 14.5.0+c68f6cbe9e
+	- fabric-lifecycle-events-v1 4.1.4+29b6eb019e
+	- fabric-loot-api-v3 3.0.17+06488ac19e
+	- fabric-menu-api-v1 2.0.17+086d547a9e
+	- fabric-message-api-v1 7.0.8+bb2ed3f79e
+	- fabric-networking-api-v1 6.3.4+2989c6a09e
+	- fabric-object-builder-api-v1 24.1.1+6fcd5f039e
+	- fabric-particles-v1 5.0.19+d1756aa99e
+	- fabric-permission-api-v1 1.0.5+e442d8d09e
+	- fabric-recipe-api-v1 9.0.22+11e1c9a39e
+	- fabric-registry-sync-v0 7.1.1+c7bd5b8e9e
+	- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	- fabric-resource-loader-v1 2.0.13+9edec1269e
+	- fabric-serialization-api-v1 2.0.4+11a26f319e
+	- fabric-tag-api-v1 2.1.4+515ac5339e
+	- fabric-transfer-api-v1 8.0.13+11dbb7d79e
+	- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.5
+	- java 25
+	- minecraft 26.2
+	- mixinextras 0.5.5
+	- pvpduels 0.1.0
+[14:35:55] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
+[14:35:55] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[14:36:02] [main/WARN] (pvpduels) BUILDWORLD mode is on (this must never happen in the game).
+[14:36:02] [main/INFO] (pvpduels) PvP Duels loaded.
+[14:36:03] [main/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[14:36:04] [Worker-Main-1/INFO] (Minecraft) No existing world data, creating new world
+[14:36:05] [main/INFO] (Minecraft) Loaded 1585 recipes
+[14:36:05] [main/INFO] (Minecraft) Loaded 1688 advancements
+[14:36:05] [main/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 66 new biomes in 1.375 ms
+[14:36:05] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.2
+[14:36:05] [Server thread/INFO] (Minecraft) Loading properties
+[14:36:05] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[14:36:05] [Server thread/INFO] (Minecraft) Generating keypair
+[14:36:05] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[14:36:05] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[14:36:05] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[14:36:05] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[14:36:05] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[14:36:05] [Server thread/INFO] (Minecraft) Preparing level "PvP Duels Lobby"
+[14:36:05] [Server thread/INFO] (Minecraft) Selecting global world spawn...
+[14:36:06] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[14:36:06] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[14:36:06] [Server thread/INFO] (Minecraft) Time elapsed: 909 ms
+[14:36:06] [Server thread/INFO] (Minecraft) Done (1.084s)! For help, type "help"
+[14:36:06] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:overworld
+[14:36:07] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/pvpduels:normal_arena
+[14:36:07] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/pvpduels:void_arena
+[14:36:07] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:the_end
+[14:36:07] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:the_nether
+[14:36:07] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[14:36:07] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[14:36:07] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[14:36:07] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[14:36:07] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[14:36:07] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[14:36:07] [Server thread/INFO] (pvpduels) [worldgen] Building the island into minecraft:overworld
+[14:36:07] [Server thread/INFO] (Minecraft) [STDERR]: trees: 150 (reserved/not grass 5142, slope 444, density 5941, spacing 861, edge 32)
+[14:36:07] [Server thread/INFO] (pvpduels) [worldgen] Island generated: 333282 blocks, 122 kinds, seed 1234
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen] Placed 333282 blocks in 1906 ms
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen] Woke 3 water blocks
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen] Lobby at 0.5 101.0 8.5, protected within 105 blocks
+[14:36:09] [Server thread/INFO] (Minecraft) Set the world spawn point to 0, 101, 8 [-180.0, 0.0] in minecraft:overworld
+[14:36:09] [Server thread/INFO] (Minecraft) Set minecraft:overworld to 6000 tick(s)
+[14:36:09] [Server thread/INFO] (Minecraft) Set the weather to clear
+[14:36:09] [Server thread/INFO] (Minecraft) Incorrect argument for command
+[14:36:09] [Server thread/INFO] (Minecraft) gamerule spawn_radius 0<--[HERE]
+[14:36:09] [Server thread/INFO] (Minecraft) Incorrect argument for command
+[14:36:09] [Server thread/INFO] (Minecraft) gamerule spawnRadius 0<--[HERE]
+[14:36:09] [Server thread/INFO] (Minecraft) Gamerule advance_time is now set to: false
+[14:36:09] [Server thread/INFO] (Minecraft) Incorrect argument for command
+[14:36:09] [Server thread/INFO] (Minecraft) gamerule doDaylightCycle false<--[HERE]
+[14:36:09] [Server thread/INFO] (Minecraft) Gamerule advance_weather is now set to: false
+[14:36:09] [Server thread/INFO] (Minecraft) Incorrect argument for command
+[14:36:09] [Server thread/INFO] (Minecraft) gamerule doWeatherCycle false<--[HERE]
+[14:36:09] [Server thread/INFO] (Minecraft) Gamerule spawn_mobs is now set to: false
+[14:36:09] [Server thread/INFO] (Minecraft) Incorrect argument for command
+[14:36:09] [Server thread/INFO] (Minecraft) gamerule doMobSpawning false<--[HERE]
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:stone 126516
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:deepslate 49085
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:andesite 42427
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:dirt 34694
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:tuff 23698
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:cobbled_deepslate 13195
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:grass_block 9135
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:spruce_leaves 6648
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:cobblestone 4268
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:moss_block 3993
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:oak_leaves 3525
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:short_grass 1159
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:birch_leaves 1049
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:polished_deepslate 1040
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:spruce_planks 792
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:mossy_stone_bricks 785
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:oxidized_cut_copper 770
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:hanging_roots 764
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:stone_bricks 663
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:mossy_cobblestone 624
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:azalea_leaves 568
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:oak_log 462
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:polished_andesite 454
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:oak_planks 435
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:spruce_log 427
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:water 405
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:tall_grass 404
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:oxidized_cut_copper_stairs 348
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:rooted_dirt 342
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen]   minecraft:moss_carpet 340
+[14:36:09] [Server thread/INFO] (pvpduels) [worldgen] Waiting 1500 ticks for the light and the water
+[14:36:09] [Server thread/WARN] (Minecraft) Can't keep up! Is the server overloaded? Running 2121ms or 42 ticks behind
+[14:36:24] [Server thread/INFO] (pvpduels) [worldgen] tick 300
+[14:36:39] [Server thread/INFO] (pvpduels) [worldgen] tick 600
+[14:36:54] [Server thread/INFO] (pvpduels) [worldgen] tick 900
+[14:37:09] [Server thread/INFO] (pvpduels) [worldgen] tick 1200
+[14:37:24] [Server thread/INFO] (pvpduels) [worldgen] tick 1500
+[14:37:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:overworld
+[14:37:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/pvpduels:normal_arena
+[14:37:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/pvpduels:void_arena
+[14:37:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:the_end
+[14:37:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:the_nether
+[14:37:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[14:37:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[14:37:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[14:37:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[14:37:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[14:37:24] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[14:37:24] [Server thread/INFO] (pvpduels) [worldgen] Saved after 77427 ms
+[14:37:24] [Server thread/INFO] (Minecraft) Stopping server
+[14:37:24] [Server thread/INFO] (Minecraft) Saving players
+[14:37:24] [Server thread/INFO] (Minecraft) Saving worlds
+[14:37:24] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:overworld
+[14:37:25] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/pvpduels:normal_arena
+[14:37:25] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/pvpduels:void_arena
+[14:37:25] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:the_end
+[14:37:25] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[PvP Duels Lobby]'/minecraft:the_nether
+[14:37:25] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[14:37:25] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[14:37:25] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[14:37:25] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[14:37:25] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[14:37:25] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_2-1791815740488.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/pvp-duels/pvp-duels/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 1m 50s
+5 actionable tasks: 5 executed
+Configuration cache entry stored.
