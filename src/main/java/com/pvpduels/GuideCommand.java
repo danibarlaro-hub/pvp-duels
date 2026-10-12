@@ -7,8 +7,12 @@ import net.minecraft.commands.Commands;
 
 public final class GuideCommand {
 	private static final String[] LINES = {
+		"LOBBY HOTBAR: while you stand in the lobby, slot 1 is Send Duel (sword: right-click to pick a player, or right-click / hit a player), slot 2 is Leave (barrier: cancels your duel requests and takes you to the lobby spawn), slot 8 is Create+ (grass block: Create Kit or Create Arena) and slot 9 is the guide book. They can't be moved; the things you had in those slots come back when you leave the lobby",
+		"NPCS in the lobby: click the Practice Bot (practice menu), the Kit Workshop (make kits) or the Arena Builder (arenas). Admins: /npc add bot|kit|arena puts one where you stand, /npc remove deletes the closest, /npc list",
+		"/duels  - the duels running right now, each with a [WATCH] button",
 		"DUELS: /duel <player>  - choose kit, arena, version and how the duel is decided, then send the challenge",
 		"/accept [player] or /duel accept [player]  - accept a challenge (you can also click [ACCEPT] in the chat); /deny [player]  - deny it. Requests expire after 60 seconds",
+		"After every duel you get a summary: how long it lasted and, for each of you, hits, damage, best combo and the totems, ender pearls, golden apples and potions used",
 		"/leave  - quit your duel (you lose, or it ends in a draw/by score if it was unlimited). /again  - ask for a rematch with the same settings",
 		"In a duel both players use the challenger's kit, your own inventory is saved and given back, and /kit load + the Quick kit keys are blocked. 5 minutes without hitting each other teleports one player next to the other.",
 		"Flat arena: 21x21 bedrock platform over the void (with or without walls). Only entities and block entities (chests, shulkers, crystals, boats...) can be placed. Falling off loses the round.",

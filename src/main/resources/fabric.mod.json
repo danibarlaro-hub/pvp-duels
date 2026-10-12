@@ -11,6 +11,7 @@
     "main": ["com.pvpduels.PvpDuelsMod"],
     "client": ["com.pvpduels.client.PvpDuelsClient"]
   },
+  "mixins": ["pvpduels.mixins.json"],
   "depends": {
     "fabricloader": ">=0.19.0",
     "minecraft": "~26.2",

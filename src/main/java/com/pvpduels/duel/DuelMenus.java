@@ -46,7 +46,7 @@ public final class DuelMenus {
 		}
 	}
 
-	private static ItemStack icon(Item item, String name, ChatFormatting color, String... lore) {
+	static ItemStack icon(Item item, String name, ChatFormatting color, String... lore) {
 		ItemStack stack = new ItemStack(item);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal(name).withStyle(style -> style.withColor(color).withItalic(false)));
 		if (lore.length > 0) {
@@ -109,7 +109,7 @@ public final class DuelMenus {
 	}
 
 	/** A paged list of the player's kits; clicking one runs onPick. */
-	private static void pickKit(ServerPlayer p, String title, int page, java.util.function.BiConsumer<ServerPlayer, String> onPick) {
+	static void pickKit(ServerPlayer p, String title, int page, java.util.function.BiConsumer<ServerPlayer, String> onPick) {
 		MinecraftServer server = p.level().getServer();
 		List<String> names = KitStore.list(p.getUUID());
 		int pages = Math.max(1, (names.size() + 44) / 45);

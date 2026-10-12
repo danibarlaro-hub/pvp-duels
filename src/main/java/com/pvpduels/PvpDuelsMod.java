@@ -4,6 +4,8 @@ import com.pvpduels.duel.DuelCommands;
 import com.pvpduels.duel.DuelManager;
 import com.pvpduels.duel.BotDuel;
 import com.pvpduels.duel.Lobby;
+import com.pvpduels.duel.LobbyKit;
+import com.pvpduels.duel.Npcs;
 import com.pvpduels.duel.Spectators;
 import com.pvpduels.duel.Terrain;
 import com.pvpduels.duel.SelfTest;
@@ -64,6 +66,7 @@ public class PvpDuelsMod implements ModInitializer {
 			Sidebar.registerCommands(dispatcher);
 			Lobby.registerCommands(dispatcher);
 			Spectators.registerCommands(dispatcher);
+			Npcs.registerCommands(dispatcher);
 			BotDuel.registerCommands(dispatcher);
 			TopCommand.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
@@ -72,6 +75,9 @@ public class PvpDuelsMod implements ModInitializer {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
 			handler.getPlayer().sendSystemMessage(Msg.info("PvP Duels is active. Type /guide to see the commands.")));
 
+		// The lobby items and the NPCs go first: their clicks must be handled before the lobby protection says no.
+		LobbyKit.register();
+		Npcs.register();
 		DuelManager.register();
 		Terrain.register();
 		Spectators.register();

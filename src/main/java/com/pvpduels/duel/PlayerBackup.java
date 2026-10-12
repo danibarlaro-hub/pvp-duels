@@ -47,6 +47,8 @@ public final class PlayerBackup {
 	}
 
 	public static void save(MinecraftServer server, ServerPlayer p) throws IOException {
+		// The lobby hotbar items are not part of what the player owns: give back what they hide first.
+		LobbyKit.strip(p);
 		JsonObject root = new JsonObject();
 		root.add("slots", KitStore.encodeInventory(server, p.getInventory()));
 		root.addProperty("dimension", p.level().dimension().identifier().toString());

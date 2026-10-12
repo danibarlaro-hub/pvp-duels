@@ -447,6 +447,7 @@ public final class LayoutCommands {
 	 */
 	private static int inventoryCopy(CommandContext<CommandSourceStack> ctx, String layoutArg, int priorityArg) throws CommandSyntaxException {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		com.pvpduels.duel.LobbyKit.strip(p); // the lobby hotbar items are not part of a layout
 		Inventory inv = p.getInventory();
 
 		int items = 0;

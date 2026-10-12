@@ -95,6 +95,7 @@ public final class KitCommands {
 			ctx.getSource().sendFailure(Msg.err("Kit '" + name + "' was given to you and is locked: save your inventory under another name."));
 			return 0;
 		}
+		com.pvpduels.duel.LobbyKit.strip(p); // the lobby hotbar items are not part of a kit
 		if (KitStore.stacksInInventory(p.getInventory()) == 0) {
 			// Never write a blank kit (and never replace a good one with a blank one). Show the player what the server has.
 			KitStore.resync(p);

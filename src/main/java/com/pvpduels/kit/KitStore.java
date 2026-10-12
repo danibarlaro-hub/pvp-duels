@@ -74,7 +74,7 @@ public final class KitStore {
 		int n = 0;
 		for (int i = 0; i < SLOTS && i < inv.getContainerSize(); i++) {
 			ItemStack s = inv.getItem(i);
-			if (!s.isEmpty() && !com.pvpduels.GuideBook.isGuide(s)) n++;
+			if (!s.isEmpty() && !com.pvpduels.GuideBook.isGuide(s) && !com.pvpduels.duel.LobbyKit.isLobbyItem(s)) n++;
 		}
 		return n;
 	}
@@ -159,6 +159,23 @@ public final class KitStore {
 		return new JsonObject();
 	}
 
+	/** A short list of stacks (like the four hotbar slots the lobby takes over) as a JSON array. */
+	public static JsonArray encodeStacks(MinecraftServer server, ItemStack[] stacks) {
+		RegistryOps<JsonElement> ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
+		JsonArray out = new JsonArray();
+		List<String> ignored = new ArrayList<>();
+		for (int i = 0; i < stacks.length; i++) out.add(encodeStack(ops, stacks[i], i, ignored));
+		return out;
+	}
+
+	/** The first n stacks of a JSON array written by encodeStacks. */
+	public static ItemStack[] decodeStacks(MinecraftServer server, JsonArray arr, int n) {
+		ItemStack[] all = decodeInventory(server, arr, new ArrayList<>());
+		ItemStack[] out = new ItemStack[n];
+		for (int i = 0; i < n; i++) out[i] = i < all.length ? all[i] : ItemStack.EMPTY;
+		return out;
+	}
+
 	public static ItemStack[] decodeInventory(MinecraftServer server, JsonArray arr) {
 		return decodeInventory(server, arr, new ArrayList<>());
 	}
@@ -206,6 +223,8 @@ public final class KitStore {
 
 	/** Replaces the whole inventory with the given 41 stacks and sends it to the player's game again. */
 	public static void setInventory(ServerPlayer player, ItemStack[] stacks) {
+		// The whole inventory is replaced: the lobby hotbar items (and what they hide) go first; the next tick puts them back if the player is still in the lobby.
+		com.pvpduels.duel.LobbyKit.strip(player);
 		Inventory inv = player.getInventory();
 		inv.clearContent();
 		int max = Math.min(inv.getContainerSize(), SLOTS);
@@ -232,7 +251,7 @@ public final class KitStore {
 		JsonArray slots = encodeInventory(server, inv, warnings);
 		// The guide book is not part of any kit.
 		for (int i = 0; i < SLOTS && i < inv.getContainerSize(); i++) {
-			if (com.pvpduels.GuideBook.isGuide(inv.getItem(i))) slots.set(i, new JsonObject());
+			if (com.pvpduels.GuideBook.isGuide(inv.getItem(i)) || com.pvpduels.duel.LobbyKit.isLobbyItem(inv.getItem(i))) slots.set(i, new JsonObject());
 		}
 
 		JsonObject root = new JsonObject();
@@ -253,7 +272,7 @@ public final class KitStore {
 		warnings.addAll(unreadable);
 		for (int i = 0; i < SLOTS && i < inv.getContainerSize(); i++) {
 			ItemStack live = inv.getItem(i);
-			if (live.isEmpty() || com.pvpduels.GuideBook.isGuide(live)) continue;
+			if (live.isEmpty() || com.pvpduels.GuideBook.isGuide(live) || com.pvpduels.duel.LobbyKit.isLobbyItem(live)) continue;
 			String key = slotName(i) + " ";
 			boolean told = warnings.stream().anyMatch(w -> w.startsWith(key));
 			if (!told && !ItemStack.matches(live, back[i])) {

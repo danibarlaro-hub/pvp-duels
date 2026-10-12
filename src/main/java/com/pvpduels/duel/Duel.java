@@ -97,6 +97,14 @@ public final class Duel {
 	private int lastCountedVictim = -1;
 	/** Two hits count as a combo when they are at most this many ticks apart (1 second). */
 	static final int COMBO_GAP = 20;
+	/** The summary of a real duel: hits landed, damage, combo, per duelist (index = who hit). */
+	private final int[] recapHits = new int[2];
+	private final float[] recapDamage = new float[2];
+	private final int[] recapBest = new int[2];
+	private final int[] recapCombo = new int[2];
+	private final int[] recapLast = {-1000, -1000};
+	/** What each duelist had used (Stats.ITEM_USED) when the duel began, for the items listed in RecapItems. */
+	private final int[][] usedAtStart = new int[2][RecapItems.COUNT];
 	/** Elo before and after for both players (set when a real duel is recorded). */
 	private int[] eloInfo;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
@@ -115,6 +123,8 @@ public final class Duel {
 		this.practice = BotDuel.isBot(ids[0]) || BotDuel.isBot(ids[1]);
 		names[0] = a.getName().getString();
 		names[1] = b.getName().getString();
+		usedAtStart[0] = RecapItems.snapshot(a);
+		usedAtStart[1] = RecapItems.snapshot(b);
 	}
 
 	// ------------------------------------------------------------------ helpers
@@ -417,6 +427,26 @@ public final class Duel {
 		return elapsed - lastHitTick <= COMBO_GAP ? combo : 0;
 	}
 
+	/** A hit between the two duelists. "victim" is the one who was hurt; amount is the damage it did. */
+	void onHit(int victim, float amount) {
+		if (practice) onPracticeHit(victim, amount);
+		else onRealHit(victim, amount);
+	}
+
+	private void onRealHit(int victim, float amount) {
+		if (phase != Phase.FIGHTING || amount <= 0f) return;
+		if (lastCountedTick == elapsed && lastCountedVictim == victim) return; // the same blow reported twice
+		lastCountedTick = elapsed;
+		lastCountedVictim = victim;
+		int hitter = 1 - victim;
+		recapHits[hitter]++;
+		recapDamage[hitter] += amount;
+		recapCombo[hitter] = elapsed - recapLast[hitter] <= COMBO_GAP ? recapCombo[hitter] + 1 : 1;
+		recapLast[hitter] = elapsed;
+		recapBest[hitter] = Math.max(recapBest[hitter], recapCombo[hitter]);
+		recapCombo[victim] = 0; // getting hit breaks your combo
+	}
+
 	/** A hit between the player and the bot. "victim" is the duelist who was hurt; amount is the damage it did. */
 	void onPracticeHit(int victim, float amount) {
 		if (!practice || phase != Phase.FIGHTING || amount <= 0f) return;
@@ -650,6 +680,7 @@ public final class Duel {
 			else title = Component.literal("DEFEAT").withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
 			sendTitle(p, title, Component.literal("Final score " + score(i)).withStyle(ChatFormatting.WHITE), 5, 80, 15);
 			p.sendSystemMessage(Msg.title("Duel finished: " + names[0] + " " + points[0] + " - " + points[1] + " " + names[1]));
+			if (!practice) sendRecap(p);
 			if (practice) {
 				if (i == 0) {
 					p.sendSystemMessage(Msg.info("Practice total: " + hits + (hits == 1 ? " hit, " : " hits, ") + oneDecimal(damage)
@@ -663,7 +694,23 @@ public final class Duel {
 				int after = eloInfo[2 * i + 1];
 				p.sendSystemMessage(Msg.info("Elo: " + before + " -> " + after + " (" + (after >= before ? "+" : "") + (after - before) + ")"));
 			}
-			p.sendSystemMessage(Msg.info("Type /again to ask for a rematch."));
+			p.sendSystemMessage(Msg.info("Rematch? ").copy().append(Component.literal("[REMATCH]").withStyle(style -> style.withColor(ChatFormatting.GREEN).withBold(true)
+				.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/again"))
+				.withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("Ask for a rematch with the same settings"))))));
+		}
+	}
+
+	/** How long it lasted, then one line per duelist: hits, damage, best combo and the items they used. */
+	private void sendRecap(ServerPlayer to) {
+		int seconds = elapsed / 20;
+		to.sendSystemMessage(Msg.info("Summary (" + seconds / 60 + ":" + String.format("%02d", seconds % 60) + " long, "
+			+ round + (round == 1 ? " round)" : " rounds)")));
+		for (int i = 0; i < 2; i++) {
+			ServerPlayer who = player(i);
+			String used = who == null ? "" : RecapItems.describe(usedAtStart[i], RecapItems.snapshot(who));
+			to.sendSystemMessage(Component.literal("  " + names[i] + ": ").withStyle(ChatFormatting.WHITE)
+				.append(Component.literal(recapHits[i] + (recapHits[i] == 1 ? " hit, " : " hits, ") + oneDecimal(recapDamage[i])
+					+ " damage, best combo " + recapBest[i] + (used.isEmpty() ? "" : " | " + used)).withStyle(ChatFormatting.GRAY)));
 		}
 	}
 

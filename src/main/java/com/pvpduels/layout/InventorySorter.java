@@ -17,6 +17,7 @@ public final class InventorySorter {
 
 	/** Returns how many swaps were made. */
 	public static int sort(ServerPlayer player, LayoutStore.Profile profile) {
+		com.pvpduels.duel.LobbyKit.strip(player); // the lobby hotbar items are put back by the next tick
 		Inventory inv = player.getInventory();
 		boolean[] locked = new boolean[36];
 		int moves = 0;

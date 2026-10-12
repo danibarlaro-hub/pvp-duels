@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.pvpduels.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AbstractContainerMenuMixin",
+    "InventoryMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

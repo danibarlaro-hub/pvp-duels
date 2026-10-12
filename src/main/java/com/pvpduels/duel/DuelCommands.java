@@ -57,6 +57,11 @@ public final class DuelCommands {
 			return 1;
 		}));
 
+		dispatcher.register(Commands.literal("duels").executes(ctx -> {
+			DuelManager.listDuels(ctx.getSource().getPlayerOrException());
+			return 1;
+		}));
+
 		dispatcher.register(Commands.literal("again").executes(ctx -> {
 			DuelManager.again(ctx.getSource().getPlayerOrException());
 			return 1;
@@ -71,20 +76,25 @@ public final class DuelCommands {
 			ctx.getSource().sendFailure(Msg.err("No player named '" + name + "' is online."));
 			return 0;
 		}
+		return challenge(me, target) ? 1 : 0;
+	}
+
+	/** Starts the duel menus against this player (what /duel <player>, the Send Duel sword and the player picker do). */
+	static boolean challenge(ServerPlayer me, ServerPlayer target) {
 		if (target.getUUID().equals(me.getUUID())) {
-			ctx.getSource().sendFailure(Msg.err("You can't duel yourself."));
-			return 0;
+			me.sendSystemMessage(Msg.err("You can't duel yourself."));
+			return false;
 		}
 		if (DuelManager.isBusy(me.getUUID())) {
-			ctx.getSource().sendFailure(Msg.err("You are busy: finish your duel or leave the kit workshop (/leave) first."));
-			return 0;
+			me.sendSystemMessage(Msg.err("You are busy: finish your duel or leave the kit workshop (/leave) first."));
+			return false;
 		}
 		if (DuelManager.isBusy(target.getUUID())) {
-			ctx.getSource().sendFailure(Msg.err(target.getName().getString() + " is busy right now (in a duel or the kit workshop)."));
-			return 0;
+			me.sendSystemMessage(Msg.err(target.getName().getString() + " is busy right now (in a duel or the kit workshop)."));
+			return false;
 		}
 		DuelMenus.open(me, target);
-		return 1;
+		return true;
 	}
 
 	private static int accept(CommandContext<CommandSourceStack> ctx, String from) throws CommandSyntaxException {

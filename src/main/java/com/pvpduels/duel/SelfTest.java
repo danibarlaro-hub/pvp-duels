@@ -1050,6 +1050,8 @@ public final class SelfTest {
 			check("an unknown player is refused", carl.heard("No player named 'Nobody'"));
 			run(carl, "spectate Carl");
 			check("you can't watch yourself", carl.heard("can't watch yourself"));
+			run(carl, "duels");
+			check("/duels lists the running duel with a [WATCH] button", carl.heard("Duels right now (1)") && carl.heard("Alice 0 - 0 Bob") && carl.heard("[WATCH]"));
 		});
 		step("spectate: watch the duel", () -> {
 			run(carl, "spectate Alice");
@@ -1077,6 +1079,11 @@ public final class SelfTest {
 			check("Carl is back in the overworld in survival", carl.level().dimension().equals(server.overworld().dimension())
 				&& carl.gameMode() == GameType.SURVIVAL, where(carl) + " " + carl.gameMode());
 			check("no backup is left", !PlayerBackup.exists(carl.getUUID()));
+			check("both duelists got the summary of the duel", a.heard("Summary (") && b.heard("Summary (") && a.heard("Alice: ") && a.heard("Bob: ") && a.heard("best combo"));
+			check("the summary counted the hit that decided it", a.heard("Alice: 1 hit"), "Alice heard the summary: " + a.heard("Summary ("));
+			check("the rematch button is there", a.heard("[REMATCH]"));
+			run(carl, "duels");
+			check("/duels says when nobody is dueling", carl.heard("Nobody is dueling right now"));
 		});
 
 		// ---------------------------------------------------------------- lobby
@@ -1121,6 +1128,293 @@ public final class SelfTest {
 			check("the lobby file is inside the world folder", java.nio.file.Files.exists(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
 				.resolve("pvpduels").resolve("lobby.json")));
 			check("the lobby is not protected by default", Lobby.protectRadius() == 0);
+		});
+
+		// ---------------------------------------------------------------- lobby items, NPCs and the guide book
+		step("lobby items: everybody in the lobby gets them", () -> {
+			// the lobby is where Alice, Bob and Carl are
+			check("Carl is in the lobby too", Lobby.contains(carl), where(carl));
+		}, () -> LobbyKit.isActive(a.getUUID()) && LobbyKit.isActive(b.getUUID()) && LobbyKit.isActive(carl.getUUID()), 200);
+		step("lobby items: what is in each slot", () -> {
+			var inv = a.getInventory();
+			check("slot 1 is Send Duel (a sword)", LobbyKit.kindOf(inv.getItem(0)) != null && "send".equals(LobbyKit.kindOf(inv.getItem(0)))
+				&& inv.getItem(0).is(Items.DIAMOND_SWORD) && inv.getItem(0).getHoverName().getString().equals("Send Duel"), inv.getItem(0).toString());
+			check("Send Duel is green", inv.getItem(0).getHoverName().getStyle().getColor() != null
+				&& inv.getItem(0).getHoverName().getStyle().getColor().getValue() == net.minecraft.ChatFormatting.GREEN.getColor());
+			check("slot 2 is the Leave barrier", "leave".equals(LobbyKit.kindOf(inv.getItem(1))) && inv.getItem(1).is(Items.BARRIER)
+				&& inv.getItem(1).getHoverName().getString().equals("Leave"), inv.getItem(1).toString());
+			check("slot 8 is the Create+ grass block", "create".equals(LobbyKit.kindOf(inv.getItem(7))) && inv.getItem(7).is(Items.GRASS_BLOCK)
+				&& inv.getItem(7).getHoverName().getString().equals("Create+"), inv.getItem(7).toString());
+			check("slot 9 is the guide book", "guide".equals(LobbyKit.kindOf(inv.getItem(8))) && GuideBook.isGuide(inv.getItem(8)), inv.getItem(8).toString());
+			check("the other hotbar slots are not touched", LobbyKit.kindOf(inv.getItem(2)) == null && LobbyKit.kindOf(inv.getItem(3)) == null
+				&& LobbyKit.kindOf(inv.getItem(4)) == null && LobbyKit.kindOf(inv.getItem(5)) == null && LobbyKit.kindOf(inv.getItem(6)) == null);
+			check("the stash is on disk", LobbyKit.hasStashFile(a.getUUID()));
+			check("the game on Alice's side sees them too", clientMatches(a), clientDiff(a));
+
+			var book = inv.getItem(8).get(net.minecraft.core.component.DataComponents.WRITTEN_BOOK_CONTENT);
+			check("the book has the content", book != null);
+			if (book != null) {
+				var pages = book.getPages(false);
+				int blank = 0;
+				int tooLong = 0;
+				for (var page : pages) {
+					if (page.getString().isEmpty()) blank++;
+					else if (page.getString().length() > 260) tooLong++;
+				}
+				check("the book has " + GuideBook.pageCount() + " pages", pages.size() == GuideBook.pageCount(), String.valueOf(pages.size()));
+				check("every topic ends with a blank page", blank == GuideBook.topicCount(), blank + " blank pages for " + GuideBook.topicCount() + " topics");
+				check("no page has too much text", tooLong == 0, tooLong + " long pages");
+				int links = 0;
+				for (Component part : pages.get(0).getSiblings()) {
+					if (part.getStyle().getClickEvent() instanceof net.minecraft.network.chat.ClickEvent.ChangePage) links++;
+				}
+				check("page 1 is the index with a link to every topic", pages.get(0).getString().contains("Lobby") && pages.get(0).getString().contains("About")
+					&& links == GuideBook.topicCount(), links + " links");
+				StringBuilder all = new StringBuilder();
+				for (var page : pages) all.append(page.getString()).append('\n');
+				for (String word : new String[] {"/duels", "/npc", "Send Duel", "Create+", "/botduel", "/kit save", "/layout", "/top", "/spectate", "About this server"}) {
+					check("the book mentions " + word, all.toString().contains(word));
+				}
+			}
+		});
+
+		step("lobby items: they can't be moved, swapped or thrown", () -> {
+			var inv = a.getInventory();
+			inv.setItem(3, new ItemStack(Items.COBBLESTONE, 7));
+			inv.setItem(20, new ItemStack(Items.STONE, 5));
+			var menu = a.containerMenu;
+			// menu slots 36-44 are the hotbar
+			menu.clicked(36, 0, ContainerInput.PICKUP, a);
+			check("picking up the sword does nothing", menu.getCarried().isEmpty() && "send".equals(LobbyKit.kindOf(inv.getItem(0))), String.valueOf(menu.getCarried()));
+			menu.clicked(37, 0, ContainerInput.QUICK_MOVE, a);
+			check("shift-clicking the barrier does nothing", "leave".equals(LobbyKit.kindOf(inv.getItem(1))));
+			menu.clicked(44, 0, ContainerInput.THROW, a);
+			menu.clicked(44, 1, ContainerInput.THROW, a);
+			check("throwing the book out does nothing", "guide".equals(LobbyKit.kindOf(inv.getItem(8))));
+			menu.clicked(20, 7, ContainerInput.SWAP, a); // hotbar key 8 on a backpack slot: would swap with the grass block
+			check("swapping with the number key does nothing", "create".equals(LobbyKit.kindOf(inv.getItem(7))) && inv.getItem(20).is(Items.STONE), inv.getItem(7) + " / " + inv.getItem(20));
+			menu.clicked(20, 1, ContainerInput.SWAP, a); // the number key 2 on a backpack slot: would swap with the barrier
+			check("the barrier stays when a number key is pressed", "leave".equals(LobbyKit.kindOf(inv.getItem(1))) && inv.getItem(20).is(Items.STONE));
+			menu.clicked(36, 0, ContainerInput.PICKUP_ALL, a);
+			check("double-click collecting does nothing", menu.getCarried().isEmpty());
+			inv.setSelectedSlot(0);
+			a.drop(true);
+			check("Q on the sword drops nothing", "send".equals(LobbyKit.kindOf(inv.getItem(0))) && inv.getItem(0).getCount() == 1);
+			inv.setSelectedSlot(8);
+			a.drop(false);
+			check("Q on the book drops nothing", "guide".equals(LobbyKit.kindOf(inv.getItem(8))));
+			check("the sword was not thrown into the world", ((ServerLevel) a.level()).getEntities((net.minecraft.world.entity.Entity) null,
+				a.getBoundingBox().inflate(6), e -> e instanceof net.minecraft.world.entity.item.ItemEntity item && LobbyKit.isLobbyItem(item.getItem())).isEmpty());
+			// the other hotbar slots still work as always
+			menu.clicked(39, 0, ContainerInput.PICKUP, a);
+			check("an ordinary slot can still be picked up", menu.getCarried().is(Items.COBBLESTONE) && menu.getCarried().getCount() == 7, String.valueOf(menu.getCarried()));
+			menu.clicked(39, 0, ContainerInput.PICKUP, a);
+			check("and put down again", menu.getCarried().isEmpty() && inv.getItem(3).is(Items.COBBLESTONE));
+			inv.setSelectedSlot(3);
+
+			// the game would put things back by itself anyway: break one on purpose
+			inv.setItem(1, new ItemStack(Items.DIRT));
+			inv.setItem(5, LobbyKit.make("leave")); // a copy in the wrong place
+			a.getInventory().setItem(20, new ItemStack(Items.STONE, 5));
+			carlTick = ticks;
+		}, () -> ticks - carlTick > 12, 100);
+		step("lobby items: broken ones are repaired", () -> {
+			var inv = a.getInventory();
+			check("the barrier is back in slot 2", "leave".equals(LobbyKit.kindOf(inv.getItem(1))));
+			check("the copy in the wrong slot is gone", LobbyKit.kindOf(inv.getItem(5)) == null);
+			boolean dirtKept = false;
+			for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(Items.DIRT)) dirtKept = true;
+			check("the dirt that was in the barrier's slot was not lost", dirtKept);
+			check("the game on Alice's side agrees", clientMatches(a), clientDiff(a));
+			inv.clearContent(); // the lobby items come back by themselves
+			carlTick = ticks;
+		}, () -> ticks - carlTick > 12, 100);
+
+		step("lobby items: your own things come back when you leave the lobby", () -> {
+			LobbyKit.strip(a);
+			var inv = a.getInventory();
+			check("no lobby item is left after strip", LobbyKit.kindOf(inv.getItem(0)) == null && LobbyKit.kindOf(inv.getItem(1)) == null
+				&& LobbyKit.kindOf(inv.getItem(7)) == null && LobbyKit.kindOf(inv.getItem(8)) == null);
+			check("the stash file is gone", !LobbyKit.hasStashFile(a.getUUID()));
+			inv.clearContent();
+			inv.setItem(0, new ItemStack(Items.IRON_SWORD));
+			inv.setItem(1, new ItemStack(Items.GOLDEN_APPLE, 5));
+			inv.setItem(7, new ItemStack(Items.ENDER_PEARL, 3));
+			inv.setItem(8, new ItemStack(Items.COOKED_BEEF, 20));
+			inv.setItem(4, new ItemStack(Items.SHIELD));
+			carlTick = ticks;
+		}, () -> true, 10);
+		step("lobby items: they hide Alice's items", () -> {
+			var inv = a.getInventory();
+			check("Alice has them again", LobbyKit.isActive(a.getUUID()) && "send".equals(LobbyKit.kindOf(inv.getItem(0))));
+			check("the item next to them is untouched", inv.getItem(4).is(Items.SHIELD));
+			run(a, "kit save lobbykit");
+			check("saving a kit in the lobby works", KitStore.exists(a.getUUID(), "lobbykit"));
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "lobbykit").orElseThrow();
+				check("the kit has Alice's own items, not the lobby ones", kit.slots()[0].is(Items.IRON_SWORD) && kit.slots()[1].is(Items.GOLDEN_APPLE)
+					&& kit.slots()[7].is(Items.ENDER_PEARL) && kit.slots()[8].is(Items.COOKED_BEEF) && kit.slots()[4].is(Items.SHIELD),
+					kit.slots()[0] + " " + kit.slots()[1] + " " + kit.slots()[7] + " " + kit.slots()[8]);
+				boolean lobbyInKit = false;
+				for (ItemStack stack : kit.slots()) if (LobbyKit.isLobbyItem(stack)) lobbyInKit = true;
+				check("no lobby item went into the kit", !lobbyInKit);
+				check("the kit has exactly the 5 stacks", kit.stacks() == 5, String.valueOf(kit.stacks()));
+			} catch (java.io.IOException | RuntimeException e) {
+				check("the kit can be read", false, e.toString());
+			}
+			carlTick = ticks;
+		}, () -> true, 10);
+		step("lobby items: walking out of the lobby gives them back", () -> {
+			a.teleportTo((ServerLevel) a.level(), 400.5, a.getY(), 400.5, java.util.Set.of(), 0f, 0f, true);
+			carlTick = ticks;
+		}, () -> ticks - carlTick > 6, 100);
+		step("lobby items: Alice has her own things", () -> {
+			var inv = a.getInventory();
+			check("the lobby items are gone", !LobbyKit.isActive(a.getUUID()) && LobbyKit.kindOf(inv.getItem(0)) == null && LobbyKit.kindOf(inv.getItem(8)) == null);
+			check("the iron sword, apples, pearls and beef are back in their slots", inv.getItem(0).is(Items.IRON_SWORD) && inv.getItem(1).is(Items.GOLDEN_APPLE)
+				&& inv.getItem(1).getCount() == 5 && inv.getItem(7).is(Items.ENDER_PEARL) && inv.getItem(8).is(Items.COOKED_BEEF) && inv.getItem(8).getCount() == 20,
+				inv.getItem(0) + " " + inv.getItem(1) + " " + inv.getItem(7) + " " + inv.getItem(8));
+			check("the stash file is gone", !LobbyKit.hasStashFile(a.getUUID()));
+			check("the game on Alice's side agrees", clientMatches(a), clientDiff(a));
+			a.teleportTo((ServerLevel) a.level(), 50.5, a.getY(), 50.5, java.util.Set.of(), 0f, 0f, true);
+			carlTick = ticks;
+		}, () -> true, 10);
+		step("lobby items: back in the lobby, then a crash (the memory is lost)", () -> {
+			check("Alice has them again", LobbyKit.isActive(a.getUUID()) && "send".equals(LobbyKit.kindOf(a.getInventory().getItem(0))));
+			LobbyKit.forgetInMemory(a.getUUID());
+			check("only the file on disk remembers her things", !LobbyKit.isActive(a.getUUID()) && LobbyKit.hasStashFile(a.getUUID()));
+			// next join: the file is read and given back
+			LobbyKit.strip(a);
+			var inv = a.getInventory();
+			check("the things come back from the file", inv.getItem(0).is(Items.IRON_SWORD) && inv.getItem(1).is(Items.GOLDEN_APPLE) && inv.getItem(7).is(Items.ENDER_PEARL)
+				&& inv.getItem(8).is(Items.COOKED_BEEF), inv.getItem(0) + " " + inv.getItem(1) + " " + inv.getItem(7) + " " + inv.getItem(8));
+			check("and the file is deleted", !LobbyKit.hasStashFile(a.getUUID()));
+			inv.clearContent();
+			carlTick = ticks;
+		}, () -> true, 10);
+
+		step("lobby items: Send Duel opens the player list", () -> {
+			check("Alice has the items again", "send".equals(LobbyKit.kindOf(a.getInventory().getItem(0))));
+			a.getInventory().setSelectedSlot(0);
+			LobbyKit.clearCooldowns();
+			a.gameMode.useItem(a, (ServerLevel) a.level(), a.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND);
+			check("right-clicking the sword opens a menu", a.containerMenu instanceof ChoiceMenu);
+			check("it lists Bob", menuHas(a, "Bob"));
+			check("it doesn't list Alice", !menuHas(a, "Alice"));
+			menuStep(a, "Bob");
+			check("choosing Bob starts the duel menus (kit first)", a.containerMenu instanceof ChoiceMenu && menuHas(a, "testkit"));
+			a.closeContainer();
+			// hitting a player with the sword does the same
+			LobbyKit.clearCooldowns();
+			var result = net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.invoker().interact(a, a.level(), InteractionHand.MAIN_HAND, b, null);
+			check("hitting Bob with the sword opens the duel menus instead of hurting him", a.containerMenu instanceof ChoiceMenu && menuHas(a, "testkit")
+				&& result == net.minecraft.world.InteractionResult.SUCCESS, String.valueOf(result));
+			a.closeContainer();
+		});
+		step("lobby items: Leave cancels requests and goes to the lobby spawn", () -> {
+			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("testkit", false, WinMode.FIRST_TO, 1), false);
+			check("Bob has a request from Alice", DuelManager.pendingFrom(b.getUUID()).contains("Alice"));
+			a.teleportTo((ServerLevel) a.level(), 70.5, a.getY(), 60.5, java.util.Set.of(), 0f, 0f, true);
+			a.getInventory().setSelectedSlot(1);
+			LobbyKit.clearCooldowns();
+			a.gameMode.useItem(a, (ServerLevel) a.level(), a.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND);
+			check("the request is cancelled", !DuelManager.pendingFrom(b.getUUID()).contains("Alice"));
+			check("Alice is back at the lobby spawn", Math.abs(a.getX() - 50.5) < 2 && Math.abs(a.getZ() - 50.5) < 2, where(a));
+			check("and was told", a.heard("Cancelled 1 duel request"));
+			a.getInventory().setSelectedSlot(3);
+		});
+		step("lobby items: Create+ opens the kit and arena menu", () -> {
+			a.getInventory().setSelectedSlot(7);
+			LobbyKit.clearCooldowns();
+			a.gameMode.useItem(a, (ServerLevel) a.level(), a.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND);
+			check("right-clicking the grass block opens the Create+ menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "Create Kit") && menuHas(a, "Create Arena"));
+			menuStep(a, "Create Arena");
+			check("the arena builder says what is coming", a.heard("Builder rank"));
+			LobbyKit.clearCooldowns();
+			a.gameMode.useItem(a, (ServerLevel) a.level(), a.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND);
+			menuStep(a, "Create Kit");
+			check("Create Kit offers a new kit", menuHas(a, "New kit"));
+			check("and Alice's kits to edit", menuHas(a, "Edit one of my kits"));
+			menuStep(a, "New kit");
+			check("Alice is in the kit workshop", Workshop.isIn(a.getUUID()));
+			boolean any = false;
+			for (int i = 0; i < a.getInventory().getContainerSize(); i++) if (LobbyKit.isLobbyItem(a.getInventory().getItem(i))) any = true;
+			check("the lobby items are not in the workshop", !any && !LobbyKit.isActive(a.getUUID()));
+			carlTick = ticks;
+		}, () -> true, 10);
+		step("lobby items: leaving the workshop brings Alice back to the lobby with them", () -> {
+			run(a, "leave");
+			check("Alice left the workshop", !Workshop.isIn(a.getUUID()));
+			carlTick = ticks;
+		}, () -> LobbyKit.isActive(a.getUUID()), 100);
+		step("lobby items: all fine after the workshop", () -> {
+			check("Alice is in the lobby with the items", "send".equals(LobbyKit.kindOf(a.getInventory().getItem(0))) && "guide".equals(LobbyKit.kindOf(a.getInventory().getItem(8))));
+			check("the game on Alice's side agrees", clientMatches(a), clientDiff(a));
+			a.getInventory().setSelectedSlot(3);
+		});
+
+		step("npc: only admins can place one", () -> {
+			run(carl, "npc add bot");
+			check("a normal player can't place an NPC", Npcs.around((ServerLevel) carl.level(), carl.getX(), carl.getY(), carl.getZ(), 4).isEmpty());
+		});
+		step("npc: place the three NPCs", () -> {
+			ServerLevel level = (ServerLevel) carl.level();
+			int n = 0;
+			for (Npcs.Kind kind : Npcs.Kind.values()) {
+				net.minecraft.world.entity.Entity npc = Npcs.placeAt(level, server.createCommandSourceStack(), kind, 56.5 + 3 * n, carl.getY(), 56.5, 180f);
+				check("the " + kind.title + " NPC exists", npc != null);
+				if (npc != null) {
+					check("it is a mannequin, invulnerable, with the tag", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(npc.getType()).getPath().equals("mannequin")
+						&& npc.isInvulnerable() && npc.entityTags().contains(kind.tag()), npc.getType() + " " + npc.entityTags());
+					check("its name is shown", npc.hasCustomName() && npc.isCustomNameVisible() && npc.getCustomName().getString().equals(kind.title),
+						String.valueOf(npc.getCustomName()));
+					if (npc instanceof net.minecraft.world.entity.decoration.Mannequin mannequin) {
+						log("skin of the " + kind.id + " NPC: " + mannequin.getProfile().skinPatch());
+					}
+				}
+				n++;
+			}
+			check("three NPCs in total", Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size() == 3, String.valueOf(Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size()));
+			run(carl, "npc list");
+		});
+		step("npc: clicking them opens the menus", () -> {
+			ServerLevel level = (ServerLevel) a.level();
+			var npcs = Npcs.around(level, 59.5, carl.getY(), 56.5, 8);
+			for (net.minecraft.world.entity.Entity npc : npcs) {
+				var kind = Npcs.kindOf(npc);
+				a.closeContainer();
+				var result = net.fabricmc.fabric.api.event.player.UseEntityCallback.EVENT.invoker().interact(a, level, InteractionHand.MAIN_HAND, npc, null);
+				switch (kind) {
+					case BOT -> check("the Practice Bot opens the bot menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "testkit"));
+					case KIT -> check("the Kit Workshop opens the kit menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "New kit"));
+					case ARENA -> check("the Arena Builder says what is coming", a.heard("Builder rank"));
+				}
+				check("the click is used up (" + kind.id + ")", result == net.minecraft.world.InteractionResult.SUCCESS, String.valueOf(result));
+				// hitting works like clicking
+				a.closeContainer();
+				var hitResult = net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.invoker().interact(a, level, InteractionHand.MAIN_HAND, npc, null);
+				check("hitting does not hurt it (" + kind.id + ")", hitResult == net.minecraft.world.InteractionResult.FAIL, String.valueOf(hitResult));
+			}
+			a.closeContainer();
+			// with a lobby item in the hand the NPC still gets the click
+			a.getInventory().setSelectedSlot(0);
+			a.closeContainer();
+			var bot = Npcs.nearest(level, 56.5, carl.getY(), 56.5, 1.5);
+			net.fabricmc.fabric.api.event.player.UseEntityCallback.EVENT.invoker().interact(a, level, InteractionHand.MAIN_HAND, bot, null);
+			check("holding Send Duel, the Practice Bot still opens its menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "testkit"));
+			a.closeContainer();
+			a.getInventory().setSelectedSlot(3);
+			run(a, "npc remove");
+			check("a normal player can't remove one", Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size() == 3);
+		});
+		step("npc: they are saved with the world and can be removed", () -> {
+			ServerLevel level = (ServerLevel) a.level();
+			carl.teleportTo(level, 59.5, carl.getY(), 56.5, java.util.Set.of(), 0f, 0f, true);
+			net.minecraft.world.entity.Entity npc = Npcs.nearest(level, 59.5, carl.getY(), 56.5, 8);
+			check("an NPC is closest to Carl", npc != null);
+			// every NPC is removed so the next tests are not disturbed
+			for (net.minecraft.world.entity.Entity left : Npcs.around(level, 59.5, carl.getY(), 56.5, 10)) left.discard();
+			check("no NPC is left", Npcs.around(level, 59.5, carl.getY(), 56.5, 10).isEmpty());
 		});
 
 		// ---------------------------------------------------------------- lobby protection

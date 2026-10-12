@@ -1,12 +1,16 @@
 package com.pvpduels;
 
 import com.pvpduels.duel.DuelManager;
+import com.pvpduels.duel.Lobby;
 import com.pvpduels.util.Prefs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.Filterable;
 import net.minecraft.world.entity.player.Inventory;
@@ -22,35 +26,84 @@ import java.util.List;
 public final class GuideBook {
 	private static final String MARK = "pvpduels_guide";
 
-	private static final String[][] PAGES = {
-		{"PvP Duels", "Kits, layouts, duels and a kit workshop.\n\nEverything is a command: this book lists them all. /guide shows the same list in chat.\n\nTurn the page!"},
-		{"Duels", "/duel <player> opens menus: kit, arena, version and how the duel is decided.\n\nThe other player gets [ACCEPT] / [DENY] buttons in chat (or /accept, /deny). Requests expire in 60 s."},
-		{"During a duel", "Both use the challenger's kit. Your own inventory is saved and comes back after.\n\n/leave quits. /again asks for a rematch.\n/kit load and the Quick kit keys are blocked."},
-		{"How it is decided", "Fixed rounds (max 100, or unlimited), First to N points, or Timed (max 30 min, a tie plays an extra round).\n\nUnlimited duels end when someone uses /leave: most points wins."},
-		{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat terrain inside invisible barriers. Build and dig freely: it resets every round."},
-		{"Practice: /botduel", "/botduel [kit] sends you to a bedrock arena that is 100 blocks each way, with walls.\n\n'Static bot?' Yes: the bot can't be moved. No: it takes knockback and you pick Passive, Easy, Normal or Hard (the last three fight back).\n\nThe sidebar counts your hits, damage and combo. It goes on until you use /leave: a bot you knock out gets up again and you get a KO, nothing is reset. Practice doesn't count for your stats."},
-		{"Ranking: /top", "/top shows the best players by Elo. /top wins and /top streak sort by wins or best win streak.\n\nEveryone starts at 1000 Elo. Winning a duel against a real player takes points from your rival; practice duels don't count."},
-		{"Unlimited arena", "Flat terrain with no border.\n\nMore than 100 blocks away from your rival for 5 seconds: the one who ran away loses half of their health and is teleported next to the other."},
-		{"Duel rules", "In the /duel menu you can switch off, for that duel only:\nnatural regeneration, fall damage, hunger and building (circular and unlimited arenas)."},
-		{"Spectate", "/spectate <player> watches a duel. /leave stops.\n\nAfter a duel you are protected for 5 s."},
-		{"Lobby", "/setlobby (admin) sets the lobby, /lobby goes there.\n/lobby return off: after duels go back to where you were.\n\n/lobby protect <radius> (admin): nobody can build or fight around it. /lobby protect off."},
-		{"Rules", "Falling into the void loses the round.\n\n5 minutes without hitting each other: one random player is teleported next to the other.\n\nIn the flat arena only entities and block entities (chests, shulkers, crystals...) can be placed."},
-		{"Kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit show <name>  look inside a kit\n/kit delete <name>\n/kit key a|b|c <kit>  sets the Quick kit keys\n/kit profile <kit> <layout>  sorts a kit when loaded"},
-		{"Sharing kits", "/publicate <kit>: share with everybody\n/kit public: list shared kits\n/kit take <kit>: copy one\n/unpublish <kit>: take yours back\n\n/private <kit> <player>: a locked copy (usable, but not shareable or editable)"},
-		{"Kit workshop", "/kit create [kit] opens a creative void: you can't place or break anything.\n\n/enchant <enchantment> [0-255]\n/infinite <1-99>\n/kit save <name>\n\n/leave or /kit exit brings your inventory back."},
-		{"Layouts", "A layout sorts slots 1-36.\n/layout slot <1-36> <rules...> (32 priority levels)\n/layout inventorycopy\n/layout use <1-21|name>\n/layout auto builds a layout from your kits.\n/layout sort or press R.\n\nSort also puts on the best armor you carry (never a piece with Curse of Binding). /layout armor off turns that part off."},
-		{"Keys", "Options > Controls > PvP Duels:\nSort inventory\nQuick kit A / B / C\nQuick layout 1 / 2 / 3\nNext / Previous layout\n\nAll of them can be changed."},
-		{"Sidebar and stats", "/sidebar turns the scoreboard on the right on or off.\n\nIt shows your Elo, wins, losses, streak and rounds, and during a duel the score of both players.\n\n/guide book gives you this book again."}
+	/** One topic of the book: a name for the index and its pages (title, text). A blank page follows every topic. */
+	private record Topic(String name, String[][] pages) {}
+
+	private static final Topic[] TOPICS = {
+		new Topic("Lobby", new String[][] {
+			{"The lobby hotbar", "Slot 1: Send Duel\nSlot 2: Leave\nSlot 8: Create+\nSlot 9: this book\n\nThey stay in place while you are in the lobby."},
+			{"Send Duel", "Right-click: pick a player to challenge.\n\nRight-click or hit a player with it: challenge them straight away."},
+			{"Leave and Create+", "Leave: cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only, soon)."},
+			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\n\nAdmins: /npc add bot|kit|arena, /npc remove, /npc list."},
+			{"Lobby commands", "/lobby: go there\n/lobby return on|off: after a duel go to the lobby or back where you were\n\nAdmins: /setlobby, /lobby protect <radius|off>, /lobby clear"}
+		}),
+		new Topic("Duels", new String[][] {
+			{"Challenge", "/duel <player> opens menus: kit, arena, version and how it is decided.\n\nThe other player gets [ACCEPT] / [DENY] (or /accept, /deny). It expires in 60 s."},
+			{"During a duel", "Both use the challenger's kit; your own inventory comes back after.\n\n/leave quits\n/again asks for a rematch\n/duels lists the duels now, with [WATCH]"},
+			{"How it is decided", "Rounds (max 100)\nFirst to N points\nTimed (max 30 min, a tie plays an extra round)\n\nUnlimited: it ends with /leave and the most points wins."},
+			{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat terrain in invisible barriers. Build freely, it resets every round."},
+			{"Unlimited arena", "Flat terrain, no border.\n\nMore than 100 blocks from your rival for 5 seconds: you lose half your health and are teleported next to them."},
+			{"Rules", "In the menu you can switch off for that duel: natural regeneration, fall damage, hunger and building.\n\nFalling into the void loses the round."},
+			{"Fair play", "5 minutes without a hit: one random player is teleported next to the other.\n\n/kit load and the Quick kit keys are blocked in a duel."},
+			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."}
+		}),
+		new Topic("Practice", new String[][] {
+			{"Practice bot", "/botduel [kit] or the Practice Bot NPC. A bedrock arena, 100 blocks each way, with walls.\n\nStatic bot? Yes: it can't move. No: pick Passive, Easy, Normal or Hard."},
+			{"Practice stats", "The sidebar counts hits, damage and combo. It goes on until /leave. A bot you knock out gets up again and you get a KO.\n\nPractice doesn't count for stats."}
+		}),
+		new Topic("Kits", new String[][] {
+			{"Your kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit show <name>\n/kit delete <name>"},
+			{"Quick keys", "/kit key a|b|c <kit> sets what the Quick kit keys load.\n\n/kit profile <kit> <layout> sorts a kit when you load it."},
+			{"Sharing", "/publicate <kit>\n/kit public\n/kit take <kit>\n/unpublish <kit>\n/private <kit> <player>: a locked copy"},
+			{"Kit workshop", "Create+ > Create Kit, or /kit create [kit]. A creative void.\n\n/enchant <name> [0-255]\n/infinite <1-99>\n/kit save <name>\n/leave"}
+		}),
+		new Topic("Layouts", new String[][] {
+			{"Layouts", "A layout sorts slots 1-36.\n/layout slot <1-36> <rules...>\n/layout inventorycopy\n/layout use <1-21|name>\n/layout auto builds one from your kits."},
+			{"Sorting", "/layout sort or press R.\n\nSort also puts on the best armor you carry (never a piece with Curse of Binding). /layout armor off turns that off."},
+			{"Keys", "Options > Controls > PvP Duels:\nSort inventory\nQuick kit A / B / C\nQuick layout 1 / 2 / 3\nNext / Previous layout\n\nAll can be changed."}
+		}),
+		new Topic("Ranking", new String[][] {
+			{"Ranking", "/top shows the best by Elo. /top wins and /top streak sort by wins or best win streak.\n\nEveryone starts at 1000 Elo. Practice duels don't count."},
+			{"Sidebar", "/sidebar turns the scoreboard on the right on or off: your Elo, wins, losses, streak and the duel score.\n\n/guide lists every command in chat."}
+		}),
+		new Topic("Spectating", new String[][] {
+			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."}
+		}),
+		new Topic("About", new String[][] {
+			{"About this server", "A place to duel your friends 1v1 with your own kits, in arenas made for it.\n\nThe world runs on the host's computer and is shared with Essential."},
+			{"Have fun", "Everything is a command or a click. If you get lost, this book is always in slot 9 and /guide lists the commands.\n\nBe fair and good luck!"}
+		})
 	};
 
 	private GuideBook() {}
 
+	/** The first page is the index; every topic is followed by a blank page. */
 	public static ItemStack create() {
 		List<Filterable<Component>> pages = new ArrayList<>();
-		for (String[] page : PAGES) {
-			Component text = Component.literal(page[0] + "\n\n").withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD)
-				.append(Component.literal(page[1]).withStyle(ChatFormatting.BLACK));
-			pages.add(Filterable.passThrough(text));
+		int[] firstPage = new int[TOPICS.length];
+		int next = 2; // pages count from 1 and the index is page 1
+		for (int t = 0; t < TOPICS.length; t++) {
+			firstPage[t] = next;
+			next += TOPICS[t].pages().length + 1;
+		}
+
+		MutableComponent index = Component.literal("PvP Duels\n").withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD)
+			.append(Component.literal("Click a topic:\n\n").withStyle(ChatFormatting.DARK_GRAY));
+		for (int t = 0; t < TOPICS.length; t++) {
+			int page = firstPage[t];
+			index.append(Component.literal("> " + TOPICS[t].name() + "\n").withStyle(style -> style.withColor(ChatFormatting.DARK_AQUA)
+				.withClickEvent(new ClickEvent.ChangePage(page))
+				.withHoverEvent(new HoverEvent.ShowText(Component.literal("Go to page " + page)))));
+		}
+		pages.add(Filterable.passThrough(index));
+
+		for (int t = 0; t < TOPICS.length; t++) {
+			for (String[] page : TOPICS[t].pages()) {
+				Component text = Component.literal(page[0] + "\n\n").withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD)
+					.append(Component.literal(page[1]).withStyle(ChatFormatting.BLACK));
+				pages.add(Filterable.passThrough(text));
+			}
+			pages.add(Filterable.passThrough(Component.literal(""))); // the blank page that separates topics
 		}
 		ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
 		book.set(DataComponents.WRITTEN_BOOK_CONTENT,
@@ -59,6 +112,18 @@ public final class GuideBook {
 		tag.putBoolean(MARK, true);
 		book.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
 		return book;
+	}
+
+	/** How many topics the book has (each one is followed by a blank page). */
+	public static int topicCount() {
+		return TOPICS.length;
+	}
+
+	/** The number of pages of the book (the index, every topic and its blank page). */
+	public static int pageCount() {
+		int n = 1;
+		for (Topic t : TOPICS) n += t.pages().length + 1;
+		return n;
 	}
 
 	public static boolean isGuide(ItemStack stack) {
@@ -85,7 +150,8 @@ public final class GuideBook {
 			ServerPlayer p = handler.player;
 			if (Prefs.bookGiven(p.getUUID())) return;
 			Prefs.markBookGiven(p.getUUID());
-			if (DuelManager.isInDuel(p.getUUID()) || has(p)) return;
+			// With a lobby the book is in slot 9 there; without one it goes into the inventory once.
+			if (Lobby.isSet() || DuelManager.isInDuel(p.getUUID()) || has(p)) return;
 			give(p);
 		});
 	}

@@ -157,6 +157,20 @@ public final class Lobby {
 		return dx * dx + dz * dz <= (double) protect * protect;
 	}
 
+	/** The radius of the lobby when no protection was set: the lobby hotbar items still need an area. */
+	public static final int DEFAULT_RADIUS = 64;
+
+	/** True when the player is in the lobby: same world, within the protected radius (or 64 blocks when there is none). */
+	public static synchronized boolean contains(ServerPlayer p) {
+		ensureLoaded();
+		if (spot == null) return false;
+		if (!p.level().dimension().identifier().toString().equals(spot.dimension())) return false;
+		double radius = protect > 0 ? protect : DEFAULT_RADIUS;
+		double dx = p.getX() - spot.x();
+		double dz = p.getZ() - spot.z();
+		return dx * dx + dz * dz <= radius * radius;
+	}
+
 	/** Somebody who fell off the island (far below the lobby, still near it) is brought back. */
 	private static synchronized void rescue(MinecraftServer server) {
 		if (server.getTickCount() % 10 != 0) return;

@@ -120,17 +120,17 @@ public final class DuelManager {
 		return true;
 	}
 
-	/** Practice duels count every hit between the player and the bot. */
+	/** Every hit between the two duelists is counted: practice shows it live, real duels sum it up at the end. */
 	private static void afterDamage(LivingEntity entity, DamageSource source, float baseDamageTaken, float damageTaken, boolean blocked) {
 		if (blocked || !(entity instanceof ServerPlayer victim)) return;
-		countPracticeHit(victim, source, damageTaken);
+		countHit(victim, source, damageTaken);
 	}
 
-	private static void countPracticeHit(ServerPlayer victim, DamageSource source, float amount) {
+	private static void countHit(ServerPlayer victim, DamageSource source, float amount) {
 		Duel duel = BY_PLAYER.get(victim.getUUID());
-		if (duel == null || !duel.practice || source == null || source.getEntity() == null) return;
+		if (duel == null || source == null || source.getEntity() == null) return;
 		int vi = duel.indexOf(victim.getUUID());
-		if (vi >= 0 && source.getEntity().getUUID().equals(duel.ids[1 - vi])) duel.onPracticeHit(vi, amount);
+		if (vi >= 0 && source.getEntity().getUUID().equals(duel.ids[1 - vi])) duel.onHit(vi, amount);
 	}
 
 	/** Duelists never really die: the round ends instead. */
@@ -138,7 +138,7 @@ public final class DuelManager {
 		if (!(entity instanceof ServerPlayer p)) return true;
 		Duel duel = BY_PLAYER.get(p.getUUID());
 		if (duel == null) return true;
-		countPracticeHit(p, source, Math.min(amount, p.getMaxHealth()));
+		countHit(p, source, Math.min(amount, p.getMaxHealth()));
 		duel.onDeath(p, source);
 		return false;
 	}
@@ -208,6 +208,30 @@ public final class DuelManager {
 		return Component.literal(label).withStyle(style -> style.withColor(color).withBold(true)
 			.withClickEvent(new ClickEvent.RunCommand(command))
 			.withHoverEvent(new HoverEvent.ShowText(Component.literal(hover))));
+	}
+
+	/** Withdraws every duel request this player sent or got. Returns how many there were. */
+	public static int cancelInvitesOf(UUID id) {
+		int before = INVITES.size();
+		INVITES.removeIf(i -> i.from().equals(id) || i.to().equals(id));
+		return before - INVITES.size();
+	}
+
+	/** /duels: the duels that are running right now, each with a [WATCH] button. */
+	public static void listDuels(ServerPlayer to) {
+		List<Duel> running = new ArrayList<>();
+		for (Duel d : SLOTS) if (d != null && !d.practice && !d.closed && d.phase != Duel.Phase.ENDED) running.add(d);
+		if (running.isEmpty()) {
+			to.sendSystemMessage(Msg.info("Nobody is dueling right now. Challenge somebody with /duel <player>."));
+			return;
+		}
+		to.sendSystemMessage(Msg.title("Duels right now (" + running.size() + ")"));
+		for (Duel d : running) {
+			Component line = Component.literal("  " + d.names[0] + " " + d.points[0] + " - " + d.points[1] + " " + d.names[1]).withStyle(ChatFormatting.WHITE)
+				.append(Component.literal("   " + d.config.kit() + ", " + d.config.arenaName() + "  ").withStyle(ChatFormatting.GRAY))
+				.append(button("[WATCH]", ChatFormatting.GREEN, "/spectate " + d.names[0], "Watch this duel"));
+			to.sendSystemMessage(line);
+		}
 	}
 
 	/** Why this player can't take part in a new duel right now, or null. */
