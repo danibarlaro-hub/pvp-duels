@@ -126,7 +126,15 @@ public final class Spectators {
 	}
 
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-		dispatcher.register(Commands.literal("spectate")
+		// Minecraft has its own /spectate (for admins); ours takes its place, /watch does the same.
+		com.pvpduels.workshop.ItemCommands.removeVanilla(dispatcher, "spectate");
+		for (String root : new String[] {"spectate", "watch"}) {
+			dispatcher.register(spectateNode(root));
+		}
+	}
+
+	private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> spectateNode(String root) {
+		return Commands.literal(root)
 			.then(Commands.argument("player", StringArgumentType.word()).suggests(DUELISTS).executes(ctx -> {
 				ServerPlayer p = ctx.getSource().getPlayerOrException();
 				String name = StringArgumentType.getString(ctx, "player");
@@ -141,6 +149,6 @@ public final class Spectators {
 					return 0;
 				}
 				return 1;
-			})));
+			}));
 	}
 }

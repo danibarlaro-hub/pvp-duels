@@ -52,7 +52,7 @@ public final class ItemCommands {
 
 	/** Removes a command that Minecraft already has, so ours takes its place. */
 	@SuppressWarnings("unchecked")
-	private static void removeVanilla(CommandDispatcher<CommandSourceStack> dispatcher, String name) {
+	public static void removeVanilla(CommandDispatcher<CommandSourceStack> dispatcher, String name) {
 		try {
 			Object root = dispatcher.getRoot();
 			for (String field : new String[] {"children", "literals", "arguments"}) {

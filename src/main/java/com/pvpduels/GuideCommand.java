@@ -16,7 +16,7 @@ public final class GuideCommand {
 		"Unlimited arena: the same terrain without a border. If you stay more than 100 blocks away from your rival for 5 seconds, you lose half of your health and are teleported next to them.",
 		"WORKSHOP: /kit create [kit]  - go to the kit workshop (creative mode, nothing can be placed or broken; give a kit name to edit it). There use /enchant <enchantment> [level 0-255] and /infinite <1-99> on the item in your hand, then /kit save <name>. /leave or /kit exit  - go back to your own inventory",
 		"DUEL RULES: in the /duel menu you can switch off natural regeneration, fall damage, hunger and (circular/unlimited arenas) building, for that duel only",
-		"/spectate <player>  - watch a running duel in spectator mode; /leave stops watching. After a duel you get 5 seconds of protection",
+		"/spectate <player> (or /watch)  - watch a running duel in spectator mode (replaces the admin-only Minecraft /spectate); /leave stops watching. After a duel you get 5 seconds of protection",
 		"LOBBY: an admin sets it with /setlobby (/lobby clear removes it). /lobby takes you there; after duels you are sent there unless you use /lobby return off",
 		"SHARING: /publicate <kit>  - put a kit on the public shelf; /kit public  - list public kits (click [TAKE] or use /kit take <kit> to copy one); /unpublish <kit>  - take yours off the shelf; /private <kit> <player>  - give a locked copy to one player: they can use it but not share or edit it",
 		"Admins: /test_dummy <name>  - adds a fake player that accepts every duel, to test alone; /test_dummy remove [name]",
