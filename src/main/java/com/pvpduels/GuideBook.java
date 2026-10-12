@@ -45,6 +45,7 @@ public final class GuideBook {
 			{"Unlimited arena", "Flat terrain, no border.\n\nMore than 100 blocks from your rival for 5 seconds: you lose half your health and are teleported next to them."},
 			{"Rules", "In the menu you can switch off for that duel: natural regeneration, fall damage, hunger and building.\n\nFalling into the void loses the round."},
 			{"Fair play", "5 minutes without a hit: one random player is teleported next to the other.\n\n/kit load and the Quick kit keys are blocked in a duel."},
+			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."},
 			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."}
 		}),
 		new Topic("Practice", new String[][] {
@@ -90,12 +91,10 @@ public final class GuideBook {
 			{"Profile", "/profile shows your Elo, wins, losses, best streak, title, how many achievements you have and your Builder rank.\n\n/profile <player> shows someone else's."}
 		}),
 		new Topic("Party & 2v2", new String[][] {
-			{"Party", "/party invite <friend> asks a friend to be your partner. They click [ACCEPT] (or /party accept).\n\nA party is exactly two players. /party leave ends it for both."},
-			{"2v2 duels", "When both of you are in a party, /duel <player> challenges that player and their partner. The kit, arena and mode work like in a 1v1.\n\nA party only duels another party. A single player can't duel a party."},
-			{"How it goes", "A player who is hit out is a spectator until the round ends. A round is won when both rivals are out. No friendly fire.\n\nWin a round alone against both rivals and you get the Clutch achievement.\n\n/leave makes your team forfeit. 2v2 does not change the Elo."}
-		}),
-		new Topic("Spectating", new String[][] {
-			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."}
+			{"Party", "/party invite <friend> asks a friend to be your partner. They click [ACCEPT].\n\nA party is exactly two players. /party leave ends it for both."},
+			{"2v2 duels", "When both of you are in a party, /duel <player> challenges that player and their partner.\n\nA party only duels another party."},
+			{"Rounds", "A player who is hit out watches until the round ends. A round is won when both rivals are out. No friendly fire.\n\nWin a round alone for the Clutch achievement."},
+			{"Good to know", "/leave makes your team forfeit.\n\n2v2 does not change the Elo, can't be watched yet, and the queue is 1v1 only."}
 		}),
 		new Topic("About", new String[][] {
 			{"About this server", "A place to duel your friends 1v1 with your own kits, in arenas made for it.\n\nThe world runs on the host's computer and is shared with Essential."},
@@ -116,7 +115,7 @@ public final class GuideBook {
 		}
 
 		MutableComponent index = Component.literal("PvP Duels\n").withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD)
-			.append(Component.literal("Click a topic:\n\n").withStyle(ChatFormatting.DARK_GRAY));
+			.append(Component.literal("Click a topic:\n").withStyle(ChatFormatting.DARK_GRAY));
 		for (int t = 0; t < TOPICS.length; t++) {
 			int page = firstPage[t];
 			index.append(Component.literal("> " + TOPICS[t].name() + "\n").withStyle(style -> style.withColor(ChatFormatting.DARK_AQUA)
