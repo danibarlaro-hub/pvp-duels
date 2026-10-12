@@ -77,7 +77,8 @@ public final class TopCommand {
 		return kits.size();
 	}
 
-	private static int showKit(CommandSourceStack source, String kit, String by) {
+	private static int showKit(CommandSourceStack source, String typed, String by) {
+		String kit = typed.toLowerCase(Locale.ROOT); // kit names are always lower case
 		if (!validBy(by)) {
 			source.sendFailure(Msg.err("Use /top kit " + kit + ", /top kit " + kit + " wins or /top kit " + kit + " streak."));
 			return 0;

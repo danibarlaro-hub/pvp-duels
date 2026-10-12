@@ -2051,8 +2051,13 @@ public final class SelfTest {
 		});
 
 		step("queue: back in the lobby", () -> {
-			a.teleportTo((ServerLevel) a.level(), 60.5, a.getY(), 55.5, java.util.Set.of(), 0f, 0f, true);
-		}, () -> LobbyKit.isActive(a.getUUID()), 200);
+			log("Alice before going to the lobby: " + where(a) + ", " + LobbyKit.why(a));
+			Lobby.teleport(server, a);
+		}, () -> {
+			boolean ok = LobbyKit.isActive(a.getUUID());
+			if (!ok && ticks % 40 == 0) log("waiting for Alice's lobby items: " + where(a) + ", " + LobbyKit.why(a));
+			return ok;
+		}, 200);
 		step("queue: the Leave barrier takes her out of the queue", () -> {
 			run(a, "queue public qkit");
 			check("Alice waits", Queue.isQueued(a.getUUID()));
