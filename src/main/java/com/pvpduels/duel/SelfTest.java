@@ -1570,6 +1570,158 @@ public final class SelfTest {
 			a.getInventory().setItem(21, new ItemStack(Items.STONE, 3));
 		});
 
+		step("kits: every item of the game is saved and read back the same", () -> {
+			var inv = a.getInventory();
+			List<ItemStack> all = new ArrayList<>();
+			for (net.minecraft.world.item.Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+				ItemStack stack = new ItemStack(item, item.getDefaultMaxStackSize());
+				if (!stack.isEmpty()) all.add(stack);
+			}
+			// Items with extra data, like the ones people make in the workshop.
+			ItemStack named = new ItemStack(Items.DIAMOND_SWORD);
+			named.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal("My Sword"));
+			named.set(net.minecraft.core.component.DataComponents.LORE,
+				new net.minecraft.world.item.component.ItemLore(List.of(Component.literal("line one"), Component.literal("line two"))));
+			named.set(net.minecraft.core.component.DataComponents.DAMAGE, 17);
+			all.add(named);
+			ItemStack pearls = new ItemStack(Items.ENDER_PEARL, 64);
+			pearls.set(net.minecraft.core.component.DataComponents.MAX_STACK_SIZE, 64);
+			all.add(pearls);
+			ItemStack totems = new ItemStack(Items.TOTEM_OF_UNDYING, 99);
+			totems.set(net.minecraft.core.component.DataComponents.MAX_STACK_SIZE, 99);
+			all.add(totems);
+
+			int batches = 0;
+			List<String> bad = new ArrayList<>();
+			for (int from = 0; from < all.size(); from += 41) {
+				inv.clearContent();
+				for (int i = 0; i < 41 && from + i < all.size(); i++) inv.setItem(i, all.get(from + i).copy());
+				batches++;
+				try {
+					KitStore.SaveReport report = KitStore.save(server, a, "alltest");
+					for (String w : report.warnings()) bad.add("batch " + batches + ": " + w);
+					var kit = KitStore.read(server, a.getUUID(), "alltest");
+					if (kit.isEmpty()) {
+						bad.add("batch " + batches + ": the kit file disappeared");
+						continue;
+					}
+					for (int i = 0; i < 41; i++) {
+						ItemStack live = inv.getItem(i);
+						if (!live.isEmpty() && !ItemStack.matches(live, kit.get().slots()[i])) {
+							bad.add("batch " + batches + " slot " + i + ": " + live + " came back as " + kit.get().slots()[i]);
+						}
+					}
+				} catch (IOException | RuntimeException e) {
+					bad.add("batch " + batches + ": " + e);
+				}
+			}
+			log("kit round trip: " + all.size() + " stacks in " + batches + " batches, " + bad.size() + " problems");
+			for (int i = 0; i < Math.min(bad.size(), 25); i++) log("  kit problem: " + bad.get(i));
+			check("all " + all.size() + " item stacks of the game are saved and come back identical", bad.isEmpty(),
+				bad.isEmpty() ? "" : bad.size() + " problems, first: " + bad.get(0));
+			try {
+				KitStore.delete(a.getUUID(), "alltest");
+			} catch (IOException ignored) {
+				// the test folder is thrown away anyway
+			}
+			for (int i = 0; i < 41; i++) inv.setItem(i, ItemStack.EMPTY);
+		});
+
+		step("kits: /kit save says what it saved and never writes a blank kit", () -> {
+			var inv = a.getInventory();
+			inv.clearContent();
+			run(a, "kit save blanktest");
+			check("an empty inventory is not saved as a blank kit", !KitStore.exists(a.getUUID(), "blanktest") && a.heard("inventory is empty"));
+
+			inv.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			inv.setItem(1, new ItemStack(Items.GOLDEN_APPLE, 5));
+			a.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+			run(a, "kit save goodkit");
+			check("/kit save tells how many stacks are in the file (3)", a.heard("3 item stacks in the file"));
+
+			inv.clearContent();
+			a.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+			run(a, "kit save goodkit");
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "goodkit");
+				check("an empty inventory does not wipe a good kit", kit.isPresent() && kit.get().stacks() == 3 && a.heard("stays as it was"),
+					kit.isPresent() ? "stacks=" + kit.get().stacks() : "no kit");
+			} catch (IOException e) {
+				check("the kit can be read", false, e.toString());
+			}
+		});
+
+		step("kits: /kit show opens the kit as a look-only chest", () -> {
+			run(a, "kit show goodkit");
+		});
+		step("kits: the chest shows the kit and nothing can be taken", () -> {
+			AbstractContainerMenu menu = a.containerMenu;
+			boolean chest = menu instanceof ChestMenu c && c.getRowCount() == 6;
+			check("a 6-row chest opened", chest);
+			if (!chest) return;
+			check("the hotbar sword is in the bottom row", menu.getSlot(KitView.where(0)).getItem().is(Items.DIAMOND_SWORD));
+			check("the apples keep their count", menu.getSlot(KitView.where(1)).getItem().getCount() == 5);
+			check("the helmet is in the armor corner", menu.getSlot(KitView.where(39)).getItem().is(Items.IRON_HELMET));
+			menu.clicked(KitView.where(0), 0, ContainerInput.PICKUP, a);
+			check("clicking an item does not take it", a.containerMenu.getCarried().isEmpty() && a.getInventory().getItem(0).isEmpty());
+			a.closeContainer();
+			check("the kit file was not touched by looking", KitStore.exists(a.getUUID(), "goodkit"));
+		});
+
+		step("kits: /kit load puts the whole kit in the game of the player", () -> {
+			a.getInventory().clearContent();
+			a.getInventory().setItem(30, new ItemStack(Items.STONE, 7));
+			run(a, "kit load goodkit");
+			check("the kit replaced the inventory", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && a.getInventory().getItem(30).isEmpty()
+				&& a.getItemBySlot(EquipmentSlot.HEAD).is(Items.IRON_HELMET));
+			check("/kit load tells how many stacks it loaded", a.heard("Loaded kit 'goodkit' (3 item stacks)"));
+		});
+		step("kits: the game of the player shows the loaded kit", () -> {
+			check("her game was sent the whole kit", clientMatches(a), clientDiff(a));
+		});
+
+		step("kits: a stack that is too big or unreadable is rescued, not lost", () -> {
+			var inv = a.getInventory();
+			inv.clearContent();
+			inv.setItem(3, new ItemStack(Items.DIAMOND_SWORD, 5));
+			run(a, "kit save bigstack");
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "bigstack");
+				check("a stack bigger than its maximum still ends up in the kit", kit.isPresent() && kit.get().slots()[3].is(Items.DIAMOND_SWORD),
+					kit.isPresent() ? String.valueOf(kit.get().slots()[3]) : "no kit");
+				log("over-full stack: " + (kit.isPresent() ? kit.get().slots()[3] : "no kit") + " / told: " + a.heard("not saved exactly"));
+			} catch (IOException e) {
+				check("the kit can be read", false, e.toString());
+			}
+
+			com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+			com.google.gson.JsonArray slots = new com.google.gson.JsonArray();
+			for (int i = 0; i < 41; i++) slots.add(new com.google.gson.JsonObject());
+			com.google.gson.JsonObject broken = com.google.gson.JsonParser.parseString(
+				"{\"id\":\"minecraft:diamond_sword\",\"count\":1,\"components\":{\"minecraft:damage\":-5}}").getAsJsonObject();
+			slots.set(0, broken);
+			slots.set(5, com.google.gson.JsonParser.parseString("{\"id\":\"minecraft:not_an_item\",\"count\":1}"));
+			slots.set(6, com.google.gson.JsonParser.parseString("{\"id\":\"minecraft:golden_apple\",\"count\":3}"));
+			root.addProperty("name", "damaged");
+			root.add("slots", slots);
+			try {
+				KitStore.writeRaw(a.getUUID(), "damaged", root);
+				var kit = KitStore.read(server, a.getUUID(), "damaged");
+				check("a kit with a broken stack still loads the rest", kit.isPresent() && kit.get().slots()[6].is(Items.GOLDEN_APPLE)
+					&& kit.get().slots()[6].getCount() == 3);
+				check("the item with broken data comes back as the plain item", kit.isPresent() && kit.get().slots()[0].is(Items.DIAMOND_SWORD),
+					kit.isPresent() ? String.valueOf(kit.get().slots()[0]) : "no kit");
+				check("an item that does not exist is reported", kit.isPresent() && kit.get().problems().stream().anyMatch(t -> t.startsWith("hotbar 6")),
+					kit.isPresent() ? String.valueOf(kit.get().problems()) : "no kit");
+				run(a, "kit load damaged");
+				check("/kit load tells which slots could not be read", a.heard("could not be read exactly"));
+			} catch (IOException e) {
+				check("the kit can be written and read", false, e.toString());
+			}
+			for (int i = 0; i < 41; i++) inv.setItem(i, ItemStack.EMPTY);
+			inv.setItem(21, new ItemStack(Items.STONE, 3));
+		});
+
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
 			check("/leave outside a duel gives an error", a.heard("not in a duel"));

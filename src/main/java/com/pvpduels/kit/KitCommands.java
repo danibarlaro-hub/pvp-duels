@@ -54,6 +54,8 @@ public final class KitCommands {
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(KitCommands::save)))
 			.then(Commands.literal("load")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(KitCommands::load)))
+			.then(Commands.literal("show")
+				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(KitCommands::show)))
 			.then(Commands.literal("delete")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(KitCommands::delete)))
 			.then(Commands.literal("list").executes(KitCommands::list))
@@ -93,13 +95,48 @@ public final class KitCommands {
 			ctx.getSource().sendFailure(Msg.err("Kit '" + name + "' was given to you and is locked: save your inventory under another name."));
 			return 0;
 		}
+		if (KitStore.stacksInInventory(p.getInventory()) == 0) {
+			// Never write a blank kit (and never replace a good one with a blank one). Show the player what the server has.
+			KitStore.resync(p);
+			ctx.getSource().sendFailure(Msg.err("Your inventory is empty (that is what the server sees), so nothing was saved"
+				+ (KitStore.exists(p.getUUID(), name) ? " and kit '" + name + "' stays as it was" : "") + ". Put your items in first, then run /kit save " + name + " again."));
+			return 0;
+		}
 		try {
 			boolean existed = KitStore.exists(p.getUUID(), name);
-			KitStore.save(ctx.getSource().getServer(), p, name);
-			ctx.getSource().sendSuccess(() -> Msg.ok((existed ? "Overwrote kit '" : "Saved kit '") + name + "' from your inventory."), false);
+			KitStore.SaveReport report = KitStore.save(ctx.getSource().getServer(), p, name);
+			ctx.getSource().sendSuccess(() -> Msg.ok((existed ? "Overwrote kit '" : "Saved kit '") + name + "' from your inventory: "
+				+ report.stacks() + " item stack" + (report.stacks() == 1 ? "" : "s") + " in the file. See it with /kit show " + name + "."), false);
+			if (!report.warnings().isEmpty()) {
+				ctx.getSource().sendSuccess(() -> Msg.err("Careful, " + report.warnings().size() + " slot" + (report.warnings().size() == 1 ? " was" : "s were")
+					+ " not saved exactly:"), false);
+				for (String w : report.warnings()) ctx.getSource().sendSuccess(() -> Msg.err("  " + w), false);
+			}
 			return 1;
-		} catch (IOException e) {
-			ctx.getSource().sendFailure(Msg.err("Could not save the kit: " + e.getMessage()));
+		} catch (IOException | RuntimeException e) {
+			ctx.getSource().sendFailure(Msg.err("Could not save the kit: " + e));
+			return 0;
+		}
+	}
+
+	/** /kit show <name>: opens the kit as a read-only chest, so you can see what is really saved in it. */
+	private static int show(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		String name = kitName(ctx);
+		try {
+			Optional<KitStore.Kit> kit = KitStore.read(ctx.getSource().getServer(), p.getUUID(), name);
+			if (kit.isEmpty()) {
+				ctx.getSource().sendFailure(missingKit(p, name));
+				return 0;
+			}
+			com.pvpduels.duel.KitView.open(p, name, kit.get().slots());
+			int stacks = kit.get().stacks();
+			ctx.getSource().sendSuccess(() -> Msg.info("Kit '" + name + "' has " + stacks + " item stack" + (stacks == 1 ? "" : "s")
+				+ (stacks == 0 ? " - it is EMPTY." : ".")), false);
+			for (String problem : kit.get().problems()) ctx.getSource().sendSuccess(() -> Msg.err("  " + problem), false);
+			return 1;
+		} catch (IOException | RuntimeException e) {
+			ctx.getSource().sendFailure(Msg.err("Could not read the kit: " + e));
 			return 0;
 		}
 	}
@@ -130,7 +167,18 @@ public final class KitCommands {
 					InventorySorter.sort(p, profile);
 				}
 			}
-			p.sendSystemMessage(Msg.ok("Loaded kit '" + name + "'. Your old inventory was replaced."));
+			int stacks = kit.get().stacks();
+			if (stacks == 0) {
+				p.sendSystemMessage(Msg.err("Loaded kit '" + name + "', but it is EMPTY: it was saved with nothing in the inventory. "
+					+ "Set your items up and run /kit save " + name + " again."));
+			} else {
+				p.sendSystemMessage(Msg.ok("Loaded kit '" + name + "' (" + stacks + " item stack" + (stacks == 1 ? "" : "s")
+					+ "). Your old inventory was replaced."));
+			}
+			if (!kit.get().problems().isEmpty()) {
+				p.sendSystemMessage(Msg.err("Some slots of this kit could not be read exactly:"));
+				for (String problem : kit.get().problems()) p.sendSystemMessage(Msg.err("  " + problem));
+			}
 			return true;
 		} catch (IOException | RuntimeException e) {
 			p.sendSystemMessage(Msg.err("Could not load the kit: " + e.getMessage()));
