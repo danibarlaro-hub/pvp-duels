@@ -34,6 +34,11 @@ https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpd
 - `/kit save <nombre>` guarda lo que armaste. `/leave` o `/kit exit` te devuelve tu inventario y tu lugar.
 - `/enchant` e `/infinite` solo funcionan en el taller (los admins los pueden usar en cualquier lado).
 
+## Sidebar y estadisticas
+- A la derecha de la pantalla aparece un marcador solo para vos: fuera de un duelo muestra tus estadisticas (victorias, derrotas, racha, rondas), durante un duelo el puntaje, y en el taller los kits que tenes.
+- `/sidebar` lo apaga o prende (se acuerda de tu eleccion). Las estadisticas se guardan en `.minecraft/pvpduels`.
+- Los duelos de practica contra `/test_dummy` no cuentan para las estadisticas.
+
 ## Probar solo (admins)
 - `/test_dummy <nombre>` invoca un jugador falso a tu lado (tambien `/fakeplayer`). No se mueve, no pelea y acepta todos los duelos y revanchas. `/duel <nombre>` y a pegarle. Se saca con `/test_dummy remove <nombre>`.
 - Hace falta tener permisos de admin (en un mundo local: crear el mundo con trucos activados).
@@ -45,7 +50,7 @@ https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpd
 - Los layouts ordenan los slots 1-36 (hotbar + mochila): `/layout slot <1-36> <reglas...>` con hasta 32 niveles de prioridad,
   `/layout level`, `/layout inventorycopy [layout] [prioridad]`, `/layout use|copy|new|show|list|clear|delete|sort|key|keys`
 - Teclas (Opciones > Controles > PvP Duels): Sort inventory (R), Quick kit A/B/C, Quick layout 1/2/3, Next/Previous layout
-- `/guide` muestra los comandos en el chat
+- `/guide` muestra los comandos en el chat; `/guide book` te da un libro con toda la ayuda (no se guarda en los kits)
 
 ## Que probar primero
 1. Entra a un mundo: tiene que aparecer "PvP Duels is active".

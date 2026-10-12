@@ -7,9 +7,9 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Kits guardados en tu carpeta (no dentro del mundo), `/kit save|load|list|delete`, sin limite practico (tenias pedido ~50 mil)
 - ✅ Teclas **Quick kit A/B/C** para cargar 3 kits (`/kit key`), todas cambiables en Controles
 - ✅ Un kit puede tener un layout asociado (`/kit profile`), se ordena solo al cargarlo
-- ⏳ Taller creativo para crear kits: `/kit create` te manda a un mundo vacio con una plataforma de piedra, creativo limitado (no rompe nada)
-- ⏳ `/enchant` propio (sin yunque): cualquier encantamiento en cualquier item, hasta nivel 255
-- ⏳ `/infinite <cantidad>`: apilar items que no se apilan (totems, etc.). Pediste maximo 128; ojo, Minecraft solo deja stacks de hasta 99, lo reviso
+- ✅ Taller creativo para crear kits: `/kit create` te manda a un mundo vacio con una plataforma de piedra, creativo limitado (no rompe nada)
+- ✅ `/enchant` propio (sin yunque): cualquier encantamiento en cualquier item, hasta nivel 255
+- ✅ `/infinite <cantidad>`: apilar items que no se apilan (totems, etc.). Pediste maximo 128, pero Minecraft solo deja stacks de hasta 99, asi que el maximo es 99
 - ⏳ `/publicate <kit>` (publico para todos), `/private <kit> <jugador>` (se lo das a uno sin que pueda compartirlo), `/unpublish`
 
 ## Ordenador de inventario (layouts)
@@ -33,15 +33,15 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ⏳ Arena circular: mundo normal, piso plano, circulo de barriers, radio 100/150/200, se resetea sola (5 bloques de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60)
 - ⏳ Arena sin limites: si te alejas 100 bloques del rival, cuenta de 5 s, perdes la mitad de la vida y te teletransporta al rival
 - ⏳ `/leave` te lleva a un **spawn que vos decoras** (hoy te devuelve a donde estabas antes del duelo; hay que decidir cual preferis)
-- ⏳ Puntos de cada uno en el sidebar durante el duelo (hoy salen en la barra de arriba y en titulos)
+- ✅ Puntos de cada uno en el sidebar durante el duelo (hoy salen en la barra de arriba y en titulos)
 
 ## Interfaz y ayuda
-- ⏳ Libro al aparecer con todos los comandos y todo lo que tiene el mod (hoy existe `/guide` en el chat)
-- ⏳ Sidebar a la derecha, desactivable (`/sidebar`), con tus estadisticas y los puntos del duelo
+- ✅ Libro al aparecer con todos los comandos y todo lo que tiene el mod (`/guide book`; el chat sigue con `/guide`)
+- ✅ Sidebar a la derecha, desactivable (`/sidebar`), con tus estadisticas y los puntos del duelo
 - ✅ Todo el texto del mod en ingles (el unico que sabe español de tu grupo)
 
 ## Ideas extra que te gustaron
-- ⏳ Estadisticas guardadas (victorias, derrotas, rondas...)
+- ✅ Estadisticas guardadas (victorias, derrotas, rondas...)
 - ⏳ Reglas por duelo, `/spectate`, proteccion al aparecer y otras extras que te propuse
 - ⏳ Funcionar bien con Essential en todos los casos (host en un mundo alterno, etc.) y quizas un mod de apoyo para tus amigos
 
