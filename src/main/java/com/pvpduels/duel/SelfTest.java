@@ -125,8 +125,18 @@ public final class SelfTest {
 		STEPS.add(new Step(name, action, until, timeout));
 	}
 
+	/** The test world is a superflat with the usual mob spawning: a slime once killed a fake player in the middle of the test. */
+	private static void clearMonsters() {
+		for (ServerLevel level : server.getAllLevels()) {
+			for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
+				if (e instanceof net.minecraft.world.entity.monster.Enemy) e.discard();
+			}
+		}
+	}
+
 	private static void tick() {
 		ticks++;
+		if (ticks % 10 == 0) clearMonsters();
 		if (ticks > 20 * 600) {
 			check("whole test finishes in time", false);
 			finish();
