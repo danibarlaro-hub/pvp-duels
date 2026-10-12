@@ -39,3 +39,15 @@ net.minecraft.world.level.block.state.StateDefinition
 net.minecraft.world.level.block.state.properties.BlockStateProperties
 net.minecraft.world.level.block.state.properties.Property
 net.minecraft.world.level.storage.LevelResource
+net.minecraft.world.item.equipment.Equippable
+net.minecraft.world.entity.EquipmentSlot
+net.minecraft.world.entity.EquipmentSlotGroup
+net.minecraft.world.item.component.ItemAttributeModifiers
+net.minecraft.world.item.component.ItemAttributeModifiers$Entry
+net.minecraft.world.entity.ai.attributes.AttributeModifier
+net.minecraft.world.entity.ai.attributes.Attributes
+net.minecraft.world.item.enchantment.ItemEnchantments
+net.minecraft.world.item.enchantment.EnchantmentHelper
+net.minecraft.world.item.enchantment.Enchantments
+net.minecraft.world.item.enchantment.EnchantmentEffectComponents
+net.minecraft.core.Holder
