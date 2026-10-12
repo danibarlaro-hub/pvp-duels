@@ -62,6 +62,8 @@ public final class DuelManager {
 		ServerLifecycleEvents.SERVER_STOPPING.register(DuelManager::onStopping);
 
 		ArenaRules.register();
+		Lobby.register();
+		LobbyGuard.register();
 	}
 
 	// ------------------------------------------------------------------ queries

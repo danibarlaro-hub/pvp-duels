@@ -1050,12 +1050,85 @@ public final class SelfTest {
 			check("/lobby takes you there", Math.abs(a.getX() - 50.5) < 2 && Math.abs(a.getZ() - 50.5) < 2, where(a));
 			run(a, "lobby return on");
 			check("and Alice turned it on again", Prefs.lobbyReturn(a.getUUID()));
+			check("the lobby file is inside the world folder", java.nio.file.Files.exists(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+				.resolve("pvpduels").resolve("lobby.json")));
+			check("the lobby is not protected by default", Lobby.protectRadius() == 0);
+		});
+
+		// ---------------------------------------------------------------- lobby protection
+		step("lobby protection: a platform in the air", () -> {
+			ServerLevel level = (ServerLevel) a.level();
+			botX = a.getY();
+			try {
+				Lobby.setAt(level.dimension().identifier().toString(), 50.5, 100.0, 50.5, 0f, 0f);
+			} catch (java.io.IOException e) {
+				check("the lobby can be moved", false, e.toString());
+			}
+			run(a, "lobby protect 20");
+			check("a normal player cannot protect the lobby", Lobby.protectRadius() == 0);
+			try {
+				Lobby.setProtectRadius(20);
+			} catch (java.io.IOException e) {
+				check("the protection can be turned on", false, e.toString());
+			}
+			check("the protection is on", Lobby.protectRadius() == 20);
+			for (int x = 46; x <= 56; x++) for (int z = 46; z <= 56; z++) level.setBlock(at(x, 99, z), Blocks.STONE.defaultBlockState(), 3);
+			// a platform far away, outside of the protected area, to compare
+			for (int x = -34; x <= -26; x++) for (int z = -34; z <= -26; z++) level.setBlock(at(x, 99, z), Blocks.STONE.defaultBlockState(), 3);
+			a.teleportTo(level, 50.5, 100, 50.5, java.util.Set.of(), 0f, 0f, true);
+			b.teleportTo(level, 50.5, 100, 52.5, java.util.Set.of(), 0f, 0f, true);
+			botTick = ticks;
+		}, () -> ticks - botTick > 5, 100);
+		step("lobby protection: nothing can be broken, placed or hit", () -> {
+			ServerLevel level = (ServerLevel) a.level();
+			check("protected radius and the lobby spot are saved", java.nio.file.Files.exists(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+				.resolve("pvpduels").resolve("lobby.json")));
+			BlockPos block = at(54, 99, 50);
+			a.gameMode.destroyBlock(block);
+			check("breaking a block in the lobby does nothing", level.getBlockState(block).is(Blocks.STONE), String.valueOf(level.getBlockState(block)));
+			useOn(a, new ItemStack(Items.DIRT), new BlockHitResult(new Vec3(54.5, 100.0, 50.5), Direction.UP, block, false));
+			check("placing a block in the lobby does nothing", level.getBlockState(at(54, 100, 50)).isAir(), String.valueOf(level.getBlockState(at(54, 100, 50))));
+			float before = b.getHealth();
+			softHit(a, b, 4f);
+			check("players cannot hurt each other in the lobby", b.getHealth() == before, before + " -> " + b.getHealth());
+			check("the protection tells you why", a.heard("The lobby is protected"));
+			// the same things work far from the lobby
+			a.teleportTo(level, -30.5, 100, -30.5, java.util.Set.of(), 0f, 0f, true);
+			b.teleportTo(level, -30.5, 100, -28.5, java.util.Set.of(), 0f, 0f, true);
+			botTick = ticks;
+		}, () -> ticks - botTick > 5, 100);
+		step("lobby protection: outside the protected area everything works", () -> {
+			ServerLevel level = (ServerLevel) a.level();
+			BlockPos block = at(-30, 99, -27);
+			a.gameMode.destroyBlock(block);
+			check("a block can be broken outside of it", level.getBlockState(block).isAir(), String.valueOf(level.getBlockState(block)));
+			useOn(a, new ItemStack(Items.DIRT), new BlockHitResult(new Vec3(-29.5, 99.5, -27.0), Direction.SOUTH, at(-30, 99, -28), false));
+			check("and a block can be placed", level.getBlockState(at(-30, 99, -27)).is(Blocks.DIRT), String.valueOf(level.getBlockState(at(-30, 99, -27))));
+			float before = b.getHealth();
+			softHit(a, b, 4f);
+			check("and players can hurt each other", b.getHealth() < before, before + " -> " + b.getHealth());
+			a.teleportTo(level, 50.5, 15, 50.5, java.util.Set.of(), 0f, 0f, true);
+			botTick = ticks;
+		}, () -> ticks - botTick > 25, 100);
+		step("lobby protection: somebody who falls off is brought back", () -> {
+			check("Alice was brought back to the lobby", a.getY() > 90 && Math.abs(a.getX() - 50.5) < 2, where(a));
+			check("and was told", a.heard("You fell off the island"));
+			try {
+				Lobby.setProtectRadius(0);
+			} catch (java.io.IOException e) {
+				check("the protection can be turned off", false, e.toString());
+			}
+			check("the protection is off", Lobby.protectRadius() == 0);
 			try {
 				Lobby.clear();
 			} catch (java.io.IOException e) {
 				check("the lobby can be removed", false, e.toString());
 			}
-			check("the lobby is gone", !Lobby.isSet());
+			check("the lobby is gone", !Lobby.isSet() && !java.nio.file.Files.exists(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+				.resolve("pvpduels").resolve("lobby.json")));
+			b.setHealth(b.getMaxHealth());
+			a.teleportTo((ServerLevel) a.level(), -30.5, botX, -30.5, java.util.Set.of(), 0f, 0f, true);
+			b.teleportTo((ServerLevel) b.level(), -20.5, botX, -30.5, java.util.Set.of(), 0f, 0f, true);
 		});
 
 		// ---------------------------------------------------------------- automatic layout

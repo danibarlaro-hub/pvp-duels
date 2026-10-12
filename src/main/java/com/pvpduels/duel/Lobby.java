@@ -5,11 +5,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.util.Msg;
 import com.pvpduels.util.Prefs;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -20,6 +23,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,6 +36,10 @@ import java.util.Set;
  * The lobby: a place you decorate yourself. An admin sets it with /setlobby; after a duel everybody who has not
  * turned it off with /lobby return off is taken there (instead of back to where they stood), and /lobby takes you
  * there any time you are not busy.
+ * <p>
+ * The lobby is saved inside the world (pvpduels/lobby.json in the world folder), so a world that is copied to
+ * another computer brings its lobby with it. An admin can also protect the lobby with /lobby protect: inside that
+ * radius nobody can break or place blocks and players cannot hurt each other.
  */
 public final class Lobby {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -39,21 +48,47 @@ public final class Lobby {
 
 	private static Spot spot;
 	private static boolean loaded;
+	/** Radius (in blocks, around the lobby) where building and fighting are not allowed. 0 = not protected. */
+	private static int protect;
+	/** The lobby file of the world that is running now (null before a world starts). */
+	private static Path worldFile;
 
 	private Lobby() {}
 
-	private static Path file() {
+	/** Where older versions kept the lobby: one file for the whole game folder. It is still read when the world has none. */
+	private static Path legacyFile() {
 		return FabricLoader.getInstance().getGameDir().resolve("pvpduels").resolve("lobby.json");
+	}
+
+	private static Path file() {
+		return worldFile != null ? worldFile : legacyFile();
+	}
+
+	/** Called by the mod at start-up: the lobby follows the world that is loaded. */
+	public static void register() {
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> reset(server.getWorldPath(LevelResource.ROOT).resolve("pvpduels").resolve("lobby.json")));
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> reset(null));
+		ServerTickEvents.END_SERVER_TICK.register(Lobby::rescue);
+	}
+
+	private static synchronized void reset(Path file) {
+		worldFile = file;
+		spot = null;
+		protect = 0;
+		loaded = false;
 	}
 
 	private static synchronized void ensureLoaded() {
 		if (loaded) return;
 		loaded = true;
 		try {
-			if (!Files.exists(file())) return;
-			JsonObject root = JsonParser.parseString(Files.readString(file())).getAsJsonObject();
+			Path source = file();
+			if (!Files.exists(source) && worldFile != null) source = legacyFile();
+			if (!Files.exists(source)) return;
+			JsonObject root = JsonParser.parseString(Files.readString(source)).getAsJsonObject();
 			spot = new Spot(root.get("dimension").getAsString(), root.get("x").getAsDouble(), root.get("y").getAsDouble(),
 				root.get("z").getAsDouble(), root.get("yaw").getAsFloat(), root.get("pitch").getAsFloat());
+			protect = root.has("protect") ? root.get("protect").getAsInt() : 0;
 		} catch (Exception e) {
 			PvpDuelsMod.LOGGER.warn("Could not read the lobby file: {}", e.toString());
 		}
@@ -65,8 +100,16 @@ public final class Lobby {
 	}
 
 	public static synchronized void set(ServerPlayer p) throws IOException {
+		setAt(p.level().dimension().identifier().toString(), p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot());
+	}
+
+	public static synchronized void setAt(String dimension, double x, double y, double z, float yaw, float pitch) throws IOException {
 		ensureLoaded();
-		spot = new Spot(p.level().dimension().identifier().toString(), p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot());
+		spot = new Spot(dimension, x, y, z, yaw, pitch);
+		save();
+	}
+
+	private static void save() throws IOException {
 		JsonObject root = new JsonObject();
 		root.addProperty("dimension", spot.dimension());
 		root.addProperty("x", spot.x());
@@ -74,6 +117,7 @@ public final class Lobby {
 		root.addProperty("z", spot.z());
 		root.addProperty("yaw", spot.yaw());
 		root.addProperty("pitch", spot.pitch());
+		root.addProperty("protect", protect);
 		Files.createDirectories(file().getParent());
 		Files.writeString(file(), GSON.toJson(root));
 	}
@@ -82,8 +126,53 @@ public final class Lobby {
 		ensureLoaded();
 		boolean had = spot != null;
 		spot = null;
+		protect = 0;
 		Files.deleteIfExists(file());
+		Files.deleteIfExists(legacyFile());
 		return had;
+	}
+
+	// ------------------------------------------------------------------ protection
+
+	public static synchronized int protectRadius() {
+		ensureLoaded();
+		return spot == null ? 0 : protect;
+	}
+
+	/** Turns the protection on (radius > 0) or off (0). Needs a lobby. */
+	public static synchronized void setProtectRadius(int radius) throws IOException {
+		ensureLoaded();
+		if (spot == null) throw new IOException("There is no lobby yet.");
+		protect = Math.max(0, radius);
+		save();
+	}
+
+	/** True when this place is inside the protected area around the lobby. */
+	public static synchronized boolean protects(Level level, double x, double z) {
+		ensureLoaded();
+		if (spot == null || protect <= 0) return false;
+		if (!level.dimension().identifier().toString().equals(spot.dimension())) return false;
+		double dx = x - spot.x();
+		double dz = z - spot.z();
+		return dx * dx + dz * dz <= (double) protect * protect;
+	}
+
+	/** Somebody who fell off the island (far below the lobby, still near it) is brought back. */
+	private static synchronized void rescue(MinecraftServer server) {
+		if (server.getTickCount() % 10 != 0) return;
+		ensureLoaded();
+		if (spot == null || protect <= 0) return;
+		ServerLevel level = level(server);
+		if (level == null) return;
+		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+			if (p.level() != level || !p.isAlive() || LobbyGuard.bypass(p)) continue;
+			if (p.getY() > spot.y() - 70) continue;
+			double dx = p.getX() - spot.x();
+			double dz = p.getZ() - spot.z();
+			if (dx * dx + dz * dz > (double) (protect + 80) * (protect + 80)) continue;
+			teleport(server, p);
+			p.sendSystemMessage(Msg.info("You fell off the island. Back to the lobby!"));
+		}
 	}
 
 	/** True when this player would be taken to the lobby after a duel. */
@@ -159,6 +248,47 @@ public final class Lobby {
 						Prefs.setLobbyReturn(p.getUUID(), on);
 						ctx.getSource().sendSuccess(() -> Msg.ok(on ? "After a duel you will be sent to the lobby."
 							: "After a duel you will go back to where you were."), false);
+						return 1;
+					})))
+			.then(Commands.literal("protect")
+				.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+				.executes(ctx -> {
+					int r = protectRadius();
+					ctx.getSource().sendSuccess(() -> Msg.info(r > 0
+						? "The lobby is protected within " + r + " blocks: no building, no fighting. Change it with /lobby protect <radius> or turn it off with /lobby protect off."
+						: "The lobby is not protected. Use /lobby protect <radius> (for example 100) to stop building and fighting around it."), false);
+					return 1;
+				})
+				.then(Commands.literal("off")
+					.executes(ctx -> {
+						try {
+							if (!isSet()) {
+								ctx.getSource().sendFailure(Msg.err("There is no lobby yet. Use /setlobby first."));
+								return 0;
+							}
+							setProtectRadius(0);
+						} catch (IOException e) {
+							ctx.getSource().sendFailure(Msg.err("Could not save: " + e.getMessage()));
+							return 0;
+						}
+						ctx.getSource().sendSuccess(() -> Msg.ok("The lobby is not protected any more."), false);
+						return 1;
+					}))
+				.then(Commands.argument("radius", IntegerArgumentType.integer(5, 2000))
+					.executes(ctx -> {
+						int radius = IntegerArgumentType.getInteger(ctx, "radius");
+						try {
+							if (!isSet()) {
+								ctx.getSource().sendFailure(Msg.err("There is no lobby yet. Use /setlobby first."));
+								return 0;
+							}
+							setProtectRadius(radius);
+						} catch (IOException e) {
+							ctx.getSource().sendFailure(Msg.err("Could not save: " + e.getMessage()));
+							return 0;
+						}
+						ctx.getSource().sendSuccess(() -> Msg.ok("The lobby is protected within " + radius
+							+ " blocks: nobody can break or place blocks or hurt other players there (admins in creative mode can still build)."), false);
 						return 1;
 					})))
 			.then(Commands.literal("clear")

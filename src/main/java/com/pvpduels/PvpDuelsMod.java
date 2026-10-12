@@ -11,6 +11,7 @@ import com.pvpduels.duel.TestDummy;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.ShareCommands;
 import com.pvpduels.layout.InventorySorter;
+import com.pvpduels.worldgen.IslandBuilder;
 import com.pvpduels.layout.LayoutCommands;
 import com.pvpduels.stats.TopCommand;
 import com.pvpduels.net.CycleLayoutPayload;
@@ -80,6 +81,7 @@ public class PvpDuelsMod implements ModInitializer {
 		GuideBook.register();
 		Sidebar.register();
 		SelfTest.register();
+		IslandBuilder.register();
 
 		LOGGER.info("PvP Duels loaded.");
 	}
