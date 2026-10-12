@@ -67,8 +67,8 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ `/duels`: lista de duelos en curso con boton [WATCH] para mirar
 - ✅ Resumen despues de cada duelo (cuanto duro, golpes, dano, combo mas largo, totems, perlas, manzanas de oro y pociones de cada uno) y boton [REMATCH]
 - ⏳ Torneos / cola para el grupo de amigos (brackets automaticos, 2v2)
-- ⏳ Cola `/queue`: publica (kit publico o al azar), random (kit al azar) y kit propio (los dos pelean con uno tuyo) — entrega 2
-- ⏳ Ranking por kit — entrega 2
+- ✅ Cola `/queue`: publica (kit publico o al azar), random (kit al azar) y kit propio (los dos pelean con uno tuyo)
+- ✅ Ranking por kit (`/top kit <nombre>`)
 - ⏳ Arenas propias con `/createarena` (plantillas), `/savearena`, `/setspawn 1|2`, rango Builder por concurso semanal de construccion (dura 3 semanas) y zona de practica — entrega 3
 - ⏳ Logros y titulos — entrega 4
 - ⏳ 2v2 / equipos — entrega 5 (la ultima, toca el nucleo de los duelos)

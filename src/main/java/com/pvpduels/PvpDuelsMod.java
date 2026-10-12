@@ -6,6 +6,7 @@ import com.pvpduels.duel.BotDuel;
 import com.pvpduels.duel.Lobby;
 import com.pvpduels.duel.LobbyKit;
 import com.pvpduels.duel.Npcs;
+import com.pvpduels.duel.Queue;
 import com.pvpduels.duel.Spectators;
 import com.pvpduels.duel.Terrain;
 import com.pvpduels.duel.SelfTest;
@@ -67,6 +68,7 @@ public class PvpDuelsMod implements ModInitializer {
 			Lobby.registerCommands(dispatcher);
 			Spectators.registerCommands(dispatcher);
 			Npcs.registerCommands(dispatcher);
+			Queue.registerCommands(dispatcher);
 			BotDuel.registerCommands(dispatcher);
 			TopCommand.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
@@ -78,6 +80,7 @@ public class PvpDuelsMod implements ModInitializer {
 		// The lobby items and the NPCs go first: their clicks must be handled before the lobby protection says no.
 		LobbyKit.register();
 		Npcs.register();
+		Queue.register();
 		DuelManager.register();
 		Terrain.register();
 		Spectators.register();

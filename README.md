@@ -54,7 +54,7 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 - `/enchant` e `/infinite` solo funcionan en el taller (los admins los pueden usar en cualquier lado).
 
 ## Lobby: items, NPCs y libro
-- Mientras estas en el lobby (hay que hacer `/setlobby`; sin proteccion cuenta un radio de 64 bloques) tu hotbar tiene 4 items que **no se pueden mover, tirar ni cambiar**: slot 1 espada **Send Duel** (click derecho = lista de jugadores; click derecho o pegarle a un jugador = desafiarlo), slot 2 barrier **Leave** (cancela tus pedidos de duelo y te lleva al spawn del lobby), slot 8 bloque de pasto **Create+** (menu: **Create Kit** = el taller de kits, nuevo o editando uno tuyo; **Create Arena** = todavia solo avisa) y slot 9 el libro de guia.
+- Mientras estas en el lobby (hay que hacer `/setlobby`; sin proteccion cuenta un radio de 64 bloques) tu hotbar tiene 4 items que **no se pueden mover, tirar ni cambiar**: slot 1 espada **Send Duel** (click derecho = lista de jugadores; click derecho o pegarle a un jugador = desafiarlo), slot 2 barrier **Leave** (te saca de la cola, cancela tus pedidos de duelo y te lleva al spawn del lobby), slot 8 bloque de pasto **Create+** (menu: **Create Kit** = el taller de kits, nuevo o editando uno tuyo; **Create Arena** = todavia solo avisa) y slot 9 el libro de guia.
 - Lo que tenias en esos slots se guarda en disco (`pvpduels/lobbystash`) y vuelve cuando salis del lobby, te vas, moris o se cierra el juego (tambien si se cae de golpe: te lo devuelve al volver a entrar). Los admins en creativo no reciben los items (asi pueden construir).
 - Para que no se muevan el mod usa dos mixins chicos (`AbstractContainerMenu.clicked` y `Inventory.removeFromSelected`).
 - NPCs: muñecos (mannequins de Minecraft) que no se mueven ni se lastiman. **Practice Bot** abre el menu de `/botduel`, **Kit Workshop** el de crear kits y **Arena Builder** explica lo de las arenas. Los admins los ponen con `/npc add bot|kit|arena` donde estan parados, `/npc remove` borra el mas cercano y `/npc list` los lista.
@@ -81,6 +81,14 @@ La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar 
 - `/unpublish <kit>` lo saca del estante (solo el autor o un admin). Las copias que ya se llevaron quedan.
 - `/private <kit> <jugador>` le da una copia **bloqueada** a un jugador conectado: la puede usar (`/kit load`, duelos, teclas) pero no puede publicarla, regalarla, editarla en el taller ni pisarla con `/kit save`.
 - Limite: si alguien carga el kit y lo vuelve a guardar a mano con otro nombre, el mod no lo puede impedir.
+
+## Cola (`/queue`)
+- Para jugar sin tener que pedirle a nadie: `/queue` abre un menu con **tres colas**. Cuando hay otro jugador esperando en la misma cola el duelo arranca solo: arena plana con paredes, el primero en llegar a 3 puntos (cuenta para el Elo).
+- **Publica** (`/queue public [kit]`): elegis un kit publico (o "Random public kit") y te toca alguien que eligio lo mismo.
+- **Random** (`/queue random`): el kit es sorpresa. Sale de los kits publicos, de los tuyos, de los de tu rival o de uno que alguien este ofreciendo en la cola de kit propio.
+- **Kit propio** (`/queue own <kit>`): ofreces uno de tus kits y esperas; otro jugador lo ve en `/queue` (o usa `/queue take <jugador>`) y los dos pelean con ese kit.
+- `/queue list` muestra quien espera, `/queue leave` o el boton **[LEAVE QUEUE]** o el barrier **Leave** del lobby te sacan. Si te desconectas o entras a un duelo/taller/modo espectador te saca solo. Mientras esperas ves un cartelito con el tiempo.
+- **Ranking por kit**: cada kit tiene su propio Elo (todos arrancan en 1000 con cada kit). `/top kit` lista los kits con ranking y `/top kit <nombre> [elo|wins|streak]` muestra los mejores con ese kit. Al terminar un duelo ves cuanto cambio tu Elo del kit. Los kits se distinguen por nombre: dos kits que se llamen igual comparten ranking. Se guarda en `pvpduels/kitstats.json`.
 
 ## Sidebar y estadisticas
 - A la derecha de la pantalla aparece un marcador solo para vos: fuera de un duelo muestra tus estadisticas (victorias, derrotas, racha, rondas), durante un duelo el puntaje, y en el taller los kits que tenes.

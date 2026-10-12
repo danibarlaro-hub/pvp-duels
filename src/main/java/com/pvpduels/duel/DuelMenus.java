@@ -59,7 +59,7 @@ public final class DuelMenus {
 		return stack;
 	}
 
-	private static ItemStack withName(ItemStack base, String name, ChatFormatting color, String... lore) {
+	static ItemStack withName(ItemStack base, String name, ChatFormatting color, String... lore) {
 		ItemStack stack = base.copy();
 		stack.setCount(1);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal(name).withStyle(style -> style.withColor(color).withItalic(false)));

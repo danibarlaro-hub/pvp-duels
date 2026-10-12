@@ -33,7 +33,7 @@ public final class GuideBook {
 		new Topic("Lobby", new String[][] {
 			{"The lobby hotbar", "Slot 1: Send Duel\nSlot 2: Leave\nSlot 8: Create+\nSlot 9: this book\n\nThey stay in place while you are in the lobby."},
 			{"Send Duel", "Right-click: pick a player to challenge.\n\nRight-click or hit a player with it: challenge them straight away."},
-			{"Leave and Create+", "Leave: cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only, soon)."},
+			{"Leave and Create+", "Leave: leaves the queue, cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only, soon)."},
 			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\n\nAdmins: /npc add bot|kit|arena, /npc remove, /npc list."},
 			{"Lobby commands", "/lobby: go there\n/lobby return on|off: after a duel go to the lobby or back where you were\n\nAdmins: /setlobby, /lobby protect <radius|off>, /lobby clear"}
 		}),
@@ -51,6 +51,11 @@ public final class GuideBook {
 			{"Practice bot", "/botduel [kit] or the Practice Bot NPC. A bedrock arena, 100 blocks each way, with walls.\n\nStatic bot? Yes: it can't move. No: pick Passive, Easy, Normal or Hard."},
 			{"Practice stats", "The sidebar counts hits, damage and combo. It goes on until /leave. A bot you knock out gets up again and you get a KO.\n\nPractice doesn't count for stats."}
 		}),
+		new Topic("Queue", new String[][] {
+			{"Queue", "/queue opens the menu. Wait for somebody and the duel starts by itself: flat arena with walls, first to 3 points.\n\nLeave with the Leave barrier, /queue leave or the [LEAVE QUEUE] button."},
+			{"Three queues", "Public: pick a public kit (or a random one) and match with somebody who picked the same.\n\nRandom: the kit is a surprise.\n\nOwn kit: offer one of your kits; you both fight with it."},
+			{"Queue commands", "/queue public [kit]\n/queue random\n/queue own <kit>\n/queue take <player>\n/queue list\n/queue leave"}
+		}),
 		new Topic("Kits", new String[][] {
 			{"Your kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit show <name>\n/kit delete <name>"},
 			{"Quick keys", "/kit key a|b|c <kit> sets what the Quick kit keys load.\n\n/kit profile <kit> <layout> sorts a kit when you load it."},
@@ -64,6 +69,7 @@ public final class GuideBook {
 		}),
 		new Topic("Ranking", new String[][] {
 			{"Ranking", "/top shows the best by Elo. /top wins and /top streak sort by wins or best win streak.\n\nEveryone starts at 1000 Elo. Practice duels don't count."},
+			{"Ranking per kit", "/top kit lists the kits that have a ranking.\n/top kit <name> [elo|wins|streak] ranks the players with that kit.\n\nAfter a duel you also see your Elo with the kit."},
 			{"Sidebar", "/sidebar turns the scoreboard on the right on or off: your Elo, wins, losses, streak and the duel score.\n\n/guide lists every command in chat."}
 		}),
 		new Topic("Spectating", new String[][] {

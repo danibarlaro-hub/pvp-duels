@@ -107,6 +107,7 @@ public final class Duel {
 	private final int[][] usedAtStart = new int[2][RecapItems.COUNT];
 	/** Elo before and after for both players (set when a real duel is recorded). */
 	private int[] eloInfo;
+	private int[] kitEloInfo;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
 	int winner = -2;
 	boolean closed;
@@ -661,6 +662,7 @@ public final class Duel {
 		// Practice duels against a /test_dummy don't count.
 		if (TestDummy.accepts(ids[0]) || TestDummy.accepts(ids[1])) return;
 		eloInfo = StatsStore.recordDuel(ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
+		kitEloInfo = StatsStore.recordKitDuel(config.kit(), ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
 	}
 
 	private void finish() {
@@ -693,6 +695,12 @@ public final class Duel {
 				int before = eloInfo[2 * i];
 				int after = eloInfo[2 * i + 1];
 				p.sendSystemMessage(Msg.info("Elo: " + before + " -> " + after + " (" + (after >= before ? "+" : "") + (after - before) + ")"));
+			}
+			if (kitEloInfo != null) {
+				int before = kitEloInfo[2 * i];
+				int after = kitEloInfo[2 * i + 1];
+				p.sendSystemMessage(Msg.info("Elo with kit " + config.kit() + ": " + before + " -> " + after + " (" + (after >= before ? "+" : "") + (after - before)
+					+ ")  /top kit " + config.kit()));
 			}
 			p.sendSystemMessage(Msg.info("Rematch? ").copy().append(Component.literal("[REMATCH]").withStyle(style -> style.withColor(ChatFormatting.GREEN).withBold(true)
 				.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/again"))

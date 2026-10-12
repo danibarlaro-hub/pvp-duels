@@ -1173,7 +1173,7 @@ public final class SelfTest {
 					&& links == GuideBook.topicCount(), links + " links");
 				StringBuilder all = new StringBuilder();
 				for (var page : pages) all.append(page.getString()).append('\n');
-				for (String word : new String[] {"/duels", "/npc", "Send Duel", "Create+", "/botduel", "/kit save", "/layout", "/top", "/spectate", "About this server"}) {
+				for (String word : new String[] {"/duels", "/npc", "/queue", "/top kit", "Send Duel", "Create+", "/botduel", "/kit save", "/layout", "/top", "/spectate", "About this server"}) {
 					check("the book mentions " + word, all.toString().contains(word));
 				}
 			}
@@ -1866,6 +1866,193 @@ public final class SelfTest {
 			}
 			a.getInventory().clearContent();
 			a.getInventory().setItem(21, new ItemStack(Items.STONE, 3));
+		});
+
+		// ---------------------------------------------------------------- queue and the ranking per kit
+		step("queue: setup", () -> {
+			StatsStore.resetKitsForTest();
+			Queue.clearAll();
+			Queue.useRandom(new java.util.Random(7));
+			a.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			a.getInventory().setItem(1, new ItemStack(Items.GOLDEN_APPLE, 4));
+			run(a, "kit save qkit");
+			a.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.IRON_SWORD));
+			run(a, "kit save qkit-b");
+			a.getInventory().clearContent();
+			a.getInventory().setItem(21, new ItemStack(Items.STONE, 3));
+			b.getInventory().clearContent();
+			b.getInventory().setItem(0, new ItemStack(Items.NETHERITE_SWORD));
+			run(b, "kit save bqkit");
+			b.getInventory().clearContent();
+			b.getInventory().setItem(20, new ItemStack(Items.DIRT, 5));
+			run(a, "publicate qkit");
+			check("the kits exist", KitStore.exists(a.getUUID(), "qkit") && KitStore.exists(a.getUUID(), "qkit-b") && KitStore.exists(b.getUUID(), "bqkit"));
+			check("qkit is on the public shelf", PublicKits.find("qkit").isPresent());
+			check("nobody is in a queue", Queue.size() == 0);
+		});
+
+		step("queue: /queue opens the menu with the three queues", () -> {
+			run(a, "queue");
+			check("the menu has the public queue", menuHas(a, "Public queue"));
+			check("the menu has the random queue", menuHas(a, "Random queue"));
+			check("the menu has the own kit queue", menuHas(a, "Own kit queue"));
+			check("there is no leave button while she is not in a queue", !menuHas(a, "Leave the queue"));
+			menuStep(a, "Public queue");
+		});
+		step("queue: the public kit menu", () -> {
+			check("it offers a random public kit", menuHas(a, "Random public kit"));
+			check("it offers qkit", menuHas(a, "qkit"));
+			menuStep(a, "qkit");
+		});
+		step("queue: Alice waits in the public queue", () -> {
+			check("Alice is in the queue", Queue.isQueued(a.getUUID()));
+			check("she was told, with a leave button", a.heard("You joined the public (qkit) queue") && a.heard("[LEAVE QUEUE]"));
+			check("the menu closed", !(a.containerMenu instanceof ChestMenu));
+			run(a, "queue list");
+			check("/queue list shows her", a.heard("Alice: public (qkit)"));
+			run(a, "queue public nothere");
+			check("an unknown public kit is refused and she keeps waiting", a.heard("There is no public kit named 'nothere'") && Queue.isQueued(a.getUUID()));
+			run(a, "queue own nothere");
+			check("an unknown own kit is refused", a.heard("You have no kit named 'nothere'"));
+			run(a, "queue");
+			check("the menu offers to leave now", menuHas(a, "Leave the queue"));
+			a.closeContainer();
+		});
+		step("queue: a different queue does not match", () -> {
+			run(b, "queue random");
+			check("Bob is in the random queue", Queue.isQueued(b.getUUID()));
+			check("both wait and there is no duel", Queue.size() == 2 && duel(a) == null && duel(b) == null);
+			run(b, "queue leave");
+			check("Bob left", !Queue.isQueued(b.getUUID()) && b.heard("You left the random queue"));
+			run(b, "queue leave");
+			check("leaving twice says so", b.heard("You are not in a queue"));
+			run(b, "queue public bqkit");
+			check("a kit that is not public can't be picked there", b.heard("There is no public kit named 'bqkit'") && !Queue.isQueued(b.getUUID()));
+			run(carl, "queue take Nobody");
+			check("taking a kit nobody offers is refused", carl.heard("Nobody is not waiting with a kit"));
+		});
+		step("queue: Bob picks the same public kit and the duel starts", () -> {
+			run(b, "queue public qkit");
+			check("both left the queue", !Queue.isQueued(a.getUUID()) && !Queue.isQueued(b.getUUID()));
+			Duel d = duel(a);
+			check("a duel exists for both", d != null && duel(b) == d);
+			check("they were told", a.heard("Match found!") && b.heard("Match found!"));
+			check("the kit is qkit", d != null && d.config.kit().equals("qkit") && d.kitOwner.equals(a.getUUID()));
+			check("flat arena with walls, first to 3", d != null && d.config.arena() == ArenaKind.FLAT && d.config.walls()
+				&& d.config.mode() == WinMode.FIRST_TO && d.config.limit() == 3);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("queue: the duel runs with the public kit; nobody can queue in a duel", () -> {
+			check("Bob got the sword of the kit", b.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			run(a, "queue random");
+			check("somebody in a duel can't join a queue", a.heard("spectator mode first") && !Queue.isQueued(a.getUUID()));
+			run(a, "leave");
+		}, () -> noDuel(b), 600);
+		step("queue: the ranking of the kit", () -> {
+			StatsStore.Stats sa = StatsStore.getKit("qkit", a.getUUID());
+			StatsStore.Stats sb = StatsStore.getKit("qkit", b.getUUID());
+			check("Bob won with the kit and gained 16", sb.wins == 1 && sb.duels == 1 && sb.elo == 1016, sb.wins + "W elo " + sb.elo);
+			check("Alice lost with it and lost 16", sa.losses == 1 && sa.duels == 1 && sa.elo == 984, sa.losses + "L elo " + sa.elo);
+			check("another kit has no numbers", StatsStore.getKit("qkit-b", a.getUUID()).duels == 0);
+			check("the duel told them the Elo with the kit", b.heard("Elo with kit qkit: 1000 -> 1016") && a.heard("Elo with kit qkit: 1000 -> 984"));
+			run(a, "top kit");
+			check("/top kit lists qkit", a.heard("Kits with a ranking") && a.heard("/top kit qkit"));
+			run(a, "top kit qkit");
+			check("/top kit qkit shows both players", a.heard("Top 2 by Elo with kit qkit") && a.heard("You: #2 of 2"));
+			run(a, "top kit QKIT wins");
+			check("/top kit works with wins and any case", a.heard("Top 2 by wins with kit qkit"));
+			run(a, "top kit nothere");
+			check("a kit nobody played says so", a.heard("Nobody has played a ranked duel with the kit 'nothere'"));
+			run(a, "top kit qkit nonsense");
+			check("a wrong ranking name is refused", a.heard("Use /top kit qkit"));
+		});
+
+		step("queue: where the random kit can come from", () -> {
+			run(dora, "queue own dk1");
+			check("Dora waits with dk1", Queue.isQueued(dora.getUUID()) && dora.heard("Waiting for somebody to take your kit 'dk1'"));
+			java.util.Set<String> owners = new java.util.HashSet<>();
+			boolean shelf = false;
+			for (int i = 0; i < 300; i++) {
+				Queue.Choice c = Queue.randomChoice(a, b);
+				if (c == null) continue;
+				if (c.source().contains("public kit")) shelf = true;
+				else owners.add(c.owner().toString());
+			}
+			check("it can be a public kit", shelf);
+			check("it can be one of Alice's", owners.contains(a.getUUID().toString()));
+			check("it can be one of Bob's", owners.contains(b.getUUID().toString()));
+			check("it can be one offered in the own kit queue", owners.contains(dora.getUUID().toString()));
+			run(dora, "queue leave");
+			check("Dora left", !Queue.isQueued(dora.getUUID()));
+		});
+		step("queue: the random queue matches two players", () -> {
+			Queue.useRandom(new java.util.Random(11));
+			run(a, "queue random");
+			check("Alice waits", Queue.isQueued(a.getUUID()) && duel(a) == null);
+			run(b, "queue random");
+			Duel d = duel(a);
+			check("they got a duel", d != null && duel(b) == d && !Queue.isQueued(a.getUUID()) && !Queue.isQueued(b.getUUID()));
+			check("the kit came from the random queue", a.heard("random queue:") && b.heard("random queue:"));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("queue: the random duel ends", () -> {
+			check("both have a kit in their hands", !a.getInventory().getItem(0).isEmpty() || !a.getInventory().getItem(1).isEmpty());
+			run(b, "leave");
+		}, () -> noDuel(a), 600);
+
+		step("queue: the own kit queue, Alice offers a kit", () -> {
+			run(a, "queue");
+			menuStep(a, "Own kit queue");
+		});
+		step("queue: nobody offers anything yet", () -> {
+			check("it says so", menuHas(a, "Nobody is offering a kit right now"));
+			menuStep(a, "Offer one of my kits");
+		});
+		step("queue: Alice picks the kit to offer", () -> {
+			check("her kits are listed", menuHas(a, "qkit") && menuHas(a, "qkit-b"));
+			menuStep(a, "qkit");
+		});
+		step("queue: Bob sees the offer", () -> {
+			Queue.Entry offer = Queue.entryOf(a.getUUID());
+			check("Alice waits with qkit in the own kit queue", offer != null && offer.mode() == Queue.Mode.OWN && "qkit".equals(offer.kit()));
+			run(b, "queue");
+			menuStep(b, "Own kit queue");
+		});
+		step("queue: Bob takes the kit and they fight with it", () -> {
+			check("Bob sees Alice's kit", menuHas(b, "Alice's kit: qkit"));
+			menuStep(b, "Alice's kit: qkit");
+			Duel d = duel(a);
+			check("they got a duel", d != null && duel(b) == d && !Queue.isQueued(a.getUUID()));
+			check("with Alice's kit", d != null && d.config.kit().equals("qkit") && d.kitOwner.equals(a.getUUID()));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("queue: the own kit duel ends", () -> {
+			check("Bob has Alice's sword", b.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			run(b, "leave");
+		}, () -> noDuel(a), 600);
+		step("queue: both duels counted for the kit", () -> {
+			StatsStore.Stats sa = StatsStore.getKit("qkit", a.getUUID());
+			StatsStore.Stats sb = StatsStore.getKit("qkit", b.getUUID());
+			check("the kit has more duels now", sa.duels >= 2 && sb.duels >= 2, sa.duels + " / " + sb.duels);
+			check("the Elo with the kit adds up to 2000", sa.elo + sb.elo == 2000, sa.elo + " + " + sb.elo);
+		});
+
+		step("queue: back in the lobby", () -> {
+			a.teleportTo((ServerLevel) a.level(), 60.5, a.getY(), 55.5, java.util.Set.of(), 0f, 0f, true);
+		}, () -> LobbyKit.isActive(a.getUUID()), 200);
+		step("queue: the Leave barrier takes her out of the queue", () -> {
+			run(a, "queue public qkit");
+			check("Alice waits", Queue.isQueued(a.getUUID()));
+			a.getInventory().setSelectedSlot(1);
+			LobbyKit.clearCooldowns();
+			a.gameMode.useItem(a, (ServerLevel) a.level(), a.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND);
+			check("she is not in the queue any more", !Queue.isQueued(a.getUUID()));
+			check("she was told", a.heard("You left the public (qkit) queue"));
+			a.getInventory().setSelectedSlot(3);
+		});
+		step("queue: clean up", () -> {
+			Queue.clearAll();
+			Queue.useRandom(new java.util.Random());
+			check("nobody is left in a queue", Queue.size() == 0);
 		});
 
 		step("kits: every item of the game is saved and read back the same", () -> {

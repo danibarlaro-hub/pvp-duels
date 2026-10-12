@@ -331,6 +331,17 @@ public final class DuelManager {
 	// ------------------------------------------------------------------ starting / leaving / again
 
 	private static void start(MinecraftServer server, Invite invite) {
+		start(server, invite, null);
+	}
+
+	/** Starts a duel between two players the queue matched, right away. The kit is already loaded. */
+	static boolean startMatched(MinecraftServer server, ServerPlayer a, ServerPlayer b, UUID kitOwner, DuelConfig config, KitStore.Kit kit) {
+		Invite invite = new Invite(a.getUUID(), a.getName().getString(), b.getUUID(), b.getName().getString(), kitOwner, config, false, tickCounter);
+		start(server, invite, kit);
+		return BY_PLAYER.containsKey(a.getUUID()) && BY_PLAYER.containsKey(b.getUUID());
+	}
+
+	private static void start(MinecraftServer server, Invite invite, KitStore.Kit preloaded) {
 		ServerPlayer a = server.getPlayerList().getPlayer(invite.from());
 		ServerPlayer b = server.getPlayerList().getPlayer(invite.to());
 		if (a == null || b == null) {
@@ -358,8 +369,8 @@ public final class DuelManager {
 			problem = "The duel world is not loaded. Make sure the mod is up to date, then restart the game.";
 		}
 
-		KitStore.Kit kit = null;
-		if (problem == null) {
+		KitStore.Kit kit = preloaded;
+		if (problem == null && kit == null) {
 			try {
 				Optional<KitStore.Kit> read = KitStore.read(server, invite.kitOwner(), invite.config().kit());
 				if (read.isEmpty()) problem = "The kit '" + invite.config().kit() + "' no longer exists.";
@@ -378,6 +389,8 @@ public final class DuelManager {
 		INVITES.removeIf(i -> i.from().equals(a.getUUID()) || i.to().equals(a.getUUID())
 			|| i.from().equals(b.getUUID()) || i.to().equals(b.getUUID()));
 
+		Queue.leave(a, false);
+		Queue.leave(b, false);
 		Duel duel = new Duel(server, slot, invite.config(), invite.kitOwner(), kit, a, b);
 		SLOTS[slot] = duel;
 		BY_PLAYER.put(a.getUUID(), duel);

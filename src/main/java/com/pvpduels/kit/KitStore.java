@@ -325,12 +325,17 @@ public final class KitStore {
 	public static Optional<Kit> read(MinecraftServer server, UUID owner, String name) throws IOException {
 		if (!exists(owner, name)) return Optional.empty();
 		JsonObject root = JsonParser.parseString(Files.readString(file(owner, name))).getAsJsonObject();
+		return Optional.of(parse(server, name, root));
+	}
+
+	/** The kit stored in a JSON object (a file of kits/ or of the public shelf). */
+	public static Kit parse(MinecraftServer server, String name, JsonObject root) {
 		List<String> problems = new ArrayList<>();
 		ItemStack[] stacks = decodeInventory(server, root.getAsJsonArray("slots"), problems);
 		String profile = root.has("profile") ? root.get("profile").getAsString() : null;
 		boolean locked = root.has("locked") && root.get("locked").getAsBoolean();
 		String from = root.has("from") ? root.get("from").getAsString() : "";
-		return Optional.of(new Kit(name, profile, stacks, locked, from, problems));
+		return new Kit(name, profile, stacks, locked, from, problems);
 	}
 
 	public static void setProfile(UUID owner, String name, String profile) throws IOException {

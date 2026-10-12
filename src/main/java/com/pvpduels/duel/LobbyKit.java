@@ -347,17 +347,17 @@ public final class LobbyKit {
 		}
 	}
 
-	/** The barrier: forgets everything pending and brings the player back to the lobby spawn. */
+	/** The barrier: leaves the queue, forgets pending duel requests and brings the player back to the lobby spawn. */
 	static void leave(ServerPlayer p) {
-		int cancelled = DuelManager.cancelInvitesOf(p.getUUID());
 		if (DuelManager.isBusy(p.getUUID())) {
 			p.sendSystemMessage(Msg.err("You are busy: use /leave to get out of the duel, the workshop or spectator mode."));
 			return;
 		}
+		int cancelled = DuelManager.cancelInvitesOf(p.getUUID());
+		boolean queued = Queue.leave(p, true);
 		boolean moved = Lobby.teleport(p.level().getServer(), p);
-		p.sendSystemMessage(Msg.ok(cancelled > 0
-			? "Cancelled " + cancelled + (cancelled == 1 ? " duel request." : " duel requests.")
-			: (moved ? "Back at the lobby spawn." : "Nothing to leave.")));
+		if (cancelled > 0) p.sendSystemMessage(Msg.ok("Cancelled " + cancelled + (cancelled == 1 ? " duel request." : " duel requests.")));
+		else if (!queued) p.sendSystemMessage(Msg.ok(moved ? "Back at the lobby spawn." : "Nothing to leave."));
 	}
 
 	static void challenge(ServerPlayer p, ServerPlayer target) {
