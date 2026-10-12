@@ -39,4 +39,10 @@ done < inspect/classes.txt
 if [ -f inspect/find.txt ]; then
   while read -r rx; do [ -n "$rx" ] && { echo "## $rx"; grep -E "$rx" $OUT/mc-classes.txt; } ; done < inspect/find.txt > $OUT/find-result.txt
 fi
+# Bytecode of a few methods (to see what vanilla really does)
+if [ -f inspect/code.txt ]; then
+  mkdir -p $OUT/code
+  while read -r c; do [ -n "$c" ] && javap -p -c -classpath "$CP" "$c" > "$OUT/code/$c.txt" 2>&1; done < inspect/code.txt
+fi
+
 ls -R $OUT | head -5 >> $OUT/info.txt
