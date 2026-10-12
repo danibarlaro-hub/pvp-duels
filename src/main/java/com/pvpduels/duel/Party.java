@@ -122,6 +122,8 @@ public final class Party {
 		g.members.add(p.getUUID());
 		GROUPS.put(p.getUUID(), g);
 		PENDING.remove(inviter.getUUID());
+		Queue.leave(p, false); // the queue is 1v1 only
+		Queue.leave(inviter, false);
 		p.sendSystemMessage(Msg.ok("You are in a party with " + inviter.getName().getString() + ". Challenge another pair with /duel <player>."));
 		inviter.sendSystemMessage(Msg.ok(p.getName().getString() + " is your partner now. Challenge another pair with /duel <player>."));
 		return null;

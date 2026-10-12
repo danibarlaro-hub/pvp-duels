@@ -2845,8 +2845,12 @@ public final class SelfTest {
 			check("a denied invitation is gone", !Party.inParty(b.getUUID()));
 		});
 		step("party: an invitation can be accepted", () -> {
+			Queue.clearAll();
+			run(b, "queue random");
+			check("Bob waits in the random queue", Queue.isQueued(b.getUUID()));
 			run(a, "party invite Bob");
 			run(b, "party accept");
+			check("joining a party takes you out of the queue", !Queue.isQueued(b.getUUID()));
 			check("they are partners", Party.isFull(a.getUUID()) && Party.isFull(b.getUUID()) && Party.partnerOf(a.getUUID()).equals(b.getUUID())
 				&& Party.partnerOf(b.getUUID()).equals(a.getUUID()));
 			check("Alice is the leader", Party.isLeader(a.getUUID()) && !Party.isLeader(b.getUUID()));
@@ -2860,6 +2864,8 @@ public final class SelfTest {
 			run(a, "party invite Carl");
 			check("Alice's party is full", a.heard("Your party is full already."));
 			check("Carl got nothing to accept", !carl.heard("wants you as a partner"));
+			run(a, "queue random");
+			check("a party can't use the 1v1 queue", a.heard("The queue is for 1v1.") && !Queue.isQueued(a.getUUID()));
 		});
 		step("party: an invitation runs out after a minute", () -> {
 			long t0 = 5_000_000L;

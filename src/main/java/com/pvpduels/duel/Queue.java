@@ -98,6 +98,7 @@ public final class Queue {
 	private static String canQueue(ServerPlayer p) {
 		if (DuelManager.isBusy(p.getUUID())) return "You are busy: use /leave to get out of the duel, the workshop or spectator mode first.";
 		if (BotDuel.isBot(p.getUUID())) return "Bots don't queue.";
+		if (Party.inParty(p.getUUID())) return "The queue is for 1v1. Use /party leave first if you want to use it.";
 		return null;
 	}
 

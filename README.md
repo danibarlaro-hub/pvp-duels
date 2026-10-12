@@ -117,7 +117,7 @@ La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar 
 - Cuando los dos estan en una pareja, `/duel <jugador>` desafia a ese jugador **y a su pareja**: son los mismos menus (kit, arena, version, modo, cantidad) y los cuatro pelean en la misma arena con el kit de quien desafia. Una pareja solo se puede duelar contra otra pareja, y un jugador solo no puede duelar a una pareja (te avisa por que).
 - Cada equipo arranca en su lado con los dos companeros juntos. **No hay fuego amigo.** Si te sacan, quedas en espectador hasta que termine la ronda; **la ronda la gana el equipo que deja afuera a los dos rivales**. Los modos (rondas, primero en N, por tiempo, ilimitado) funcionan igual que en 1v1, y el puntaje cuenta rondas por equipo.
 - `/leave` en medio de un 2v2 hace que **tu equipo pierda**. No cambia el Elo ni las estadisticas 1v1; da los logros **Better Together**, **Dynamic Duo**, **Clutch** (ganar una ronda solo contra los dos rivales cuando tu companero ya cayo) y **Clutch Master**.
-- Por ahora los 2v2 no se pueden mirar (`/spectate`), no hay cola ni revancha. `/duels` los lista.
+- Por ahora los 2v2 no se pueden mirar (`/spectate`), no hay cola ni revancha. La cola `/queue` es solo 1v1, asi que no se usa mientras estas en una pareja. `/duels` los lista.
 
 ## Sidebar y estadisticas
 - A la derecha de la pantalla aparece un marcador solo para vos: fuera de un duelo muestra tus estadisticas (victorias, derrotas, racha, rondas), durante un duelo el puntaje, y en el taller los kits que tenes.
