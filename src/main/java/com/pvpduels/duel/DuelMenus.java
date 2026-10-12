@@ -152,12 +152,12 @@ public final class DuelMenus {
 			"The bot stands still and never fights back.",
 			"Rounds go on until you use /leave.",
 			"Practice duels don't count for your stats."));
-		b.set(11, icon(Items.LIME_CONCRETE, "Yes", ChatFormatting.GREEN, "Start the practice duel"), who -> {
+		b.set(11, icon(Items.EMERALD, "Yes", ChatFormatting.GREEN, "Start the practice duel"), who -> {
 			who.closeContainer();
 			String problem = BotDuel.start(who, kit);
 			if (problem != null) who.sendSystemMessage(Msg.err(problem));
 		});
-		b.set(15, icon(Items.RED_CONCRETE, "No", ChatFormatting.RED), ServerPlayer::closeContainer);
+		b.set(15, icon(Items.BARRIER, "No", ChatFormatting.RED), ServerPlayer::closeContainer);
 		if (canGoBack) b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), DuelMenus::botKits);
 		ChoiceMenu.open(p, Component.literal("Duel the bot?"), 3, b);
 	}
