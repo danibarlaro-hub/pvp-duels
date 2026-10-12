@@ -1766,13 +1766,12 @@ public final class SelfTest {
 			inv.setItem(5, new ItemStack(Items.GOLDEN_BOOTS));
 			inv.setItem(6, new ItemStack(Items.IRON_BOOTS));
 			inv.setItem(7, new ItemStack(Items.ELYTRA));
-			inv.setItem(8, new ItemStack(Items.CARVED_PUMPKIN));
 			// worn diamond leggings with Curse of Binding: a better pair in the backpack must not replace them
-			inv.setItem(10, new ItemStack(Items.DIAMOND_LEGGINGS));
-			inv.setSelectedSlot(10);
+			inv.setItem(8, new ItemStack(Items.DIAMOND_LEGGINGS));
+			inv.setSelectedSlot(8);
 			run(a, "enchant binding_curse 1");
-			a.setItemSlot(EquipmentSlot.LEGS, inv.getItem(10).copy());
-			inv.setItem(10, ItemStack.EMPTY);
+			a.setItemSlot(EquipmentSlot.LEGS, inv.getItem(8).copy());
+			inv.setItem(8, new ItemStack(Items.CARVED_PUMPKIN));
 			inv.setItem(11, new ItemStack(Items.NETHERITE_LEGGINGS));
 			inv.setSelectedSlot(0);
 
