@@ -71,7 +71,7 @@ public final class TestDummy {
 			// A real player is pushed by its own game client: vanilla sends the knockback to it and then takes the push
 			// away from the server's copy. A fake player has no client, so the push is taken from the packet here.
 			if (owner != null && packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == owner.getId()) {
-				owner.queueMotion(motion.movement());
+				// disabled for the experiment: owner.queueMotion(motion.movement());
 			}
 		}
 
