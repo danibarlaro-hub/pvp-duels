@@ -195,6 +195,7 @@ public final class LobbyKit {
 		}
 		STASH.put(p.getUUID(), hidden);
 		for (int i = 0; i < SLOTS.length; i++) inv.setItem(SLOTS[i], make(KINDS[i]));
+		p.containerMenu.sendAllDataToRemote();
 		return true;
 	}
 
@@ -279,6 +280,8 @@ public final class LobbyKit {
 			if (KINDS[i].equals(kindOf(here)) && here.getCount() == 1) continue;
 			if (!here.isEmpty() && !isLobbyItem(here)) {
 				// Something else got into a lobby slot: keep it, the stash only holds what was there before.
+				// It must leave the slot first: adding a stack that is still in the inventory merges it with itself.
+				inv.setItem(SLOTS[i], ItemStack.EMPTY);
 				if (!inv.add(here)) p.drop(here, false);
 			}
 			inv.setItem(SLOTS[i], make(KINDS[i]));

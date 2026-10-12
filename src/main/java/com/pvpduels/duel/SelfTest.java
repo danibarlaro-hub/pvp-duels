@@ -512,7 +512,7 @@ public final class SelfTest {
 		step("duel ends and everybody gets their stuff back", () -> {
 			Duel d = duel(a);
 			check("winner is Alice", d.winner == 0, "winner=" + d.winner);
-			check("Alice was told about the rematch", a.heard("/again"));
+			check("Alice was told about the rematch", a.heard("[REMATCH]"));
 		}, () -> noDuel(a) && noDuel(b), 600);
 		step("check restored state", () -> {
 			check("Alice is back in the overworld near where she was", a.level().dimension().equals(server.overworld().dimension()) && dist(a, aPos) < 1.5, where(a));

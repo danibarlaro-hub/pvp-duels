@@ -53,6 +53,15 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 - `/kit save <nombre>` guarda lo que armaste. `/leave` o `/kit exit` te devuelve tu inventario y tu lugar.
 - `/enchant` e `/infinite` solo funcionan en el taller (los admins los pueden usar en cualquier lado).
 
+## Lobby: items, NPCs y libro
+- Mientras estas en el lobby (hay que hacer `/setlobby`; sin proteccion cuenta un radio de 64 bloques) tu hotbar tiene 4 items que **no se pueden mover, tirar ni cambiar**: slot 1 espada **Send Duel** (click derecho = lista de jugadores; click derecho o pegarle a un jugador = desafiarlo), slot 2 barrier **Leave** (cancela tus pedidos de duelo y te lleva al spawn del lobby), slot 8 bloque de pasto **Create+** (menu: **Create Kit** = el taller de kits, nuevo o editando uno tuyo; **Create Arena** = todavia solo avisa) y slot 9 el libro de guia.
+- Lo que tenias en esos slots se guarda en disco (`pvpduels/lobbystash`) y vuelve cuando salis del lobby, te vas, moris o se cierra el juego (tambien si se cae de golpe: te lo devuelve al volver a entrar). Los admins en creativo no reciben los items (asi pueden construir).
+- Para que no se muevan el mod usa dos mixins chicos (`AbstractContainerMenu.clicked` y `Inventory.removeFromSelected`).
+- NPCs: muñecos (mannequins de Minecraft) que no se mueven ni se lastiman. **Practice Bot** abre el menu de `/botduel`, **Kit Workshop** el de crear kits y **Arena Builder** explica lo de las arenas. Los admins los ponen con `/npc add bot|kit|arena` donde estan parados, `/npc remove` borra el mas cercano y `/npc list` los lista.
+- El libro tiene un indice con links, una pagina en blanco entre cada tema y al final un poco sobre el servidor.
+- `/duels` lista los duelos en curso con un boton **[WATCH]**.
+- Despues de cada duelo contra un jugador sale un resumen: cuanto duro y, de cada uno, golpes, dano, combo mas largo y los totems, perlas, manzanas de oro y pociones que uso. Ahi mismo hay un boton **[REMATCH]**.
+
 ## Reglas, espectadores y lobby
 - En el menu de `/duel` hay una pantalla de reglas: regeneracion natural, dano de caida, hambre y construir (en las arenas circular y sin limites), se apagan solo para ese duelo.
 - `/spectate <jugador>` (o `/watch`) mira un duelo en modo espectador (se guarda tu inventario como en un duelo); `/leave` para salir. Reemplaza al `/spectate` de Minecraft, que era solo para admins. Al volver de un duelo tenes 5 segundos de proteccion.

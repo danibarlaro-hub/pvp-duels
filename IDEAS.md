@@ -39,6 +39,14 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ `/botduel`: el bot sin cliente ahora recibe knockback de verdad (el golpe de un jugador se manda por red al golpeado y el servidor le quitaba el empujon), el duelo arranca despues del click del menu y se reenvia el kit; si el duelo termina porque alguien se fue, el chat dice quien
 - ✅ Puntos de cada uno en el sidebar durante el duelo (hoy salen en la barra de arriba y en titulos)
 
+## Lobby: items, NPCs y libro (entrega 1 de la tanda grande)
+- ✅ Hotbar del lobby, inamovible mientras estas en el lobby: slot 1 espada **Send Duel** (verde), slot 2 barrier **Leave** (cancela tus pedidos y te lleva al spawn del lobby), slot 8 bloque de pasto **Create+** (menu con pechera de netherite = Create Kit y bloque de pasto = Create Arena), slot 9 libro de guia
+- ✅ Lo que tenias en esos 4 slots se guarda en disco y vuelve al salir del lobby, al desconectarte, al morir o si el juego se cierra de golpe
+- ✅ 3 NPCs (muñecos que se clickean): Practice Bot, Kit Workshop y Arena Builder; `/npc add bot|kit|arena`, `/npc remove`, `/npc list` (admins)
+- ✅ Libro con indice clickeable, una pagina en blanco entre cada tema y una parte "About this server"
+- 🟡 Create Arena: por ahora solo explica que viene (entrega 3: `/createarena`, rango Builder)
+- ⏳ La barrier no puede usarse siendo espectador (Minecraft no deja usar items en espectador): ahi se sale con `/leave` o el boton del chat
+
 ## Interfaz y ayuda
 - ✅ Libro al aparecer con todos los comandos y todo lo que tiene el mod (`/guide book`; el chat sigue con `/guide`)
 - ✅ Sidebar a la derecha, desactivable (`/sidebar`), con tus estadisticas y los puntos del duelo
@@ -56,6 +64,11 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Bot que pelea de vuelta (se acerca y pega) con niveles de dificultad: Passive, Easy, Normal, Hard
 - ✅ Contador de practica en `/botduel`: golpes, dano, combo mas largo, por ronda
 - ✅ `/top`: ranking por Elo, victorias o racha
-- ⏳ `/duels`: lista de duelos en curso con boton [WATCH] para mirar
+- ✅ `/duels`: lista de duelos en curso con boton [WATCH] para mirar
+- ✅ Resumen despues de cada duelo (cuanto duro, golpes, dano, combo mas largo, totems, perlas, manzanas de oro y pociones de cada uno) y boton [REMATCH]
 - ⏳ Torneos / cola para el grupo de amigos (brackets automaticos, 2v2)
-- ⏳ Arena propia: un admin construye una y `/savearena` hace que los duelos la usen
+- ⏳ Cola `/queue`: publica (kit publico o al azar), random (kit al azar) y kit propio (los dos pelean con uno tuyo) — entrega 2
+- ⏳ Ranking por kit — entrega 2
+- ⏳ Arenas propias con `/createarena` (plantillas), `/savearena`, `/setspawn 1|2`, rango Builder por concurso semanal de construccion (dura 3 semanas) y zona de practica — entrega 3
+- ⏳ Logros y titulos — entrega 4
+- ⏳ 2v2 / equipos — entrega 5 (la ultima, toca el nucleo de los duelos)
