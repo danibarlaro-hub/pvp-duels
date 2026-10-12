@@ -27,7 +27,7 @@ jobs:
           mkdir -p run
           echo "eula=true" > run/eula.txt
           printf '%s\n' "online-mode=false" "spawn-protection=0" "view-distance=6" "simulation-distance=6" \
-            "max-tick-time=-1" "spawn-monsters=false" "spawn-animals=false" "spawn-npcs=false" \
+            "max-tick-time=-1" "pause-when-empty-seconds=-1" "spawn-monsters=false" "spawn-animals=false" "spawn-npcs=false" \
             "generate-structures=false" "allow-nether=false" "enable-command-block=false" "gamemode=survival" "difficulty=normal" \
             "level-name=PvP Duels Lobby" "level-type=minecraft\\:flat" \
             'generator-settings={"layers":[{"block":"minecraft:air","height":1}],"biome":"minecraft:the_void","features":false,"lakes":false,"structure_overrides":[]}' \
@@ -35,7 +35,7 @@ jobs:
           cat run/server.properties
       - name: Build the island into the world
         run: |
-          PVPDUELS_BUILDWORLD=1 timeout 1500 gradle runServer --no-daemon --console=plain > world.log 2>&1 || true
+          PVPDUELS_BUILDWORLD=1 timeout 700 gradle runServer --no-daemon --console=plain > world.log 2>&1 || true
           ls -la run run/"PvP Duels Lobby" || true
           cat run/worldgen-report.txt || echo "no report"
       - name: Build the mod jar

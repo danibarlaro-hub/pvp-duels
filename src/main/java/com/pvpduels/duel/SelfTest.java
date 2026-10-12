@@ -1075,6 +1075,9 @@ public final class SelfTest {
 			for (int x = 46; x <= 56; x++) for (int z = 46; z <= 56; z++) level.setBlock(at(x, 99, z), Blocks.STONE.defaultBlockState(), 3);
 			// a platform far away, outside of the protected area, to compare
 			for (int x = -34; x <= -26; x++) for (int z = -34; z <= -26; z++) level.setBlock(at(x, 99, z), Blocks.STONE.defaultBlockState(), 3);
+			// the few seconds of protection after a duel would hide what this test wants to see
+			a.removeAllEffects();
+			b.removeAllEffects();
 			a.teleportTo(level, 50.5, 100, 50.5, java.util.Set.of(), 0f, 0f, true);
 			b.teleportTo(level, 50.5, 100, 52.5, java.util.Set.of(), 0f, 0f, true);
 			botTick = ticks;
