@@ -1,7 +1,7 @@
 name: stable
 on:
   push:
-    tags:
+    branches:
       - 'stable-*'
 
 permissions:
@@ -28,4 +28,4 @@ jobs:
         run: |
           JAR=$(ls build/libs/pvpduels-*.jar | grep -v sources | head -1)
           gh release delete "${GITHUB_REF_NAME}" --yes || true
-          gh release create "${GITHUB_REF_NAME}" "$JAR" --title "PvP Duels - ${GITHUB_REF_NAME} (fixed copy)" --notes "Fixed copy of the mod at this point. It never changes, so it is a safe fallback if a newer build has a problem."
+          gh release create "${GITHUB_REF_NAME}" "$JAR" --target "${GITHUB_SHA}" --title "PvP Duels - ${GITHUB_REF_NAME} (fixed copy)" --notes "Fixed copy of the mod at this point. It never changes, so it is a safe fallback if a newer build has a problem."
