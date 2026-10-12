@@ -71,5 +71,5 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Ranking por kit (`/top kit <nombre>`)
 - ✅ Concurso semanal de construccion (`/contest`): categoria al azar, 5 dias para construir y 2 para votar (galeria sin nombres), los 3 mas votados son Builder 3 semanas
 - ⏳ Zona de practica (por ahora lo cubre el NPC Practice Bot)
-- ⏳ Logros y titulos — entrega 4
+- ✅ Logros y titulos: 36 logros, `/achievements`, `/titles` (titulo delante del nombre), `/profile`
 - ⏳ 2v2 / equipos — entrega 5 (la ultima, toca el nucleo de los duelos)

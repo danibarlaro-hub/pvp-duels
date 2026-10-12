@@ -96,6 +96,7 @@ public final class ArenaCommands {
 		} catch (IOException e) {
 			return ArenaStudio.answer(source, "Could not share the arena: " + e.getMessage());
 		}
+		com.pvpduels.achievements.Achievements.add(p.getUUID(), p.getName().getString(), "arenas_published", 1);
 		source.sendSuccess(() -> Msg.ok("'" + ArenaStore.clean(name) + "' is public now: everybody can pick it when they challenge somebody. /arena unpublish "
 			+ ArenaStore.clean(name) + " takes it back."), false);
 		return 1;

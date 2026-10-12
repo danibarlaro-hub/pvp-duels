@@ -2,6 +2,8 @@ package com.pvpduels;
 
 import com.pvpduels.duel.DuelCommands;
 import com.pvpduels.duel.DuelManager;
+import com.pvpduels.achievements.AchievementCommands;
+import com.pvpduels.achievements.Achievements;
 import com.pvpduels.arena.ArenaCommands;
 import com.pvpduels.arena.ArenaStudio;
 import com.pvpduels.arena.BuilderRank;
@@ -77,6 +79,7 @@ public class PvpDuelsMod implements ModInitializer {
 			ArenaCommands.register(dispatcher);
 			BuilderRank.registerCommands(dispatcher);
 			Contest.registerCommands(dispatcher);
+			AchievementCommands.register(dispatcher);
 			BotDuel.registerCommands(dispatcher);
 			TopCommand.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
@@ -91,6 +94,7 @@ public class PvpDuelsMod implements ModInitializer {
 		Queue.register();
 		ArenaStudio.register();
 		Contest.register();
+		Achievements.register();
 		DuelManager.register();
 		Terrain.register();
 		Spectators.register();

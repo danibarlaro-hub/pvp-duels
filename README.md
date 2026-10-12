@@ -105,6 +105,13 @@ La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar 
 - Los **3 mas votados** (con al menos 1 voto) son **Builders por 3 semanas** (se suman a lo que ya tengan). Si hay menos de 2 obras se cancela y arranca otro. `/contest results` muestra el ultimo resultado y al entrar al juego te avisa si ganaste.
 - Admins: `/contest start [categoria]` (arranca uno nuevo con la categoria que quieras, tirando el que estaba), `/contest end` (salta a la siguiente fase: de construir a votar, de votar a los resultados). Tambien esta en **Create+** (el cuadro).
 
+## Logros y titulos
+- `/achievements` abre la lista de **36 logros** con tu progreso (los que no tenes salen grises con "Progress: 3/10"). Se ganan jugando: duelos ganados (1, 10, 25, 50, 100), rachas (3, 5, 10), **Flawless** (ganar sin perder ninguna ronda), Elo (1100, 1200, 1400), combos (5 y 10 golpes), totems, perlas y manzanas doradas usadas, ganar con 3 o 10 kits distintos, jugar en 4 tipos de arena, ganar desde la cola, mirar duelos, KOs al bot de practica (10 y 100), guardar y compartir kits, guardar y compartir arenas y el concurso (participar, votar, quedar en el podio, ganar).
+- Cuando desbloqueas uno te avisa unos 3 segundos despues (en el chat y arriba de la hotbar) con un boton **[WEAR]** si trae titulo.
+- **Titulos**: `/titles` abre los que ganaste (Rookie, Duelist, Gladiator, Champion, Legend, Streaker, On Fire, Unstoppable, Flawless, Untouchable, Rising Star, Expert, Master, Combo King, Versatile, Traveler, Matchmaker, Crusher, Collector, Generous, Architect, Critic, Builder, Master Builder). Click en uno y queda **delante de tu nombre** (chat, lista de jugadores y arriba de la cabeza) con un color segun la categoria. `/titles off` lo saca.
+- `/profile [jugador]` muestra el Elo, victorias, derrotas, mejor racha, titulo, logros y rango Builder.
+- El titulo usa un equipo del marcador (scoreboard team) por cada titulo; si tenes tu propio equipo, el titulo lo reemplaza mientras lo llevas puesto.
+
 ## Sidebar y estadisticas
 - A la derecha de la pantalla aparece un marcador solo para vos: fuera de un duelo muestra tus estadisticas (victorias, derrotas, racha, rondas), durante un duelo el puntaje, y en el taller los kits que tenes.
 - `/sidebar` lo apaga o prende (se acuerda de tu eleccion). Las estadisticas se guardan en `.minecraft/pvpduels`.

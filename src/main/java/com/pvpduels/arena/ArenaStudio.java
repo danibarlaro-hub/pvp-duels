@@ -364,6 +364,7 @@ public final class ArenaStudio {
 			return "Could not save the arena: " + e.getMessage();
 		}
 		p.sendSystemMessage(Msg.ok((isNew ? "Saved" : "Updated") + " the arena '" + name + "' (" + data.solidBlocks() + " blocks)."));
+		com.pvpduels.achievements.Achievements.max(p.getUUID(), p.getName().getString(), "arenas_saved", ArenaStore.list(p.getUUID()).stream().filter(n -> !DRAFT.equals(n)).count());
 		p.sendSystemMessage(Msg.info("  Private by default: only you can pick it. Share it with the others using ")
 			.copy().append(Msg.button("[PUBLISH]", ChatFormatting.GREEN, "/arena publish " + name, "Put the arena on the public shelf"))
 			.append(net.minecraft.network.chat.Component.literal(" or /arena publish " + name + ".").withStyle(ChatFormatting.GRAY)));

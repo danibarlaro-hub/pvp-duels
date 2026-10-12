@@ -101,6 +101,7 @@ public final class ShareCommands {
 			return 0;
 		}
 		boolean update = existing.isPresent();
+		if (!update) com.pvpduels.achievements.Achievements.add(p.getUUID(), p.getName().getString(), "kits_published", 1);
 		ctx.getSource().sendSuccess(() -> Msg.ok((update ? "Updated the public kit '" : "Kit '") + name + (update ? "'." : "' is now public.")
 			+ " Everybody can copy it with /kit take " + name + ". Use /unpublish " + name + " to take it back."), false);
 		for (ServerPlayer other : server.getPlayerList().getPlayers()) {

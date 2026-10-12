@@ -303,8 +303,9 @@ public final class Contest {
 	public static synchronized void saveEntry(UUID id, String name, ArenaData data) throws IOException {
 		ensureLoaded();
 		ArenaStore.save(data, ArenaStore.contestKey(id));
-		state.entries.put(id.toString(), name);
+		boolean first = state.entries.put(id.toString(), name) == null;
 		save();
+		if (first) com.pvpduels.achievements.Achievements.add(id, name, "contest_entries", 1);
 	}
 
 	public static synchronized void removeEntry(UUID id) {
@@ -326,6 +327,7 @@ public final class Contest {
 		if (owner.equals(voter.getUUID())) return "You can't vote for your own build.";
 		String before = state.votes.put(voter.getUUID().toString(), owner.toString());
 		save();
+		if (before == null) com.pvpduels.achievements.Achievements.add(voter.getUUID(), voter.getName().getString(), "contest_votes", 1);
 		voter.sendSystemMessage(Msg.ok("Your vote goes to build #" + number + (before != null && !before.equals(owner.toString()) ? " (you changed your vote)" : "")
 			+ ". You can change it until the voting ends."));
 		return null;
@@ -445,7 +447,10 @@ public final class Contest {
 			w.place = r.winners.size() + 1;
 			r.winners.add(w);
 			try {
-				BuilderRank.grant(UUID.fromString(w.id), BuilderRank.DEFAULT_WEEKS);
+				UUID winnerId = UUID.fromString(w.id);
+				BuilderRank.grant(winnerId, BuilderRank.DEFAULT_WEEKS);
+				com.pvpduels.achievements.Achievements.add(winnerId, w.name, "contest_podiums", 1);
+				if (w.place == 1) com.pvpduels.achievements.Achievements.add(winnerId, w.name, "contest_wins", 1);
 			} catch (IllegalArgumentException ignored) {
 				// a damaged entry in the file
 			}

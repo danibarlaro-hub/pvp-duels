@@ -3,6 +3,7 @@ package com.pvpduels.duel;
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.GuideBook;
 import com.pvpduels.duel.TestDummy.Dummy;
+import com.pvpduels.achievements.Achievements;
 import com.pvpduels.arena.ArenaData;
 import com.pvpduels.arena.ArenaStore;
 import com.pvpduels.arena.ArenaStudio;
@@ -2816,6 +2817,90 @@ public final class SelfTest {
 			run(a, "leave");
 			check("Alice left the workshop", !Workshop.isIn(a.getUUID()));
 			check("her armor slots are back to what she had", a.getItemBySlot(EquipmentSlot.HEAD).isEmpty());
+		});
+
+		// ---------------------------------------------------------------- achievements and titles
+		step("achievements: the duels, kits and builds of this whole test already counted", () -> {
+			check("Alice has First Steps and First Victory", Achievements.has(a.getUUID(), "first_duel") && Achievements.has(a.getUUID(), "first_win"));
+			check("her win counter is her real number of wins", Achievements.counter(a.getUUID(), "wins") == StatsStore.get(a.getUUID()).wins && StatsStore.get(a.getUUID()).wins > 0,
+				Achievements.counter(a.getUUID(), "wins") + " vs " + StatsStore.get(a.getUUID()).wins);
+			check("Bob played too", Achievements.has(b.getUUID(), "first_duel"));
+			check("Alice won 2-0 in her own arena: Flawless", Achievements.has(a.getUUID(), "flawless"));
+			check("she has dueled in at least two kinds of arena", Achievements.counter(a.getUUID(), "arena_kinds") >= 2, "" + Achievements.counter(a.getUUID(), "arena_kinds"));
+			check("she saved a kit", Achievements.has(a.getUUID(), "kit_first"));
+			check("she saved and shared an arena", Achievements.has(a.getUUID(), "arena_first") && Achievements.has(a.getUUID(), "arena_share"));
+			check("she won the building contest", Achievements.has(a.getUUID(), "contest_join") && Achievements.has(a.getUUID(), "contest_podium") && Achievements.has(a.getUUID(), "contest_win"));
+			check("Bob was second: podium but not the win", Achievements.has(b.getUUID(), "contest_podium") && !Achievements.has(b.getUUID(), "contest_win"));
+			check("Carl voted once", Achievements.counter(carl.getUUID(), "contest_votes") == 1, "" + Achievements.counter(carl.getUUID(), "contest_votes"));
+		});
+		step("achievements: counters unlock achievements", () -> {
+			Achievements.resetForTest();
+			java.util.UUID id = carl.getUUID();
+			check("nothing is unlocked", Achievements.unlockedCount(id) == 0);
+			Achievements.max(id, "Carl", "wins", 1);
+			check("1 win: First Victory, but not Duelist", Achievements.has(id, "first_win") && !Achievements.has(id, "wins_10"));
+			Achievements.add(id, "Carl", "bot_kos", 6);
+			Achievements.add(id, "Carl", "bot_kos", 4);
+			check("6 + 4 bot KOs: Bot Buster", Achievements.has(id, "bot_10") && Achievements.counter(id, "bot_kos") == 10 && !Achievements.has(id, "bot_100"));
+			Achievements.distinct(id, "Carl", "kit_wins", "k1");
+			Achievements.distinct(id, "Carl", "kit_wins", "k1");
+			Achievements.distinct(id, "Carl", "kit_wins", "k2");
+			check("the same kit twice counts once", Achievements.counter(id, "kit_wins") == 2 && !Achievements.has(id, "kits_3"));
+			Achievements.distinct(id, "Carl", "kit_wins", "k3");
+			check("three different kits: Versatile", Achievements.has(id, "kits_3"));
+			Achievements.max(id, "Carl", "wins", 0);
+			check("a lower value never lowers a max counter", Achievements.counter(id, "wins") == 1);
+			Achievements.max(id, "Carl", "elo", 1050);
+			check("1050 Elo is not enough", !Achievements.has(id, "elo_1100"));
+			Achievements.max(id, "Carl", "elo", 1210);
+			check("1210 Elo: Rising Star and Expert, not Master", Achievements.has(id, "elo_1100") && Achievements.has(id, "elo_1200") && !Achievements.has(id, "elo_1400"));
+			Achievements.max(id, "Carl", "wins", 100);
+			check("100 wins: all the win achievements", Achievements.has(id, "wins_10") && Achievements.has(id, "wins_25") && Achievements.has(id, "wins_50") && Achievements.has(id, "wins_100"));
+			check("Alice, whose data was thrown away, has nothing", Achievements.unlockedCount(a.getUUID()) == 0);
+		});
+		step("achievements: the player is told a few seconds later", () -> {
+			check("not told yet", !carl.heard("Achievement unlocked: Legend"));
+		}, () -> carl.heard("Achievement unlocked: Legend"), 400);
+		step("achievements: what the message says", () -> {
+			check("it names the title and offers [WEAR]", carl.heard("New title: [Legend]") && carl.heard("[WEAR]"));
+			check("nothing is left to tell", Achievements.pendingCount(carl.getUUID()) == 0);
+		});
+		step("achievements: the list of achievements", () -> {
+			run(carl, "achievements");
+			check("the menu shows unlocked and locked ones", menuHas(carl, "Legend") && menuHas(carl, "First Victory") && menuHas(carl, "Unstoppable") && menuHas(carl, "Bot Crusher"));
+			check("and the way to the titles", menuHas(carl, "My titles"));
+			menuStep(carl, "My titles");
+		});
+		step("achievements: wearing a title", () -> {
+			check("the titles menu has the won ones only", menuHas(carl, "[Rookie]") && menuHas(carl, "[Legend]") && menuHas(carl, "[Versatile]") && !menuHas(carl, "[Unstoppable]"));
+			check("click [Legend]", clickMenu(carl, "[Legend]"));
+		});
+		step("achievements: the title is in front of the name", () -> {
+			var board = server.getScoreboard();
+			var team = board.getPlayersTeam(carl.getScoreboardName());
+			check("Carl is in a title team", team != null, "no team");
+			check("its prefix is [Legend]", team != null && team.getPlayerPrefix().getString().equals("[Legend] "), team == null ? "" : team.getPlayerPrefix().getString());
+			check("so the name shown in chat has it", carl.getDisplayName().getString().contains("[Legend] Carl"), carl.getDisplayName().getString());
+			check("the game remembers it", Achievements.titleOf(carl.getUUID()) != null && Achievements.titleOf(carl.getUUID()).id().equals("wins_100"));
+			run(carl, "titles wear streak_10");
+			check("a title you haven't won is refused", carl.heard("You haven't unlocked that title yet") && Achievements.titleOf(carl.getUUID()).id().equals("wins_100"));
+			run(carl, "titles wear first_win");
+			check("another one can be worn", Achievements.titleOf(carl.getUUID()).title().equals("Rookie") && carl.getDisplayName().getString().contains("[Rookie] Carl"), carl.getDisplayName().getString());
+			run(carl, "profile");
+			check("/profile shows the title", carl.heard("Profile: [Rookie] Carl"));
+			check("/profile counts them", carl.heard("Achievements: "));
+		});
+		step("achievements: it is saved in the file", () -> {
+			Achievements.reloadForTest();
+			check("the unlocked achievements are still there", Achievements.has(carl.getUUID(), "wins_100") && Achievements.has(carl.getUUID(), "bot_10") && Achievements.counter(carl.getUUID(), "kit_wins") == 3);
+			check("so is the title", Achievements.titleOf(carl.getUUID()) != null && Achievements.titleOf(carl.getUUID()).title().equals("Rookie"));
+			run(carl, "titles off");
+			check("/titles off takes it off", Achievements.titleOf(carl.getUUID()) == null && server.getScoreboard().getPlayersTeam(carl.getScoreboardName()) == null
+				&& !carl.getDisplayName().getString().contains("["));
+		});
+		step("achievements: clean up", () -> {
+			Achievements.resetForTest();
+			check("Carl has no team left", server.getScoreboard().getPlayersTeam(carl.getScoreboardName()) == null);
 		});
 
 		step("sanity: commands from outside a duel", () -> {

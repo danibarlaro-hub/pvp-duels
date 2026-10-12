@@ -71,6 +71,7 @@ public final class Spectators {
 			return "Could not save your inventory, so you were not sent to the duel: " + e.getMessage();
 		}
 		WATCHING.put(p.getUUID(), duel);
+		com.pvpduels.achievements.Achievements.add(p.getUUID(), p.getName().getString(), "spectated", 1);
 		p.closeContainer();
 		p.removeAllEffects();
 		p.setGameMode(GameType.SPECTATOR);

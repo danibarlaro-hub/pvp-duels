@@ -1,6 +1,7 @@
 package com.pvpduels.duel;
 
 import com.pvpduels.PvpDuelsMod;
+import com.pvpduels.achievements.Achievements;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutStore;
@@ -108,6 +109,8 @@ public final class Duel {
 	/** Elo before and after for both players (set when a real duel is recorded). */
 	private int[] eloInfo;
 	private int[] kitEloInfo;
+	/** True when the duel came from the queue. */
+	boolean queued;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
 	int winner = -2;
 	boolean closed;
@@ -497,6 +500,7 @@ public final class Duel {
 			if (lastKoTick == elapsed) return; // the same blow reported twice
 			lastKoTick = elapsed;
 			points[1 - i]++;
+			Achievements.add(ids[1 - i], names[1 - i], "bot_kos", 1);
 			p.setAbsorptionAmount(0f);
 			p.invulnerableTime = 0;
 			ServerPlayer you = player(1 - i);
@@ -663,6 +667,38 @@ public final class Duel {
 		if (TestDummy.accepts(ids[0]) || TestDummy.accepts(ids[1])) return;
 		eloInfo = StatsStore.recordDuel(ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
 		kitEloInfo = StatsStore.recordKitDuel(config.kit(), ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
+		recordAchievements();
+	}
+
+	/** Feeds the achievements with what happened in this duel (the numbers of the stats are already updated). */
+	private void recordAchievements() {
+		if (practice) return;
+		for (int i = 0; i < 2; i++) {
+			UUID id = ids[i];
+			String name = names[i];
+			StatsStore.Stats s = StatsStore.get(id);
+			boolean won = winner == i;
+			Achievements.max(id, name, "duels", s.duels);
+			Achievements.max(id, name, "wins", s.wins);
+			Achievements.max(id, name, "streak", s.bestStreak);
+			Achievements.max(id, name, "elo", s.elo);
+			Achievements.max(id, name, "combo", recapBest[i]);
+			Achievements.distinct(id, name, "arena_kinds", config.arena().name());
+			if (won) {
+				Achievements.distinct(id, name, "kit_wins", config.kit());
+				if (queued) Achievements.add(id, name, "queue_wins", 1);
+				if (points[1 - i] == 0 && points[i] >= 2) Achievements.add(id, name, "flawless", 1);
+			}
+			ServerPlayer p = player(i);
+			if (p != null) {
+				int[] now = RecapItems.snapshot(p);
+				String[] counters = {"totems", "pearls", "apples"};
+				for (int g = 0; g < counters.length; g++) {
+					int used = now[g] - usedAtStart[i][g];
+					if (used > 0) Achievements.add(id, name, counters[g], used);
+				}
+			}
+		}
 	}
 
 	private void finish() {

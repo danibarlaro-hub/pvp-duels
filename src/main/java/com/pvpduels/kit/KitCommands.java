@@ -106,6 +106,7 @@ public final class KitCommands {
 		try {
 			boolean existed = KitStore.exists(p.getUUID(), name);
 			KitStore.SaveReport report = KitStore.save(ctx.getSource().getServer(), p, name);
+			com.pvpduels.achievements.Achievements.max(p.getUUID(), p.getName().getString(), "kits_saved", KitStore.list(p.getUUID()).size());
 			ctx.getSource().sendSuccess(() -> Msg.ok((existed ? "Overwrote kit '" : "Saved kit '") + name + "' from your inventory: "
 				+ report.stacks() + " item stack" + (report.stacks() == 1 ? "" : "s") + " in the file. See it with /kit show " + name + "."), false);
 			if (!report.warnings().isEmpty()) {

@@ -338,6 +338,8 @@ public final class DuelManager {
 	static boolean startMatched(MinecraftServer server, ServerPlayer a, ServerPlayer b, UUID kitOwner, DuelConfig config, KitStore.Kit kit) {
 		Invite invite = new Invite(a.getUUID(), a.getName().getString(), b.getUUID(), b.getName().getString(), kitOwner, config, false, tickCounter);
 		start(server, invite, kit);
+		Duel started = BY_PLAYER.get(a.getUUID());
+		if (started != null) started.queued = true;
 		return BY_PLAYER.containsKey(a.getUUID()) && BY_PLAYER.containsKey(b.getUUID());
 	}
 

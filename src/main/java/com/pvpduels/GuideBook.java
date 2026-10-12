@@ -84,6 +84,11 @@ public final class GuideBook {
 			{"Ranking per kit", "/top kit lists the kits that have a ranking.\n/top kit <name> [elo|wins|streak] ranks the players with that kit.\n\nAfter a duel you also see your Elo with the kit."},
 			{"Sidebar", "/sidebar turns the scoreboard on the right on or off: your Elo, wins, losses, streak and the duel score.\n\n/guide lists every command in chat."}
 		}),
+		new Topic("Achievements", new String[][] {
+			{"Achievements", "/achievements lists all of them: what you unlocked and how far you are from the rest.\n\nYou win them by dueling, practicing, making kits and arenas and building in the contest."},
+			{"Titles", "Some achievements give a title: Rookie, Duelist, Champion, Builder...\n\n/titles opens the ones you won: click one to wear it in front of your name (chat, tab list and name tag). /titles off takes it off."},
+			{"Profile", "/profile shows your Elo, wins, losses, best streak, title, how many achievements you have and your Builder rank.\n\n/profile <player> shows someone else's."}
+		}),
 		new Topic("Spectating", new String[][] {
 			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."}
 		}),
