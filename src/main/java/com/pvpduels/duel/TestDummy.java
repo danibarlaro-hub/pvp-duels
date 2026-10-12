@@ -17,6 +17,7 @@ import net.minecraft.network.ProtocolInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
@@ -61,9 +62,17 @@ public final class TestDummy {
 			super(PacketFlow.SERVERBOUND);
 		}
 
+		/** The fake player this connection belongs to (set right after it joins). */
+		Dummy owner;
+
 		private void record(Packet<?> packet) {
 			sent.add(packet);
 			if (sent.size() > 4000) sent.subList(0, 1000).clear();
+			// A real player is pushed by its own game client: vanilla sends the knockback to it and then takes the push
+			// away from the server's copy. A fake player has no client, so the push is taken from the packet here.
+			if (owner != null && packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == owner.getId()) {
+				owner.queueMotion(motion.movement());
+			}
 		}
 
 		@Override public void send(Packet<?> packet) { record(packet); }
@@ -106,6 +115,13 @@ public final class TestDummy {
 			pinZ = z;
 		}
 
+		// A push (knockback) that vanilla only sent to the "client" of this fake player; it is applied on its next tick.
+		private Vec3 queuedMotion;
+
+		void queueMotion(Vec3 motion) {
+			queuedMotion = motion;
+		}
+
 		private void holdStill() {
 			if (pinDimension == null || isChangingDimension() || !level().dimension().equals(pinDimension)) return;
 			if (distanceToSqr(pinX, pinY, pinZ) > 0.0004) {
@@ -124,6 +140,10 @@ public final class TestDummy {
 		@Override
 		public void tick() {
 			markLoaded();
+			if (queuedMotion != null) {
+				setDeltaMovement(queuedMotion);
+				queuedMotion = null;
+			}
 			if (brain != null) brain.prepare();
 			Vec3 before = position();
 			super.tick();
@@ -150,6 +170,7 @@ public final class TestDummy {
 		GameProfile profile = new GameProfile(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8)), name);
 		Dummy dummy = new Dummy(server, server.overworld(), profile);
 		dummy.link = new FakeConnection();
+		dummy.link.owner = dummy;
 		server.getPlayerList().placeNewPlayer(dummy.link, dummy, CommonListenerCookie.createInitial(profile, false));
 		return dummy;
 	}

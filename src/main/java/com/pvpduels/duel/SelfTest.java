@@ -78,6 +78,7 @@ public final class SelfTest {
 		PvpDuelsMod.LOGGER.warn("SELFTEST mode '{}' is on (this must never happen in the game).", mode);
 		ServerLifecycleEvents.SERVER_STARTED.register(s -> {
 			server = s;
+			Duel.traceEnd = true; // every end of a duel is logged with where it came from
 			if (mode.equals("stop")) {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else {
@@ -250,6 +251,72 @@ public final class SelfTest {
 		return false;
 	}
 
+	/**
+	 * What the game of this (fake) player would show in its inventory, rebuilt only from the packets the server sent it:
+	 * the last full content of its own inventory, then every single-slot update after that. Index = inventory slot
+	 * (0-8 hotbar, 9-35 main, 36-39 boots..helmet, 40 off hand). Null when no full content was ever sent.
+	 */
+	private static ItemStack[] clientView(Dummy who) {
+		java.util.List<net.minecraft.network.protocol.Packet<?>> sent = who.link.sent;
+		int start = -1;
+		for (int i = sent.size() - 1; i >= 0; i--) {
+			if (sent.get(i) instanceof net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket c && c.containerId() == 0) {
+				start = i;
+				break;
+			}
+		}
+		if (start < 0) return null;
+		ItemStack[] view = new ItemStack[41];
+		java.util.Arrays.fill(view, ItemStack.EMPTY);
+		var full = (net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket) sent.get(start);
+		for (int menu = 0; menu < full.items().size(); menu++) {
+			int idx = menuToInventory(menu);
+			if (idx >= 0) view[idx] = full.items().get(menu);
+		}
+		for (int i = start + 1; i < sent.size(); i++) {
+			var packet = sent.get(i);
+			if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket one && one.getContainerId() == 0) {
+				int idx = menuToInventory(one.getSlot());
+				if (idx >= 0) view[idx] = one.getItem();
+			} else if (packet instanceof net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket one) {
+				if (one.slot() >= 0 && one.slot() < 41) view[one.slot()] = one.contents();
+			} else if (packet instanceof net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket again && again.containerId() == 0) {
+				for (int menu = 0; menu < again.items().size(); menu++) {
+					int idx = menuToInventory(menu);
+					if (idx >= 0) view[idx] = again.items().get(menu);
+				}
+			}
+		}
+		return view;
+	}
+
+	/** Slot numbers of the player's own inventory screen to the index in the inventory (-1: crafting grid and so on). */
+	private static int menuToInventory(int menu) {
+		if (menu >= 9 && menu <= 35) return menu;
+		if (menu >= 36 && menu <= 44) return menu - 36;
+		if (menu >= 5 && menu <= 8) return 44 - menu; // 5 helmet -> 39 ... 8 boots -> 36
+		if (menu == 45) return 40;
+		return -1;
+	}
+
+	private static boolean clientMatches(Dummy who) {
+		return clientDiff(who).isEmpty();
+	}
+
+	/** Empty when the rebuilt client view equals the real inventory, else the first differences. */
+	private static String clientDiff(Dummy who) {
+		ItemStack[] view = clientView(who);
+		if (view == null) return "the server never sent the full inventory";
+		StringBuilder out = new StringBuilder();
+		for (int i = 0; i < 41; i++) {
+			ItemStack real = who.getInventory().getItem(i);
+			if (!ItemStack.matches(real, view[i])) {
+				if (out.length() < 200) out.append("slot ").append(i).append(": server ").append(real).append(" / game ").append(view[i]).append("; ");
+			}
+		}
+		return out.toString();
+	}
+
 	private static boolean menuStep(Dummy who, String name) {
 		boolean ok = clickMenu(who, name);
 		check("menu has the option '" + name + "'", ok);
@@ -368,6 +435,7 @@ public final class SelfTest {
 			check("Bob received the kit armor", b.getItemBySlot(EquipmentSlot.CHEST).is(Items.IRON_CHESTPLATE));
 			check("Bob received the kit offhand item", b.getItemBySlot(EquipmentSlot.OFFHAND).is(Items.SHIELD));
 			check("Alice's old marker item is gone during the duel", a.getInventory().getItem(21).isEmpty());
+			check("her game was sent the whole kit (what a real client would show)", clientMatches(a), clientDiff(a));
 			check("Bob's old marker item is gone during the duel", b.getInventory().getItem(20).isEmpty());
 			ServerLevel arena = Arena.level(server);
 			int cx = Arena.centerX(d.slot);
@@ -1226,7 +1294,8 @@ public final class SelfTest {
 			run(a, "botduel testkit");
 			check("with a kit name the question opens right away", menuHas(a, "Yes") && menuHas(a, "No"));
 			menuStep(a, "Yes");
-
+		}, () -> duel(a) != null, 100);
+		step("bot duel: the duel with the static bot", () -> {
 			Duel d = duel(a);
 			check("a practice duel exists", d != null && d.practice && d.config.arena() == ArenaKind.BOT && d.config.unlimited(),
 				d == null ? "no duel" : d.config.toString());
@@ -1386,15 +1455,27 @@ public final class SelfTest {
 			check("a push moves a passive bot away", moved > 1.5, "moved " + moved);
 			check("it landed on the floor of the arena", Math.abs(bot.getY() - (Arena.FLOOR_Y + 1)) < 0.2, where(bot));
 			check("and it stopped", bot.getDeltaMovement().horizontalDistanceSqr() < 0.01, String.valueOf(bot.getDeltaMovement()));
+			// A real blow, the way a player's game sends it (Player.attack): the push has to reach a bot that has no game.
+			ServerLevel arena = Arena.level(server);
+			a.teleportTo(arena, bot.getX() - 1.5, bot.getY(), bot.getZ(), java.util.Set.of(), -90f, 0f, true);
+			bot.invulnerableTime = 0;
 			botX = bot.getX();
-			softHit(a, bot, 3f);
+			a.attack(bot);
 			botTick = ticks;
 		}, () -> ticks - botTick > 25, 100);
 		step("passive bot: a hit knocks it back", () -> {
 			double moved = bot.getX() - botX;
-			log("a hit moved the passive bot " + moved + " blocks");
-			check("a hit pushes it away from Alice", moved > 0.3, "moved " + moved);
+			log("a real blow moved the passive bot " + moved + " blocks");
+			check("a blow from a player pushes it away from her", moved > 0.3, "moved " + moved);
+			check("it was really hurt", bot.getHealth() < bot.getMaxHealth() || duel(a).hits >= 1, bot.getHealth() + " hp, hits " + duel(a).hits);
 			check("a passive bot never fights back", duel(a).hitsTaken == 0);
+			botTick = ticks;
+		}, () -> ticks - botTick > 900, 1000);
+		step("passive bot: the duel is still going after 45 seconds", () -> {
+			Duel d = duel(a);
+			check("an unlimited duel does not end by itself", d != null && !d.isClosedForTest() && server.getPlayerList().getPlayerByName("Bot") == bot,
+				d == null ? "no duel" : d.phase + ", round " + d.round);
+			check("it is still in its fighting phase", d != null && d.phase == Duel.Phase.FIGHTING, d == null ? "no duel" : String.valueOf(d.phase));
 			run(a, "leave");
 		}, () -> server.getPlayerList().getPlayerByName("Bot") == null, 200);
 
@@ -1413,6 +1494,13 @@ public final class SelfTest {
 			log("hard bot at " + where(bot) + ", Alice at " + where(a) + ", hits taken " + d.hitsTaken);
 			check("the bot hit Alice", d.hitsTaken >= 1 && d.damageTaken > 0f, "hits taken " + d.hitsTaken);
 			check("the bot came close to Alice", bot.distanceTo(a) < 5.0, "distance " + bot.distanceTo(a));
+			botTick = ticks;
+		}, () -> ticks - botTick > 900, 1000);
+		step("hard bot: the duel is still going after 45 seconds", () -> {
+			Duel d = duel(a);
+			check("an unlimited duel against a fighting bot does not end by itself", d != null && server.getPlayerList().getPlayerByName("Bot") == bot,
+				d == null ? "no duel" : d.phase + ", round " + d.round);
+			log("after 45 s: round " + (d == null ? -1 : d.round) + ", Alice " + (d == null ? "" : d.points[0]) + " - Bot " + (d == null ? "" : d.points[1]));
 			run(a, "leave");
 		}, () -> server.getPlayerList().getPlayerByName("Bot") == null, 200);
 		step("bots: all gone", () -> {

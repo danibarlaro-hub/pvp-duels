@@ -176,8 +176,7 @@ public final class DuelMenus {
 
 	private static void startBot(ServerPlayer who, String kit, BotLevel level) {
 		who.closeContainer();
-		String problem = BotDuel.start(who, kit, level);
-		if (problem != null) who.sendSystemMessage(Msg.err(problem));
+		BotDuel.startLater(who, kit, level);
 	}
 
 	// ------------------------------------------------------------------ 2. arena

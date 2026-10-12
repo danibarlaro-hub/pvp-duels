@@ -49,6 +49,18 @@ public final class BotDuel {
 
 	// ------------------------------------------------------------------ starting
 
+	private record Pending(UUID player, String kit, BotLevel level) {}
+	/** Practice duels chosen in the menu: they start at the end of this tick, once the menu click is completely handled. */
+	private static final List<Pending> PENDING = new ArrayList<>();
+
+	/**
+	 * Called from the menu. Minecraft keeps working on the player's inventory after a menu click (it writes what the
+	 * client thought the click did), so the kit and the teleport must wait until that is over.
+	 */
+	static void startLater(ServerPlayer player, String kit, BotLevel level) {
+		PENDING.add(new Pending(player.getUUID(), kit, level));
+	}
+
 	/** Joins the bot and starts the duel. Returns an error text, or null (also when the reason was already told to the player). */
 	static String start(ServerPlayer player, String kit, BotLevel level) {
 		MinecraftServer server = player.level().getServer();
@@ -101,6 +113,15 @@ public final class BotDuel {
 	}
 
 	private static void tick(MinecraftServer server) {
+		if (!PENDING.isEmpty()) {
+			for (Pending pending : List.copyOf(PENDING)) {
+				PENDING.remove(pending);
+				ServerPlayer who = server.getPlayerList().getPlayer(pending.player());
+				if (who == null) continue;
+				String problem = start(who, pending.kit(), pending.level());
+				if (problem != null) who.sendSystemMessage(Msg.err(problem));
+			}
+		}
 		if (LEAVING.isEmpty()) return;
 		for (UUID id : List.copyOf(LEAVING)) {
 			TestDummy.disconnect(server, id);
@@ -119,6 +140,7 @@ public final class BotDuel {
 		ServerTickEvents.END_SERVER_TICK.register(BotDuel::tick);
 		ServerLifecycleEvents.SERVER_STOPPING.register(BotDuel::removeAll);
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			PENDING.clear();
 			BOTS.clear();
 			LEAVING.clear();
 		});

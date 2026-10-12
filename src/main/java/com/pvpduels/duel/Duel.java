@@ -8,6 +8,7 @@ import com.pvpduels.stats.StatsStore;
 import com.pvpduels.util.Msg;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
@@ -46,6 +47,13 @@ public final class Duel {
 	public static int farCountdown = 5 * 20;
 	/** Server ticks that count as one minute of a timed duel (1200 normally; the self-test shortens it). */
 	public static int ticksPerMinute = 60 * 20;
+	/** For the self-test: whether this duel has been closed already. */
+	boolean isClosedForTest() {
+		return closed;
+	}
+
+	/** The self-test sets this: every end of a duel then logs where it was decided from. */
+	public static boolean traceEnd = false;
 
 	private final MinecraftServer server;
 	final int slot;
@@ -195,9 +203,20 @@ public final class Duel {
 		LayoutStore.Profile profile = profileFor(p);
 		if (profile != null) InventorySorter.sort(p, profile);
 		p.getInventory().setSelectedSlot(0);
+		resync(p);
 		// The arena can be dark at night, so both players always see well.
 		p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 72000, 0, false, false));
 		space.teleportToSpawn(p, arena, i);
+	}
+
+	/**
+	 * Sends the whole inventory and the selected hotbar slot to the player again, so their game really shows the kit
+	 * (and holds the first slot) at the start of every round, whatever the client thought it had.
+	 */
+	private static void resync(ServerPlayer p) {
+		p.inventoryMenu.sendAllDataToRemote();
+		if (p.containerMenu != p.inventoryMenu) p.containerMenu.sendAllDataToRemote();
+		if (p.connection != null) p.connection.send(new ClientboundSetHeldSlotPacket(p.getInventory().getSelectedSlot()));
 	}
 
 	// ------------------------------------------------------------------ per tick
@@ -266,6 +285,11 @@ public final class Duel {
 			Component number = Component.literal(String.valueOf(seconds)).withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
 			sendTitle(a, number, sub, 0, 25, 5);
 			sendTitle(b, number, sub, 0, 25, 5);
+		}
+		if (phaseTicks == 2) {
+			// after the teleport into the arena has settled
+			resync(a);
+			resync(b);
 		}
 		if (left <= 0) {
 			phase = Phase.FIGHTING;
@@ -580,6 +604,8 @@ public final class Duel {
 	}
 
 	private void finish() {
+		if (traceEnd) PvpDuelsMod.LOGGER.info("Duel {} vs {} is finishing (round {}, phase {}, practice {})", names[0], names[1], round, phase, practice,
+			new Throwable("who finished the duel"));
 		recordStats();
 		DuelManager.onFinished(this);
 		phase = Phase.ENDED;
@@ -630,6 +656,7 @@ public final class Duel {
 
 	/** Ends the duel right now (used when you leave a practice duel: the bot has no reason to wait around). */
 	void closeNow() {
+		if (traceEnd) PvpDuelsMod.LOGGER.info("Duel {} vs {} closed right now", names[0], names[1], new Throwable("who closed the duel"));
 		close();
 	}
 
