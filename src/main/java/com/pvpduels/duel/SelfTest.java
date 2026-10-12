@@ -1,7 +1,9 @@
 package com.pvpduels.duel;
 
 import com.pvpduels.PvpDuelsMod;
+import com.pvpduels.GuideBook;
 import com.pvpduels.duel.TestDummy.Dummy;
+import com.pvpduels.stats.StatsStore;
 import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
@@ -11,6 +13,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundResetScorePacket;
+import net.minecraft.network.protocol.game.ClientboundSetObjectivePacket;
+import net.minecraft.network.protocol.game.ClientboundSetScorePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +37,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 
@@ -164,6 +172,7 @@ public final class SelfTest {
 	// ------------------------------------------------------------------ helpers
 
 	private static ItemStack enchantedSword = ItemStack.EMPTY;
+	private static int dummyDuelsBefore;
 	private static Dummy a;
 	private static Dummy b;
 	private static final double[] aPos = new double[3];
@@ -225,6 +234,26 @@ public final class SelfTest {
 		return p.level().dimension().identifier() + " " + String.format("%.1f %.1f %.1f", p.getX(), p.getY(), p.getZ());
 	}
 
+	/** The sidebar lines a player currently sees, rebuilt from the packets the server sent them. */
+	private static List<String> sidebar(Dummy who) {
+		Map<Integer, String> lines = new TreeMap<>();
+		for (Packet<?> packet : List.copyOf(who.link.sent)) {
+			if (packet instanceof ClientboundSetObjectivePacket obj) {
+				if (obj.getMethod() == ClientboundSetObjectivePacket.METHOD_ADD || obj.getMethod() == ClientboundSetObjectivePacket.METHOD_REMOVE) lines.clear();
+			} else if (packet instanceof ClientboundSetScorePacket score) {
+				lines.put(Integer.parseInt(score.owner().substring(5)), score.display().map(Component::getString).orElse("?"));
+			} else if (packet instanceof ClientboundResetScorePacket reset) {
+				lines.remove(Integer.parseInt(reset.owner().substring(5)));
+			}
+		}
+		return new java.util.ArrayList<>(lines.values());
+	}
+
+	private static boolean sidebarHas(Dummy who, String text) {
+		for (String line : sidebar(who)) if (line.contains(text)) return true;
+		return false;
+	}
+
 	private static void invite(Dummy from, Dummy to, DuelConfig config) {
 		DuelManager.sendInvite(from, to, from.getUUID(), config, false);
 		run(to, "accept " + from.getName().getString());
@@ -246,6 +275,8 @@ public final class SelfTest {
 			b = spawn("Bob");
 			check("both fake players are in the player list",
 				server.getPlayerList().getPlayer(a.getUUID()) == a && server.getPlayerList().getPlayer(b.getUUID()) == b);
+			check("a new player gets the guide book", GuideBook.has(a) && GuideBook.has(b));
+			check("a new player sees the sidebar with their stats", sidebarHas(a, "Wins: 0") && sidebarHas(a, "Duels played"), String.valueOf(sidebar(a)));
 		}, () -> ticks > 60, 300);
 
 		step("prepare Alice's kit and the marker items", () -> {
@@ -353,6 +384,8 @@ public final class SelfTest {
 			ServerLevel arena = Arena.level(server);
 			int cx = Arena.centerX(d.slot);
 			check("this is round 2", d.round == 2, "round=" + d.round);
+			check("the sidebar shows the duel score", sidebarHas(a, "vs Bob") && sidebarHas(a, "Alice: 1") && sidebarHas(a, "Bob: 0"), String.valueOf(sidebar(a)));
+			check("the sidebar shows the win condition", sidebarHas(a, "First to 2"), String.valueOf(sidebar(a)));
 			check("the chest left in round 1 was removed", arena.getBlockState(new BlockPos(cx, Arena.FLOOR_Y + 1, 0)).isAir());
 			check("both players are back at their spawn", a.distanceToSqr(Arena.spawn(d.slot, 0)[0], Arena.spawn(d.slot, 0)[1], Arena.spawn(d.slot, 0)[2]) < 4
 				&& b.distanceToSqr(Arena.spawn(d.slot, 1)[0], Arena.spawn(d.slot, 1)[1], Arena.spawn(d.slot, 1)[2]) < 4,
@@ -487,6 +520,7 @@ public final class SelfTest {
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
 		});
 		step("test dummy: spawn, auto-accept", () -> {
+			dummyDuelsBefore = StatsStore.get(a.getUUID()).duels;
 			String problem = TestDummy.spawn(a, "dum");
 			Dummy dum = (Dummy) server.getPlayerList().getPlayerByName("dum");
 			check("the dummy was created", problem == null && dum != null, String.valueOf(problem));
@@ -512,6 +546,8 @@ public final class SelfTest {
 			Duel d = duel(a);
 			check("the duel ends in Alice's favour", d != null && d.winner == 0 && d.phase == Duel.Phase.ENDED,
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
+			check("duels against a test dummy don't count in the statistics", StatsStore.get(a.getUUID()).duels == dummyDuelsBefore,
+				StatsStore.get(a.getUUID()).duels + " vs " + dummyDuelsBefore);
 			check("the dummy is not auto-accepting any more", !TestDummy.accepts(java.util.UUID.nameUUIDFromBytes("OfflinePlayer:dum".getBytes(java.nio.charset.StandardCharsets.UTF_8))));
 		}, () -> noDuel(a), 600);
 
@@ -608,6 +644,45 @@ public final class SelfTest {
 			check("Alice is in the overworld with her items", a.level().dimension().equals(server.overworld().dimension())
 				&& a.getInventory().getItem(21).is(Items.STONE), where(a));
 			check("and in survival", a.gameMode() == GameType.SURVIVAL);
+		});
+
+		step("statistics, sidebar and guide book", () -> {
+			StatsStore.Stats sa = StatsStore.get(a.getUUID());
+			StatsStore.Stats sb = StatsStore.get(b.getUUID());
+			check("Alice's wins and losses were counted", sa.wins >= 3 && sa.losses >= 1 && sa.duels == sa.wins + sa.losses + sa.draws,
+				sa.wins + "W " + sa.losses + "L of " + sa.duels);
+			check("Bob's wins were counted", sb.wins >= 1 && sb.losses >= 1, sb.wins + "W " + sb.losses + "L");
+			check("the best streak is at least the streak", sa.bestStreak >= sa.streak && sa.bestStreak >= 1);
+			run(a, "sidebar off");
+			check("/sidebar off hides it", sidebar(a).isEmpty());
+			run(a, "sidebar on");
+			check("/sidebar on shows her stats again", sidebarHas(a, "Wins: " + sa.wins), String.valueOf(sidebar(a)));
+			run(a, "sidebar");
+			check("/sidebar alone toggles", sidebar(a).isEmpty());
+			run(a, "sidebar");
+			check("and toggles back", !sidebar(a).isEmpty());
+
+			a.getInventory().clearContent();
+			run(a, "guide book");
+			check("/guide book gives the guide book", GuideBook.has(a));
+			a.getInventory().setItem(5, new ItemStack(Items.DIRT, 2));
+			run(a, "kit save withbook");
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "withbook");
+				boolean noBook = kit.isPresent();
+				boolean hasDirt = false;
+				if (kit.isPresent()) {
+					for (ItemStack stack : kit.get().slots()) {
+						if (GuideBook.isGuide(stack)) noBook = false;
+					}
+					hasDirt = kit.get().slots()[5].is(Items.DIRT);
+				}
+				check("a saved kit never contains the guide book (but keeps other items)", noBook && hasDirt);
+			} catch (java.io.IOException e) {
+				check("the kit can be read", false, e.toString());
+			}
+			a.getInventory().clearContent();
+			a.getInventory().setItem(21, new ItemStack(Items.STONE, 3));
 		});
 
 		step("sanity: commands from outside a duel", () -> {

@@ -11,6 +11,7 @@ import com.pvpduels.net.CycleLayoutPayload;
 import com.pvpduels.net.QuickKitPayload;
 import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
+import com.pvpduels.ui.Sidebar;
 import com.pvpduels.util.Msg;
 import com.pvpduels.workshop.ItemCommands;
 import com.pvpduels.workshop.Workshop;
@@ -52,6 +53,7 @@ public class PvpDuelsMod implements ModInitializer {
 			DuelCommands.register(dispatcher);
 			TestDummy.register(dispatcher);
 			Workshop.registerCommands(dispatcher);
+			Sidebar.registerCommands(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
 		});
 
@@ -61,6 +63,8 @@ public class PvpDuelsMod implements ModInitializer {
 		DuelManager.register();
 		TestDummy.registerEvents();
 		Workshop.register();
+		GuideBook.register();
+		Sidebar.register();
 		SelfTest.register();
 
 		LOGGER.info("PvP Duels loaded.");

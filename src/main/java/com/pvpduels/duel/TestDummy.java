@@ -51,13 +51,21 @@ public final class TestDummy {
 
 	/** A network connection that goes nowhere. */
 	static final class FakeConnection extends Connection {
+		/** The last packets the server sent to this fake player (the self-test reads the sidebar from them). */
+		final List<Packet<?>> sent = new ArrayList<>();
+
 		FakeConnection() {
 			super(PacketFlow.SERVERBOUND);
 		}
 
-		@Override public void send(Packet<?> packet) {}
-		@Override public void send(Packet<?> packet, ChannelFutureListener listener) {}
-		@Override public void send(Packet<?> packet, ChannelFutureListener listener, boolean flush) {}
+		private void record(Packet<?> packet) {
+			sent.add(packet);
+			if (sent.size() > 4000) sent.subList(0, 1000).clear();
+		}
+
+		@Override public void send(Packet<?> packet) { record(packet); }
+		@Override public void send(Packet<?> packet, ChannelFutureListener listener) { record(packet); }
+		@Override public void send(Packet<?> packet, ChannelFutureListener listener, boolean flush) { record(packet); }
 		@Override public void setReadOnly() {}
 		@Override public void handleDisconnection() {}
 		@Override public void setListenerForServerboundHandshake(PacketListener listener) {}
@@ -67,6 +75,7 @@ public final class TestDummy {
 	static final class Dummy extends ServerPlayer {
 		/** The last messages this player received (the self-test reads them). */
 		final List<String> inbox = new ArrayList<>();
+		FakeConnection link;
 
 		Dummy(MinecraftServer server, ServerLevel level, GameProfile profile) {
 			super(server, level, profile, ClientInformation.createDefault());
@@ -104,7 +113,8 @@ public final class TestDummy {
 	static Dummy create(MinecraftServer server, String name) {
 		GameProfile profile = new GameProfile(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8)), name);
 		Dummy dummy = new Dummy(server, server.overworld(), profile);
-		server.getPlayerList().placeNewPlayer(new FakeConnection(), dummy, CommonListenerCookie.createInitial(profile, false));
+		dummy.link = new FakeConnection();
+		server.getPlayerList().placeNewPlayer(dummy.link, dummy, CommonListenerCookie.createInitial(profile, false));
 		return dummy;
 	}
 
@@ -141,15 +151,19 @@ public final class TestDummy {
 		else if (AUTO.containsKey(name.toLowerCase())) names.add(name.toLowerCase());
 		int removed = 0;
 		for (String key : names) {
-			UUID id = AUTO.remove(key);
+			UUID id = AUTO.get(key);
 			ServerPlayer p = id == null ? null : server.getPlayerList().getPlayer(id);
-			if (p == null) continue;
+			if (p == null) {
+				AUTO.remove(key);
+				continue;
+			}
 			Duel duel = DuelManager.duelOf(id);
 			if (duel != null) {
 				// Leaves the duel first so the other player is not left waiting.
 				DuelManager.leave(p);
 			}
 			if (p.connection != null) p.connection.onDisconnect(new DisconnectionDetails(Component.literal("Test dummy removed")));
+			AUTO.remove(key);
 			removed++;
 		}
 		return removed;

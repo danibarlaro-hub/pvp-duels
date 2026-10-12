@@ -14,6 +14,7 @@ public final class GuideCommand {
 		"Arena: flat 21x21 bedrock platform over the void (with or without walls). Only entities and block entities (chests, shulkers, crystals, boats...) can be placed. Falling off loses the round.",
 		"WORKSHOP: /kit create [kit]  - go to the kit workshop (creative mode, nothing can be placed or broken; give a kit name to edit it). There use /enchant <enchantment> [level 0-255] and /infinite <1-99> on the item in your hand, then /kit save <name>. /leave or /kit exit  - go back to your own inventory",
 		"Admins: /test_dummy <name>  - adds a fake player that accepts every duel, to test alone; /test_dummy remove [name]",
+		"/sidebar [on|off]  - the scoreboard on the right with your stats and the duel score. /guide book  - get the guide book again",
 		"/kit save <name>  - save your current inventory as a kit",
 		"/kit load <name>  - replace your inventory with a kit",
 		"/kit list  - list your kits",
@@ -35,12 +36,18 @@ public final class GuideCommand {
 	private GuideCommand() {}
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		dispatcher.register(Commands.literal("guide").executes(ctx -> {
-			ctx.getSource().sendSuccess(() -> Msg.title("PvP Duels - commands"), false);
-			for (String line : LINES) {
-				ctx.getSource().sendSuccess(() -> Msg.info(line), false);
-			}
-			return 1;
-		}));
+		dispatcher.register(Commands.literal("guide")
+			.executes(ctx -> {
+				ctx.getSource().sendSuccess(() -> Msg.title("PvP Duels - commands"), false);
+				for (String line : LINES) {
+					ctx.getSource().sendSuccess(() -> Msg.info(line), false);
+				}
+				return 1;
+			})
+			.then(Commands.literal("book").executes(ctx -> {
+				GuideBook.give(ctx.getSource().getPlayerOrException());
+				ctx.getSource().sendSuccess(() -> Msg.ok("Here is the guide book."), false);
+				return 1;
+			})));
 	}
 }

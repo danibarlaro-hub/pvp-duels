@@ -102,6 +102,10 @@ public final class KitStore {
 		UUID owner = player.getUUID();
 		Inventory inv = player.getInventory();
 		JsonArray slots = encodeInventory(server, inv);
+		// The guide book is not part of any kit.
+		for (int i = 0; i < SLOTS && i < inv.getContainerSize(); i++) {
+			if (com.pvpduels.GuideBook.isGuide(inv.getItem(i))) slots.set(i, new JsonObject());
+		}
 
 		JsonObject root = new JsonObject();
 		root.addProperty("name", name);

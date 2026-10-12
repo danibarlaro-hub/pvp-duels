@@ -4,6 +4,7 @@ import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutStore;
+import com.pvpduels.stats.StatsStore;
 import com.pvpduels.util.Msg;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -20,6 +21,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.GameType;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -59,6 +62,7 @@ public final class Duel {
 	private int noContact;
 	private boolean warnedTeleport;
 	private boolean finishing;
+	private boolean recorded;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
 	int winner = -2;
 	boolean closed;
@@ -377,7 +381,46 @@ public final class Duel {
 		finish();
 	}
 
+	/** The lines of the sidebar for one of the two players. */
+	public List<String> sidebarFor(UUID viewer) {
+		int i = indexOf(viewer);
+		List<String> out = new ArrayList<>();
+		if (i < 0) return out;
+		out.add("vs " + names[1 - i]);
+		out.add("");
+		out.add(names[i] + ": " + points[i]);
+		out.add(names[1 - i] + ": " + points[1 - i]);
+		out.add("");
+		out.add(roundLabel());
+		switch (config.mode()) {
+			case FIRST_TO -> out.add(config.limit() > 0 ? "First to " + config.limit() : "Unlimited");
+			case ROUNDS -> { if (config.limit() == 0) out.add("Unlimited"); }
+			case TIMED -> {
+				if (timedOut) out.add("Time is up!");
+				else {
+					int left = Math.max(0, (config.limit() * ticksPerMinute - elapsed) / 20);
+					out.add(String.format("Time left %d:%02d", left / 60, left % 60));
+				}
+			}
+		}
+		out.add("Kit: " + config.kit());
+		if (phase == Phase.ENDED) out.add(winner == -1 ? "Draw" : (winner == i ? "You won!" : "You lost"));
+		return out;
+	}
+
+	private void recordStats() {
+		if (recorded || winner == -2) return;
+		recorded = true;
+		// Practice duels against a /test_dummy don't count.
+		if (TestDummy.accepts(ids[0]) || TestDummy.accepts(ids[1])) return;
+		for (int i = 0; i < 2; i++) {
+			int result = winner == -1 ? 0 : (winner == i ? 1 : -1);
+			StatsStore.record(ids[i], result, points[i], points[1 - i]);
+		}
+	}
+
 	private void finish() {
+		recordStats();
 		DuelManager.onFinished(this);
 		phase = Phase.ENDED;
 		phaseTicks = 0;
