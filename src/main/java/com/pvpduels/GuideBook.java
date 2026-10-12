@@ -38,7 +38,7 @@ public final class GuideBook {
 		{"Kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit show <name>  look inside a kit\n/kit delete <name>\n/kit key a|b|c <kit>  sets the Quick kit keys\n/kit profile <kit> <layout>  sorts a kit when loaded"},
 		{"Sharing kits", "/publicate <kit>: share with everybody\n/kit public: list shared kits\n/kit take <kit>: copy one\n/unpublish <kit>: take yours back\n\n/private <kit> <player>: a locked copy (usable, but not shareable or editable)"},
 		{"Kit workshop", "/kit create [kit] opens a creative void: you can't place or break anything.\n\n/enchant <enchantment> [0-255]\n/infinite <1-99>\n/kit save <name>\n\n/leave or /kit exit brings your inventory back."},
-		{"Layouts", "A layout sorts slots 1-36.\n/layout slot <1-36> <rules...> (32 priority levels)\n/layout inventorycopy\n/layout use <1-21|name>\n/layout auto builds a layout from your kits.\n/layout sort or press R."},
+		{"Layouts", "A layout sorts slots 1-36.\n/layout slot <1-36> <rules...> (32 priority levels)\n/layout inventorycopy\n/layout use <1-21|name>\n/layout auto builds a layout from your kits.\n/layout sort or press R.\n\nSort also puts on the best armor you carry (never a piece with Curse of Binding). /layout armor off turns that part off."},
 		{"Keys", "Options > Controls > PvP Duels:\nSort inventory\nQuick kit A / B / C\nQuick layout 1 / 2 / 3\nNext / Previous layout\n\nAll of them can be changed."},
 		{"Sidebar and stats", "/sidebar turns the scoreboard on the right on or off.\n\nIt shows your Elo, wins, losses, streak and rounds, and during a duel the score of both players.\n\n/guide book gives you this book again."}
 	};

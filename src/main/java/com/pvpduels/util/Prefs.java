@@ -21,6 +21,7 @@ public final class Prefs {
 	private static final Set<UUID> SIDEBAR_OFF = new HashSet<>();
 	private static final Set<UUID> BOOK_GIVEN = new HashSet<>();
 	private static final Set<UUID> LOBBY_OFF = new HashSet<>();
+	private static final Set<UUID> ARMOR_OFF = new HashSet<>();
 	private static boolean loaded;
 
 	private Prefs() {}
@@ -38,6 +39,7 @@ public final class Prefs {
 			read(root, "sidebarOff", SIDEBAR_OFF);
 			read(root, "bookGiven", BOOK_GIVEN);
 			read(root, "lobbyOff", LOBBY_OFF);
+			read(root, "armorOff", ARMOR_OFF);
 		} catch (Exception e) {
 			PvpDuelsMod.LOGGER.warn("Could not read the settings file: {}", e.toString());
 		}
@@ -66,6 +68,7 @@ public final class Prefs {
 			write(root, "sidebarOff", SIDEBAR_OFF);
 			write(root, "bookGiven", BOOK_GIVEN);
 			write(root, "lobbyOff", LOBBY_OFF);
+			write(root, "armorOff", ARMOR_OFF);
 			Files.createDirectories(file().getParent());
 			Files.writeString(file(), GSON.toJson(root));
 		} catch (IOException e) {
@@ -92,6 +95,17 @@ public final class Prefs {
 	public static synchronized void setLobbyReturn(UUID id, boolean on) {
 		ensureLoaded();
 		if (on ? LOBBY_OFF.remove(id) : LOBBY_OFF.add(id)) save();
+	}
+
+	/** Whether the Sort key also puts on your best armor. On by default. */
+	public static synchronized boolean armorSort(UUID id) {
+		ensureLoaded();
+		return !ARMOR_OFF.contains(id);
+	}
+
+	public static synchronized void setArmorSort(UUID id, boolean on) {
+		ensureLoaded();
+		if (on ? ARMOR_OFF.remove(id) : ARMOR_OFF.add(id)) save();
 	}
 
 	public static synchronized boolean bookGiven(UUID id) {

@@ -1,6 +1,7 @@
 package com.pvpduels.layout;
 
 import com.pvpduels.util.Msg;
+import com.pvpduels.util.Prefs;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -61,16 +62,27 @@ public final class InventorySorter {
 		inv.setItem(b, first);
 	}
 
-	/** Sorts using the player's active layout and tells them what happened. */
+	/**
+	 * Sorts using the player's active layout and tells them what happened. Before that it puts on the best armor you
+	 * carry (never one with Curse of Binding) unless you turned that off with /layout armor off.
+	 */
 	public static void sortAndReport(ServerPlayer player) {
+		ArmorPicker.Result armor = Prefs.armorSort(player.getUUID()) ? ArmorPicker.equipBest(player) : new ArmorPicker.Result(List.of(), List.of());
+
 		LayoutStore.Data data = LayoutStore.get(player.getUUID());
 		LayoutStore.Profile profile = data.profiles.get(data.active);
 		boolean hasRules = LayoutStore.hasRules(profile);
-		if (!hasRules) {
+		if (hasRules) {
+			int moved = sort(player, profile);
+			player.sendSystemMessage(Msg.ok("Inventory sorted with layout '" + data.active + "' (" + moved + " moved)."));
+		} else if (!armor.changedSomething()) {
 			player.sendSystemMessage(Msg.err("Layout '" + data.active + "' has no rules yet. Try: /layout slot 1 sword spear"));
-			return;
 		}
-		int moved = sort(player, profile);
-		player.sendSystemMessage(Msg.ok("Inventory sorted with layout '" + data.active + "' (" + moved + " moved)."));
+		if (armor.changedSomething()) {
+			player.sendSystemMessage(Msg.ok("Armor: put on " + String.join(", ", armor.equipped()) + "."));
+		}
+		for (String note : armor.notes()) {
+			player.sendSystemMessage(Msg.info("Armor: " + note));
+		}
 	}
 }

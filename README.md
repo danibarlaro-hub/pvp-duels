@@ -91,6 +91,7 @@ La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar 
 - `/kit profile <kit> <layout|none>` ordena ese kit con un layout al cargarlo
 - Los layouts ordenan los slots 1-36 (hotbar + mochila): `/layout slot <1-36> <reglas...>` con hasta 32 niveles de prioridad,
   `/layout level`, `/layout inventorycopy [layout] [prioridad]`, `/layout use|copy|new|show|list|clear|delete|sort|key|keys`
+- **Sort tambien se pone la mejor armadura** que lleves en el inventario (la que tiene mas puntos de armadura, dureza, Protection y durabilidad). Nunca se pone una pieza con Curse of Binding ni te saca una que ya la tiene. No toca elytra, calabazas ni cabezas. `/layout armor off|on` lo apaga o prende (prendido por defecto).
 - Teclas (Opciones > Controles > PvP Duels): Sort inventory (R), Quick kit A/B/C, Quick layout 1/2/3, Next/Previous layout
 - `/guide` muestra los comandos en el chat; `/guide book` te da un libro con toda la ayuda (no se guarda en los kits)
 

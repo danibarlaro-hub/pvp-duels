@@ -1748,6 +1748,92 @@ public final class SelfTest {
 			check("Alice left the workshop", !Workshop.isIn(a.getUUID()));
 		});
 
+		step("armor: Sort puts on the best armor and never a Curse of Binding piece", () -> {
+			run(a, "kit create");
+			check("Alice is in the workshop", Workshop.isIn(a.getUUID()));
+			var inv = a.getInventory();
+			for (int i = 0; i < 41; i++) inv.setItem(i, ItemStack.EMPTY);
+
+			inv.setItem(0, new ItemStack(Items.IRON_HELMET));
+			inv.setItem(1, new ItemStack(Items.DIAMOND_HELMET));
+			inv.setItem(2, new ItemStack(Items.LEATHER_HELMET));
+			// a netherite chestplate with Curse of Binding: better than the diamond one, but must not be put on
+			inv.setItem(3, new ItemStack(Items.NETHERITE_CHESTPLATE));
+			inv.setSelectedSlot(3);
+			run(a, "enchant binding_curse 1");
+			check("the netherite chestplate got Curse of Binding", a.getMainHandItem().getEnchantments().toString().contains("binding_curse"));
+			inv.setItem(4, new ItemStack(Items.DIAMOND_CHESTPLATE));
+			inv.setItem(5, new ItemStack(Items.GOLDEN_BOOTS));
+			inv.setItem(6, new ItemStack(Items.IRON_BOOTS));
+			inv.setItem(7, new ItemStack(Items.ELYTRA));
+			inv.setItem(8, new ItemStack(Items.CARVED_PUMPKIN));
+			// worn diamond leggings with Curse of Binding: a better pair in the backpack must not replace them
+			inv.setItem(10, new ItemStack(Items.DIAMOND_LEGGINGS));
+			inv.setSelectedSlot(10);
+			run(a, "enchant binding_curse 1");
+			a.setItemSlot(EquipmentSlot.LEGS, inv.getItem(10).copy());
+			inv.setItem(10, ItemStack.EMPTY);
+			inv.setItem(11, new ItemStack(Items.NETHERITE_LEGGINGS));
+			inv.setSelectedSlot(0);
+
+			run(a, "layout sort");
+			check("the best helmet (diamond) is on", a.getItemBySlot(EquipmentSlot.HEAD).is(Items.DIAMOND_HELMET), String.valueOf(a.getItemBySlot(EquipmentSlot.HEAD)));
+			check("the diamond chestplate is on, not the cursed netherite one", a.getItemBySlot(EquipmentSlot.CHEST).is(Items.DIAMOND_CHESTPLATE),
+				String.valueOf(a.getItemBySlot(EquipmentSlot.CHEST)));
+			check("the worn cursed leggings were not replaced", a.getItemBySlot(EquipmentSlot.LEGS).is(Items.DIAMOND_LEGGINGS)
+				&& inv.getItem(11).is(Items.NETHERITE_LEGGINGS), String.valueOf(a.getItemBySlot(EquipmentSlot.LEGS)));
+			check("the best boots (iron) are on", a.getItemBySlot(EquipmentSlot.FEET).is(Items.IRON_BOOTS), String.valueOf(a.getItemBySlot(EquipmentSlot.FEET)));
+			check("nothing was lost: the helmet slot got swapped (the iron one is still in the inventory)", inv.getItem(0).is(Items.IRON_HELMET));
+			boolean elytraKept = false;
+			boolean pumpkinKept = false;
+			for (int i = 0; i < 36; i++) {
+				if (inv.getItem(i).is(Items.ELYTRA)) elytraKept = true;
+				if (inv.getItem(i).is(Items.CARVED_PUMPKIN)) pumpkinKept = true;
+			}
+			check("elytra and pumpkin are never worn by Sort", elytraKept && pumpkinKept && !a.getItemBySlot(EquipmentSlot.CHEST).is(Items.ELYTRA)
+				&& !a.getItemBySlot(EquipmentSlot.HEAD).is(Items.CARVED_PUMPKIN));
+			check("it says what it put on", a.heard("Armor: put on"));
+			check("it says the cursed piece was left out", a.heard("Curse of Binding"));
+
+			a.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+			run(a, "layout sort");
+			check("a second Sort puts on the remaining boots (the golden ones)", a.getItemBySlot(EquipmentSlot.FEET).is(Items.GOLDEN_BOOTS),
+				String.valueOf(a.getItemBySlot(EquipmentSlot.FEET)));
+			run(a, "layout sort");
+			check("Sort changes nothing more when the best armor is already on",
+				a.getItemBySlot(EquipmentSlot.HEAD).is(Items.DIAMOND_HELMET) && a.getItemBySlot(EquipmentSlot.CHEST).is(Items.DIAMOND_CHESTPLATE));
+		});
+		step("armor: /layout armor off, a better worn piece and Protection", () -> {
+			var inv = a.getInventory();
+			run(a, "layout armor off");
+			check("/layout armor off says so", a.heard("only sorts your inventory"));
+			a.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+			run(a, "layout sort");
+			check("with it off Sort leaves your armor alone", a.getItemBySlot(EquipmentSlot.FEET).isEmpty());
+			run(a, "layout armor on");
+			check("/layout armor on says so", a.heard("also puts on the best armor"));
+
+			// worn netherite helmet beats the diamond one in the backpack
+			a.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
+			inv.setItem(20, new ItemStack(Items.DIAMOND_HELMET));
+			// diamond boots with Protection beat plain netherite boots? score: diamond 3+1+protection IV(4)... check both ways
+			run(a, "layout sort");
+			check("a better worn piece is kept", a.getItemBySlot(EquipmentSlot.HEAD).is(Items.NETHERITE_HELMET));
+			check("and the worse one stays in the backpack", inv.getItem(20).is(Items.DIAMOND_HELMET));
+
+			inv.setItem(21, new ItemStack(Items.DIAMOND_HELMET));
+			inv.setSelectedSlot(21);
+			run(a, "enchant protection 10");
+			inv.setSelectedSlot(0);
+			run(a, "layout sort");
+			check("a helmet with Protection X beats a plain netherite one", a.getItemBySlot(EquipmentSlot.HEAD).getEnchantments().toString().contains("protection"),
+				String.valueOf(a.getItemBySlot(EquipmentSlot.HEAD)));
+
+			run(a, "leave");
+			check("Alice left the workshop", !Workshop.isIn(a.getUUID()));
+			check("her armor slots are back to what she had", a.getItemBySlot(EquipmentSlot.HEAD).isEmpty());
+		});
+
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
 			check("/leave outside a duel gives an error", a.heard("not in a duel"));

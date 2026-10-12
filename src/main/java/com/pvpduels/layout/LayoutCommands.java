@@ -71,6 +71,10 @@ public final class LayoutCommands {
 				.executes(ctx -> auto(ctx, "auto"))
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(PROFILES)
 					.executes(ctx -> auto(ctx, StringArgumentType.getString(ctx, "name")))))
+			.then(Commands.literal("armor")
+				.executes(ctx -> armorSetting(ctx, null))
+				.then(Commands.literal("on").executes(ctx -> armorSetting(ctx, true)))
+				.then(Commands.literal("off").executes(ctx -> armorSetting(ctx, false))))
 			.then(Commands.literal("sort")
 				.executes(ctx -> {
 					InventorySorter.sortAndReport(ctx.getSource().getPlayerOrException());
@@ -78,6 +82,17 @@ public final class LayoutCommands {
 				})
 				.then(inventoryCopyNode()))
 			.then(inventoryCopyNode()));
+	}
+
+	/** /layout armor [on|off]: whether Sort also puts on the best armor you carry. */
+	private static int armorSetting(CommandContext<CommandSourceStack> ctx, Boolean on) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		if (on != null) com.pvpduels.util.Prefs.setArmorSort(p.getUUID(), on);
+		boolean now = com.pvpduels.util.Prefs.armorSort(p.getUUID());
+		ctx.getSource().sendSuccess(() -> Msg.ok("Sort " + (now
+			? "also puts on the best armor you carry (never one with Curse of Binding). Turn it off with /layout armor off."
+			: "only sorts your inventory. Turn the armor part on with /layout armor on.")), false);
+		return 1;
 	}
 
 	/** /layout auto [layout]: builds a layout from what all your kits have in common. */

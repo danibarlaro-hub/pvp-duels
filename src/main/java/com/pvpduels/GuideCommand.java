@@ -38,6 +38,7 @@ public final class GuideCommand {
 		"/layout copy <from> <to>  - copy a layout; /layout new <name>  - create one",
 		"/layout show | list | clear <slot|all> | delete <name>  - manage layouts (max 21)",
 		"/layout auto [name]  - builds a layout from your kits: every item (or category like sword) that is in the same slot in most of your kits gets that slot",
+		"/layout armor on|off  - Sort also puts on the best armor you carry (armor points, toughness, Protection...). It never puts on a piece with Curse of Binding and never takes off one that has it. On by default",
 		"/layout sort  - sort now. /layout key <1-3> <layout>  - choose which layout each Quick layout key uses (default 1, 2, 3)",
 		"Keys (Options > Controls > PvP Duels): Sort inventory, Quick kit A/B/C, Quick layout 1/2/3, Next/Previous layout",
 		"Rules can be categories (sword, spear, axe, mace, bow, crossbow, shield, totem, crystal, obsidian, gapple, pearl, potion, food, block...), exact item ids, or 'hand'."
