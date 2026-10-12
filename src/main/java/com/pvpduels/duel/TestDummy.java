@@ -23,7 +23,9 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -89,11 +91,34 @@ public final class TestDummy {
 			}
 		}
 
+		// Where a practice bot is nailed to the ground (see pin). Null for the other dummies.
+		private ResourceKey<Level> pinDimension;
+		private double pinX;
+		private double pinY;
+		private double pinZ;
+
+		/** From now on, whenever this dummy is in that dimension it is put back at that spot (knockback, pushing...). */
+		void pin(ResourceKey<Level> dimension, double x, double y, double z) {
+			pinDimension = dimension;
+			pinX = x;
+			pinY = y;
+			pinZ = z;
+		}
+
+		private void holdStill() {
+			if (pinDimension == null || isChangingDimension() || !level().dimension().equals(pinDimension)) return;
+			if (distanceToSqr(pinX, pinY, pinZ) > 0.0004) {
+				teleportTo((ServerLevel) level(), pinX, pinY, pinZ, Set.of(), getYRot(), 0f, true);
+			}
+			setDeltaMovement(0, 0, 0);
+		}
+
 		@Override
 		public void tick() {
 			markLoaded();
 			super.tick();
 			doTick();
+			holdStill();
 		}
 
 		@Override
@@ -122,7 +147,7 @@ public final class TestDummy {
 
 	/** True for dummies made with the command: they accept every challenge. */
 	public static boolean accepts(UUID id) {
-		return AUTO.containsValue(id);
+		return AUTO.containsValue(id) || BotDuel.isBot(id);
 	}
 
 	// ------------------------------------------------------------------ spawning / removing
@@ -142,6 +167,14 @@ public final class TestDummy {
 			Set.of(), owner.getYRot() + 180f, 0f, true);
 		PvpDuelsMod.LOGGER.info("Test dummy '{}' created by {}", name, owner.getName().getString());
 		return null;
+	}
+
+	/** Takes a fake player out of the game; if it is in a duel, it leaves it first. */
+	static void disconnect(MinecraftServer server, UUID id) {
+		ServerPlayer p = server.getPlayerList().getPlayer(id);
+		if (p == null) return;
+		if (DuelManager.duelOf(id) != null) DuelManager.leave(p);
+		if (p.connection != null) p.connection.onDisconnect(new DisconnectionDetails(Component.literal("Test dummy removed")));
 	}
 
 	/** Removes one dummy (name given) or all of them. Returns how many were removed. */

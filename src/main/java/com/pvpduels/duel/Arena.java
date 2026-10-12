@@ -12,6 +12,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.AABB;
 
 import java.util.List;
@@ -28,6 +30,10 @@ public final class Arena {
 	public static final int FLOOR_Y = 100;
 	/** The floor reaches this many blocks from the center in every direction (21x21 total). */
 	public static final int RADIUS = 10;
+	/** The practice arena (/botduel) is much bigger: 100 blocks from the center in every direction (201x201). */
+	public static final int BOT_RADIUS = 100;
+	/** Practice arenas live in their own part of the dimension, so a slot can switch between small and big arenas. */
+	private static final int BOT_BASE = 4096;
 	public static final int WALL_HEIGHT = 40;
 	/** The scan for leftover blocks goes this high above the floor. */
 	private static final int SCAN_HEIGHT = 200;
@@ -48,11 +54,19 @@ public final class Arena {
 		return slot * SPACING;
 	}
 
+	public static int botCenterX(int slot) {
+		return BOT_BASE + slot * SPACING;
+	}
+
 	public static final int CENTER_Z = 0;
 
 	/** Spawn point of player 0 (west side) or 1 (east side), facing each other. */
 	public static double[] spawn(int slot, int index) {
-		double x = centerX(slot) + (index == 0 ? -7.5 : 8.5);
+		return spawnAt(centerX(slot), index);
+	}
+
+	public static double[] spawnAt(int cx, int index) {
+		double x = cx + (index == 0 ? -7.5 : 8.5);
 		double z = CENTER_Z + 0.5;
 		float yaw = index == 0 ? -90f : 90f;
 		return new double[] {x, FLOOR_Y + 1, z, yaw};
@@ -72,10 +86,16 @@ public final class Arena {
 	}
 
 	public static boolean fellOut(ServerPlayer p, int slot) {
+		return fellOut(p, centerX(slot), RADIUS);
+	}
+
+	public static boolean fellOut(ServerPlayer p, int cx, int radius) {
 		if (p.getY() < FALL_Y) return true;
-		double dx = p.getX() - centerX(slot);
+		double dx = p.getX() - cx;
 		double dz = p.getZ() - CENTER_Z;
-		return dx * dx + dz * dz > (double) MAX_DISTANCE * MAX_DISTANCE;
+		// 45 blocks for the small arena (the old rule); big arenas get more room for their corners.
+		double max = radius * 1.5 + (MAX_DISTANCE - RADIUS * 1.5);
+		return dx * dx + dz * dz > max * max;
 	}
 
 	/** True if this block position belongs to the arena of the given slot (for the build rules). */
@@ -87,10 +107,10 @@ public final class Arena {
 		return Math.round((float) x / SPACING);
 	}
 
-	private static BlockState wanted(int dx, int dz, int y, boolean walls) {
-		boolean floorArea = Math.abs(dx) <= RADIUS && Math.abs(dz) <= RADIUS;
+	private static BlockState wanted(int dx, int dz, int y, boolean walls, int radius) {
+		boolean floorArea = Math.abs(dx) <= radius && Math.abs(dz) <= radius;
 		if (y == FLOOR_Y && floorArea) return Blocks.BEDROCK.defaultBlockState();
-		boolean ring = Math.max(Math.abs(dx), Math.abs(dz)) == RADIUS + 1;
+		boolean ring = Math.max(Math.abs(dx), Math.abs(dz)) == radius + 1;
 		if (walls && ring && y >= FLOOR_Y && y <= FLOOR_Y + WALL_HEIGHT) return Blocks.BEDROCK.defaultBlockState();
 		return Blocks.AIR.defaultBlockState();
 	}
@@ -100,27 +120,60 @@ public final class Arena {
 	 * (shulkers, chests...), rebuilds the floor and walls, and deletes every non-player entity around it.
 	 */
 	public static void reset(ServerLevel level, int slot, boolean walls) {
-		int cx = centerX(slot);
-		int r = RADIUS + 1;
+		reset(level, centerX(slot), RADIUS, walls);
+	}
+
+	/**
+	 * The same for an arena of any size. It walks the chunks section by section: sections above the walls that hold
+	 * nothing but air are skipped after one look at their palette, so even the 201x201 practice arena is cheap
+	 * once it has been built.
+	 */
+	public static void reset(ServerLevel level, int cx, int radius, boolean walls) {
+		long started = System.nanoTime();
+		int r = radius + 1;
+		int yLow = FLOOR_Y - 1; // anything dug below the floor
+		int yHigh = FLOOR_Y + SCAN_HEIGHT;
+		int bandTop = FLOOR_Y + WALL_HEIGHT; // the floor and the walls are somewhere in here
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		for (int dx = -r; dx <= r; dx++) {
-			for (int dz = -r; dz <= r; dz++) {
-				for (int y = FLOOR_Y; y <= FLOOR_Y + SCAN_HEIGHT; y++) {
-					pos.set(cx + dx, y, CENTER_Z + dz);
-					BlockState want = wanted(dx, dz, y, walls);
-					BlockState have = level.getBlockState(pos);
-					if (have != want) {
-						level.setBlock(pos, want, FLAGS);
+		int changed = 0;
+		for (int chunkX = (cx - r) >> 4; chunkX <= (cx + r) >> 4; chunkX++) {
+			for (int chunkZ = (CENTER_Z - r) >> 4; chunkZ <= (CENTER_Z + r) >> 4; chunkZ++) {
+				LevelChunk chunk = level.getChunk(chunkX, chunkZ);
+				LevelChunkSection[] sections = chunk.getSections();
+				int minY = chunk.getMinY();
+				int x0 = Math.max(chunkX << 4, cx - r);
+				int x1 = Math.min((chunkX << 4) + 15, cx + r);
+				int z0 = Math.max(chunkZ << 4, CENTER_Z - r);
+				int z1 = Math.min((chunkZ << 4) + 15, CENTER_Z + r);
+				for (int index = 0; index < sections.length; index++) {
+					int sectionY = minY + index * 16;
+					if (sectionY + 15 < yLow || sectionY > yHigh) continue;
+					LevelChunkSection section = sections[index];
+					if (sectionY > bandTop && !section.maybeHas(s -> !s.isAir())) continue;
+					for (int x = x0; x <= x1; x++) {
+						int dx = x - cx;
+						for (int z = z0; z <= z1; z++) {
+							int dz = z - CENTER_Z;
+							for (int ly = 0; ly < 16; ly++) {
+								int y = sectionY + ly;
+								if (y < yLow || y > yHigh) continue;
+								BlockState want = wanted(dx, dz, y, walls, radius);
+								if (section.getBlockState(x & 15, ly, z & 15) != want) {
+									pos.set(x, y, z);
+									level.setBlock(pos, want, FLAGS);
+									changed++;
+								}
+							}
+						}
 					}
-				}
-				// Anything dug below the floor
-				pos.set(cx + dx, FLOOR_Y - 1, CENTER_Z + dz);
-				if (!level.getBlockState(pos).isAir()) {
-					level.setBlock(pos, Blocks.AIR.defaultBlockState(), FLAGS);
 				}
 			}
 		}
-		clearEntities(level, slot);
+		clearEntitiesAround(level, cx, radius);
+		if (radius > RADIUS) {
+			com.pvpduels.PvpDuelsMod.LOGGER.info("Practice arena at x={} (radius {}) reset: {} blocks changed in {} ms",
+				cx, radius, changed, (System.nanoTime() - started) / 1_000_000);
+		}
 	}
 
 	public static void clearEntities(ServerLevel level, int slot) {
@@ -129,7 +182,12 @@ public final class Arena {
 
 	/** Deletes every non-player entity near this x coordinate (items dropped, crystals, arrows...). */
 	public static void clearEntitiesAround(ServerLevel level, int cx) {
-		AABB box = new AABB(cx - 60, FLOOR_Y - 60, CENTER_Z - 60, cx + 60, FLOOR_Y + SCAN_HEIGHT + 20, CENTER_Z + 60);
+		clearEntitiesAround(level, cx, RADIUS);
+	}
+
+	public static void clearEntitiesAround(ServerLevel level, int cx, int radius) {
+		int reach = radius + 50;
+		AABB box = new AABB(cx - reach, FLOOR_Y - 60, CENTER_Z - reach, cx + reach, FLOOR_Y + SCAN_HEIGHT + 20, CENTER_Z + reach);
 		List<Entity> found = level.getEntities((Entity) null, box, e -> !(e instanceof Player));
 		for (Entity e : found) {
 			e.discard();

@@ -52,6 +52,8 @@ public final class Duel {
 	final Space space;
 	final DuelConfig config;
 	final UUID kitOwner;
+	/** A practice duel against the /botduel bot: no stats, no 5-minute rule, and it closes as soon as you leave. */
+	final boolean practice;
 	private final KitStore.Kit kit;
 	final UUID[] ids = new UUID[2];
 	final String[] names = new String[2];
@@ -83,6 +85,7 @@ public final class Duel {
 		this.kit = kit;
 		ids[0] = a.getUUID();
 		ids[1] = b.getUUID();
+		this.practice = BotDuel.isBot(ids[0]) || BotDuel.isBot(ids[1]);
 		names[0] = a.getName().getString();
 		names[1] = b.getName().getString();
 	}
@@ -281,6 +284,7 @@ public final class Duel {
 		}
 
 		// Rule: no damage between the two for 5 minutes -> one random player is sent next to the other.
+		if (practice) noContact = 0; // the bot never fights, so there is nothing to force
 		if (!warnedTeleport && noContact >= noContactLimit - noContactWarning) {
 			warnedTeleport = true;
 			Component warn = Component.literal("No contact for a long time: one of you will be teleported next to the other in "
@@ -538,6 +542,11 @@ public final class Duel {
 			p.sendSystemMessage(Msg.ok("Your inventory has been restored." + (lobby ? " Welcome to the lobby." : "")
 				+ " You are protected for " + PROTECTION_TICKS / 20 + " seconds."));
 		}
+	}
+
+	/** Ends the duel right now (used when you leave a practice duel: the bot has no reason to wait around). */
+	void closeNow() {
+		close();
 	}
 
 	private void close() {

@@ -102,6 +102,14 @@ public final class DuelMenus {
 	}
 
 	private static void kits(ServerPlayer p, Setup setup, int page) {
+		pickKit(p, "Duel vs " + setup.opponentName + ": choose a kit", page, (who, name) -> {
+			setup.kit = name;
+			arena(who, setup);
+		});
+	}
+
+	/** A paged list of the player's kits; clicking one runs onPick. */
+	private static void pickKit(ServerPlayer p, String title, int page, java.util.function.BiConsumer<ServerPlayer, String> onPick) {
 		MinecraftServer server = p.level().getServer();
 		List<String> names = KitStore.list(p.getUUID());
 		int pages = Math.max(1, (names.size() + 44) / 45);
@@ -112,15 +120,46 @@ public final class DuelMenus {
 			int index = current * 45 + i;
 			if (index >= names.size()) break;
 			String name = names.get(index);
-			b.set(i, kitIcon(server, p.getUUID(), name), who -> {
-				setup.kit = name;
-				arena(who, setup);
-			});
+			b.set(i, kitIcon(server, p.getUUID(), name), who -> onPick.accept(who, name));
 		}
-		if (current > 0) b.set(45, icon(Items.ARROW, "Previous page", ChatFormatting.YELLOW), who -> kits(who, setup, current - 1));
+		if (current > 0) b.set(45, icon(Items.ARROW, "Previous page", ChatFormatting.YELLOW), who -> pickKit(who, title, current - 1, onPick));
 		b.set(49, icon(Items.BARRIER, "Cancel", ChatFormatting.RED), ServerPlayer::closeContainer);
-		if (current < pages - 1) b.set(53, icon(Items.ARROW, "Next page", ChatFormatting.YELLOW), who -> kits(who, setup, current + 1));
-		ChoiceMenu.open(p, Component.literal("Duel vs " + setup.opponentName + ": choose a kit (" + (current + 1) + "/" + pages + ")"), 6, b);
+		if (current < pages - 1) b.set(53, icon(Items.ARROW, "Next page", ChatFormatting.YELLOW), who -> pickKit(who, title, current + 1, onPick));
+		ChoiceMenu.open(p, Component.literal(title + " (" + (current + 1) + "/" + pages + ")"), 6, b);
+	}
+
+	// ------------------------------------------------------------------ /botduel
+
+	/** /botduel: choose a kit (unless one was given), then the Yes / No question. */
+	public static void openBot(ServerPlayer p, String kit) {
+		if (KitStore.list(p.getUUID()).isEmpty()) {
+			p.sendSystemMessage(Msg.err("You have no kits yet. Set up your inventory and run /kit save <name> first."));
+			return;
+		}
+		if (kit != null) botQuestion(p, kit, false);
+		else botKits(p);
+	}
+
+	private static void botKits(ServerPlayer p) {
+		pickKit(p, "Bot duel: choose a kit", 0, (who, name) -> botQuestion(who, name, true));
+	}
+
+	private static void botQuestion(ServerPlayer p, String kit, boolean canGoBack) {
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
+		b.set(13, icon(Items.BOOK, "Practice duel vs a bot", ChatFormatting.GOLD,
+			"Kit: " + kit,
+			"Arena: bedrock platform, " + Arena.BOT_RADIUS + " blocks each way, with walls.",
+			"The bot stands still and never fights back.",
+			"Rounds go on until you use /leave.",
+			"Practice duels don't count for your stats."));
+		b.set(11, icon(Items.LIME_CONCRETE, "Yes", ChatFormatting.GREEN, "Start the practice duel"), who -> {
+			who.closeContainer();
+			String problem = BotDuel.start(who, kit);
+			if (problem != null) who.sendSystemMessage(Msg.err(problem));
+		});
+		b.set(15, icon(Items.RED_CONCRETE, "No", ChatFormatting.RED), ServerPlayer::closeContainer);
+		if (canGoBack) b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), DuelMenus::botKits);
+		ChoiceMenu.open(p, Component.literal("Duel the bot?"), 3, b);
 	}
 
 	// ------------------------------------------------------------------ 2. arena
@@ -175,7 +214,7 @@ public final class DuelMenus {
 		switch (setup.arena) {
 			case FLAT -> version(p, setup);
 			case CIRCLE -> radius(p, setup);
-			case UNLIMITED -> arena(p, setup);
+			default -> arena(p, setup);
 		}
 	}
 

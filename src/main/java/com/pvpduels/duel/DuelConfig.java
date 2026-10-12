@@ -21,7 +21,7 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 			if (!regen) parts.add("no natural regeneration");
 			if (!fallDamage) parts.add("no fall damage");
 			if (!hunger && regen) parts.add("no hunger loss");
-			if (!building && arena != ArenaKind.FLAT) parts.add("no building");
+			if (!building && (arena == ArenaKind.CIRCLE || arena == ArenaKind.UNLIMITED)) parts.add("no building");
 			if (parts.isEmpty()) return "default rules";
 			String text = String.join(", ", parts);
 			return Character.toUpperCase(text.charAt(0)) + text.substring(1);
@@ -47,6 +47,7 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 			case FLAT -> walls ? "Flat arena (with walls)" : "Flat arena (no walls)";
 			case CIRCLE -> "Circular arena (radius " + radius + ")";
 			case UNLIMITED -> "Unlimited arena";
+			case BOT -> "Bot arena (radius " + Arena.BOT_RADIUS + ")";
 		};
 	}
 

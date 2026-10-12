@@ -126,7 +126,7 @@ public final class SelfTest {
 
 	private static void tick() {
 		ticks++;
-		if (ticks > 20 * 400) {
+		if (ticks > 20 * 600) {
 			check("whole test finishes in time", false);
 			finish();
 			return;
@@ -186,6 +186,9 @@ public final class SelfTest {
 	private static int carlTick;
 	private static Dummy carl;
 	private static Dummy dora;
+	private static Dummy bot;
+	private static int botTick;
+	private static int botStatsBefore;
 
 	private static BlockPos at(int x, int y, int z) {
 		return new BlockPos(x, y, z);
@@ -1106,6 +1109,135 @@ public final class SelfTest {
 			check("another name makes another layout", com.pvpduels.layout.LayoutStore.get(dora.getUUID()).profiles.containsKey("mine"));
 			run(dora, "layout auto mine");
 			check("an existing layout with rules is not overwritten", dora.heard("already has rules"));
+		});
+
+		// ---------------------------------------------------------------- practice duel against a bot
+		step("bot duel: /botduel asks which kit", () -> {
+			botStatsBefore = StatsStore.get(a.getUUID()).duels;
+			a.getInventory().clearContent();
+			a.getInventory().setItem(21, new ItemStack(Items.STONE, 3));
+			run(a, "botduel");
+			check("the kit list opens", menuHas(a, "testkit"));
+			menuStep(a, "testkit");
+		});
+		step("bot duel: the Yes / No question, answer No", () -> {
+			check("the question has a Yes and a No", menuHas(a, "Yes") && menuHas(a, "No"));
+			menuStep(a, "No");
+			check("answering No starts nothing", noDuel(a) && server.getPlayerList().getPlayerByName("Bot") == null);
+			check("the menu was closed", !(a.containerMenu instanceof ChestMenu));
+		});
+		step("bot duel: with a kit name, answer Yes", () -> {
+			run(a, "botduel nokit");
+			check("an unknown kit is refused", a.heard("no kit named 'nokit'"));
+			run(a, "botduel testkit");
+			check("with a kit name the question opens right away", menuHas(a, "Yes") && menuHas(a, "No"));
+			menuStep(a, "Yes");
+
+			Duel d = duel(a);
+			check("a practice duel exists", d != null && d.practice && d.config.arena() == ArenaKind.BOT && d.config.unlimited(),
+				d == null ? "no duel" : d.config.toString());
+			if (d == null) return;
+			bot = d.player(1) instanceof Dummy x ? x : null;
+			check("the opponent is the bot", bot != null && bot.getName().getString().equals("Bot") && BotDuel.isBot(bot.getUUID()));
+			if (bot == null) return;
+			check("the bot is in the player list", server.getPlayerList().getPlayerByName("Bot") == bot);
+			check("both are in the arena dimension", a.level().dimension().equals(Arena.DIMENSION) && bot.level().dimension().equals(Arena.DIMENSION),
+				where(a) + " / " + where(bot));
+			check("both have the kit sword", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && bot.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			check("Alice's old marker item is gone during the duel", a.getInventory().getItem(21).isEmpty());
+			check("Alice's inventory is saved on disk", PlayerBackup.exists(a.getUUID()));
+			check("the invitation text names the bot arena", a.heard("Bot arena (radius 100)") && a.heard("Unlimited rounds"));
+			check("the player is told it is a practice duel", a.heard("never fights back"));
+
+			ServerLevel arena = Arena.level(server);
+			int cx = Arena.botCenterX(d.slot);
+			int fy = Arena.FLOOR_Y;
+			check("floor: center, and the four corners at 100 blocks",
+				arena.getBlockState(at(cx, fy, 0)).is(Blocks.BEDROCK) && arena.getBlockState(at(cx + 100, fy, 100)).is(Blocks.BEDROCK)
+				&& arena.getBlockState(at(cx - 100, fy, -100)).is(Blocks.BEDROCK) && arena.getBlockState(at(cx + 100, fy, -100)).is(Blocks.BEDROCK)
+				&& arena.getBlockState(at(cx - 100, fy, 100)).is(Blocks.BEDROCK));
+			check("the floor ends at 100: nothing at 101 on the floor level except the wall",
+				arena.getBlockState(at(cx + 101, fy, 0)).is(Blocks.BEDROCK) && arena.getBlockState(at(cx + 102, fy, 0)).isAir());
+			check("the wall is 40 blocks high",
+				arena.getBlockState(at(cx + 101, fy + 40, 0)).is(Blocks.BEDROCK) && arena.getBlockState(at(cx + 101, fy + 41, 0)).isAir()
+				&& arena.getBlockState(at(cx, fy + 40, 101)).is(Blocks.BEDROCK) && arena.getBlockState(at(cx - 101, fy + 20, -101)).is(Blocks.BEDROCK));
+			check("the inside is empty and there is void under the floor", arena.getBlockState(at(cx + 50, fy + 1, 50)).isAir()
+				&& arena.getBlockState(at(cx, fy - 1, 0)).isAir());
+
+			// Leave a mess behind in every kind of place; the next round must clean all of it.
+			arena.setBlock(at(cx + 80, fy + 1, 70), Blocks.CHEST.defaultBlockState(), 3);
+			arena.setBlock(at(cx + 60, fy, -40), Blocks.AIR.defaultBlockState(), 3);
+			arena.setBlock(at(cx - 70, fy - 1, 30), Blocks.STONE.defaultBlockState(), 3);
+			arena.setBlock(at(cx + 30, fy + 20, 30), Blocks.STONE.defaultBlockState(), 3);
+			arena.setBlock(at(cx - 90, fy + 150, -60), Blocks.STONE.defaultBlockState(), 3);
+			arena.setBlock(at(cx + 101, fy + 10, 0), Blocks.AIR.defaultBlockState(), 3);
+			arena.setBlock(at(cx - 30, fy + 60, 90), Blocks.STONE.defaultBlockState(), 3);
+			check("the mess is there", arena.getBlockState(at(cx - 90, fy + 150, -60)).is(Blocks.STONE) && arena.getBlockState(at(cx + 60, fy, -40)).isAir());
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+
+		step("bot duel: the bot is pushed away", () -> {
+			Duel d = duel(a);
+			double[] s = d.space.spawn(1);
+			check("the bot stands at its spawn point", bot.distanceToSqr(s[0], s[1], s[2]) < 0.01, where(bot));
+			check("Alice stands at hers", a.distanceToSqr(d.space.spawn(0)[0], d.space.spawn(0)[1], d.space.spawn(0)[2]) < 0.5, where(a));
+			bot.setDeltaMovement(3.0, 0.5, 1.0);
+			bot.teleportTo(Arena.level(server), s[0] + 6, s[1], s[2] + 3, java.util.Set.of(), 0f, 0f, true);
+			botTick = ticks;
+		}, () -> ticks - botTick > 6, 100);
+		step("bot duel: the bot is back where it was", () -> {
+			Duel d = duel(a);
+			double[] s = d.space.spawn(1);
+			check("the bot cannot be moved", bot.distanceToSqr(s[0], s[1], s[2]) < 0.01 && bot.getDeltaMovement().lengthSqr() < 0.01, where(bot));
+			check("still the same round with no points", d.phase == Duel.Phase.FIGHTING && d.points[0] == 0 && d.points[1] == 0);
+			// the far corner is inside the arena
+			int cx = Arena.botCenterX(d.slot);
+			a.teleportTo(Arena.level(server), cx + 99.5, Arena.FLOOR_Y + 1, 99.5, java.util.Set.of(), 0f, 0f, true);
+			botTick = ticks;
+		}, () -> true, 1);
+		step("bot duel: standing in the far corner is fine", () -> {}, () -> ticks - botTick > 20, 100);
+		step("bot duel: Alice kills the bot", () -> {
+			Duel d = duel(a);
+			check("the far corner did not lose the round", d.phase == Duel.Phase.FIGHTING && d.points[1] == 0, d.phase + " " + d.points[0] + "-" + d.points[1]);
+			hit(a, bot);
+			check("round ended, Alice has 1 point", d.phase == Duel.Phase.ROUND_END && d.points[0] == 1, d.phase + " " + d.points[0] + "-" + d.points[1]);
+			check("the bot did not really die", bot.isAlive() && bot.getHealth() >= bot.getMaxHealth() - 0.01f);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING) && duel(a).round == 2, 600);
+		step("bot duel: round 2 started clean", () -> {
+			Duel d = duel(a);
+			ServerLevel arena = Arena.level(server);
+			int cx = Arena.botCenterX(d.slot);
+			int fy = Arena.FLOOR_Y;
+			check("the chest in the far corner is gone", arena.getBlockState(at(cx + 80, fy + 1, 70)).isAir());
+			check("the hole in the floor is closed", arena.getBlockState(at(cx + 60, fy, -40)).is(Blocks.BEDROCK));
+			check("the block under the floor is gone", arena.getBlockState(at(cx - 70, fy - 1, 30)).isAir());
+			check("the block in the middle of the air is gone", arena.getBlockState(at(cx + 30, fy + 20, 30)).isAir());
+			check("the block high above the walls is gone", arena.getBlockState(at(cx - 90, fy + 150, -60)).isAir());
+			check("the block above the wall top but below the sky is gone", arena.getBlockState(at(cx - 30, fy + 60, 90)).isAir());
+			check("the hole in the wall is closed", arena.getBlockState(at(cx + 101, fy + 10, 0)).is(Blocks.BEDROCK));
+			double[] s = d.space.spawn(1);
+			check("the bot is at its spawn point again", bot.distanceToSqr(s[0], s[1], s[2]) < 0.01, where(bot));
+			check("the sidebar shows the score against the bot", sidebarHas(a, "vs Bot") && sidebarHas(a, "Alice: 1"), String.valueOf(sidebar(a)));
+			check("the sidebar says unlimited", sidebarHas(a, "Unlimited"), String.valueOf(sidebar(a)));
+			// drop out of the world
+			a.teleportTo(arena, cx + 0.5, Arena.FALL_Y - 10, 0.5, java.util.Set.of(), 0f, 0f, true);
+		}, () -> true, 1);
+		step("bot duel: falling loses the round", () -> {
+			Duel d = duel(a);
+			check("the bot got the point", d.points[1] == 1 && d.points[0] == 1, d.points[0] + "-" + d.points[1]);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING) && duel(a).round == 3, 600);
+		step("bot duel: /leave closes everything", () -> {
+			run(a, "leave");
+			check("Alice is out of the duel", noDuel(a));
+			check("she got her inventory back", a.getInventory().getItem(21).is(Items.STONE) && !a.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			check("the backup is deleted", !PlayerBackup.exists(a.getUUID()));
+			check("the practice duel is not counted for the stats", StatsStore.get(a.getUUID()).duels == botStatsBefore,
+				StatsStore.get(a.getUUID()).duels + " vs " + botStatsBefore);
+			botTick = ticks;
+		}, () -> server.getPlayerList().getPlayerByName("Bot") == null, 200);
+		step("bot duel: the bot is gone", () -> {
+			check("no bot is left and no arena is in use", server.getPlayerList().getPlayerByName("Bot") == null && DuelManager.activeDuels() == 0,
+				"duels=" + DuelManager.activeDuels());
+			check("the bot's id is forgotten", !BotDuel.isBot(bot.getUUID()));
 		});
 
 		step("statistics, sidebar and guide book", () -> {

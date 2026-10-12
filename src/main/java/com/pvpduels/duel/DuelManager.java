@@ -156,10 +156,12 @@ public final class DuelManager {
 		}
 		BY_PLAYER.remove(d.ids[0], d);
 		BY_PLAYER.remove(d.ids[1], d);
+		BotDuel.release(d);
 	}
 
 	/** The duel is decided: remember it so /again works right away. */
 	static void onFinished(Duel d) {
+		if (d.practice) return; // /again against a bot makes no sense: use /botduel
 		LAST.put(d.ids[0], new Last(d.ids[1], d.names[1], d.kitOwner, d.config));
 		LAST.put(d.ids[1], new Last(d.ids[0], d.names[0], d.kitOwner, d.config));
 	}
@@ -366,10 +368,18 @@ public final class DuelManager {
 		if (duel.phase == Duel.Phase.ENDED) {
 			// The duel is already decided: just leave now instead of waiting.
 			duel.restore(i);
-			return;
+		} else {
+			duel.forfeit(i);
+			duel.restore(i);
 		}
-		duel.forfeit(i);
-		duel.restore(i);
+		if (duel.practice) duel.closeNow();
+	}
+
+	/** Starts a /botduel right away (the bot "accepts" by existing). The caller checks afterwards whether it worked. */
+	static void startPractice(ServerPlayer player, ServerPlayer bot, DuelConfig config) {
+		Invite invite = new Invite(player.getUUID(), player.getName().getString(), bot.getUUID(), bot.getName().getString(),
+			player.getUUID(), config, false, tickCounter);
+		start(player.level().getServer(), invite);
 	}
 
 	public static void again(ServerPlayer p) {

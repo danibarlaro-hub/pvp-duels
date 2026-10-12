@@ -12,7 +12,8 @@ import java.util.Set;
 abstract class Space {
 	static Space of(DuelConfig config, int slot) {
 		return switch (config.arena()) {
-			case FLAT -> new Flat(slot, config.walls());
+			case FLAT -> new Flat(slot, config.walls(), false);
+			case BOT -> new Flat(slot, true, true);
 			case CIRCLE, UNLIMITED -> new Normal(config.arena(), slot, config.radius());
 		};
 	}
@@ -55,22 +56,28 @@ abstract class Space {
 	private static final class Flat extends Space {
 		private final int slot;
 		private final boolean walls;
+		/** The big practice arena of /botduel instead of the small 21x21 one. */
+		private final boolean practice;
 
-		Flat(int slot, boolean walls) {
+		Flat(int slot, boolean walls, boolean practice) {
 			this.slot = slot;
 			this.walls = walls;
+			this.practice = practice;
 		}
 
+		private int cx() { return practice ? Arena.botCenterX(slot) : Arena.centerX(slot); }
+		private int radius() { return practice ? Arena.BOT_RADIUS : Arena.RADIUS; }
+
 		@Override ResourceKey<Level> dimension() { return Arena.DIMENSION; }
-		@Override double[] spawn(int index) { return Arena.spawn(slot, index); }
-		@Override double centerX() { return Arena.centerX(slot); }
+		@Override double[] spawn(int index) { return Arena.spawnAt(cx(), index); }
+		@Override double centerX() { return cx(); }
 		@Override double centerZ() { return Arena.CENTER_Z; }
-		@Override void begin(ServerLevel level) { Arena.reset(level, slot, walls); }
-		@Override void end(ServerLevel level) { if (level != null) Arena.clearEntities(level, slot); }
+		@Override void begin(ServerLevel level) { Arena.reset(level, cx(), radius(), walls); }
+		@Override void end(ServerLevel level) { if (level != null) Arena.clearEntitiesAround(level, cx(), radius()); }
 
 		@Override
 		String outOfBounds(ServerPlayer p) {
-			return Arena.fellOut(p, slot) ? "fell into the void." : null;
+			return Arena.fellOut(p, cx(), radius()) ? "fell into the void." : null;
 		}
 	}
 

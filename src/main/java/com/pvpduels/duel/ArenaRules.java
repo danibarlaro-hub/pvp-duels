@@ -13,7 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.EntityBlock;
 
 /**
- * Building rules inside duels: only things that are entities or block entities (shulker boxes, chests, ender chests,
+ * Building rules inside duels (flat and practice arenas): only things that are entities or block entities (shulker boxes, chests, ender chests,
  * end crystals, boats, minecarts, armor stands...) can be placed. Normal blocks, fluids and fire are blocked,
  * and the only blocks that can be broken are the block entities you placed.
  */
@@ -30,7 +30,7 @@ final class ArenaRules {
 		if (!(player instanceof ServerPlayer sp)) return Mode.OFF;
 		Duel duel = DuelManager.duelOf(sp.getUUID());
 		if (duel == null) return Mode.OFF;
-		if (duel.config.arena() == ArenaKind.FLAT) return Mode.FLAT;
+		if (duel.config.arena() == ArenaKind.FLAT || duel.config.arena() == ArenaKind.BOT) return Mode.FLAT;
 		return duel.config.rules().building() ? Mode.OFF : Mode.NO_BUILDING;
 	}
 
