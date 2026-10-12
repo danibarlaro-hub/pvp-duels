@@ -1722,6 +1722,32 @@ public final class SelfTest {
 			inv.setItem(21, new ItemStack(Items.STONE, 3));
 		});
 
+		step("kits: items taken in the creative menu are in the saved kit", () -> {
+			run(a, "kit create");
+			check("Alice is in the workshop", Workshop.isIn(a.getUUID()));
+			// What the game of a player sends when they pick an item from the creative menu (menu slot 36 = hotbar 1).
+			a.connection.handleSetCreativeModeSlot(new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket((short) 36, new ItemStack(Items.NETHERITE_SWORD)));
+			a.connection.handleSetCreativeModeSlot(new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket((short) 37, new ItemStack(Items.GOLDEN_APPLE, 64)));
+			a.connection.handleSetCreativeModeSlot(new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket((short) 5, new ItemStack(Items.NETHERITE_HELMET)));
+			a.connection.handleSetCreativeModeSlot(new net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket((short) 45, new ItemStack(Items.SHIELD)));
+			check("the server took the creative picks (sword, apples, helmet, shield)", a.getInventory().getItem(0).is(Items.NETHERITE_SWORD)
+				&& a.getInventory().getItem(1).getCount() == 64 && a.getItemBySlot(EquipmentSlot.HEAD).is(Items.NETHERITE_HELMET)
+				&& a.getItemBySlot(EquipmentSlot.OFFHAND).is(Items.SHIELD), String.valueOf(a.getInventory().getItem(0)));
+			run(a, "kit save creative1");
+			check("/kit save counts 4 stacks", a.heard("4 item stacks in the file"));
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "creative1");
+				check("the kit has the creative picks", kit.isPresent() && kit.get().slots()[0].is(Items.NETHERITE_SWORD) && kit.get().stacks() == 4,
+					kit.isPresent() ? "stacks=" + kit.get().stacks() : "no kit");
+			} catch (IOException e) {
+				check("the kit can be read", false, e.toString());
+			}
+		});
+		step("kits: leaving the workshop after the creative picks", () -> {
+			run(a, "leave");
+			check("Alice left the workshop", !Workshop.isIn(a.getUUID()));
+		});
+
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
 			check("/leave outside a duel gives an error", a.heard("not in a duel"));

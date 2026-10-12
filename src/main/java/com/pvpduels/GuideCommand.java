@@ -26,6 +26,7 @@ public final class GuideCommand {
 		"/kit save <name>  - save your current inventory as a kit",
 		"/kit load <name>  - replace your inventory with a kit",
 		"/kit list  - list your kits",
+		"/kit show <name>  - look inside a saved kit (a chest you can only look at)",
 		"/kit delete <name>  - delete a kit",
 		"/kit key <a|b|c> <kit|none>  - choose which kit each Quick kit A/B/C key loads; /kit keys  - show them",
 		"/kit profile <kit> <layout|none>  - sort a kit with a layout when it is loaded",

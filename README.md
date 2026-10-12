@@ -84,7 +84,9 @@ La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar 
 - Hace falta tener permisos de admin (en un mundo local: crear el mundo con trucos activados).
 
 ## Kits y layouts
-- `/kit save|load|list|delete <nombre>` (se guardan en `.minecraft/pvpduels`, no dentro del mundo)
+- `/kit save|load|list|show|delete <nombre>` (se guardan en `.minecraft/pvpduels`, no dentro del mundo)
+- `/kit save` lee el archivo de vuelta y te dice **cuantos items quedaron guardados**; si algo no se pudo guardar igual te avisa slot por slot. Con el inventario vacio **no guarda** (asi un kit bueno nunca se pisa con uno en blanco).
+- `/kit show <nombre>` abre el kit como un cofre que solo se puede mirar (armadura arriba a la izquierda, mano secundaria arriba a la derecha, mochila en el medio y barra de acceso abajo).
 - `/kit key <a|b|c> <kit|none>` asigna un kit a las teclas **Quick kit A / B / C**; `/kit keys` las muestra
 - `/kit profile <kit> <layout|none>` ordena ese kit con un layout al cargarlo
 - Los layouts ordenan los slots 1-36 (hotbar + mochila): `/layout slot <1-36> <reglas...>` con hasta 32 niveles de prioridad,

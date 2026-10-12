@@ -187,6 +187,11 @@ public final class Duel {
 			p.sendSystemMessage(Msg.info("  Kit: " + config.kit() + "   Arena: " + config.arenaName()));
 			p.sendSystemMessage(Msg.info("  Mode: " + config.modeName() + "   Use /leave to quit."));
 			if (!config.rules().isDefault()) p.sendSystemMessage(Msg.info("  Rules: " + config.rules().describe(config.arena())));
+			if (kit.stacks() == 0) {
+				p.sendSystemMessage(Msg.err("  The kit '" + config.kit() + "' is EMPTY, so you start with nothing."
+					+ (p.getUUID().equals(kitOwner) ? " Look inside it with /kit show " + config.kit() + ", and fix it in /kit create "
+						+ config.kit() + " (then /kit save " + config.kit() + ")." : "")));
+			}
 		}
 	}
 
