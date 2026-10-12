@@ -76,7 +76,8 @@ public final class Spectators {
 		p.setGameMode(GameType.SPECTATOR);
 		moveNear(p, target, level);
 		p.sendSystemMessage(Msg.title("Watching " + duel.names[0] + " vs " + duel.names[1]));
-		p.sendSystemMessage(Msg.info("  You are in spectator mode. /leave stops watching and brings you back."));
+		p.sendSystemMessage(Msg.info("  You are in spectator mode. /leave stops watching and brings you back. ")
+			.copy().append(Msg.button("[LEAVE]", net.minecraft.ChatFormatting.RED, "/leave", "Stop watching and get your things back")));
 		PvpDuelsMod.LOGGER.info("{} is watching the duel {} vs {}", p.getName().getString(), duel.names[0], duel.names[1]);
 		return null;
 	}

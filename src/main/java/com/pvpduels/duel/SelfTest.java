@@ -1059,6 +1059,7 @@ public final class SelfTest {
 			check("Carl is in spectator mode", carl.gameMode() == GameType.SPECTATOR);
 			check("Carl is in the duel world", carl.level().dimension().equals(Arena.DIMENSION), where(carl));
 			check("Carl's inventory was backed up", PlayerBackup.exists(carl.getUUID()));
+			check("Carl got a [LEAVE] button", carl.heard("[LEAVE]"));
 			run(carl, "duel Alice");
 			check("a spectator can't start a duel", carl.heard("busy"));
 			carlTick = ticks;
@@ -1224,7 +1225,9 @@ public final class SelfTest {
 			check("the copy in the wrong slot is gone", LobbyKit.kindOf(inv.getItem(5)) == null);
 			boolean dirtKept = false;
 			for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(Items.DIRT)) dirtKept = true;
-			check("the dirt that was in the barrier's slot was not lost", dirtKept);
+			StringBuilder hotbar = new StringBuilder();
+			for (int i = 0; i < 12; i++) hotbar.append(i).append('=').append(inv.getItem(i).getItem()).append(' ');
+			check("the dirt that was in the barrier's slot was not lost", dirtKept, hotbar.toString());
 			check("the game on Alice's side agrees", clientMatches(a), clientDiff(a));
 			inv.clearContent(); // the lobby items come back by themselves
 			carlTick = ticks;
@@ -1337,6 +1340,7 @@ public final class SelfTest {
 			check("and Alice's kits to edit", menuHas(a, "Edit one of my kits"));
 			menuStep(a, "New kit");
 			check("Alice is in the kit workshop", Workshop.isIn(a.getUUID()));
+			check("and got a [LEAVE] button", a.heard("[LEAVE]"));
 			boolean any = false;
 			for (int i = 0; i < a.getInventory().getContainerSize(); i++) if (LobbyKit.isLobbyItem(a.getInventory().getItem(i))) any = true;
 			check("the lobby items are not in the workshop", !any && !LobbyKit.isActive(a.getUUID()));

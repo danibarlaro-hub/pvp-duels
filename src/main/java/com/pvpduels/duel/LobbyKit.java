@@ -212,7 +212,7 @@ public final class LobbyKit {
 			for (int i = 0; i < SLOTS.length; i++) {
 				ItemStack current = inv.getItem(SLOTS[i]);
 				inv.setItem(SLOTS[i], hidden[i]);
-				if (!current.isEmpty() && !isLobbyItem(current) && !inv.add(current)) p.drop(current, false);
+				if (!current.isEmpty() && !isLobbyItem(current)) keepAfterStrip(p, current);
 			}
 		}
 		if (onDisk) {
@@ -282,12 +282,28 @@ public final class LobbyKit {
 				// Something else got into a lobby slot: keep it, the stash only holds what was there before.
 				// It must leave the slot first: adding a stack that is still in the inventory merges it with itself.
 				inv.setItem(SLOTS[i], ItemStack.EMPTY);
-				if (!inv.add(here)) p.drop(here, false);
+				keep(p, here);
 			}
 			inv.setItem(SLOTS[i], make(KINDS[i]));
 			changed = true;
 		}
 		if (changed) p.containerMenu.sendAllDataToRemote();
+	}
+
+	/** Like keep, but the lobby slots are free again at this point (they were just given back), so only the other slots are used. */
+	private static void keepAfterStrip(ServerPlayer p, ItemStack stack) {
+		keep(p, stack);
+	}
+
+	/** Puts a stack that was in the way in the first free place of the inventory (outside the lobby slots), or drops it. */
+	private static void keep(ServerPlayer p, ItemStack stack) {
+		Inventory inv = p.getInventory();
+		for (int i = 0; i < 36; i++) {
+			if (isReserved(i) || !inv.getItem(i).isEmpty()) continue;
+			inv.setItem(i, stack);
+			return;
+		}
+		p.drop(stack, false);
 	}
 
 	private static int indexOfSlot(int slot) {

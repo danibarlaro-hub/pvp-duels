@@ -111,7 +111,8 @@ public final class Workshop {
 		p.sendSystemMessage(Msg.info(kit == null ? "  Your inventory is empty. Take items from the creative menu."
 			: "  Editing the kit '" + kitName + "' (" + (kit.stacks() == 0 ? "it is EMPTY" : kit.stacks() + " item stacks") + ")."));
 		p.sendSystemMessage(Msg.info("  /enchant <enchantment> [level 1-255] and /infinite <amount> change the item in your hand."));
-		p.sendSystemMessage(Msg.info("  /kit save <name> saves your inventory as a kit. /leave brings your own inventory back."));
+		p.sendSystemMessage(Msg.info("  /kit save <name> saves your inventory as a kit. /leave brings your own inventory back. ")
+			.copy().append(Msg.button("[LEAVE]", net.minecraft.ChatFormatting.RED, "/leave", "Leave the workshop and get your inventory back")));
 		return null;
 	}
 

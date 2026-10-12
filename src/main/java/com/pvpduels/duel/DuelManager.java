@@ -205,9 +205,7 @@ public final class DuelManager {
 	// ------------------------------------------------------------------ invitations
 
 	private static Component button(String label, ChatFormatting color, String command, String hover) {
-		return Component.literal(label).withStyle(style -> style.withColor(color).withBold(true)
-			.withClickEvent(new ClickEvent.RunCommand(command))
-			.withHoverEvent(new HoverEvent.ShowText(Component.literal(hover))));
+		return Msg.button(label, color, command, hover);
 	}
 
 	/** Withdraws every duel request this player sent or got. Returns how many there were. */
