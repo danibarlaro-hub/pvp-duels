@@ -163,6 +163,7 @@ public final class SelfTest {
 
 	// ------------------------------------------------------------------ helpers
 
+	private static ItemStack enchantedSword = ItemStack.EMPTY;
 	private static Dummy a;
 	private static Dummy b;
 	private static final double[] aPos = new double[3];
@@ -551,6 +552,7 @@ public final class SelfTest {
 			check("level 256 is refused", !a.getMainHandItem().getEnchantments().toString().contains("unbreaking"));
 			run(a, "ench smite 7");
 			check("/ench works too", a.getMainHandItem().getEnchantments().toString().contains("smite"));
+			enchantedSword = a.getMainHandItem().copy();
 
 			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
 			run(a, "infinite 64");
@@ -560,7 +562,7 @@ public final class SelfTest {
 			run(a, "infinite 100");
 			check("more than 99 is refused", a.getMainHandItem().getCount() == 99);
 			a.getInventory().setItem(3, a.getMainHandItem().copy());
-			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			a.setItemInHand(InteractionHand.MAIN_HAND, enchantedSword);
 			run(a, "infinite 5");
 			check("items with durability can't be stacked", a.getMainHandItem().getCount() == 1 && a.heard("durability"));
 			a.getInventory().setItem(0, a.getMainHandItem().copy());
@@ -597,7 +599,9 @@ public final class SelfTest {
 		step("workshop: disconnect inside it", () -> {
 			run(a, "kit create");
 			a.connection.onDisconnect(new DisconnectionDetails(Component.literal("selftest disconnect")));
-			check("the session ended and the backup stays on disk", !Workshop.isIn(a.getUUID()) && PlayerBackup.exists(a.getUUID()));
+		}, () -> !Workshop.isIn(a.getUUID()), 100);
+		step("workshop: the backup stays on disk after the disconnect", () -> {
+			check("the backup is still there", PlayerBackup.exists(a.getUUID()));
 			a = spawn("Alice");
 		}, () -> !PlayerBackup.exists(a.getUUID()), 200);
 		step("workshop: joining again brings everything back", () -> {
