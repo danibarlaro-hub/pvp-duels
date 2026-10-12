@@ -27,9 +27,10 @@ jobs:
             "generate-structures=false" "level-type=minecraft\\:flat" "enable-command-block=false" > run/server.properties
       - name: First start - world WITHOUT the arena dimension
         run: |
-          mv src/main/resources/data/pvpduels/dimension/void_arena.json /tmp/void_arena.json
+          mkdir -p /tmp/dims
+          mv src/main/resources/data/pvpduels/dimension/*.json /tmp/dims/
           PVPDUELS_SELFTEST=stop timeout 900 gradle runServer --no-daemon --console=plain > first.log 2>&1 || true
-          mv /tmp/void_arena.json src/main/resources/data/pvpduels/dimension/void_arena.json
+          mv /tmp/dims/*.json src/main/resources/data/pvpduels/dimension/
           ls run run/world 2>/dev/null | head -30
       - name: Second start - the same world, now with the mod's dimension, plays the test
         run: |

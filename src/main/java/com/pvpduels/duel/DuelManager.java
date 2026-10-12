@@ -310,7 +310,7 @@ public final class DuelManager {
 		for (int i = 0; i < SLOTS.length && slot < 0; i++) if (SLOTS[i] == null) slot = i;
 		if (problem == null && slot < 0) problem = "All " + MAX_DUELS + " arenas are busy right now. Try again in a minute.";
 
-		ServerLevel arena = Arena.level(server);
+		ServerLevel arena = slot >= 0 ? Space.of(invite.config(), slot).level(server) : null;
 		if (problem == null && arena == null) {
 			problem = "The duel world is not loaded. Make sure the mod is up to date, then restart the game.";
 		}

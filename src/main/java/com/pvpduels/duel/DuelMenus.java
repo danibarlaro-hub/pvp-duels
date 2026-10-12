@@ -30,6 +30,8 @@ public final class DuelMenus {
 		final UUID opponent;
 		final String opponentName;
 		String kit;
+		ArenaKind arena = ArenaKind.FLAT;
+		int radius = 100;
 		boolean walls;
 		WinMode mode = WinMode.ROUNDS;
 		int limit = 3;
@@ -123,11 +125,54 @@ public final class DuelMenus {
 		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
 		b.set(11, icon(Items.END_CRYSTAL, "Flat void arena", ChatFormatting.GREEN,
 			"A 21x21 bedrock platform over the void.", "You can only place entities and block entities.", "Falling off loses the round."),
-			who -> version(who, setup));
-		b.set(13, icon(Items.BARRIER, "Circular arena", ChatFormatting.DARK_GRAY, "Coming soon"));
-		b.set(15, icon(Items.BARRIER, "Unlimited arena", ChatFormatting.DARK_GRAY, "Coming soon"));
+			who -> {
+				setup.arena = ArenaKind.FLAT;
+				version(who, setup);
+			});
+		b.set(13, icon(Items.GRASS_BLOCK, "Circular arena", ChatFormatting.GREEN,
+			"Flat normal terrain inside a circle of invisible barriers.", "You can build and dig anywhere.",
+			"The terrain is reset after every round.", "Leaving the circle loses the round."),
+			who -> {
+				setup.arena = ArenaKind.CIRCLE;
+				radius(who, setup);
+			});
+		b.set(15, icon(Items.ELYTRA, "Unlimited arena", ChatFormatting.GREEN,
+			"Flat normal terrain with no border.", "You can build and dig anywhere.",
+			"If you stay more than 100 blocks away from your rival for 5 seconds,",
+			"you lose half of your health and get teleported to them."),
+			who -> {
+				setup.arena = ArenaKind.UNLIMITED;
+				mode(who, setup);
+			});
 		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> kits(who, setup, 0));
 		ChoiceMenu.open(p, Component.literal("Duel: choose an arena"), 3, b);
+	}
+
+	// ------------------------------------------------------------------ 2b. circle radius
+
+	private static void radius(ServerPlayer p, Setup setup) {
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
+		int[] options = {100, 150, 200};
+		int slot = 11;
+		for (int value : options) {
+			b.set(slot, icon(Items.GRASS_BLOCK, "Radius " + value, ChatFormatting.GREEN,
+				"The circle is " + (value * 2) + " blocks wide."), who -> {
+				setup.radius = value;
+				mode(who, setup);
+			});
+			slot += 2;
+		}
+		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> arena(who, setup));
+		ChoiceMenu.open(p, Component.literal("Duel: how big is the circle?"), 3, b);
+	}
+
+	/** The "Back" button of the win-mode menu returns to the last menu of the chosen arena. */
+	private static void backToArena(ServerPlayer p, Setup setup) {
+		switch (setup.arena) {
+			case FLAT -> version(p, setup);
+			case CIRCLE -> radius(p, setup);
+			case UNLIMITED -> arena(p, setup);
+		}
 	}
 
 	// ------------------------------------------------------------------ 3. version
@@ -168,7 +213,7 @@ public final class DuelMenus {
 				setup.mode = WinMode.TIMED;
 				amount(who, setup);
 			});
-		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> version(who, setup));
+		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> backToArena(who, setup));
 		ChoiceMenu.open(p, Component.literal("Duel: how is it decided?"), 3, b);
 	}
 
@@ -211,7 +256,7 @@ public final class DuelMenus {
 	// ------------------------------------------------------------------ 6. confirm
 
 	private static DuelConfig config(Setup setup) {
-		return new DuelConfig(setup.kit, setup.walls, setup.mode, setup.limit);
+		return new DuelConfig(setup.kit, setup.arena, setup.walls, setup.arena == ArenaKind.CIRCLE ? setup.radius : 0, setup.mode, setup.limit);
 	}
 
 	private static void confirm(ServerPlayer p, Setup setup) {

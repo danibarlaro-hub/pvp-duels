@@ -39,11 +39,15 @@ public final class Duel {
 	public static int noContactLimit = 5 * 60 * 20;
 	/** The warning starts this many ticks before the teleport. */
 	public static int noContactWarning = 5 * 20;
+	/** Unlimited arena: farther than this from your rival (in blocks) for farCountdown ticks costs half your health. */
+	public static double farLimit = 100;
+	public static int farCountdown = 5 * 20;
 	/** Server ticks that count as one minute of a timed duel (1200 normally; the self-test shortens it). */
 	public static int ticksPerMinute = 60 * 20;
 
 	private final MinecraftServer server;
 	final int slot;
+	final Space space;
 	final DuelConfig config;
 	final UUID kitOwner;
 	private final KitStore.Kit kit;
@@ -60,6 +64,7 @@ public final class Duel {
 	boolean timedOut;
 	boolean tiebreak;
 	private int noContact;
+	private int farTicks;
 	private boolean warnedTeleport;
 	private boolean finishing;
 	private boolean recorded;
@@ -70,6 +75,7 @@ public final class Duel {
 	Duel(MinecraftServer server, int slot, DuelConfig config, UUID kitOwner, KitStore.Kit kit, ServerPlayer a, ServerPlayer b) {
 		this.server = server;
 		this.slot = slot;
+		this.space = Space.of(config, slot);
 		this.config = config;
 		this.kitOwner = kitOwner;
 		this.kit = kit;
@@ -133,7 +139,7 @@ public final class Duel {
 			PlayerBackup.discard(ids[1]);
 			throw e;
 		}
-		Arena.reset(arena, slot, config.walls());
+		space.begin(arena);
 		for (int i = 0; i < 2; i++) setupPlayer(i, arena);
 		phase = Phase.STARTING;
 		phaseTicks = 0;
@@ -164,7 +170,7 @@ public final class Duel {
 		p.getInventory().setSelectedSlot(0);
 		// The arena can be dark at night, so both players always see well.
 		p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 72000, 0, false, false));
-		Arena.teleportToSpawn(p, arena, slot, i);
+		space.teleportToSpawn(p, arena, i);
 	}
 
 	// ------------------------------------------------------------------ per tick
@@ -198,10 +204,10 @@ public final class Duel {
 
 	private void tickStarting(ServerPlayer a, ServerPlayer b) {
 		phaseTicks++;
-		ServerLevel arena = Arena.level(server);
+		ServerLevel arena = space.level(server);
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
-			double[] s = Arena.spawn(slot, i);
+			double[] s = space.spawn(i);
 			if (arena != null && p.distanceToSqr(s[0], s[1], s[2]) > 0.3) {
 				// Nobody walks during the countdown.
 				p.teleportTo(arena, s[0], s[1], s[2], Set.of(), p.getYRot(), p.getXRot(), true);
@@ -233,12 +239,15 @@ public final class Duel {
 
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
-			boolean wrongWorld = !p.level().dimension().equals(Arena.DIMENSION);
-			if (wrongWorld || Arena.fellOut(p, slot)) {
-				endRound(1 - i, names[i] + " fell into the void.");
+			boolean wrongWorld = !p.level().dimension().equals(space.dimension());
+			String out = wrongWorld ? "left the arena." : space.outOfBounds(p);
+			if (out != null) {
+				endRound(1 - i, names[i] + " " + out);
 				return;
 			}
 		}
+		space.follow(a, b);
+		if (config.arena() == ArenaKind.UNLIMITED) tickFar(a, b);
 
 		if (config.mode() == WinMode.TIMED && !timedOut && elapsed >= config.limit() * ticksPerMinute) {
 			timedOut = true;
@@ -262,6 +271,42 @@ public final class Duel {
 		}
 
 		if (phaseTicks % 20 == 0) showScoreboard();
+	}
+
+	/**
+	 * The 100-block rule of the unlimited arena: if the two are too far apart for 5 seconds, the one who is farther
+	 * from the start point (the one who ran away) loses half of their health and is sent next to the other.
+	 */
+	private void tickFar(ServerPlayer a, ServerPlayer b) {
+		if (a.distanceTo(b) <= farLimit) {
+			if (farTicks > 0) {
+				tell(Msg.ok("You are close enough again."));
+				farTicks = 0;
+			}
+			return;
+		}
+		if (farTicks == 0) {
+			tell(Component.literal("You are more than " + (int) farLimit + " blocks apart! Get closer within "
+				+ Math.max(1, farCountdown / 20) + " seconds or the one who ran away loses half of their health.").withStyle(ChatFormatting.YELLOW));
+		}
+		farTicks++;
+		int left = farCountdown - farTicks;
+		if (left > 0 && left % 20 == 0) {
+			Component text = Component.literal("Too far apart! " + (left / 20) + "s").withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+			a.sendOverlayMessage(text);
+			b.sendOverlayMessage(text);
+		}
+		if (farTicks >= farCountdown) {
+			farTicks = 0;
+			double da = Math.pow(a.getX() - space.centerX(), 2) + Math.pow(a.getZ() - space.centerZ(), 2);
+			double db = Math.pow(b.getX() - space.centerX(), 2) + Math.pow(b.getZ() - space.centerZ(), 2);
+			int who = da >= db ? 0 : 1;
+			ServerPlayer runner = player(who);
+			ServerPlayer other = player(1 - who);
+			runner.setHealth(Math.max(1f, runner.getHealth() / 2f));
+			Arena.teleportNextTo(runner, other);
+			tell(Msg.info(names[who] + " went too far away: lost half of their health and was teleported next to " + names[1 - who] + "."));
+		}
 	}
 
 	private String roundLabel() {
@@ -354,12 +399,12 @@ public final class Duel {
 
 	private void nextRound() {
 		round++;
-		ServerLevel arena = Arena.level(server);
+		ServerLevel arena = space.level(server);
 		if (arena == null) {
 			forfeit(0);
 			return;
 		}
-		Arena.reset(arena, slot, config.walls());
+		space.begin(arena);
 		for (int i = 0; i < 2; i++) setupPlayer(i, arena);
 		phase = Phase.STARTING;
 		phaseTicks = 0;
@@ -455,8 +500,7 @@ public final class Duel {
 		closed = true;
 		restore(0);
 		restore(1);
-		ServerLevel arena = Arena.level(server);
-		if (arena != null) Arena.clearEntities(arena, slot);
+		space.end(space.level(server));
 		DuelManager.onClosed(this);
 		PvpDuelsMod.LOGGER.info("Duel {} vs {} closed ({} - {}).", names[0], names[1], points[0], points[1]);
 	}

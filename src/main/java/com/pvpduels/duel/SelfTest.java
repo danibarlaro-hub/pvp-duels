@@ -178,6 +178,16 @@ public final class SelfTest {
 	private static final double[] aPos = new double[3];
 	private static final double[] bPos = new double[3];
 
+	private static int circleCx;
+
+	private static BlockPos at(int x, int y, int z) {
+		return new BlockPos(x, y, z);
+	}
+
+	private static boolean isBlock(int x, int y, int z, net.minecraft.world.level.block.Block block) {
+		return Terrain.level(server).getBlockState(at(x, y, z)).is(block);
+	}
+
 	private static void run(Dummy who, String command) {
 		server.getCommands().performPrefixedCommand(who.createCommandSourceStack(), command);
 	}
@@ -267,7 +277,8 @@ public final class SelfTest {
 			for (ServerLevel l : server.getAllLevels()) keys.append(l.dimension().identifier()).append(' ');
 			log("loaded dimensions: " + keys);
 			check("dimension pvpduels:void_arena is loaded in this (already existing) world", Arena.level(server) != null);
-			if (Arena.level(server) == null) finish();
+			check("dimension pvpduels:normal_arena is loaded too", Terrain.level(server) != null);
+			if (Arena.level(server) == null || Terrain.level(server) == null) finish();
 		});
 
 		step("create two fake players", () -> {
@@ -644,6 +655,141 @@ public final class SelfTest {
 			check("Alice is in the overworld with her items", a.level().dimension().equals(server.overworld().dimension())
 				&& a.getInventory().getItem(21).is(Items.STONE), where(a));
 			check("and in survival", a.gameMode() == GameType.SURVIVAL);
+		});
+
+
+		// ---------------------------------------------------------------- circular and unlimited arenas
+		step("circular arena: menus", () -> {
+			run(a, "duel Bob");
+			menuStep(a, "testkit");
+		});
+		step("circular arena: menu arena", () -> { menuStep(a, "Circular arena"); });
+		step("circular arena: menu radius", () -> { menuStep(a, "Radius 100"); });
+		step("circular arena: menu mode", () -> { menuStep(a, "First to N points"); });
+		step("circular arena: menu amount", () -> { menuStep(a, "First to 2"); });
+		step("circular arena: send and accept", () -> {
+			menuStep(a, "Send the challenge");
+			check("the invitation names the circular arena", b.heard("Circular arena (radius 100)"));
+			run(b, "accept Alice");
+			Duel d = duel(a);
+			check("a circular duel exists", d != null && d.config.arena() == ArenaKind.CIRCLE && d.config.radius() == 100);
+			if (d != null) circleCx = (int) d.space.centerX();
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("circular arena: the terrain has the right layers", () -> {
+			check("both players are in the normal arena dimension", a.level().dimension().equals(Terrain.DIMENSION) && b.level().dimension().equals(Terrain.DIMENSION),
+				where(a) + " / " + where(b));
+			check("Terrain keeps one arena open", Terrain.activeRegions() == 1, String.valueOf(Terrain.activeRegions()));
+			int x = circleCx;
+			check("y70 is dirt", isBlock(x, 70, 0, Blocks.DIRT));
+			check("y66 is dirt (5 blocks of dirt)", isBlock(x, 66, 0, Blocks.DIRT));
+			check("y65 is stone", isBlock(x, 65, 0, Blocks.STONE));
+			check("y0 is stone", isBlock(x, 0, 0, Blocks.STONE));
+			check("y-1 is deepslate", isBlock(x, -1, 0, Blocks.DEEPSLATE));
+			check("y-59 is deepslate", isBlock(x, -59, 0, Blocks.DEEPSLATE));
+			check("y-60 is bedrock", isBlock(x, -60, 0, Blocks.BEDROCK));
+			check("y-61 is air", isBlock(x, -61, 0, Blocks.AIR));
+			check("y71 is air", isBlock(x, 71, 0, Blocks.AIR));
+			check("the players stand on the dirt", Math.abs(a.getY() - 71) < 0.5 && Math.abs(b.getY() - 71) < 0.5, where(a) + " / " + where(b));
+			check("they are 32 blocks apart", Math.abs(a.distanceTo(b) - 32) < 1.5, String.valueOf(a.distanceTo(b)));
+			Terrain.level(server).getChunk((x + 100) >> 4, 0);
+			Terrain.level(server).getChunk((x - 100) >> 4, 0);
+			Terrain.level(server).getChunk(x >> 4, 100 >> 4);
+			Terrain.level(server).getChunk((x + 71) >> 4, 71 >> 4);
+		});
+		step("circular arena: the barrier ring is drawn as its chunks load", () -> {}, () ->
+			isBlock(circleCx + 100, 100, 0, Blocks.BARRIER) && isBlock(circleCx - 100, 100, 0, Blocks.BARRIER)
+				&& isBlock(circleCx, 100, 100, Blocks.BARRIER) && isBlock(circleCx + 71, 100, 71, Blocks.BARRIER), 200);
+		step("circular arena: the ring has the right shape", () -> {
+			int x = circleCx;
+			check("the ring is closed right at the radius", isBlock(x + 100, 100, 0, Blocks.BARRIER) && isBlock(x - 100, 100, 0, Blocks.BARRIER) && isBlock(x, 100, 100, Blocks.BARRIER));
+			check("inside the ring is free", isBlock(x + 99, 100, 0, Blocks.AIR) && isBlock(x + 98, 71, 0, Blocks.AIR));
+			check("the ring goes down to the bedrock layer", isBlock(x + 100, -60, 0, Blocks.BARRIER) && isBlock(x + 100, 30, 0, Blocks.BARRIER));
+			check("the ring goes up to the build limit", isBlock(x + 100, 319, 0, Blocks.BARRIER));
+			check("nothing below the bedrock layer", isBlock(x + 100, -61, 0, Blocks.AIR));
+			check("the ring is also there on the diagonal", isBlock(x + 71, 100, 71, Blocks.BARRIER));
+			boolean blocked = false;
+			for (int i = 0; i < 70; i++) {
+				// walking along the diagonal from the center, the first non-air block must be a barrier (no gap to slip through)
+				if (!isBlock(x + i, 100, i, Blocks.AIR)) { blocked = true; break; }
+			}
+			check("the diagonal inside the circle is free", !blocked);
+		});
+		step("circular arena: normal blocks can be placed and dug", () -> {
+			ServerLevel lvl = Terrain.level(server);
+			BlockPos ground = a.blockPosition().below();
+			ItemStack sword = a.getItemInHand(InteractionHand.MAIN_HAND).copy();
+			BlockPos stoneBase = ground.east();
+			BlockPos chestBase = ground.east(2);
+			useOn(a, new ItemStack(Items.STONE), new BlockHitResult(new Vec3(stoneBase.getX() + 0.5, stoneBase.getY() + 1, stoneBase.getZ() + 0.5), Direction.UP, stoneBase, false));
+			check("a stone block can be placed", lvl.getBlockState(stoneBase.above()).is(Blocks.STONE), String.valueOf(lvl.getBlockState(stoneBase.above())));
+			useOn(a, new ItemStack(Items.CHEST), new BlockHitResult(new Vec3(chestBase.getX() + 0.5, chestBase.getY() + 1, chestBase.getZ() + 0.5), Direction.UP, chestBase, false));
+			check("a chest can be placed", lvl.getBlockState(chestBase.above()).is(Blocks.CHEST));
+			a.setItemInHand(InteractionHand.MAIN_HAND, sword);
+			boolean dug = a.gameMode.destroyBlock(ground.south());
+			check("the ground can be dug", dug && lvl.getBlockState(ground.south()).isAir());
+			lvl.setBlock(at(circleCx - 5, 40, 0), Blocks.OBSIDIAN.defaultBlockState(), 2);
+			lvl.setBlock(at(circleCx + 30, 71, 3), Blocks.TNT.defaultBlockState(), 2);
+			check("the tracked changes exist", lvl.getBlockState(at(circleCx - 5, 40, 0)).is(Blocks.OBSIDIAN));
+			hit(a, b);
+			Duel d = duel(a);
+			check("round 1 went to Alice", d.points[0] == 1 && d.phase == Duel.Phase.ROUND_END, d.points[0] + "-" + d.points[1] + " " + d.phase);
+		});
+		step("circular arena: round 2 starts on clean terrain", () -> {
+			int x = circleCx;
+			check("the stone block is gone", isBlock(circleCx - 15, 71, 0, Blocks.AIR), String.valueOf(Terrain.level(server).getBlockState(at(circleCx - 15, 71, 0))));
+			check("the dug hole is filled again", isBlock(circleCx - 16, 70, 1, Blocks.DIRT), String.valueOf(Terrain.level(server).getBlockState(at(circleCx - 16, 70, 1))));
+			check("the obsidian inside the ground is gone", isBlock(x - 5, 40, 0, Blocks.STONE));
+			check("the TNT on the surface is gone", isBlock(x + 30, 71, 3, Blocks.AIR));
+			check("the chest is gone", isBlock(circleCx - 14, 71, 0, Blocks.AIR));
+			check("the ring is still there", isBlock(x + 100, 100, 0, Blocks.BARRIER));
+			check("round 2 is on", duel(a).round == 2);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("circular arena: leaving the circle loses the round", () -> {
+			ServerLevel lvl = Terrain.level(server);
+			b.teleportTo(lvl, circleCx + 110.5, 71, 0.5, java.util.Set.of(), 0f, 0f, true);
+		}, () -> phaseIs(a, Duel.Phase.ENDED), 300);
+		step("circular arena: Alice won and the arena closes", () -> {
+			Duel d = duel(a);
+			check("Alice won 2-0", d != null && d.winner == 0 && d.points[0] == 2, d == null ? "no duel" : d.winner + " " + d.points[0] + "-" + d.points[1]);
+			check("Alice was told that Bob left the arena", a.heard("Bob left the arena"));
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("circular arena: closed", () -> {
+			check("Terrain has no open arena any more", Terrain.activeRegions() == 0, String.valueOf(Terrain.activeRegions()));
+			check("both players are back in the overworld", a.level().dimension().equals(server.overworld().dimension())
+				&& b.level().dimension().equals(server.overworld().dimension()), where(a) + " / " + where(b));
+			var chunk = Terrain.level(server).getChunkSource().getChunkNow((circleCx + 100) >> 4, 0);
+			check("the ring is removed from chunks that are still loaded", chunk == null || isBlock(circleCx + 100, 100, 0, Blocks.AIR));
+		});
+
+		step("unlimited arena: start", () -> {
+			Duel.farCountdown = 40;
+			invite(a, b, new DuelConfig("testkit", ArenaKind.UNLIMITED, false, 0, WinMode.FIRST_TO, 3));
+			Duel d = duel(a);
+			check("an unlimited duel exists", d != null && d.config.arena() == ArenaKind.UNLIMITED && d.config.arenaName().equals("Unlimited arena"));
+			if (d != null) circleCx = (int) d.space.centerX();
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("unlimited arena: players are in the normal terrain far from the other arenas", () -> {
+			check("both are in the normal arena dimension", a.level().dimension().equals(Terrain.DIMENSION) && b.level().dimension().equals(Terrain.DIMENSION));
+			check("the arena is centered at x=" + circleCx, circleCx >= Terrain.UNLIMITED_BASE && Math.abs(a.getX() - circleCx) < 20, where(a));
+			check("no barrier ring here", isBlock(circleCx + 100, 100, 0, Blocks.AIR));
+			// Bob runs away 150 blocks
+			b.teleportTo(Terrain.level(server), circleCx + 150.5, 71, 0.5, java.util.Set.of(), 0f, 0f, true);
+			check("Bob is farther than 100 blocks from Alice", a.distanceTo(b) > 100, String.valueOf(a.distanceTo(b)));
+		});
+		step("unlimited arena: the 100 block rule fires", () -> {}, () -> a.distanceTo(b) < 10, 300);
+		step("unlimited arena: Bob lost half of his health, Alice is untouched", () -> {
+			check("Bob has about half of his health", b.getHealth() > 8f && b.getHealth() < 12f, "health=" + b.getHealth());
+			check("Alice kept all her health", a.getHealth() >= a.getMaxHealth() - 0.01f, "health=" + a.getHealth());
+			check("they were told", a.heard("went too far") && b.heard("more than 100 blocks"));
+			check("the duel goes on and nobody lost a round", duel(a).phase == Duel.Phase.FIGHTING && duel(a).points[0] == 0 && duel(a).points[1] == 0);
+			Duel.farCountdown = 5 * 20;
+			run(b, "leave");
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b) && Terrain.activeRegions() == 0, 600);
+		step("unlimited arena: nothing left open", () -> {
+			check("Terrain has no open arena", Terrain.activeRegions() == 0, String.valueOf(Terrain.activeRegions()));
+			check("both are back in the overworld", a.level().dimension().equals(server.overworld().dimension())
+				&& b.level().dimension().equals(server.overworld().dimension()), where(a) + " / " + where(b));
 		});
 
 		step("statistics, sidebar and guide book", () -> {

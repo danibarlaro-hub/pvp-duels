@@ -20,8 +20,11 @@ import net.minecraft.world.level.block.EntityBlock;
 final class ArenaRules {
 	private ArenaRules() {}
 
+	/** Only duels in the flat void arena have building rules; the normal arenas can be built and dug freely. */
 	private static boolean duelist(net.minecraft.world.entity.player.Player player) {
-		return player instanceof ServerPlayer sp && DuelManager.isInDuel(sp.getUUID());
+		if (!(player instanceof ServerPlayer sp)) return false;
+		Duel duel = DuelManager.duelOf(sp.getUUID());
+		return duel != null && duel.config.arena() == ArenaKind.FLAT;
 	}
 
 	static void register() {
