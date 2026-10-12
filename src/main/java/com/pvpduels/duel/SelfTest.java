@@ -3,6 +3,10 @@ package com.pvpduels.duel;
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.GuideBook;
 import com.pvpduels.duel.TestDummy.Dummy;
+import com.pvpduels.arena.ArenaData;
+import com.pvpduels.arena.ArenaStore;
+import com.pvpduels.arena.ArenaStudio;
+import com.pvpduels.arena.BuilderRank;
 import com.pvpduels.stats.StatsStore;
 import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
@@ -195,6 +199,7 @@ public final class SelfTest {
 	private static int ruleStartTick;
 	private static float ruleStartHealth;
 	private static int carlTick;
+	private static int studioCx;
 	private static Dummy carl;
 	private static Dummy dora;
 	private static Dummy bot;
@@ -1346,7 +1351,8 @@ public final class SelfTest {
 			a.gameMode.useItem(a, (ServerLevel) a.level(), a.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND);
 			check("right-clicking the grass block opens the Create+ menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "Create Kit") && menuHas(a, "Create Arena"));
 			menuStep(a, "Create Arena");
-			check("the arena builder says what is coming", a.heard("Builder rank"));
+			check("somebody who is not a Builder sees why they can't", a.containerMenu instanceof ChoiceMenu && menuHas(a, "Builders only"));
+			a.closeContainer();
 			LobbyKit.clearCooldowns();
 			a.gameMode.useItem(a, (ServerLevel) a.level(), a.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND);
 			menuStep(a, "Create Kit");
@@ -1405,7 +1411,7 @@ public final class SelfTest {
 				switch (kind) {
 					case BOT -> check("the Practice Bot opens the bot menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "testkit"));
 					case KIT -> check("the Kit Workshop opens the kit menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "New kit"));
-					case ARENA -> check("the Arena Builder says what is coming", a.heard("Builder rank"));
+					case ARENA -> check("the Arena Builder opens the arena menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "Builders only"));
 				}
 				check("the click is used up (" + kind.id + ")", result == net.minecraft.world.InteractionResult.SUCCESS, String.valueOf(result));
 				// hitting works like clicking
@@ -2051,8 +2057,14 @@ public final class SelfTest {
 		});
 
 		step("queue: back in the lobby", () -> {
-			log("Alice before going to the lobby: " + where(a) + ", " + LobbyKit.why(a));
-			Lobby.teleport(server, a);
+			// the lobby of the earlier tests was cleared: make a new one where Alice stands
+			a.teleportTo(server.overworld(), 50.5, a.getY(), 50.5, java.util.Set.of(), 0f, 0f, true);
+			try {
+				Lobby.set(a);
+			} catch (java.io.IOException e) {
+				check("the lobby can be saved", false, e.toString());
+			}
+			check("the lobby is set", Lobby.isSet());
 		}, () -> {
 			boolean ok = LobbyKit.isActive(a.getUUID());
 			if (!ok && ticks % 40 == 0) log("waiting for Alice's lobby items: " + where(a) + ", " + LobbyKit.why(a));
@@ -2071,7 +2083,278 @@ public final class SelfTest {
 		step("queue: clean up", () -> {
 			Queue.clearAll();
 			Queue.useRandom(new java.util.Random());
+			try {
+				Lobby.clear();
+			} catch (java.io.IOException e) {
+				check("the lobby can be cleared", false, e.toString());
+			}
 			check("nobody is left in a queue", Queue.size() == 0);
+		});
+
+		// ---------------------------------------------------------------- Builder rank and custom arenas
+		step("builder: Alice is not a Builder", () -> {
+			BuilderRank.resetForTest();
+			check("Alice has no rank", !BuilderRank.hasRank(a.getUUID()) && !BuilderRank.can(a));
+			run(a, "builder");
+			check("/builder says how to get it", a.heard("You don't have the Builder rank"));
+			run(a, "createarena flat");
+			check("she can't open the studio", a.heard("Only Builders can make arenas") && !ArenaStudio.isIn(a.getUUID()));
+			run(a, "createarena");
+			check("the menu explains the rank", menuHas(a, "Builders only"));
+			a.closeContainer();
+			run(a, "builder give Alice");
+			check("a normal player can't give the rank", !BuilderRank.hasRank(a.getUUID()));
+		});
+		step("builder: the rank lasts three weeks", () -> {
+			long t0 = 1_800_000_000_000L;
+			long day = 24L * 3600_000;
+			BuilderRank.setClockForTest(t0);
+			BuilderRank.grant(a.getUUID(), BuilderRank.DEFAULT_WEEKS);
+			check("Alice is a Builder", BuilderRank.hasRank(a.getUUID()) && BuilderRank.can(a));
+			check("21 days left", BuilderRank.timeLeft(a.getUUID()).equals("21 days left"), BuilderRank.timeLeft(a.getUUID()));
+			BuilderRank.setClockForTest(t0 + 20 * day + day / 2);
+			check("12 hours left on day 20 and a half", BuilderRank.timeLeft(a.getUUID()).equals("12 hours left"), BuilderRank.timeLeft(a.getUUID()));
+			BuilderRank.setClockForTest(t0 + 21 * day + 1);
+			check("after three weeks it is over", !BuilderRank.hasRank(a.getUUID()) && BuilderRank.timeLeft(a.getUUID()).equals("over"));
+			BuilderRank.setClockForTest(t0);
+			BuilderRank.grant(a.getUUID(), 1);
+			check("a week is added to the rank that is running", BuilderRank.timeLeft(a.getUUID()).equals("28 days left"), BuilderRank.timeLeft(a.getUUID()));
+			BuilderRank.revoke(a.getUUID());
+			check("it can be taken away", !BuilderRank.hasRank(a.getUUID()));
+			BuilderRank.resetForTest();
+			BuilderRank.grant(a.getUUID(), BuilderRank.DEFAULT_WEEKS);
+			check("with the real clock it works too", BuilderRank.hasRank(a.getUUID()));
+			run(a, "builder");
+			check("/builder tells her", a.heard("You are a Builder"));
+		});
+
+		step("studio: Bob is not a Builder, Alice starts from the flat template", () -> {
+			run(b, "createarena flat");
+			check("Bob is refused", !ArenaStudio.isIn(b.getUUID()) && b.heard("Only Builders can make arenas"));
+			ArenaStore.deleteForTest(a.getUUID());
+			run(a, "createarena flat");
+			check("Alice is in the studio and busy", ArenaStudio.isIn(a.getUUID()) && DuelManager.isBusy(a.getUUID()));
+			check("in the duel world, in creative", a.level().dimension().equals(Arena.DIMENSION) && a.gameMode() == GameType.CREATIVE, where(a));
+			check("her things are backed up", PlayerBackup.exists(a.getUUID()));
+			studioCx = ArenaStudio.plotOf(a.getUUID());
+			ServerLevel lvl = Arena.level(server);
+			check("grass floor, dirt and bedrock like the template", lvl.getBlockState(at(studioCx + 10, 100, 5)).is(Blocks.GRASS_BLOCK)
+				&& lvl.getBlockState(at(studioCx - 31, 99, -32)).is(Blocks.DIRT) && lvl.getBlockState(at(studioCx, 97, 0)).is(Blocks.BEDROCK));
+			check("the corners of the box are in the plot", lvl.getBlockState(at(studioCx + 31, 100, 31)).is(Blocks.GRASS_BLOCK)
+				&& lvl.getBlockState(at(studioCx + 32, 100, 0)).isAir());
+			check("air above the floor", lvl.getBlockState(at(studioCx, 101, 0)).isAir());
+			run(a, "queue random");
+			check("she can't queue while building", !Queue.isQueued(a.getUUID()));
+		});
+		step("studio: building only works inside the box", () -> {
+			ServerLevel lvl = Arena.level(server);
+			BlockHitResult inside = new BlockHitResult(new Vec3(studioCx + 5.5, 101, 0.5), Direction.UP, at(studioCx + 5, 100, 0), false);
+			BlockHitResult outside = new BlockHitResult(new Vec3(studioCx + 40.5, 101, 0.5), Direction.UP, at(studioCx + 40, 100, 0), false);
+			BlockHitResult edge = new BlockHitResult(new Vec3(studioCx + 31.9, 101, 0.5), Direction.EAST, at(studioCx + 31, 101, 0), false);
+			var use = net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT;
+			check("placing inside is allowed", use.invoker().interact(a, lvl, InteractionHand.MAIN_HAND, inside) == net.minecraft.world.InteractionResult.PASS);
+			check("placing outside is refused", use.invoker().interact(a, lvl, InteractionHand.MAIN_HAND, outside) == net.minecraft.world.InteractionResult.FAIL);
+			check("placing on the edge, into the next block outside, is refused", use.invoker().interact(a, lvl, InteractionHand.MAIN_HAND, edge) == net.minecraft.world.InteractionResult.FAIL);
+			var attack = net.fabricmc.fabric.api.event.player.AttackBlockCallback.EVENT;
+			check("breaking inside is allowed", attack.invoker().interact(a, lvl, InteractionHand.MAIN_HAND, at(studioCx + 5, 100, 0), Direction.UP) == net.minecraft.world.InteractionResult.PASS);
+			check("breaking outside is refused", attack.invoker().interact(a, lvl, InteractionHand.MAIN_HAND, at(studioCx + 40, 100, 0), Direction.UP) == net.minecraft.world.InteractionResult.FAIL);
+			check("the break event also says no outside", !net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.invoker()
+				.beforeBlockBreak(lvl, a, at(studioCx + 40, 100, 0), lvl.getBlockState(at(studioCx + 40, 100, 0)), null));
+		});
+		step("studio: spawn points", () -> {
+			ServerLevel lvl = Arena.level(server);
+			a.teleportTo(lvl, studioCx + 3.5, 101, 2.5, java.util.Set.of(), 90f, 0f, true);
+			run(a, "setspawn 1");
+			check("spawn 1 was set", a.heard("Spawn of player 1 set"));
+			a.teleportTo(lvl, studioCx + 45.5, 101, 0.5, java.util.Set.of(), 0f, 0f, true);
+			run(a, "setspawn 2");
+			check("a spawn outside the box is refused", a.heard("Stand inside the building box"));
+			a.teleportTo(lvl, studioCx + 12.5, 101, -3.5, java.util.Set.of(), -90f, 0f, true);
+			run(a, "setspawn 2");
+			check("spawn 2 was set", a.heard("Spawn of player 2 set"));
+			lvl.setBlock(at(studioCx + 4, 101, 4), Blocks.OBSIDIAN.defaultBlockState(), 2);
+			lvl.setBlock(at(studioCx - 20, 130, 20), Blocks.DIAMOND_BLOCK.defaultBlockState(), 2);
+			a.teleportTo(lvl, studioCx + 60.5, 101, 0.5, java.util.Set.of(), 0f, 0f, true);
+		}, () -> Math.abs(a.getX() - studioCx) < 40, 100);
+		step("studio: somebody who walks away is brought back", () -> {
+			check("Alice is inside the box area again", Math.abs(a.getX() - studioCx) < 40, where(a));
+		});
+		step("studio: saving the arena", () -> {
+			run(a, "savearena draft");
+			check("'draft' is reserved", a.heard("is the name of your draft"));
+			run(a, "savearena Castle");
+			check("saved as 'castle' (any case)", ArenaStore.exists(a.getUUID(), "castle") && a.heard("Saved the arena 'castle'"));
+			check("the publish button was offered", a.heard("[PUBLISH]"));
+			try {
+				var data = ArenaStore.load(ArenaStore.key(a.getUUID(), "castle")).orElse(null);
+				check("it can be read back", data != null);
+				if (data != null) {
+					check("the obsidian is in the file", data.blocks[ArenaData.index(36, 17, 36)].is(Blocks.OBSIDIAN));
+					check("so is the high block", data.blocks[ArenaData.index(12, 46, 52)].is(Blocks.DIAMOND_BLOCK));
+					check("and the grass", data.blocks[ArenaData.index(5, 16, 5)].is(Blocks.GRASS_BLOCK));
+					check("the owner is Alice", a.getUUID().equals(data.owner) && data.ownerName.equals("Alice") && data.template.equals("flat"));
+					check("both spawns are saved (relative to the center)", data.hasBothSpawns() && Math.abs(data.spawn0[0] - 3.5) < 0.01 && Math.abs(data.spawn0[2] - 2.5) < 0.01
+						&& Math.abs(data.spawn1[0] - 12.5) < 0.01 && Math.abs(data.spawn1[2] + 3.5) < 0.01 && Math.abs(data.spawn1[3] + 90) < 0.01);
+				}
+			} catch (java.io.IOException e) {
+				check("the arena can be read", false, e.toString());
+			}
+		});
+		step("arena: list, publish and the shelf", () -> {
+			run(a, "arena list");
+			check("/arena list shows castle as private", a.heard("castle  (private)"));
+			run(b, "arena publish castle");
+			check("Bob has no such arena", b.heard("You have no arena named 'castle'"));
+			run(a, "arena publish castle");
+			var shared = ArenaStore.findPublic("castle");
+			check("Alice published it", shared.isPresent() && a.getUUID().equals(shared.get().owner()) && a.heard("is public now"));
+			run(b, "arena public");
+			check("the shelf shows castle by Alice", b.heard("castle by Alice"));
+			run(b, "arena unpublish castle");
+			check("only the owner can take it off", b.heard("Only Alice can take it off") && ArenaStore.findPublic("castle").isPresent());
+			run(a, "arena list");
+			check("/arena list now says public", a.heard("castle  (public)"));
+		});
+		step("studio: /leave keeps a draft and cleans the plot", () -> {
+			run(a, "leave");
+			check("Alice left the studio", !ArenaStudio.isIn(a.getUUID()) && !DuelManager.isBusy(a.getUUID()));
+			check("back in the overworld in survival", a.level().dimension().equals(server.overworld().dimension()) && a.gameMode() == GameType.SURVIVAL, where(a) + " " + a.gameMode());
+			check("her backup is gone", !PlayerBackup.exists(a.getUUID()));
+			check("a draft was kept", ArenaStore.exists(a.getUUID(), "draft") && a.heard("A draft of your build was kept"));
+			ServerLevel lvl = Arena.level(server);
+			check("the plot is empty again", lvl.getBlockState(at(studioCx + 10, 100, 5)).isAir() && lvl.getBlockState(at(studioCx + 4, 101, 4)).isAir()
+				&& lvl.getBlockState(at(studioCx - 20, 130, 20)).isAir());
+			run(a, "arena list");
+			check("the draft is not listed as an arena", !a.heard("draft  (private)"));
+		});
+		step("studio: editing the saved arena", () -> {
+			run(a, "arena edit castle");
+			check("Alice is in the studio again", ArenaStudio.isIn(a.getUUID()));
+			studioCx = ArenaStudio.plotOf(a.getUUID());
+			ServerLevel lvl = Arena.level(server);
+			check("the arena was pasted: grass, obsidian and the high block", lvl.getBlockState(at(studioCx + 10, 100, 5)).is(Blocks.GRASS_BLOCK)
+				&& lvl.getBlockState(at(studioCx + 4, 101, 4)).is(Blocks.OBSIDIAN) && lvl.getBlockState(at(studioCx - 20, 130, 20)).is(Blocks.DIAMOND_BLOCK));
+			lvl.setBlock(at(studioCx + 4, 101, 4), Blocks.AIR.defaultBlockState(), 2);
+			run(a, "leave");
+			check("left", !ArenaStudio.isIn(a.getUUID()));
+			run(a, "arena edit nothere");
+			check("an unknown arena is refused", a.heard("You have no arena named 'nothere'") && !ArenaStudio.isIn(a.getUUID()));
+		});
+		step("studio: the Create Arena menu for a Builder", () -> {
+			run(a, "createarena");
+			check("it offers the three templates", menuHas(a, "Void") && menuHas(a, "Flat grass") && menuHas(a, "Bedrock box"));
+			check("and to continue the draft", menuHas(a, "Continue my draft"));
+			check("and to edit an arena", menuHas(a, "Edit one of my arenas"));
+			menuStep(a, "Edit one of my arenas");
+		});
+		step("studio: the list of her arenas", () -> {
+			check("castle is listed", menuHas(a, "castle"));
+			check("the draft is not", !menuHas(a, "draft"));
+			a.closeContainer();
+			run(a, "createarena void");
+			studioCx = ArenaStudio.plotOf(a.getUUID());
+			ServerLevel lvl = Arena.level(server);
+			check("the void template is just a bedrock pad", lvl.getBlockState(at(studioCx, 100, 0)).is(Blocks.BEDROCK) && lvl.getBlockState(at(studioCx + 2, 100, -2)).is(Blocks.BEDROCK)
+				&& lvl.getBlockState(at(studioCx + 3, 100, 0)).isAir() && lvl.getBlockState(at(studioCx + 10, 100, 5)).isAir());
+			run(a, "leave");
+			run(a, "createarena box");
+			studioCx = ArenaStudio.plotOf(a.getUUID());
+			lvl = Arena.level(server);
+			check("the box template has a floor and walls", lvl.getBlockState(at(studioCx, 100, 0)).is(Blocks.BEDROCK) && lvl.getBlockState(at(studioCx - 32, 110, 0)).is(Blocks.BEDROCK)
+				&& lvl.getBlockState(at(studioCx + 31, 124, 31)).is(Blocks.BEDROCK) && lvl.getBlockState(at(studioCx + 31, 125, 31)).isAir() && lvl.getBlockState(at(studioCx, 110, 0)).isAir());
+			run(a, "savearena boxy");
+			check("a template arena can be saved at once (it has default spawns)", ArenaStore.exists(a.getUUID(), "boxy"));
+			run(a, "leave");
+			run(a, "arena delete boxy");
+			check("an arena can be deleted", !ArenaStore.exists(a.getUUID(), "boxy"));
+			run(a, "arena delete draft");
+			check("the draft can't be deleted like an arena", a.heard("You have no arena named 'draft'"));
+		});
+
+		step("custom arena: Alice picks it in the /duel menu", () -> {
+			run(a, "duel Bob");
+			menuStep(a, "qkit");
+		});
+		step("custom arena: menu, the arena step", () -> {
+			check("the arena step offers custom arenas", menuHas(a, "Custom arena"));
+			menuStep(a, "Custom arena");
+		});
+		step("custom arena: menu, the list", () -> {
+			check("her castle is listed", menuHas(a, "castle"));
+			menuStep(a, "castle");
+		});
+		step("custom arena: menu, how it is decided", () -> { menuStep(a, "First to N points"); });
+		step("custom arena: menu, amount", () -> { menuStep(a, "First to 2"); });
+		step("custom arena: menu, rules", () -> {
+			check("building can be switched", menuHas(a, "Building: ON"));
+			menuStep(a, "Continue");
+		});
+		step("custom arena: menu, send", () -> {
+			check("the summary names the arena", menuHas(a, "Duel vs Bob"));
+			menuStep(a, "Send the challenge");
+			check("Bob got the request naming the arena", b.heard("Custom arena 'castle'"));
+		});
+		step("custom arena: Bob accepts", () -> {
+			run(b, "accept Alice");
+			check("a duel started", duel(a) != null && duel(b) == duel(a));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("custom arena: the duel is in her arena", () -> {
+			Duel d = duel(a);
+			studioCx = Arena.centerX(d.slot);
+			ServerLevel lvl = Arena.level(server);
+			check("it is a custom arena duel", d.config.arena() == ArenaKind.CUSTOM && d.config.customName().equals("castle"), d.config.toString());
+			check("they are in the duel world", a.level().dimension().equals(Arena.DIMENSION) && b.level().dimension().equals(Arena.DIMENSION), where(a) + " / " + where(b));
+			check("the arena was pasted: grass, the high block", lvl.getBlockState(at(studioCx + 10, 100, 5)).is(Blocks.GRASS_BLOCK)
+				&& lvl.getBlockState(at(studioCx - 20, 130, 20)).is(Blocks.DIAMOND_BLOCK));
+			check("Alice is at spawn 1 and Bob at spawn 2", Math.abs(a.getX() - (studioCx + 3.5)) < 1.5 && Math.abs(a.getZ() - 2.5) < 1.5
+				&& Math.abs(b.getX() - (studioCx + 12.5)) < 1.5 && Math.abs(b.getZ() + 3.5) < 1.5, where(a) + " / " + where(b));
+			BlockHitResult target = new BlockHitResult(new Vec3(studioCx + 0.5, 101, 0.5), Direction.UP, at(studioCx, 100, 0), false);
+			useOn(a, new ItemStack(Items.STONE), target);
+			check("building is on, so she can place a block", lvl.getBlockState(at(studioCx, 101, 0)).is(Blocks.STONE));
+			lvl.setBlock(at(studioCx + 20, 120, 0), Blocks.TNT.defaultBlockState(), 2);
+			hit(a, b);
+			check("round 1 went to Alice", d.points[0] == 1 && d.phase == Duel.Phase.ROUND_END, d.points[0] + "-" + d.points[1] + " " + d.phase);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("custom arena: round 2 started on a clean arena", () -> {
+			ServerLevel lvl = Arena.level(server);
+			check("the stone she placed is gone", lvl.getBlockState(at(studioCx, 101, 0)).isAir());
+			check("the block somebody left in the air is gone", lvl.getBlockState(at(studioCx + 20, 120, 0)).isAir());
+			check("the arena itself is still there", lvl.getBlockState(at(studioCx + 10, 100, 5)).is(Blocks.GRASS_BLOCK));
+			check("this is round 2", duel(a).round == 2);
+			b.teleportTo(lvl, studioCx + 0.5, 60, 0.5, java.util.Set.of(), 0f, 0f, true);
+		}, () -> phaseIs(a, Duel.Phase.ENDED), 300);
+		step("custom arena: falling loses the round and the arena closes", () -> {
+			Duel d = duel(a);
+			check("Alice won 2-0", d != null && d.winner == 0 && d.points[0] == 2, d == null ? "no duel" : d.winner + " " + d.points[0] + "-" + d.points[1]);
+			check("Alice was told that Bob fell", a.heard("Bob fell into the void"));
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("custom arena: nothing is left in the duel world", () -> {
+			ServerLevel lvl = Arena.level(server);
+			check("the arena is cleaned away", lvl.getBlockState(at(studioCx + 10, 100, 5)).isAir() && lvl.getBlockState(at(studioCx - 20, 130, 20)).isAir());
+			check("both are back in the overworld", a.level().dimension().equals(server.overworld().dimension()) && b.level().dimension().equals(server.overworld().dimension()),
+				where(a) + " / " + where(b));
+		});
+		step("custom arena: Bob sees Alice's public arena", () -> {
+			run(b, "duel Alice");
+			menuStep(b, "bqkit");
+		});
+		step("custom arena: Bob's menu", () -> {
+			menuStep(b, "Custom arena");
+		});
+		step("custom arena: Bob's list", () -> {
+			check("castle is there as a public arena", menuHas(b, "castle"));
+			b.closeContainer();
+			DuelManager.cancelInvitesOf(b.getUUID());
+		});
+		step("custom arena: deleting an arena", () -> {
+			run(a, "arena delete castle");
+			check("it is gone, also from the shelf", !ArenaStore.exists(a.getUUID(), "castle") && ArenaStore.findPublic("castle").isEmpty());
+			DuelManager.sendInvite(a, b, a.getUUID(), DuelConfig.inCustomArena("qkit", ArenaStore.key(a.getUUID(), "castle"), WinMode.FIRST_TO, 1, DuelConfig.Rules.DEFAULT), false);
+			run(b, "accept Alice");
+			check("a challenge to a deleted arena does not start", duel(a) == null && b.heard("The custom arena 'castle' no longer exists"));
+			DuelManager.cancelInvitesOf(a.getUUID());
+			ArenaStore.deleteForTest(a.getUUID());
+			BuilderRank.resetForTest();
 		});
 
 		step("kits: every item of the game is saved and read back the same", () -> {

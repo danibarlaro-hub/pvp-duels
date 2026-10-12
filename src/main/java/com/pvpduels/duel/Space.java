@@ -1,5 +1,8 @@
 package com.pvpduels.duel;
 
+import com.pvpduels.arena.ArenaData;
+import com.pvpduels.arena.ArenaPaster;
+import com.pvpduels.arena.ArenaStore;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +18,7 @@ abstract class Space {
 			case FLAT -> new Flat(slot, config.walls(), false);
 			case BOT -> new Flat(slot, true, true);
 			case CIRCLE, UNLIMITED -> new Normal(config.arena(), slot, config.radius());
+			case CUSTOM -> new Custom(slot, config.custom());
 		};
 	}
 
@@ -136,6 +140,60 @@ abstract class Space {
 			if (region == null) return;
 			Terrain.follow(region, a.getX(), a.getZ());
 			Terrain.follow(region, b.getX(), b.getZ());
+		}
+	}
+
+	// ------------------------------------------------------------------ an arena a Builder made
+
+	private static final class Custom extends Space {
+		private final int slot;
+		private final String key;
+		private ArenaData data;
+
+		Custom(int slot, String key) {
+			this.slot = slot;
+			this.key = key;
+		}
+
+		private ArenaData data() {
+			if (data == null) {
+				try {
+					data = ArenaStore.load(key).orElseThrow(() -> new IllegalStateException("The arena '" + key + "' no longer exists."));
+				} catch (java.io.IOException e) {
+					throw new java.io.UncheckedIOException(e);
+				}
+			}
+			return data;
+		}
+
+		private int cx() {
+			return Arena.centerX(slot);
+		}
+
+		@Override ResourceKey<Level> dimension() { return Arena.DIMENSION; }
+		@Override double centerX() { return cx(); }
+		@Override double centerZ() { return 0; }
+
+		@Override
+		double[] spawn(int index) {
+			double[] s = index == 0 ? data().spawn0 : data().spawn1;
+			if (s == null) s = new double[] {index == 0 ? -8.5 : 9.5, 1, 0.5, index == 0 ? -90 : 90};
+			return new double[] {cx() + s[0], Arena.FLOOR_Y + s[1], s[2], s[3]};
+		}
+
+		@Override void begin(ServerLevel level) { ArenaPaster.apply(level, cx(), data()); }
+
+		@Override
+		void end(ServerLevel level) {
+			if (level != null) ArenaPaster.apply(level, cx(), null);
+		}
+
+		@Override
+		String outOfBounds(ServerPlayer p) {
+			if (p.getY() < ArenaPaster.MIN_Y - 8) return "fell into the void.";
+			double reach = ArenaPaster.HALF + 24;
+			if (Math.abs(p.getX() - cx()) > reach || Math.abs(p.getZ()) > reach) return "left the arena.";
+			return null;
 		}
 	}
 }

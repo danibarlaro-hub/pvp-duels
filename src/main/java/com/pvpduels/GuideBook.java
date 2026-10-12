@@ -33,7 +33,7 @@ public final class GuideBook {
 		new Topic("Lobby", new String[][] {
 			{"The lobby hotbar", "Slot 1: Send Duel\nSlot 2: Leave\nSlot 8: Create+\nSlot 9: this book\n\nThey stay in place while you are in the lobby."},
 			{"Send Duel", "Right-click: pick a player to challenge.\n\nRight-click or hit a player with it: challenge them straight away."},
-			{"Leave and Create+", "Leave: leaves the queue, cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only, soon)."},
+			{"Leave and Create+", "Leave: leaves the queue, cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only: your own arenas)."},
 			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\n\nAdmins: /npc add bot|kit|arena, /npc remove, /npc list."},
 			{"Lobby commands", "/lobby: go there\n/lobby return on|off: after a duel go to the lobby or back where you were\n\nAdmins: /setlobby, /lobby protect <radius|off>, /lobby clear"}
 		}),
@@ -55,6 +55,12 @@ public final class GuideBook {
 			{"Queue", "/queue opens the menu. Wait for somebody and the duel starts by itself: flat arena with walls, first to 3 points.\n\nLeave with the Leave barrier, /queue leave or the [LEAVE QUEUE] button."},
 			{"Three queues", "Public: pick a public kit (or a random one) and match with somebody who picked the same.\n\nRandom: the kit is a surprise.\n\nOwn kit: offer one of your kits; you both fight with it."},
 			{"Queue commands", "/queue public [kit]\n/queue random\n/queue own <kit>\n/queue take <player>\n/queue list\n/queue leave"}
+		}),
+		new Topic("Arenas", new String[][] {
+			{"Custom arenas", "/createarena or Create+ > Create Arena. Pick a template and build in a 64x64 plot.\n\nTo fight in one, pick Custom arena in the arena step of /duel."},
+			{"Building one", "/setspawn 1 and 2: where each player starts\n/savearena <name>\n/leave: stop building (kept as a draft)\n\nChests and signs are not saved."},
+			{"Share them", "/arena: your arenas, with [EDIT] and [PUBLISH]\n/arena public: the shared ones\n/arena publish <name>\n/arena unpublish <name>\n\nPrivate arenas are only for you."},
+			{"Builder rank", "Only Builders make arenas. Place 1st, 2nd or 3rd in the weekly building contest to get it for 3 weeks.\n\n/builder shows yours."}
 		}),
 		new Topic("Kits", new String[][] {
 			{"Your kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit show <name>\n/kit delete <name>"},

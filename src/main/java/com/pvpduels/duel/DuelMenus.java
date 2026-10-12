@@ -31,6 +31,7 @@ public final class DuelMenus {
 		final String opponentName;
 		String kit;
 		ArenaKind arena = ArenaKind.FLAT;
+		String custom = "";
 		int radius = 100;
 		boolean walls;
 		boolean regen = true;
@@ -204,6 +205,14 @@ public final class DuelMenus {
 				setup.arena = ArenaKind.UNLIMITED;
 				mode(who, setup);
 			});
+		b.set(22, icon(Items.CRAFTING_TABLE, "Custom arena", ChatFormatting.GREEN,
+			"An arena a Builder made: yours or a public one.", "You can build and dig unless you switch building off.",
+			"The arena is reset after every round."),
+			who -> ArenaMenus.pickArena(who, "Duel: choose a custom arena", 0, () -> arena(who, setup), (w, pick) -> {
+				setup.arena = ArenaKind.CUSTOM;
+				setup.custom = pick[0];
+				mode(w, setup);
+			}));
 		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> kits(who, setup, 0));
 		ChoiceMenu.open(p, Component.literal("Duel: choose an arena"), 3, b);
 	}
@@ -352,6 +361,10 @@ public final class DuelMenus {
 	// ------------------------------------------------------------------ 7. confirm
 
 	private static DuelConfig config(Setup setup) {
+		if (setup.arena == ArenaKind.CUSTOM) {
+			return DuelConfig.inCustomArena(setup.kit, setup.custom, setup.mode, setup.limit,
+				new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
+		}
 		return new DuelConfig(setup.kit, setup.arena, setup.walls, setup.arena == ArenaKind.CIRCLE ? setup.radius : 0, setup.mode, setup.limit,
 			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
 	}

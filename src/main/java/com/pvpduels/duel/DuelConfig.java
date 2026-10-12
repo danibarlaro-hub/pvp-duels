@@ -1,7 +1,7 @@
 package com.pvpduels.duel;
 
 /** Everything chosen in the /duel menus. The kit belongs to kitOwner (the player who sent the challenge). */
-public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius, WinMode mode, int limit, Rules rules) {
+public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius, WinMode mode, int limit, Rules rules, String custom) {
 
 	/**
 	 * Rules the challenger can switch off for one duel.
@@ -21,7 +21,7 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 			if (!regen) parts.add("no natural regeneration");
 			if (!fallDamage) parts.add("no fall damage");
 			if (!hunger && regen) parts.add("no hunger loss");
-			if (!building && (arena == ArenaKind.CIRCLE || arena == ArenaKind.UNLIMITED)) parts.add("no building");
+			if (!building && (arena == ArenaKind.CIRCLE || arena == ArenaKind.UNLIMITED || arena == ArenaKind.CUSTOM)) parts.add("no building");
 			if (parts.isEmpty()) return "default rules";
 			String text = String.join(", ", parts);
 			return Character.toUpperCase(text.charAt(0)) + text.substring(1);
@@ -30,6 +30,23 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 
 	public DuelConfig {
 		if (rules == null) rules = Rules.DEFAULT;
+		if (custom == null) custom = "";
+	}
+
+	/** Without a custom arena. */
+	public DuelConfig(String kit, ArenaKind arena, boolean walls, int radius, WinMode mode, int limit, Rules rules) {
+		this(kit, arena, walls, radius, mode, limit, rules, "");
+	}
+
+	/** In a custom arena: key is "player id/name" or "public/name" (see ArenaStore). */
+	public static DuelConfig inCustomArena(String kit, String key, WinMode mode, int limit, Rules rules) {
+		return new DuelConfig(kit, ArenaKind.CUSTOM, false, 0, mode, limit, rules, key);
+	}
+
+	/** The name of the custom arena (the part of the key after the slash), or "". */
+	public String customName() {
+		int slash = custom.indexOf('/');
+		return slash < 0 ? custom : custom.substring(slash + 1);
 	}
 
 	/** Same as above with the default rules. */
@@ -48,6 +65,7 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 			case CIRCLE -> "Circular arena (radius " + radius + ")";
 			case UNLIMITED -> "Unlimited arena";
 			case BOT -> "Bot arena (radius " + Arena.BOT_RADIUS + ")";
+			case CUSTOM -> "Custom arena '" + customName() + "'";
 		};
 	}
 

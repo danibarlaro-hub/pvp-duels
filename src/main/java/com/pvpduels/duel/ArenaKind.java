@@ -9,5 +9,7 @@ public enum ArenaKind {
 	/** Flat normal terrain without a border; you can't get more than 100 blocks away from your rival. */
 	UNLIMITED,
 	/** The practice arena of /botduel: a bedrock platform over the void, 100 blocks each way, with walls. */
-	BOT
+	BOT,
+	/** An arena a Builder made: it is pasted into the duel world before every round. */
+	CUSTOM
 }

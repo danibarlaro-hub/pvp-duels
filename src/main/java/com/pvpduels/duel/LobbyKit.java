@@ -451,11 +451,9 @@ public final class LobbyKit {
 		if (problem != null) p.sendSystemMessage(Msg.err(problem));
 	}
 
-	/** The arena builder is the next delivery: for now this says how it will work. */
+	/** Create Arena: the arena studio menu for Builders, an explanation of the rank for everybody else. */
 	static void openArenaInfo(ServerPlayer p) {
-		p.closeContainer();
-		p.sendSystemMessage(Msg.title("Create Arena"));
-		p.sendSystemMessage(Msg.info("  Custom arenas are coming soon. Only players with the Builder rank will be able to make them."));
+		ArenaMenus.openStudio(p);
 	}
 
 	// ------------------------------------------------------------------ events

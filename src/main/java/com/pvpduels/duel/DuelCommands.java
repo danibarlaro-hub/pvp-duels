@@ -52,6 +52,7 @@ public final class DuelCommands {
 		dispatcher.register(Commands.literal("leave").executes(ctx -> {
 			ServerPlayer p = ctx.getSource().getPlayerOrException();
 			if (com.pvpduels.workshop.Workshop.isIn(p.getUUID())) com.pvpduels.workshop.Workshop.exit(p);
+			else if (com.pvpduels.arena.ArenaStudio.isIn(p.getUUID())) com.pvpduels.arena.ArenaStudio.exit(p);
 			else if (Spectators.isIn(p.getUUID())) Spectators.exit(p);
 			else DuelManager.leave(p);
 			return 1;

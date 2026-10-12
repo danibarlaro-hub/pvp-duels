@@ -44,7 +44,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Lo que tenias en esos 4 slots se guarda en disco y vuelve al salir del lobby, al desconectarte, al morir o si el juego se cierra de golpe
 - ✅ 3 NPCs (muñecos que se clickean): Practice Bot, Kit Workshop y Arena Builder; `/npc add bot|kit|arena`, `/npc remove`, `/npc list` (admins)
 - ✅ Libro con indice clickeable, una pagina en blanco entre cada tema y una parte "About this server"
-- 🟡 Create Arena: por ahora solo explica que viene (entrega 3: `/createarena`, rango Builder)
+- ✅ Create Arena: estudio de arenas propias para Builders (`/createarena`, `/savearena`, `/setspawn 1|2`, `/arena …`); el concurso semanal que da el rango viene en la entrega 3b
 - ⏳ La barrier no puede usarse siendo espectador (Minecraft no deja usar items en espectador): ahi se sale con `/leave` o el boton del chat
 
 ## Interfaz y ayuda
