@@ -8,7 +8,8 @@ El `.jar` siempre actualizado esta aca (lo arma GitHub solo en cada cambio):
 https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0.1.0.jar
 
 Si una version nueva falla, hay copias fijas que nunca cambian:
-- Todo el mod (hasta antes de `/botduel`), probado con 276 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-full/pvpduels-0.1.0.jar
+- Todo el mod con `/botduel`, probado con 323 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botduel/pvpduels-0.1.0.jar
+- Todo el mod sin `/botduel`, probado con 276 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-full/pvpduels-0.1.0.jar
 - Solo hasta los duelos (la primera version probada): https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpduels-0.1.0.jar
 
 ## Instalar
