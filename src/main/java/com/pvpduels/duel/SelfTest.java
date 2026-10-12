@@ -1,27 +1,18 @@
 package com.pvpduels.duel;
 
-import com.mojang.authlib.GameProfile;
 import com.pvpduels.PvpDuelsMod;
+import com.pvpduels.duel.TestDummy.Dummy;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
-import io.netty.channel.ChannelFutureListener;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.Connection;
 import net.minecraft.network.DisconnectionDetails;
-import net.minecraft.network.PacketListener;
-import net.minecraft.network.ProtocolInfo;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -36,7 +27,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,59 +43,8 @@ public final class SelfTest {
 
 	// ------------------------------------------------------------------ fake players
 
-	private static final class FakeConnection extends Connection {
-		FakeConnection() {
-			super(PacketFlow.SERVERBOUND);
-		}
-
-		@Override public void send(Packet<?> packet) {}
-		@Override public void send(Packet<?> packet, ChannelFutureListener listener) {}
-		@Override public void send(Packet<?> packet, ChannelFutureListener listener, boolean flush) {}
-		@Override public void setReadOnly() {}
-		@Override public void handleDisconnection() {}
-		@Override public void setListenerForServerboundHandshake(PacketListener listener) {}
-		@Override public <T extends PacketListener> void setupInboundProtocol(ProtocolInfo<T> info, T listener) {}
-	}
-
-	private static final class Bot extends ServerPlayer {
-		final List<String> inbox = new ArrayList<>();
-
-		Bot(MinecraftServer server, ServerLevel level, GameProfile profile) {
-			super(server, level, profile, ClientInformation.createDefault());
-		}
-
-		/** A real client tells the server when it has loaded the world; until then players can't be hurt. */
-		void markLoaded() {
-			if (isChangingDimension()) hasChangedDimension(); // a real client does this with its first movement packet
-			if (connection != null && !connection.hasClientLoaded()) {
-				connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
-			}
-		}
-
-		@Override
-		public void tick() {
-			markLoaded();
-			super.tick();
-			doTick();
-		}
-
-		@Override
-		public void sendSystemMessage(Component message, boolean overlay) {
-			inbox.add(message.getString());
-			super.sendSystemMessage(message, overlay);
-		}
-
-		boolean heard(String text) {
-			for (String line : inbox) if (line.contains(text)) return true;
-			return false;
-		}
-	}
-
-	private static Bot spawn(String name) {
-		GameProfile profile = new GameProfile(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8)), name);
-		Bot bot = new Bot(server, server.overworld(), profile);
-		server.getPlayerList().placeNewPlayer(new FakeConnection(), bot, CommonListenerCookie.createInitial(profile, false));
-		return bot;
+	private static Dummy spawn(String name) {
+		return TestDummy.create(server, name);
 	}
 
 	// ------------------------------------------------------------------ test runner
@@ -223,32 +162,32 @@ public final class SelfTest {
 
 	// ------------------------------------------------------------------ helpers
 
-	private static Bot a;
-	private static Bot b;
+	private static Dummy a;
+	private static Dummy b;
 	private static final double[] aPos = new double[3];
 	private static final double[] bPos = new double[3];
 
-	private static void run(Bot who, String command) {
+	private static void run(Dummy who, String command) {
 		server.getCommands().performPrefixedCommand(who.createCommandSourceStack(), command);
 	}
 
-	private static Duel duel(Bot who) {
+	private static Duel duel(Dummy who) {
 		return DuelManager.duelOf(who.getUUID());
 	}
 
 	/** Right-clicks the block with this item in the main hand, like a real client does. */
-	private static void useOn(Bot who, ItemStack stack, BlockHitResult hit) {
+	private static void useOn(Dummy who, ItemStack stack, BlockHitResult hit) {
 		who.setItemInHand(InteractionHand.MAIN_HAND, stack);
 		who.gameMode.useItemOn(who, (ServerLevel) who.level(), who.getItemInHand(InteractionHand.MAIN_HAND), InteractionHand.MAIN_HAND, hit);
 	}
 
-	private static void hit(Bot attacker, Bot victim) {
+	private static void hit(Dummy attacker, Dummy victim) {
 		victim.markLoaded();
 		victim.invulnerableTime = 0;
 		victim.hurtServer((ServerLevel) victim.level(), attacker.damageSources().playerAttack(attacker), 1000f);
 	}
 
-	private static boolean clickMenu(Bot who, String name) {
+	private static boolean clickMenu(Dummy who, String name) {
 		AbstractContainerMenu menu = who.containerMenu;
 		if (!(menu instanceof ChestMenu chest)) return false;
 		for (int i = 0; i < chest.getRowCount() * 9; i++) {
@@ -261,30 +200,30 @@ public final class SelfTest {
 		return false;
 	}
 
-	private static boolean menuStep(Bot who, String name) {
+	private static boolean menuStep(Dummy who, String name) {
 		boolean ok = clickMenu(who, name);
 		check("menu has the option '" + name + "'", ok);
 		return ok;
 	}
 
-	private static double dist(Bot p, double[] pos) {
+	private static double dist(Dummy p, double[] pos) {
 		return Math.sqrt(p.distanceToSqr(pos[0], pos[1], pos[2]));
 	}
 
-	private static boolean phaseIs(Bot who, Duel.Phase phase) {
+	private static boolean phaseIs(Dummy who, Duel.Phase phase) {
 		Duel d = duel(who);
 		return d != null && d.phase == phase;
 	}
 
-	private static boolean noDuel(Bot who) {
+	private static boolean noDuel(Dummy who) {
 		return duel(who) == null;
 	}
 
-	private static String where(Bot p) {
+	private static String where(Dummy p) {
 		return p.level().dimension().identifier() + " " + String.format("%.1f %.1f %.1f", p.getX(), p.getY(), p.getZ());
 	}
 
-	private static void invite(Bot from, Bot to, DuelConfig config) {
+	private static void invite(Dummy from, Dummy to, DuelConfig config) {
 		DuelManager.sendInvite(from, to, from.getUUID(), config, false);
 		run(to, "accept " + from.getName().getString());
 	}
@@ -540,6 +479,39 @@ public final class SelfTest {
 			check("leaving an unlimited duel is decided by score (Alice ahead)", d != null && d.winner == 0 && d.phase == Duel.Phase.ENDED,
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
+
+		step("test dummy: only admins can use the command", () -> {
+			run(a, "test_dummy gate");
+			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
+		});
+		step("test dummy: spawn, auto-accept", () -> {
+			String problem = TestDummy.spawn(a, "dum");
+			Dummy dum = (Dummy) server.getPlayerList().getPlayerByName("dum");
+			check("the dummy was created", problem == null && dum != null, String.valueOf(problem));
+			check("a bad name is refused", TestDummy.spawn(a, "bad name!") != null);
+			check("a duplicate name is refused", TestDummy.spawn(a, "dum") != null);
+			check("the dummy stands next to the owner", dum != null && a.distanceTo(dum) < 5, dum == null ? "" : String.valueOf(a.distanceTo(dum)));
+			DuelManager.sendInvite(a, dum, a.getUUID(), new DuelConfig("testkit", false, WinMode.FIRST_TO, 1), false);
+			check("the dummy accepted the challenge by itself", duel(a) != null && duel(dum) == duel(a));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("test dummy: Alice wins", () -> {
+			Dummy dum = (Dummy) server.getPlayerList().getPlayerByName("dum");
+			hit(a, dum);
+			Duel d = duel(a);
+			check("first to 1 point: Alice beats the dummy", d.points[0] == 1 && d.winner == 0, d.points[0] + "-" + d.points[1] + " winner=" + d.winner);
+		}, () -> noDuel(a), 600);
+		step("test dummy: /again is accepted by the dummy", () -> {
+			run(a, "again");
+			check("the rematch started without anybody clicking", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("test dummy: removing it in the middle of a duel", () -> {
+			int removed = TestDummy.remove(server, "dum");
+			check("the dummy was removed", removed == 1 && server.getPlayerList().getPlayerByName("dum") == null);
+			Duel d = duel(a);
+			check("the duel ends in Alice's favour", d != null && d.winner == 0 && d.phase == Duel.Phase.ENDED,
+				d == null ? "no duel" : d.phase + " winner=" + d.winner);
+			check("the dummy is not auto-accepting any more", !TestDummy.accepts(java.util.UUID.nameUUIDFromBytes("OfflinePlayer:dum".getBytes(java.nio.charset.StandardCharsets.UTF_8))));
+		}, () -> noDuel(a), 600);
 
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");

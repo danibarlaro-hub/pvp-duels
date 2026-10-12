@@ -239,6 +239,12 @@ public final class DuelManager {
 		to.sendSystemMessage(buttons);
 
 		from.sendSystemMessage(Msg.ok("Duel request sent to " + toName + ". It expires in 60 seconds."));
+
+		// A test dummy (see /test_dummy) accepts everything right away.
+		if (TestDummy.accepts(to.getUUID())) {
+			from.sendSystemMessage(Msg.info(toName + " (test dummy) accepted."));
+			accept(to, fromName);
+		}
 	}
 
 	private static Optional<Invite> findInvite(UUID to, String fromName) {
