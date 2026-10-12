@@ -8,7 +8,7 @@ El `.jar` siempre actualizado esta aca (lo arma GitHub solo en cada cambio):
 https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0.1.0.jar
 
 Si una version nueva falla, hay copias fijas que nunca cambian:
-- Todo el mod, probado con 276 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-full/pvpduels-0.1.0.jar
+- Todo el mod (hasta antes de `/botduel`), probado con 276 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-full/pvpduels-0.1.0.jar
 - Solo hasta los duelos (la primera version probada): https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpduels-0.1.0.jar
 
 ## Instalar
@@ -29,6 +29,13 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 - Hasta 3 duelos al mismo tiempo en el mundo.
 - **Arena circular** (radio 100, 150 o 200): terreno plano normal (5 de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60) dentro de un circulo de barreras invisibles. Se puede poner y romper todo; el terreno se resetea solo antes de cada ronda. Salir del circulo = perder la ronda.
 - **Arena sin limites**: el mismo terreno sin borde. Si estas a mas de 100 bloques de tu rival durante 5 segundos, el que se alejo (el que esta mas lejos del punto de inicio) pierde la mitad de la vida y se teletransporta al lado del rival.
+
+## Practicar solo contra un bot (`/botduel`)
+- `/botduel [kit]` abre los menus: elegis el kit (si no lo escribiste), te pregunta **Yes / No**, y con **Yes** te manda a una arena de bedrock de **100 bloques hacia cada lado** (201x201) con paredes de 40 de alto.
+- El bot se llama `Bot`, tiene tu kit, **no se mueve (si lo empujan o lo golpean vuelve al lugar) y no pelea de vuelta**. Aparece en la lista de jugadores como uno mas ("Bot joined the game" en el chat).
+- Las rondas siguen hasta que hagas `/leave` (se juega a puntos sin limite). Cada ronda la arena se limpia sola y el bot vuelve a su lugar. Las reglas de construccion son las de la arena plana (solo entidades y bloques con entidad).
+- No cuenta para tus estadisticas. Si dos amigos hacen `/botduel` a la vez, cada uno tiene su bot y su arena (hasta 3 duelos en total).
+- La primera vez que se usa cada arena el juego se traba como un segundo mientras la arma (son 73.000 bloques); despues se limpia en menos de 0,1 s.
 
 ## Taller de kits (crear kits en creativo)
 - `/kit create [kit]` te manda a un mundo vacio con una plataforma de piedra, en creativo, pero **sin poder romper ni poner nada**. Si das el nombre de un kit, se carga para editarlo.
@@ -75,5 +82,5 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 
 ## Prueba automatica
 Cada vez que se arma el mod, GitHub levanta un servidor de prueba con dos jugadores falsos que juegan duelos completos
-(menus, invitaciones, rondas, vacio, `/leave`, desconexion, reglas de la arena, arenas circular y sin limites, reglas por duelo, `/spectate`, lobby, taller de kits, `/enchant`, `/infinite`, compartir kits, `/layout auto`, `/test_dummy`) y publica el resultado en la rama `selftest-out`.
+(menus, invitaciones, rondas, vacio, `/leave`, desconexion, reglas de la arena, arenas circular y sin limites, reglas por duelo, `/spectate`, lobby, taller de kits, `/enchant`, `/infinite`, compartir kits, `/layout auto`, `/test_dummy`, `/botduel`) y publica el resultado en la rama `selftest-out`.
 Lo que esa prueba **no** puede ver: como se dibujan los menus, titulos, marcador y libro en una pantalla real, que tan fluido anda un circulo de radio 200 en tu PC, ni Essential.
