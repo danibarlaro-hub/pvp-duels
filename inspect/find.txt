@@ -1,13 +1,3 @@
-\.Equippable$
-ItemAttributeModifiers
-\.EquipmentSlot(Group)?$
-\.ItemEnchantments
-\.EnchantmentHelper$
-\.Enchantments$
-EnchantmentEffectComponents
-\.AttributeModifier$
-\.Attributes$
-\.Mannequin$
-\.Villager$
-\.ArmorStand$
-\.Interaction$
+\.StructureTemplateManager$
+\.templatesystem\.
+^net\.minecraft\.world\.level\.block\.Block$

@@ -134,6 +134,18 @@ public final class LobbyKit {
 		return STASH.containsKey(id);
 	}
 
+	/** For the self-test log: why this player does not get the lobby items right now ("ok" when they do). */
+	static String why(ServerPlayer p) {
+		if (!p.isAlive() || p.isSpectator() || p.isRemoved()) return "dead, spectator or removed";
+		if (!Lobby.isSet()) return "no lobby";
+		if (!Lobby.contains(p)) return "outside the lobby";
+		if (LobbyGuard.bypass(p)) return "admin bypass";
+		if (DuelManager.isBusy(p.getUUID())) return "busy (duel " + DuelManager.duelOf(p.getUUID()) + ", workshop " + com.pvpduels.workshop.Workshop.isIn(p.getUUID())
+			+ ", spectating " + Spectators.isIn(p.getUUID()) + ")";
+		if (PlayerBackup.exists(p.getUUID())) return "has a backup";
+		return STASH.containsKey(p.getUUID()) ? "ok" : "eligible but no items yet";
+	}
+
 	static boolean eligible(ServerPlayer p) {
 		if (!p.isAlive() || p.isSpectator() || p.isRemoved()) return false;
 		if (!Lobby.isSet() || !Lobby.contains(p)) return false;

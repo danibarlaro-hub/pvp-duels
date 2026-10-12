@@ -1,9 +1,0 @@
-net.minecraft.network.Connection
-net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket
-net.minecraft.server.level.ServerEntity
-net.minecraft.server.level.ServerPlayer
-net.minecraft.server.network.ServerCommonPacketListenerImpl
-net.minecraft.server.network.ServerGamePacketListenerImpl
-net.minecraft.server.players.PlayerList
-net.minecraft.world.entity.LivingEntity
-net.minecraft.world.entity.player.Player

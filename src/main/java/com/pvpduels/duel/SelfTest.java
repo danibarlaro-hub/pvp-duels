@@ -1135,7 +1135,11 @@ public final class SelfTest {
 		step("lobby items: everybody in the lobby gets them", () -> {
 			// the lobby is where Alice, Bob and Carl are
 			check("Carl is in the lobby too", Lobby.contains(carl), where(carl));
-		}, () -> LobbyKit.isActive(a.getUUID()) && LobbyKit.isActive(b.getUUID()) && LobbyKit.isActive(carl.getUUID()), 200);
+		}, () -> {
+			boolean ok = LobbyKit.isActive(a.getUUID()) && LobbyKit.isActive(b.getUUID()) && LobbyKit.isActive(carl.getUUID());
+			if (!ok && ticks % 40 == 0) log("waiting for the lobby items: Alice " + LobbyKit.why(a) + " | Bob " + LobbyKit.why(b) + " | Carl " + LobbyKit.why(carl));
+			return ok;
+		}, 200);
 		step("lobby items: what is in each slot", () -> {
 			var inv = a.getInventory();
 			check("slot 1 is Send Duel (a sword)", LobbyKit.kindOf(inv.getItem(0)) != null && "send".equals(LobbyKit.kindOf(inv.getItem(0)))
