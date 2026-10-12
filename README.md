@@ -8,7 +8,7 @@ El `.jar` siempre actualizado esta aca (lo arma GitHub solo en cada cambio):
 https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0.1.0.jar
 
 Si una version nueva falla, hay copias fijas que nunca cambian:
-- **Ultima**: todo el mod con el bot que se levanta despues de un KO sin reiniciar nada, `/kit save` que verifica lo que guardo, `/kit show` para mirar adentro de un kit y aviso si un duelo arranca con un kit vacio, y el Sort que se pone la mejor armadura (sin Curse of Binding), probado con 422 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-armor/pvpduels-0.1.0.jar
+- **Ultima**: cola `/queue` (publica, random y kit propio) y ranking por kit (`/top kit <nombre>`), ademas de los items fijos del lobby (Send Duel, Leave, Create+, libro de guia), los 3 NPCs, `/duels` con [WATCH] y el resumen despues de cada duelo; probado con unos 560 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-queue/pvpduels-0.1.0.jar
 - Con el lobby protegido y el mundo de la isla flotante, 370 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-lobby/pvpduels-0.1.0.jar
 - Todo el mod con `/botduel` con niveles (estatico, passive, easy, normal, hard), contadores de practica, Elo y `/top`, probado con 356 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botlevels/pvpduels-0.1.0.jar
 - Todo el mod con `/botduel` basico (bot siempre estatico), probado con 323 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botduel/pvpduels-0.1.0.jar

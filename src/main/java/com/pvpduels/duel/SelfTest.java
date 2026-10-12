@@ -2051,8 +2051,14 @@ public final class SelfTest {
 		});
 
 		step("queue: back in the lobby", () -> {
-			log("Alice before going to the lobby: " + where(a) + ", " + LobbyKit.why(a));
-			Lobby.teleport(server, a);
+			// the lobby of the earlier tests was cleared: make a new one where Alice stands
+			a.teleportTo(server.overworld(), 50.5, a.getY(), 50.5, java.util.Set.of(), 0f, 0f, true);
+			try {
+				Lobby.set(a);
+			} catch (java.io.IOException e) {
+				check("the lobby can be saved", false, e.toString());
+			}
+			check("the lobby is set", Lobby.isSet());
 		}, () -> {
 			boolean ok = LobbyKit.isActive(a.getUUID());
 			if (!ok && ticks % 40 == 0) log("waiting for Alice's lobby items: " + where(a) + ", " + LobbyKit.why(a));
@@ -2071,6 +2077,11 @@ public final class SelfTest {
 		step("queue: clean up", () -> {
 			Queue.clearAll();
 			Queue.useRandom(new java.util.Random());
+			try {
+				Lobby.clear();
+			} catch (java.io.IOException e) {
+				check("the lobby can be cleared", false, e.toString());
+			}
 			check("nobody is left in a queue", Queue.size() == 0);
 		});
 
