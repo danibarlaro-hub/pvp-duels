@@ -1820,8 +1820,8 @@ public final class SelfTest {
 			check("a better worn piece is kept", a.getItemBySlot(EquipmentSlot.HEAD).is(Items.NETHERITE_HELMET));
 			check("and the worse one stays in the backpack", inv.getItem(20).is(Items.DIAMOND_HELMET));
 
-			inv.setItem(21, new ItemStack(Items.DIAMOND_HELMET));
-			inv.setSelectedSlot(21);
+			inv.setItem(1, new ItemStack(Items.DIAMOND_HELMET));
+			inv.setSelectedSlot(1);
 			run(a, "enchant protection 10");
 			inv.setSelectedSlot(0);
 			run(a, "layout sort");
