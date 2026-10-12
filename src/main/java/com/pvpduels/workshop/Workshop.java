@@ -75,6 +75,7 @@ public final class Workshop {
 			try {
 				Optional<KitStore.Kit> read = KitStore.read(server, p.getUUID(), kitName);
 				if (read.isEmpty()) return "You have no kit named '" + kitName + "'. Use /kit list.";
+				if (read.get().locked()) return "Kit '" + kitName + "' was given to you and is locked: you can use it but not edit it.";
 				kit = read.get();
 			} catch (IOException | RuntimeException e) {
 				return "Could not read the kit: " + e.getMessage();

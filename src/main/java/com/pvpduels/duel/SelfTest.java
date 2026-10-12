@@ -7,6 +7,7 @@ import com.pvpduels.stats.StatsStore;
 import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
+import com.pvpduels.kit.PublicKits;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
@@ -790,6 +791,78 @@ public final class SelfTest {
 			check("Terrain has no open arena", Terrain.activeRegions() == 0, String.valueOf(Terrain.activeRegions()));
 			check("both are back in the overworld", a.level().dimension().equals(server.overworld().dimension())
 				&& b.level().dimension().equals(server.overworld().dimension()), where(a) + " / " + where(b));
+		});
+
+
+		// ---------------------------------------------------------------- sharing kits
+		step("sharing: /publicate and /kit public", () -> {
+			run(a, "publicate nothere");
+			check("an unknown kit can't be published", PublicKits.find("nothere").isEmpty() && a.heard("don't have a kit"));
+			run(a, "publicate testkit");
+			var entry = PublicKits.find("testkit");
+			check("the kit is on the public shelf", entry.isPresent() && entry.get().owner().equals(a.getUUID()) && entry.get().ownerName().equals("Alice"));
+			check("the other players hear about it", b.heard("shared the kit 'testkit'"));
+			run(b, "kit public");
+			check("/kit public lists the kit and its author", b.heard("testkit") && b.heard("by Alice"));
+			run(b, "unpublish testkit");
+			check("only the owner can unpublish", PublicKits.find("testkit").isPresent() && b.heard("Only Alice can unpublish"));
+		});
+		step("sharing: /kit take", () -> {
+			run(b, "kit take testkit");
+			check("Bob copied the public kit", KitStore.exists(b.getUUID(), "testkit") && !KitStore.isLocked(b.getUUID(), "testkit"));
+			try {
+				var kit = KitStore.read(server, b.getUUID(), "testkit");
+				check("the copy has the sword and the armor", kit.isPresent() && kit.get().slots()[0].is(Items.DIAMOND_SWORD)
+					&& kit.get().slots()[38].is(Items.IRON_CHESTPLATE), kit.isPresent() ? kit.get().slots()[0].toString() : "no kit");
+			} catch (java.io.IOException e) {
+				check("the copy can be read", false, e.toString());
+			}
+			run(b, "kit take testkit");
+			check("taking it twice is refused", b.heard("already have a kit named"));
+			run(b, "publicate testkit");
+			check("two public kits can't share a name", b.heard("already a public kit named"));
+			run(b, "kit take nothere");
+			check("an unknown public kit is refused", b.heard("no public kit named"));
+		});
+		step("sharing: /unpublish", () -> {
+			run(a, "unpublish testkit");
+			check("the owner took it off the shelf", PublicKits.find("testkit").isEmpty());
+			check("the copy Bob already took stays with him", KitStore.exists(b.getUUID(), "testkit"));
+		});
+		step("sharing: /private gives a locked copy", () -> {
+			run(a, "private testkit Bob");
+			check("Bob got the kit under a new name because he already had 'testkit'", KitStore.exists(b.getUUID(), "testkit-2"));
+			check("his own 'testkit' was not overwritten", !KitStore.isLocked(b.getUUID(), "testkit"));
+			check("the gift is locked", KitStore.isLocked(b.getUUID(), "testkit-2"));
+			check("Bob was told", b.heard("gave you the kit 'testkit-2'"));
+			try {
+				var kit = KitStore.read(server, b.getUUID(), "testkit-2");
+				check("the gift keeps the author and the content", kit.isPresent() && kit.get().locked() && kit.get().from().equals("Alice")
+					&& kit.get().slots()[0].is(Items.DIAMOND_SWORD));
+			} catch (java.io.IOException e) {
+				check("the gift can be read", false, e.toString());
+			}
+			run(a, "private testkit Nobody");
+			check("an offline player is refused", a.heard("No player named 'Nobody'"));
+			run(a, "private testkit Alice");
+			check("you can't give a kit to yourself", a.heard("That is you"));
+		});
+		step("sharing: a locked kit can be used but not shared or edited", () -> {
+			run(b, "publicate testkit-2");
+			check("a locked kit can't be published", PublicKits.find("testkit-2").isEmpty() && b.heard("locked: you can't share it"));
+			run(b, "private testkit-2 Alice");
+			check("a locked kit can't be given away", !KitStore.exists(a.getUUID(), "testkit-2") && b.heard("you can't give it away"));
+			run(b, "kit save testkit-2");
+			check("a locked kit can't be overwritten", KitStore.isLocked(b.getUUID(), "testkit-2") && b.heard("is locked"));
+			run(b, "kit create testkit-2");
+			check("a locked kit can't be opened in the workshop", !Workshop.isIn(b.getUUID()) && b.heard("you can use it but not edit it"));
+			b.getInventory().clearContent();
+			run(b, "kit load testkit-2");
+			check("a locked kit can be loaded", b.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			run(b, "kit list");
+			check("/kit list marks the gift", b.heard("testkit-2 (given, locked)"));
+			b.getInventory().clearContent();
+			b.getInventory().setItem(20, new ItemStack(Items.DIRT, 5));
 		});
 
 		step("statistics, sidebar and guide book", () -> {

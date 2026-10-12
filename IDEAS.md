@@ -10,7 +10,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Taller creativo para crear kits: `/kit create` te manda a un mundo vacio con una plataforma de piedra, creativo limitado (no rompe nada)
 - ✅ `/enchant` propio (sin yunque): cualquier encantamiento en cualquier item, hasta nivel 255
 - ✅ `/infinite <cantidad>`: apilar items que no se apilan (totems, etc.). Pediste maximo 128, pero Minecraft solo deja stacks de hasta 99, asi que el maximo es 99
-- ⏳ `/publicate <kit>` (publico para todos), `/private <kit> <jugador>` (se lo das a uno sin que pueda compartirlo), `/unpublish`
+- ✅ `/publicate <kit>` (publico para todos), `/private <kit> <jugador>` (se lo das a uno sin que pueda compartirlo), `/unpublish`; los demas ven la lista con `/kit public` y copian con `/kit take`. Ojo: un kit regalado se puede usar pero no compartir ni editar con comandos (a mano siempre lo pueden rearmar)
 
 ## Ordenador de inventario (layouts)
 - ✅ Tecla para ordenar (R), ordena todo el inventario (slots 1-36, nunca armadura ni mano secundaria)

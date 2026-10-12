@@ -89,6 +89,10 @@ public final class KitCommands {
 			ctx.getSource().sendFailure(Msg.err("Kit names can only use a-z, 0-9, _ and - (max 32)."));
 			return 0;
 		}
+		if (KitStore.isLocked(p.getUUID(), name)) {
+			ctx.getSource().sendFailure(Msg.err("Kit '" + name + "' was given to you and is locked: save your inventory under another name."));
+			return 0;
+		}
 		try {
 			boolean existed = KitStore.exists(p.getUUID(), name);
 			KitStore.save(ctx.getSource().getServer(), p, name);
@@ -209,7 +213,9 @@ public final class KitCommands {
 			String folder = KitStore.folder(p.getUUID()).toString();
 			ctx.getSource().sendSuccess(() -> Msg.info("You have no kits yet. Set up your inventory and use /kit save <name>. (Kits folder: " + folder + ")"), false);
 		} else {
-			String text = String.join(", ", names);
+			List<String> shown = new java.util.ArrayList<>();
+			for (String n : names) shown.add(KitStore.isLocked(p.getUUID(), n) ? n + " (given, locked)" : n);
+			String text = String.join(", ", shown);
 			ctx.getSource().sendSuccess(() -> Msg.info("Your kits (" + names.size() + "): " + text), false);
 		}
 		return 1;

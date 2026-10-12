@@ -6,6 +6,7 @@ import com.pvpduels.duel.Terrain;
 import com.pvpduels.duel.SelfTest;
 import com.pvpduels.duel.TestDummy;
 import com.pvpduels.kit.KitCommands;
+import com.pvpduels.kit.ShareCommands;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutCommands;
 import com.pvpduels.net.CycleLayoutPayload;
@@ -49,6 +50,7 @@ public class PvpDuelsMod implements ModInitializer {
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			KitCommands.register(dispatcher);
+			ShareCommands.register(dispatcher);
 			LayoutCommands.register(dispatcher);
 			GuideCommand.register(dispatcher);
 			DuelCommands.register(dispatcher);

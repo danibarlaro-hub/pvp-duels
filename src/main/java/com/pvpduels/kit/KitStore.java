@@ -38,7 +38,12 @@ public final class KitStore {
 
 	private KitStore() {}
 
-	public record Kit(String name, String profile, ItemStack[] slots) {}
+	/** locked = a kit somebody gave you with /private: you can use it but not share or edit it. from = who made it. */
+	public record Kit(String name, String profile, ItemStack[] slots, boolean locked, String from) {
+		public Kit(String name, String profile, ItemStack[] slots) {
+			this(name, profile, slots, false, "");
+		}
+	}
 
 	public static boolean validName(String name) {
 		return NAME.matcher(name).matches();
@@ -119,6 +124,25 @@ public final class KitStore {
 		Files.writeString(file(owner, name), GSON.toJson(root));
 	}
 
+	/** The kit exactly as it is stored (used to hand a copy to somebody else). */
+	public static JsonObject readRaw(UUID owner, String name) throws IOException {
+		return JsonParser.parseString(Files.readString(file(owner, name))).getAsJsonObject();
+	}
+
+	public static void writeRaw(UUID owner, String name, JsonObject root) throws IOException {
+		Files.createDirectories(dir(owner));
+		Files.writeString(file(owner, name), GSON.toJson(root));
+	}
+
+	/** True when the kit exists and was given to the player with /private. */
+	public static boolean isLocked(UUID owner, String name) {
+		try {
+			return exists(owner, name) && readRaw(owner, name).has("locked") && readRaw(owner, name).get("locked").getAsBoolean();
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
 	private static String existingProfile(UUID owner, String name) {
 		try {
 			if (!exists(owner, name)) return null;
@@ -134,7 +158,9 @@ public final class KitStore {
 		JsonObject root = JsonParser.parseString(Files.readString(file(owner, name))).getAsJsonObject();
 		ItemStack[] stacks = decodeInventory(server, root.getAsJsonArray("slots"));
 		String profile = root.has("profile") ? root.get("profile").getAsString() : null;
-		return Optional.of(new Kit(name, profile, stacks));
+		boolean locked = root.has("locked") && root.get("locked").getAsBoolean();
+		String from = root.has("from") ? root.get("from").getAsString() : "";
+		return Optional.of(new Kit(name, profile, stacks, locked, from));
 	}
 
 	public static void setProfile(UUID owner, String name, String profile) throws IOException {

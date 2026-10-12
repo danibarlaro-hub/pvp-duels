@@ -15,6 +15,7 @@ public final class GuideCommand {
 		"Circular arena (radius 100, 150 or 200): flat normal terrain (5 dirt, stone, deepslate, bedrock) inside a ring of invisible barriers. You can build and dig freely; the terrain is reset after every round. Leaving the circle loses the round.",
 		"Unlimited arena: the same terrain without a border. If you stay more than 100 blocks away from your rival for 5 seconds, you lose half of your health and are teleported next to them.",
 		"WORKSHOP: /kit create [kit]  - go to the kit workshop (creative mode, nothing can be placed or broken; give a kit name to edit it). There use /enchant <enchantment> [level 0-255] and /infinite <1-99> on the item in your hand, then /kit save <name>. /leave or /kit exit  - go back to your own inventory",
+		"SHARING: /publicate <kit>  - put a kit on the public shelf; /kit public  - list public kits (click [TAKE] or use /kit take <kit> to copy one); /unpublish <kit>  - take yours off the shelf; /private <kit> <player>  - give a locked copy to one player: they can use it but not share or edit it",
 		"Admins: /test_dummy <name>  - adds a fake player that accepts every duel, to test alone; /test_dummy remove [name]",
 		"/sidebar [on|off]  - the scoreboard on the right with your stats and the duel score. /guide book  - get the guide book again",
 		"/kit save <name>  - save your current inventory as a kit",

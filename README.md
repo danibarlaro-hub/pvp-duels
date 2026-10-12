@@ -35,6 +35,12 @@ https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpd
 - `/kit save <nombre>` guarda lo que armaste. `/leave` o `/kit exit` te devuelve tu inventario y tu lugar.
 - `/enchant` e `/infinite` solo funcionan en el taller (los admins los pueden usar en cualquier lado).
 
+## Compartir kits
+- `/publicate <kit>` lo deja en el estante publico; todos lo ven con `/kit public` y lo copian con `[TAKE]` o `/kit take <kit>` (queda como un kit propio).
+- `/unpublish <kit>` lo saca del estante (solo el autor o un admin). Las copias que ya se llevaron quedan.
+- `/private <kit> <jugador>` le da una copia **bloqueada** a un jugador conectado: la puede usar (`/kit load`, duelos, teclas) pero no puede publicarla, regalarla, editarla en el taller ni pisarla con `/kit save`.
+- Limite: si alguien carga el kit y lo vuelve a guardar a mano con otro nombre, el mod no lo puede impedir.
+
 ## Sidebar y estadisticas
 - A la derecha de la pantalla aparece un marcador solo para vos: fuera de un duelo muestra tus estadisticas (victorias, derrotas, racha, rondas), durante un duelo el puntaje, y en el taller los kits que tenes.
 - `/sidebar` lo apaga o prende (se acuerda de tu eleccion). Las estadisticas se guardan en `.minecraft/pvpduels`.
