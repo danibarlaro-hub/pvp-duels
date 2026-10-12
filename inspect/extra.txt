@@ -39,3 +39,5 @@ net.minecraft.world.level.block.state.StateDefinition
 net.minecraft.world.level.block.state.properties.BlockStateProperties
 net.minecraft.world.level.block.state.properties.Property
 net.minecraft.world.level.storage.LevelResource
+net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket
+net.minecraft.world.inventory.InventoryMenu
