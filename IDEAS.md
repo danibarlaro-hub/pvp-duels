@@ -43,7 +43,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 ## Ideas extra que te gustaron
 - ✅ Estadisticas guardadas (victorias, derrotas, rondas...)
 - ✅ Reglas por duelo (regeneracion, dano de caida, hambre, construir), `/spectate`, proteccion de 5 s al volver, lobby (`/setlobby`, `/lobby`)
-- ⏳ Funcionar bien con Essential en todos los casos (host en un mundo alterno, etc.) y quizas un mod de apoyo para tus amigos
+- 🟡 Funcionar bien con Essential: todo corre en la PC del host y el mod no manda nada propio a los amigos, asi que **no hace falta un mod de apoyo**; los amigos solo necesitan el `.jar` para las teclas. Probado en un servidor de prueba, no con Essential de verdad (eso lo tenes que probar vos)
 
 ## Principios que pediste
 - Todo el texto en ingles · todas las teclas cambiables en Controles · nada que sea trampa · entregar el mod siempre como archivo `.jar` listo para usar
