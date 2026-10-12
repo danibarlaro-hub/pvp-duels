@@ -68,3 +68,14 @@ net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 net.fabricmc.fabric.api.event.player.UseBlockCallback
 net.fabricmc.fabric.api.event.player.UseItemCallback
 net.minecraft.world.entity.item.ItemEntity
+net.minecraft.world.entity.decoration.Mannequin
+net.minecraft.world.entity.Interaction
+net.minecraft.world.entity.npc.villager.Villager
+net.minecraft.stats.Stats
+net.minecraft.stats.StatType
+net.minecraft.stats.Stat
+net.minecraft.stats.ServerStatsCounter
+net.minecraft.stats.StatsCounter
+net.minecraft.world.entity.player.PlayerModelPart
+net.minecraft.world.entity.player.Input
+net.minecraft.world.item.Items
