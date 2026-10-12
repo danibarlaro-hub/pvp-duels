@@ -1350,7 +1350,6 @@ public final class SelfTest {
 			check("the best streak is at least the streak", sa.bestStreak >= sa.streak && sa.bestStreak >= 1);
 			check("the ratings of two players who only played each other add up to 2000", sa.elo + sb.elo == 2000, sa.elo + " + " + sb.elo);
 			check("Alice, who won more, has the higher rating", sa.wins > sb.wins ? sa.elo > sb.elo : true, sa.elo + " vs " + sb.elo);
-			check("the sidebar shows the rating", sidebarHas(a, "Elo: " + sa.elo), String.valueOf(sidebar(a)));
 			run(a, "top");
 			check("/top shows the ranking with both players", a.heard("Top 2 by Elo") && a.heard(" 1. ") && a.heard(" 2. ") && a.heard("You: #"));
 			run(a, "top wins");
@@ -1363,6 +1362,7 @@ public final class SelfTest {
 			check("/sidebar off hides it", sidebar(a).isEmpty());
 			run(a, "sidebar on");
 			check("/sidebar on shows her stats again", sidebarHas(a, "Wins: " + sa.wins), String.valueOf(sidebar(a)));
+			check("the sidebar shows the Elo rating", sidebarHas(a, "Elo: " + sa.elo), String.valueOf(sidebar(a)));
 			run(a, "sidebar");
 			check("/sidebar alone toggles", sidebar(a).isEmpty());
 			run(a, "sidebar");
