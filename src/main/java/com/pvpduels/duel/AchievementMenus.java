@@ -33,7 +33,7 @@ public final class AchievementMenus {
 					: DuelMenus.icon(a.icon(), a.name(), ChatFormatting.GREEN, a.description(), "Unlocked!");
 			} else {
 				long value = Math.min(Achievements.counter(me, a.counter()), a.target());
-				icon = DuelMenus.icon(Items.GRAY_DYE, a.name(), ChatFormatting.GRAY, a.description(), "Progress: " + value + "/" + a.target(),
+				icon = DuelMenus.icon(Items.GRAY_STAINED_GLASS_PANE, a.name(), ChatFormatting.GRAY, a.description(), "Progress: " + value + "/" + a.target(),
 					a.hasTitle() ? "Gives the title [" + a.title() + "]" : "");
 			}
 			b.set(i, icon);
