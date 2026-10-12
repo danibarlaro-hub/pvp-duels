@@ -8,7 +8,8 @@ El `.jar` siempre actualizado esta aca (lo arma GitHub solo en cada cambio):
 https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0.1.0.jar
 
 Si una version nueva falla, hay copias fijas que nunca cambian:
-- **Ultima**: todo el mod con el lobby protegido (no se rompe, no se pega) y el mundo de la isla flotante, probado con 370 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-lobby/pvpduels-0.1.0.jar
+- **Ultima**: todo el mod con el bot que ahora si recibe knockback y el arreglo del arranque de `/botduel`, probado con 375 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botfix/pvpduels-0.1.0.jar
+- Con el lobby protegido y el mundo de la isla flotante, 370 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-lobby/pvpduels-0.1.0.jar
 - Todo el mod con `/botduel` con niveles (estatico, passive, easy, normal, hard), contadores de practica, Elo y `/top`, probado con 356 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botlevels/pvpduels-0.1.0.jar
 - Todo el mod con `/botduel` basico (bot siempre estatico), probado con 323 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botduel/pvpduels-0.1.0.jar
 - Todo el mod sin `/botduel`, probado con 276 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-full/pvpduels-0.1.0.jar
