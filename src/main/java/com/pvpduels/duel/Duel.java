@@ -534,12 +534,18 @@ public final class Duel {
 	/** Someone left, disconnected, or typed /leave. */
 	void forfeit(int idx) {
 		if (phase == Phase.ENDED || closed) return;
+		PvpDuelsMod.LOGGER.info("Duel {} vs {}: {} left (round {}, phase {}, practice {})", names[0], names[1], names[idx], round, phase, practice);
+		// Always say why the duel is ending, so nobody is left guessing.
+		ServerPlayer other = player(1 - idx);
+		if (other != null) {
+			other.sendSystemMessage(Msg.info(BotDuel.isBot(ids[idx])
+				? names[idx] + " (the bot) is no longer in the game, so the practice is over."
+				: names[idx] + " left the duel."));
+		}
 		if (config.unlimited()) {
 			winner = points[0] == points[1] ? -1 : (points[0] > points[1] ? 0 : 1);
 		} else {
 			winner = 1 - idx;
-			ServerPlayer other = player(1 - idx);
-			if (other != null) other.sendSystemMessage(Msg.info(names[idx] + " left the duel."));
 		}
 		finish();
 	}

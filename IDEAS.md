@@ -36,6 +36,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Spawn que vos decoras: un admin hace `/setlobby`; al terminar un duelo te manda ahi (con `/lobby return off` volves a donde estabas); `/lobby` te lleva cuando quieras
 - ✅ Lobby protegido (`/lobby protect <radio>`: no se rompe, no se pone, no se pega; los admins en creativo pueden construir) y guardado dentro del mundo
 - ✅ Mundo de vacio con una isla flotante grande y verde, con pueblito, montañas y cascada, listo para usar (zip en la release `world-lobby`)
+- ✅ `/botduel`: el bot sin cliente ahora recibe knockback de verdad (el golpe de un jugador se manda por red al golpeado y el servidor le quitaba el empujon), el duelo arranca despues del click del menu y se reenvia el kit; si el duelo termina porque alguien se fue, el chat dice quien
 - ✅ Puntos de cada uno en el sidebar durante el duelo (hoy salen en la barra de arriba y en titulos)
 
 ## Interfaz y ayuda
