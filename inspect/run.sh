@@ -23,6 +23,8 @@ if [ -n "$MC" ]; then
   unzip -q -o "$MC" 'data/minecraft/dimension_type/*' 'data/minecraft/worldgen/world_preset/*' 'data/minecraft/worldgen/flat_level_generator_preset/*' 'data/minecraft/dimension/*' 'data/minecraft/worldgen/biome/the_void.json' 'data/minecraft/tags/worldgen/flat_level_generator_preset/*' -d /tmp/mcdata 2>> $OUT/info.txt
   cp -r /tmp/mcdata/data $OUT/data/ 2>/dev/null
   unzip -l "$MC" | awk '{print $4}' | grep -E "^data/minecraft/(dimension|dimension_type|worldgen/world_preset|worldgen/flat)" > $OUT/data-listing.txt
+  # Every block that has a loot table = (almost) every block id of the game, including the colored ones
+  unzip -l "$MC" | awk '{print $4}' | grep -E "^data/minecraft/loot_table/blocks/.*\.json$" | sed 's#.*/##; s#\.json$##' | sort > $OUT/block-ids.txt
 fi
 
 while read -r c; do

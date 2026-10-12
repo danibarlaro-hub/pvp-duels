@@ -21,6 +21,7 @@ net.minecraft.world.item.ShovelItem
 net.minecraft.world.item.SpawnEggItem
 net.minecraft.world.level.GameType
 net.minecraft.world.level.block.Blocks
+net.minecraft.world.level.block.ColorCollection
 net.minecraft.world.level.block.LiquidBlock
 net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase
 net.minecraft.world.level.block.state.StateDefinition
