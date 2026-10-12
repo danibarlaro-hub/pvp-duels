@@ -89,7 +89,7 @@ public final class BotDuel {
 			bot.setBrain(new BotBrain(bot, level, player.getUUID()));
 		}
 		player.sendSystemMessage(Msg.info("  Practice duel against " + name + " (" + level.label + "): " + level.description));
-		player.sendSystemMessage(Msg.info("  Rounds go on until you use /leave. Your hits, damage and combos are on the sidebar."
+		player.sendSystemMessage(Msg.info("  It goes on until you use /leave. A bot you knock out gets up again (KO) and nothing is reset. Your hits, damage and combos are on the sidebar."
 			+ " Practice duels don't count for your stats."));
 		return null;
 	}

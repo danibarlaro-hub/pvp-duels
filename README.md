@@ -42,6 +42,7 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 - El bot se llama `Bot` y tiene tu kit. Aparece en la lista de jugadores como uno mas ("Bot joined the game" en el chat).
 - **Contador de practica**: el marcador muestra tus golpes, el dano, tu combo actual y el mejor (dos golpes seguidos con menos de 1 segundo entre ellos son combo) y, si el bot pelea, los golpes que recibiste. Al terminar cada ronda te dice el resumen y al salir con `/leave` el total.
 - Las rondas siguen hasta que hagas `/leave` (se juega a puntos sin limite). Cada ronda la arena se limpia sola y el bot vuelve a su lugar. Las reglas de construccion son las de la arena plana (solo entidades y bloques con entidad).
+- Si dejas al bot sin vida (KO) se levanta solo con la vida llena, te suma un KO y **no se reinicia nada** (ni la arena, ni tu posicion, ni el kit). La ronda solo se reinicia si te caes al vacio o si el bot te mata a vos.
 - No cuenta para tus estadisticas. Si dos amigos hacen `/botduel` a la vez, cada uno tiene su bot y su arena (hasta 3 duelos en total).
 - La primera vez que se usa cada arena el juego se traba como un segundo mientras la arma (son 73.000 bloques); despues se limpia en menos de 0,1 s.
 

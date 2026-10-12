@@ -83,6 +83,8 @@ public final class Duel {
 	/** Practice duels: hits you landed on the bot, the damage they did, your current and best combo, and what the bot did to you. */
 	int hits;
 	int hitsTaken;
+	/** The tick of the last KO of the practice bot (the death event can be reported twice for one blow). */
+	private int lastKoTick = -1;
 	int bestCombo;
 	float damage;
 	float damageTaken;
@@ -454,6 +456,20 @@ public final class Duel {
 		if (i < 0) return;
 		p.setHealth(p.getMaxHealth());
 		if (phase != Phase.FIGHTING) return;
+		if (practice && BotDuel.isBot(p.getUUID())) {
+			// Practice: the bot is knocked out and gets up again right away. Nothing is reset, you just keep going.
+			if (lastKoTick == elapsed) return; // the same blow reported twice
+			lastKoTick = elapsed;
+			points[1 - i]++;
+			p.setAbsorptionAmount(0f);
+			p.invulnerableTime = 0;
+			ServerPlayer you = player(1 - i);
+			if (you != null) {
+				you.sendOverlayMessage(Component.literal("KNOCKED OUT!  KO " + points[1 - i]).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+			}
+			printPracticeSummary("KO " + points[1 - i]);
+			return;
+		}
 		Entity killer = source == null ? null : source.getEntity();
 		String reason = killer != null && killer.getUUID().equals(ids[1 - i])
 			? names[1 - i] + " defeated " + names[i] + "."
@@ -467,17 +483,7 @@ public final class Duel {
 		phaseTicks = 0;
 		if (winnerIdx >= 0) points[winnerIdx]++;
 		decide();
-		if (practice) {
-			ServerPlayer you = player(0);
-			if (you != null) {
-				you.sendSystemMessage(Msg.info("Round " + round + ": " + roundHits + (roundHits == 1 ? " hit, " : " hits, ")
-					+ oneDecimal(roundDamage) + " damage, best combo " + roundBest));
-			}
-			roundHits = 0;
-			roundDamage = 0f;
-			roundBest = 0;
-			combo = 0;
-		}
+		if (practice) printPracticeSummary("Round " + round);
 
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
@@ -488,6 +494,19 @@ public final class Duel {
 			sendTitle(p, title, Component.literal(score(i)).withStyle(ChatFormatting.WHITE), 0, 40, 10);
 			p.sendSystemMessage(Msg.info(reason + "  Score: " + score(i)));
 		}
+	}
+
+	/** Tells the player what happened since the last summary (a round or a KO) and starts counting again. */
+	private void printPracticeSummary(String label) {
+		ServerPlayer you = player(0);
+		if (you != null) {
+			you.sendSystemMessage(Msg.info(label + ": " + roundHits + (roundHits == 1 ? " hit, " : " hits, ")
+				+ oneDecimal(roundDamage) + " damage, best combo " + roundBest));
+		}
+		roundHits = 0;
+		roundDamage = 0f;
+		roundBest = 0;
+		combo = 0;
 	}
 
 	/** Works out whether the duel is over after the round that just ended. */

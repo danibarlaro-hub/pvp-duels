@@ -1387,13 +1387,31 @@ public final class SelfTest {
 				&& sidebarHas(a, "Combo: 1 (best 3)") && sidebarHas(a, "Bot: Static"), String.valueOf(sidebar(a)));
 			check("a static bot has no 'hits taken' line", !sidebarHas(a, "Hits taken"));
 		});
-		step("bot duel: Alice kills the bot", () -> {
+		step("bot duel: Alice knocks the bot out", () -> {
 			Duel d = duel(a);
 			hit(a, bot);
-			check("round ended, Alice has 1 point", d.phase == Duel.Phase.ROUND_END && d.points[0] == 1, d.phase + " " + d.points[0] + "-" + d.points[1]);
+			check("a KO is a point for Alice and nothing else changes", d.phase == Duel.Phase.FIGHTING && d.points[0] == 1 && d.points[1] == 0 && d.round == 1,
+				d.phase + " " + d.points[0] + "-" + d.points[1] + " round " + d.round);
 			check("the killing blow is counted too", d.hits == 5, String.valueOf(d.hits));
-			check("the round summary was sent", a.heard("Round 1: 5 hits"));
-			check("the bot did not really die", bot.isAlive() && bot.getHealth() >= bot.getMaxHealth() - 0.01f);
+			check("the KO summary was sent", a.heard("KO 1: 5 hits"));
+			check("the bot got up again at full health", bot.isAlive() && bot.getHealth() >= bot.getMaxHealth() - 0.01f, String.valueOf(bot.getHealth()));
+			botTick = ticks;
+		}, () -> ticks - botTick > 5, 50);
+		step("bot duel: after the KO the practice goes on", () -> {
+			Duel d = duel(a);
+			check("still the same fight: no countdown, no new round", d.phase == Duel.Phase.FIGHTING && d.round == 1 && d.points[0] == 1,
+				d.phase + " round " + d.round + " " + d.points[0] + "-" + d.points[1]);
+			double[] s0 = d.space.spawn(1);
+			check("the bot has not been moved to its spawn point by a reset", bot.distanceToSqr(s0[0], s0[1], s0[2]) < 0.01, where(bot));
+			softHit(a, bot, 3f);
+			check("it can be hit again", d.hits == 6, String.valueOf(d.hits));
+			// drop out of the world: that does lose the round
+			ServerLevel arena = Arena.level(server);
+			a.teleportTo(arena, Arena.botCenterX(d.slot) + 0.5, Arena.FALL_Y - 10, 0.5, java.util.Set.of(), 0f, 0f, true);
+		}, () -> true, 1);
+		step("bot duel: falling loses the round", () -> {
+			Duel d = duel(a);
+			check("the bot got the point", d.points[1] == 1 && d.points[0] == 1, d.points[0] + "-" + d.points[1]);
 		}, () -> phaseIs(a, Duel.Phase.FIGHTING) && duel(a).round == 2, 600);
 		step("bot duel: round 2 started clean", () -> {
 			Duel d = duel(a);
@@ -1411,19 +1429,13 @@ public final class SelfTest {
 			check("the bot is at its spawn point again", bot.distanceToSqr(s[0], s[1], s[2]) < 0.01, where(bot));
 			check("the sidebar shows the score against the bot", sidebarHas(a, "vs Bot") && sidebarHas(a, "Alice: 1"), String.valueOf(sidebar(a)));
 			check("the sidebar says unlimited", sidebarHas(a, "Unlimited"), String.valueOf(sidebar(a)));
-			// drop out of the world
-			a.teleportTo(arena, cx + 0.5, Arena.FALL_Y - 10, 0.5, java.util.Set.of(), 0f, 0f, true);
-		}, () -> true, 1);
-		step("bot duel: falling loses the round", () -> {
-			Duel d = duel(a);
-			check("the bot got the point", d.points[1] == 1 && d.points[0] == 1, d.points[0] + "-" + d.points[1]);
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING) && duel(a).round == 3, 600);
+		});
 		step("bot duel: /leave closes everything", () -> {
 			run(a, "leave");
 			check("Alice is out of the duel", noDuel(a));
 			check("she got her inventory back", a.getInventory().getItem(21).is(Items.STONE) && !a.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
 			check("the backup is deleted", !PlayerBackup.exists(a.getUUID()));
-			check("the practice total was shown", a.heard("Practice total: 5 hits"));
+			check("the practice total was shown", a.heard("Practice total: 6 hits"));
 			check("the practice duel is not counted for the stats", StatsStore.get(a.getUUID()).duels == botStatsBefore
 				&& StatsStore.get(a.getUUID()).elo == botEloBefore, StatsStore.get(a.getUUID()).duels + " vs " + botStatsBefore);
 		}, () -> server.getPlayerList().getPlayerByName("Bot") == null, 200);

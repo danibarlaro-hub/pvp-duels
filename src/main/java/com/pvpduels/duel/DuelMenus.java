@@ -150,7 +150,7 @@ public final class DuelMenus {
 		b.set(13, icon(Items.BOOK, "Practice duel vs a bot", ChatFormatting.GOLD,
 			"Kit: " + kit,
 			"Arena: bedrock platform, " + Arena.BOT_RADIUS + " blocks each way, with walls.",
-			"Rounds go on until you use /leave.",
+			"It goes on until you use /leave. A knocked-out bot gets up again.",
 			"Practice duels don't count for your stats.",
 			"",
 			"Yes: a static bot. It can't be moved and never fights back.",
