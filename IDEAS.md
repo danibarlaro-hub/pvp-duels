@@ -34,6 +34,8 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Arena circular: mundo normal, piso plano, circulo de barriers, radio 100/150/200, se resetea sola (5 bloques de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60)
 - ✅ Arena sin limites: si te alejas 100 bloques del rival, cuenta de 5 s, perdes la mitad de la vida y te teletransporta al rival
 - ✅ Spawn que vos decoras: un admin hace `/setlobby`; al terminar un duelo te manda ahi (con `/lobby return off` volves a donde estabas); `/lobby` te lleva cuando quieras
+- ✅ Lobby protegido (`/lobby protect <radio>`: no se rompe, no se pone, no se pega; los admins en creativo pueden construir) y guardado dentro del mundo
+- ✅ Mundo de vacio con una isla flotante grande y verde, con pueblito, montañas y cascada, listo para usar (zip en la release `world-lobby`)
 - ✅ Puntos de cada uno en el sidebar durante el duelo (hoy salen en la barra de arriba y en titulos)
 
 ## Interfaz y ayuda

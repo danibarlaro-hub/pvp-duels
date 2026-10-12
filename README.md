@@ -14,7 +14,7 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 - Solo hasta los duelos (la primera version probada): https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpduels-0.1.0.jar
 
 ## Instalar
-- **El host** (el que abre el mundo con Essential) necesita: Minecraft 26.2, Fabric Loader, **Fabric API**, Essential y este `.jar` en la carpeta `mods`. Todo corre en su PC: los kits, layouts, estadisticas y el lobby se guardan en su `.minecraft/pvpduels`.
+- **El host** (el que abre el mundo con Essential) necesita: Minecraft 26.2, Fabric Loader, **Fabric API**, Essential y este `.jar` en la carpeta `mods`. Todo corre en su PC: los kits, layouts y estadisticas se guardan en su `.minecraft/pvpduels`, y el lobby dentro de la carpeta del mundo (asi viaja con el mundo).
 - **Los amigos** deberian poder entrar sin el `.jar`: el mod no manda nada propio al cliente (menus de cofre, marcador, libro y botones del chat son de Minecraft). Sin el `.jar` no tienen las **teclas** (ordenar, Quick kit, Quick layout); con los comandos funciona todo igual. Esto no se pudo probar con Essential de verdad, asi que si a alguien le da error al entrar, que ponga el mismo `.jar` y Fabric API.
 - Si todos lo tienen instalado, que sea la misma version del `.jar`.
 - Para actualizar: borra el `.jar` viejo de `mods`, pone el nuevo y reinicia el juego/mundo.
@@ -53,7 +53,15 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 ## Reglas, espectadores y lobby
 - En el menu de `/duel` hay una pantalla de reglas: regeneracion natural, dano de caida, hambre y construir (en las arenas circular y sin limites), se apagan solo para ese duelo.
 - `/spectate <jugador>` (o `/watch`) mira un duelo en modo espectador (se guarda tu inventario como en un duelo); `/leave` para salir. Reemplaza al `/spectate` de Minecraft, que era solo para admins. Al volver de un duelo tenes 5 segundos de proteccion.
-- Lobby: un admin se para donde quiere y hace `/setlobby`. Al terminar un duelo vas ahi; `/lobby return off` para volver a donde estabas; `/lobby` te lleva cuando quieras; `/lobby clear` lo borra.
+- Lobby: un admin se para donde quiere y hace `/setlobby`. Al terminar un duelo vas ahi; `/lobby return off` para volver a donde estabas; `/lobby` te lleva cuando quieras; `/lobby clear` lo borra. El lobby queda guardado **dentro del mundo** (`pvpduels/lobby.json`).
+- Lobby protegido: `/lobby protect <radio>` (admins; por ejemplo 100) hace que dentro de ese radio nadie pueda romper ni poner bloques ni pegarle a otro jugador. Los admins en creativo si pueden construir. `/lobby protect off` lo apaga. Si alguien se cae de la isla, vuelve solo al lobby.
+
+## Mundo con isla flotante (lobby listo)
+Un mundo de vacio con una isla flotante grande y verde (pueblito con plaza y fuente, 5 casas y un salon, cartel gigante "PVP DUELS", dos montañas chicas con camino y mirador, rio con cascada, estanques, bosque y flores). Ya viene con el lobby puesto y protegido (radio 105).
+1. Descarga `PvP-Duels-Lobby-world.zip` de https://github.com/danibarlaro-hub/pvp-duels/releases/tag/world-lobby y descomprimilo en `.minecraft/saves`.
+2. Pone el `.jar` del mod (esta en la misma pagina) en `mods`, junto con Fabric API.
+3. Abri el mundo "PvP Duels Lobby" (con Essential: abrilo a LAN/invitar a tus amigos como siempre).
+La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar unos segundos.
 - `/layout auto [nombre]` arma un layout mirando todos tus kits (hasta los 300 mas nuevos): cada item o categoria que esta en el mismo slot en la mayoria de los kits queda en ese slot.
 
 ## Compartir kits
@@ -89,5 +97,5 @@ Si una version nueva falla, hay copias fijas que nunca cambian:
 
 ## Prueba automatica
 Cada vez que se arma el mod, GitHub levanta un servidor de prueba con dos jugadores falsos que juegan duelos completos
-(menus, invitaciones, rondas, vacio, `/leave`, desconexion, reglas de la arena, arenas circular y sin limites, reglas por duelo, `/spectate`, lobby, taller de kits, `/enchant`, `/infinite`, compartir kits, `/layout auto`, `/test_dummy`, `/botduel` con niveles, contadores, Elo y `/top`) y publica el resultado en la rama `selftest-out`.
+(menus, invitaciones, rondas, vacio, `/leave`, desconexion, reglas de la arena, arenas circular y sin limites, reglas por duelo, `/spectate`, lobby y lobby protegido, taller de kits, `/enchant`, `/infinite`, compartir kits, `/layout auto`, `/test_dummy`, `/botduel` con niveles, contadores, Elo y `/top`) y publica el resultado en la rama `selftest-out`.
 Lo que esa prueba **no** puede ver: como se dibujan los menus, titulos, marcador y libro en una pantalla real, que tan fluido anda un circulo de radio 200 en tu PC, ni Essential.

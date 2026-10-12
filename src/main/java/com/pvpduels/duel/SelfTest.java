@@ -1078,6 +1078,9 @@ public final class SelfTest {
 			// the few seconds of protection after a duel would hide what this test wants to see
 			a.removeAllEffects();
 			b.removeAllEffects();
+			// Bob was left in creative mode by an earlier step, and nobody can hurt a creative player
+			a.setGameMode(GameType.SURVIVAL);
+			b.setGameMode(GameType.SURVIVAL);
 			a.teleportTo(level, 50.5, 100, 50.5, java.util.Set.of(), 0f, 0f, true);
 			b.teleportTo(level, 50.5, 100, 52.5, java.util.Set.of(), 0f, 0f, true);
 			botTick = ticks;
