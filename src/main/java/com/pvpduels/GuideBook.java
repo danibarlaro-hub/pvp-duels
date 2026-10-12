@@ -89,6 +89,11 @@ public final class GuideBook {
 			{"Titles", "Some achievements give a title: Rookie, Duelist, Champion, Builder...\n\n/titles opens the ones you won: click one to wear it in front of your name (chat, tab list and name tag). /titles off takes it off."},
 			{"Profile", "/profile shows your Elo, wins, losses, best streak, title, how many achievements you have and your Builder rank.\n\n/profile <player> shows someone else's."}
 		}),
+		new Topic("Party & 2v2", new String[][] {
+			{"Party", "/party invite <friend> asks a friend to be your partner. They click [ACCEPT] (or /party accept).\n\nA party is exactly two players. /party leave ends it for both."},
+			{"2v2 duels", "When both of you are in a party, /duel <player> challenges that player and their partner. The kit, arena and mode work like in a 1v1.\n\nA party only duels another party. A single player can't duel a party."},
+			{"How it goes", "A player who is hit out is a spectator until the round ends. A round is won when both rivals are out. No friendly fire.\n\nWin a round alone against both rivals and you get the Clutch achievement.\n\n/leave makes your team forfeit. 2v2 does not change the Elo."}
+		}),
 		new Topic("Spectating", new String[][] {
 			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."}
 		}),

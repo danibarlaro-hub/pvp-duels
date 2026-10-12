@@ -2885,7 +2885,10 @@ public final class SelfTest {
 			check("a party can't challenge a single player", a.heard("You are in a party, so you can only duel another party (2v2). Carl is not in one."));
 			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("qkit", false, WinMode.FIRST_TO, 2), false);
 			check("a player can't challenge their own partner", a.heard("That is your own partner!"));
-			check("nobody got an invitation", !carl.heard("challenged you") && !b.heard("challenged you"));
+			run(carl, "accept Alice");
+			run(a, "accept Carl");
+			run(b, "accept Alice");
+			check("none of those left an invitation to accept", !DuelManager.isInDuel(a.getUUID()) && !DuelManager.isInDuel(carl.getUUID()) && !DuelManager.isInDuel(b.getUUID()));
 			run(carl, "party invite Dora");
 			run(dora, "party accept");
 			check("Carl and Dora are a party again", Party.isFull(carl.getUUID()) && Party.isFull(dora.getUUID()));

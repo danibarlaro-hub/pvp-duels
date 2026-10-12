@@ -66,10 +66,10 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ `/top`: ranking por Elo, victorias o racha
 - ✅ `/duels`: lista de duelos en curso con boton [WATCH] para mirar
 - ✅ Resumen despues de cada duelo (cuanto duro, golpes, dano, combo mas largo, totems, perlas, manzanas de oro y pociones de cada uno) y boton [REMATCH]
-- ⏳ Torneos / cola para el grupo de amigos (brackets automaticos, 2v2)
+- ⏳ Torneos / cola para el grupo de amigos (brackets automaticos)
 - ✅ Cola `/queue`: publica (kit publico o al azar), random (kit al azar) y kit propio (los dos pelean con uno tuyo)
 - ✅ Ranking por kit (`/top kit <nombre>`)
 - ✅ Concurso semanal de construccion (`/contest`): categoria al azar, 5 dias para construir y 2 para votar (galeria sin nombres), los 3 mas votados son Builder 3 semanas
 - ⏳ Zona de practica (por ahora lo cubre el NPC Practice Bot)
-- ✅ Logros y titulos: 36 logros, `/achievements`, `/titles` (titulo delante del nombre), `/profile`
-- ⏳ 2v2 / equipos — entrega 5 (la ultima, toca el nucleo de los duelos)
+- ✅ Logros y titulos: 40 logros, `/achievements`, `/titles` (titulo delante del nombre), `/profile`
+- ✅ 2v2 / equipos: `/party` (parejas de dos) y duelos de cuatro con sus rondas, sin fuego amigo, con logros (Better Together, Clutch...)
