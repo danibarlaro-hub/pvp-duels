@@ -27,6 +27,8 @@ public final class GuideBook {
 		{"Duels", "/duel <player> opens menus: kit, arena, version and how the duel is decided.\n\nThe other player gets [ACCEPT] / [DENY] buttons in chat (or /accept, /deny). Requests expire in 60 s."},
 		{"During a duel", "Both use the challenger's kit. Your own inventory is saved and comes back after.\n\n/leave quits. /again asks for a rematch.\n/kit load and the Quick kit keys are blocked."},
 		{"How it is decided", "Fixed rounds (max 100, or unlimited), First to N points, or Timed (max 30 min, a tie plays an extra round).\n\nUnlimited duels end when someone uses /leave: most points wins."},
+		{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat terrain inside invisible barriers. Build and dig freely: it resets every round."},
+		{"Unlimited arena", "Flat terrain with no border.\n\nMore than 100 blocks away from your rival for 5 seconds: the one who ran away loses half of their health and is teleported next to the other."},
 		{"Rules", "Falling into the void loses the round.\n\n5 minutes without hitting each other: one random player is teleported next to the other.\n\nIn the flat arena only entities and block entities (chests, shulkers, crystals...) can be placed."},
 		{"Kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit delete <name>\n/kit key a|b|c <kit>  sets the Quick kit keys\n/kit profile <kit> <layout>  sorts a kit when loaded"},
 		{"Kit workshop", "/kit create [kit] opens a creative void: you can't place or break anything.\n\n/enchant <enchantment> [0-255]\n/infinite <1-99>\n/kit save <name>\n\n/leave or /kit exit brings your inventory back."},

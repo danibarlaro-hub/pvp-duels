@@ -25,7 +25,8 @@ https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpd
 - Durante un duelo `/kit load` y las teclas Quick kit estan bloqueadas.
 - `/leave` salir del duelo, `/again` pedir revancha con la misma configuracion.
 - Hasta 3 duelos al mismo tiempo en el mundo.
-- Arena circular y arena ilimitada aparecen como "Coming soon".
+- **Arena circular** (radio 100, 150 o 200): terreno plano normal (5 de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60) dentro de un circulo de barreras invisibles. Se puede poner y romper todo; el terreno se resetea solo antes de cada ronda. Salir del circulo = perder la ronda.
+- **Arena sin limites**: el mismo terreno sin borde. Si estas a mas de 100 bloques de tu rival durante 5 segundos, el que se alejo (el que esta mas lejos del punto de inicio) pierde la mitad de la vida y se teletransporta al lado del rival.
 
 ## Taller de kits (crear kits en creativo)
 - `/kit create [kit]` te manda a un mundo vacio con una plataforma de piedra, en creativo, pero **sin poder romper ni poner nada**. Si das el nombre de un kit, se carga para editarlo.

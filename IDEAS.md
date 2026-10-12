@@ -30,8 +30,8 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ `/kit load` y Quick kit bloqueados durante un duelo
 - ✅ Arena plana: bedrock 21x21 sobre el vacio, con o sin paredes, solo se ponen entidades/bloques con entidad (cofres, shulkers, ender chests, cristales...)
 - ✅ `/test_dummy <nombre>` (solo admins): jugador falso que acepta todo, para probar solo
-- ⏳ Arena circular: mundo normal, piso plano, circulo de barriers, radio 100/150/200, se resetea sola (5 bloques de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60)
-- ⏳ Arena sin limites: si te alejas 100 bloques del rival, cuenta de 5 s, perdes la mitad de la vida y te teletransporta al rival
+- ✅ Arena circular: mundo normal, piso plano, circulo de barriers, radio 100/150/200, se resetea sola (5 bloques de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60)
+- ✅ Arena sin limites: si te alejas 100 bloques del rival, cuenta de 5 s, perdes la mitad de la vida y te teletransporta al rival
 - ⏳ `/leave` te lleva a un **spawn que vos decoras** (hoy te devuelve a donde estabas antes del duelo; hay que decidir cual preferis)
 - ✅ Puntos de cada uno en el sidebar durante el duelo (hoy salen en la barra de arriba y en titulos)
 
