@@ -418,7 +418,7 @@ public final class LobbyKit {
 		ChoiceMenu.open(me, Component.literal("Send Duel: pick a player (" + (current + 1) + "/" + pages + ")"), 6, b);
 	}
 
-	/** The Create+ menu: the netherite chestplate (kits) and the grass block (arenas). */
+	/** The Create+ menu: the netherite chestplate (kits), the grass block (arenas) and the painting (the building contest). */
 	static void openCreateMenu(ServerPlayer p) {
 		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
 		b.set(11, DuelMenus.icon(Items.NETHERITE_CHESTPLATE, "Create Kit", ChatFormatting.AQUA,
@@ -427,6 +427,12 @@ public final class LobbyKit {
 		b.set(15, DuelMenus.icon(Items.GRASS_BLOCK, "Create Arena", ChatFormatting.GOLD,
 			"Build your own arena.",
 			"Needs the Builder rank."), who -> openArenaInfo(who));
+		b.set(13, DuelMenus.icon(Items.PAINTING, "Building contest", ChatFormatting.LIGHT_PURPLE,
+			"Win the Builder rank: build the weekly",
+			"category and vote for the best builds."), who -> {
+			who.closeContainer();
+			com.pvpduels.arena.Contest.show(who);
+		});
 		ChoiceMenu.open(p, Component.literal("Create+"), 3, b);
 	}
 

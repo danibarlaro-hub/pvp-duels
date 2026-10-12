@@ -33,7 +33,7 @@ public final class GuideBook {
 		new Topic("Lobby", new String[][] {
 			{"The lobby hotbar", "Slot 1: Send Duel\nSlot 2: Leave\nSlot 8: Create+\nSlot 9: this book\n\nThey stay in place while you are in the lobby."},
 			{"Send Duel", "Right-click: pick a player to challenge.\n\nRight-click or hit a player with it: challenge them straight away."},
-			{"Leave and Create+", "Leave: leaves the queue, cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only: your own arenas)."},
+			{"Leave and Create+", "Leave: leaves the queue, cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only: your own arenas) and the building contest."},
 			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\n\nAdmins: /npc add bot|kit|arena, /npc remove, /npc list."},
 			{"Lobby commands", "/lobby: go there\n/lobby return on|off: after a duel go to the lobby or back where you were\n\nAdmins: /setlobby, /lobby protect <radius|off>, /lobby clear"}
 		}),
@@ -61,6 +61,12 @@ public final class GuideBook {
 			{"Building one", "/setspawn 1 and 2: where each player starts\n/savearena <name>\n/leave: stop building (kept as a draft)\n\nChests and signs are not saved."},
 			{"Share them", "/arena: your arenas, with [EDIT] and [PUBLISH]\n/arena public: the shared ones\n/arena publish <name>\n/arena unpublish <name>\n\nPrivate arenas are only for you."},
 			{"Builder rank", "Only Builders make arenas. Place 1st, 2nd or 3rd in the weekly building contest to get it for 3 weeks.\n\n/builder shows yours."}
+		}),
+		new Topic("Contest", new String[][] {
+			{"Building contest", "Every week there is a category (a castle, a pirate ship...). Everybody can build it: /contest enter.\n\n5 days to build, then 2 days to vote."},
+			{"Your build", "Your plot is 64x64. Change at least 20 blocks.\n/contest save keeps it, /leave goes back. It is kept as your entry, and you can come back to improve it."},
+			{"Voting", "/contest vote opens the gallery: the builds have numbers, not names.\n\nVisit them and click [VOTE]. One vote each, you can change it, and not for your own."},
+			{"Prize", "The top 3 become Builders for 3 weeks and can make their own arenas (/createarena).\n\n/contest shows how it is going, /contest results the last one.\n\nAdmins: /contest start [category], /contest end"}
 		}),
 		new Topic("Kits", new String[][] {
 			{"Your kits", "/kit save <name>\n/kit load <name>\n/kit list\n/kit show <name>\n/kit delete <name>"},

@@ -52,16 +52,23 @@ public final class ArenaStudio {
 	/** How far outside the box a builder can walk before being brought back. */
 	private static final int MARGIN = 6;
 
+	/** STUDIO: a Builder making an arena. CONTEST: anybody building their entry of the building contest. VIEW: looking at somebody's entry (nothing can be touched). */
+	public enum Mode { STUDIO, CONTEST, VIEW }
+
 	private static final class Session {
 		final int slot;
+		final Mode mode;
 		/** The arena being edited (null when starting from a template or a draft). */
 		final String editing;
 		String template;
 		double[] spawn0;
 		double[] spawn1;
+		/** The owner of the entry being looked at (VIEW only). */
+		UUID viewing;
 
-		Session(int slot, String editing, String template) {
+		Session(int slot, Mode mode, String editing, String template) {
 			this.slot = slot;
+			this.mode = mode;
 			this.editing = editing;
 			this.template = template;
 		}
@@ -73,6 +80,18 @@ public final class ArenaStudio {
 
 	public static boolean isIn(UUID id) {
 		return SESSIONS.containsKey(id);
+	}
+
+	/** The mode the player is in, or null. */
+	public static Mode modeOf(UUID id) {
+		Session s = SESSIONS.get(id);
+		return s == null ? null : s.mode;
+	}
+
+	/** Whose entry the player is looking at, or null. */
+	public static UUID viewing(UUID id) {
+		Session s = SESSIONS.get(id);
+		return s == null || s.mode != Mode.VIEW ? null : s.viewing;
 	}
 
 	static int centerX(int slot) {
@@ -94,11 +113,9 @@ public final class ArenaStudio {
 	public static String enter(ServerPlayer p, ArenaTemplates.Kind kind, String editName) {
 		MinecraftServer server = p.level().getServer();
 		if (!BuilderRank.can(p)) return "Only Builders can make arenas. The Builder rank is won by placing 1st, 2nd or 3rd in the weekly building contest. /builder tells you more.";
-		if (isIn(p.getUUID())) return "You are already building. Use /leave to go back.";
-		if (DuelManager.isBusy(p.getUUID()) || DuelManager.isInDuel(p.getUUID())) return "You are busy: use /leave first.";
-		if (Spectators.isIn(p.getUUID())) return "You are watching a duel: use /leave first.";
+		String problem = check(p);
+		if (problem != null) return problem;
 		ServerLevel level = Arena.level(server);
-		if (level == null) return "The duel world is not loaded. Make sure the mod is up to date, then restart the game.";
 
 		ArenaData loaded = null;
 		if (editName != null) {
@@ -111,19 +128,14 @@ public final class ArenaStudio {
 			}
 		}
 
-		if (PlayerBackup.exists(p.getUUID())) PlayerBackup.restore(server, p);
+		Session session;
 		try {
-			PlayerBackup.save(server, p);
+			session = begin(p, Mode.STUDIO, editName != null && !DRAFT.equals(editName) ? editName : null, loaded != null ? loaded.template : kind.id);
 		} catch (IOException e) {
 			return "Could not save your inventory, so the studio was not opened: " + e.getMessage();
 		}
 
-		int slot = 0;
-		while (inUse(slot)) slot++;
-		Session session = new Session(slot, editName != null && !DRAFT.equals(editName) ? editName : null, loaded != null ? loaded.template : kind.id);
-		SESSIONS.put(p.getUUID(), session);
-
-		int cx = centerX(slot);
+		int cx = centerX(session.slot);
 		if (loaded != null) {
 			ArenaPaster.apply(level, cx, loaded);
 			session.spawn0 = loaded.spawn0;
@@ -135,16 +147,7 @@ public final class ArenaStudio {
 			session.spawn0 = spawns[0];
 			session.spawn1 = spawns[1];
 		}
-
-		p.closeContainer();
-		p.removeAllEffects();
-		p.getInventory().clearContent();
-		p.setGameMode(GameType.CREATIVE);
-		p.setHealth(p.getMaxHealth());
-		p.getFoodData().setFoodLevel(20);
-		p.teleportTo(level, cx + 0.5, Arena.FLOOR_Y + 1, 0.5, Set.of(), 0f, 0f, true);
-		p.setDeltaMovement(0, 0, 0);
-		p.resetFallDistance();
+		teleportIn(p, level, cx + 0.5, Arena.FLOOR_Y + 1);
 
 		p.sendSystemMessage(Msg.title("Arena studio"));
 		p.sendSystemMessage(Msg.info("  " + (editName == null ? "Template: " + kind.title + "." : DRAFT.equals(editName) ? "Your draft." : "Editing '" + editName + "'.")
@@ -155,19 +158,151 @@ public final class ArenaStudio {
 		return null;
 	}
 
+	/** The checks every kind of session needs. Returns an error text or null. */
+	private static String check(ServerPlayer p) {
+		if (isIn(p.getUUID())) return "You are already building. Use /leave to go back.";
+		if (DuelManager.isBusy(p.getUUID()) || DuelManager.isInDuel(p.getUUID())) return "You are busy: use /leave first.";
+		if (Spectators.isIn(p.getUUID())) return "You are watching a duel: use /leave first.";
+		if (Arena.level(p.level().getServer()) == null) return "The duel world is not loaded. Make sure the mod is up to date, then restart the game.";
+		return null;
+	}
+
+	/** Saves the player's things and gives them a free plot. */
+	private static Session begin(ServerPlayer p, Mode mode, String editing, String template) throws IOException {
+		MinecraftServer server = p.level().getServer();
+		if (PlayerBackup.exists(p.getUUID())) PlayerBackup.restore(server, p);
+		PlayerBackup.save(server, p);
+		int slot = 0;
+		while (inUse(slot)) slot++;
+		Session session = new Session(slot, mode, editing, template);
+		SESSIONS.put(p.getUUID(), session);
+		return session;
+	}
+
+	/** Empty hands, creative mode, standing at x, y in the middle (z = 0) of the plot. */
+	private static void teleportIn(ServerPlayer p, ServerLevel level, double x, double y) {
+		p.closeContainer();
+		p.removeAllEffects();
+		p.getInventory().clearContent();
+		p.setGameMode(GameType.CREATIVE);
+		p.setHealth(p.getMaxHealth());
+		p.getFoodData().setFoodLevel(20);
+		p.teleportTo(level, x, y, 0.5, Set.of(), 0f, 0f, true);
+		p.setDeltaMovement(0, 0, 0);
+		p.resetFallDistance();
+	}
+
+	// ------------------------------------------------------------------ the building contest
+
+	/** Takes anybody (no Builder rank needed) to a plot to build their entry. Returns an error text or null. */
+	public static String enterContest(ServerPlayer p) {
+		if (!Contest.building()) return "There is no building contest to build for right now. /contest tells you more.";
+		String problem = check(p);
+		if (problem != null) return problem;
+		ServerLevel level = Arena.level(p.level().getServer());
+		ArenaData existing = Contest.loadEntry(p.getUUID());
+		Session session;
+		try {
+			session = begin(p, Mode.CONTEST, null, "flat");
+		} catch (IOException e) {
+			return "Could not save your inventory, so the plot was not opened: " + e.getMessage();
+		}
+		int cx = centerX(session.slot);
+		ArenaPaster.apply(level, cx, existing != null ? existing : new ArenaData("entry", p.getUUID(), p.getName().getString(), "flat", ArenaTemplates.build(ArenaTemplates.Kind.FLAT)));
+		teleportIn(p, level, cx + 0.5, Arena.FLOOR_Y + 1);
+		p.sendSystemMessage(Msg.title("Building contest: " + Contest.category()));
+		p.sendSystemMessage(Msg.info("  " + (existing != null ? "Your entry is here: keep building." : "Build \"" + Contest.category() + "\" in the box around you.")
+			+ " " + Contest.timeLeft() + " to finish."));
+		p.sendSystemMessage(Msg.info("  Your build is kept as your entry when you leave (change at least " + Contest.MIN_BLOCKS + " blocks). /contest save keeps it without leaving. ")
+			.copy().append(Msg.button("[LEAVE]", ChatFormatting.RED, "/leave", "Leave the plot, keep your entry and get your inventory back")));
+		return null;
+	}
+
+	/** Keeps the entry of somebody who is building it, without leaving. Returns an error text or null. */
+	public static String saveContest(ServerPlayer p) {
+		Session session = SESSIONS.get(p.getUUID());
+		if (session == null || session.mode != Mode.CONTEST) return "You are not building your entry. /contest enter takes you to your plot.";
+		ServerLevel level = Arena.level(p.level().getServer());
+		if (level == null) return "The duel world is not loaded.";
+		ArenaData data = snapshot(level, p, session, "entry");
+		int changed = Contest.changed(data);
+		if (changed < Contest.MIN_BLOCKS) return "Your build is too small: change at least " + Contest.MIN_BLOCKS + " blocks of the plot (you changed " + changed + ").";
+		try {
+			Contest.saveEntry(p.getUUID(), p.getName().getString(), data);
+		} catch (IOException e) {
+			return "Could not save your entry: " + e.getMessage();
+		}
+		p.sendSystemMessage(Msg.ok("Your entry was saved (" + changed + " blocks built)."));
+		return null;
+	}
+
+	/** Takes the player to look at an entry of the contest (the vote). Returns an error text or null. */
+	public static String visit(ServerPlayer p, UUID owner) {
+		if (!Contest.voting()) return "Nobody can look at the builds now: the voting is not open.";
+		Session session = SESSIONS.get(p.getUUID());
+		if (session != null && session.mode != Mode.VIEW) return "You are building: use /leave first.";
+		int number = Contest.numberOf(owner);
+		ArenaData data = Contest.loadEntry(owner);
+		if (number == 0 || data == null) return "That build is not in the contest.";
+		ServerLevel level = Arena.level(p.level().getServer());
+		boolean first = session == null;
+		if (first) {
+			String problem = check(p);
+			if (problem != null) return problem;
+			try {
+				session = begin(p, Mode.VIEW, null, "flat");
+			} catch (IOException e) {
+				return "Could not save your inventory, so the gallery was not opened: " + e.getMessage();
+			}
+		}
+		session.viewing = owner;
+		int cx = centerX(session.slot);
+		ArenaPaster.apply(level, cx, data);
+		double y = topOf(data) + 1.0;
+		if (first) {
+			teleportIn(p, level, cx + 0.5, y);
+		} else {
+			p.teleportTo(level, cx + 0.5, y, 0.5, Set.of(), 0f, 0f, true);
+			p.setDeltaMovement(0, 0, 0);
+			p.resetFallDistance();
+		}
+		Contest.describeView(p, number, owner.equals(p.getUUID()));
+		return null;
+	}
+
+	/** World y of the highest block in the middle of the box (the floor line when there is none). */
+	private static int topOf(ArenaData data) {
+		for (int y = ArenaData.SIZE - 1; y >= 0; y--) {
+			if (!data.blocks[ArenaData.index(ArenaData.SIZE / 2, y, ArenaData.SIZE / 2)].isAir()) return Math.min(ArenaPaster.MIN_Y + y, ArenaPaster.MIN_Y + ArenaData.SIZE - 3);
+		}
+		return Arena.FLOOR_Y;
+	}
+
+	/** Gets everybody in a session of one of these kinds out (the phase of the contest changed). */
+	public static void exitAll(MinecraftServer server, Mode... modes) {
+		for (Map.Entry<UUID, Session> entry : Map.copyOf(SESSIONS).entrySet()) {
+			boolean match = false;
+			for (Mode m : modes) if (m == entry.getValue().mode) match = true;
+			if (!match) continue;
+			ServerPlayer p = server.getPlayerList().getPlayer(entry.getKey());
+			if (p != null) exit(p);
+			else SESSIONS.remove(entry.getKey());
+		}
+	}
+
 	private static boolean inUse(int slot) {
 		for (Session s : SESSIONS.values()) if (s.slot == slot) return true;
 		return false;
 	}
 
-	/** Leaves the studio: keeps a draft, cleans the plot and gives the player their things back. */
+	/** Leaves the studio: keeps a draft (or the contest entry), cleans the plot and gives the player their things back. */
 	public static void exit(ServerPlayer p) {
 		Session session = SESSIONS.get(p.getUUID());
 		if (session == null) return;
 		MinecraftServer server = p.level().getServer();
 		ServerLevel level = Arena.level(server);
 		String note = "";
-		if (level != null) {
+		if (level != null && session.mode == Mode.STUDIO) {
 			try {
 				ArenaData draft = snapshot(level, p, session, DRAFT);
 				ArenaStore.save(draft, ArenaStore.key(p.getUUID(), DRAFT));
@@ -176,11 +311,26 @@ public final class ArenaStudio {
 				PvpDuelsMod.LOGGER.warn("Could not keep the draft of {}: {}", p.getName().getString(), e.toString());
 				note = " The draft could not be saved.";
 			}
+		} else if (level != null && session.mode == Mode.CONTEST) {
+			try {
+				ArenaData entry = snapshot(level, p, session, "entry");
+				if (Contest.changed(entry) >= Contest.MIN_BLOCKS) {
+					Contest.saveEntry(p.getUUID(), p.getName().getString(), entry);
+					note = " Your build is your entry in the contest.";
+				} else {
+					Contest.removeEntry(p.getUUID());
+					note = " Your build is too small to be an entry (change at least " + Contest.MIN_BLOCKS + " blocks).";
+				}
+			} catch (IOException | RuntimeException e) {
+				PvpDuelsMod.LOGGER.warn("Could not keep the contest entry of {}: {}", p.getName().getString(), e.toString());
+				note = " Your entry could not be saved.";
+			}
 		}
 		SESSIONS.remove(p.getUUID());
 		if (level != null) ArenaPaster.apply(level, centerX(session.slot), null);
 		PlayerBackup.restore(server, p);
-		p.sendSystemMessage(Msg.ok("You left the studio. Your inventory was restored." + note));
+		p.sendSystemMessage(Msg.ok((session.mode == Mode.STUDIO ? "You left the studio." : session.mode == Mode.CONTEST ? "You left your plot." : "You left the gallery.")
+			+ " Your inventory was restored." + note));
 	}
 
 	private static ArenaData snapshot(ServerLevel level, ServerPlayer p, Session session, String name) {
@@ -195,7 +345,7 @@ public final class ArenaStudio {
 	/** Returns an error text or null. */
 	public static String save(ServerPlayer p, String rawName) {
 		Session session = SESSIONS.get(p.getUUID());
-		if (session == null) return "You are not in the arena studio. /createarena takes you there.";
+		if (session == null || session.mode != Mode.STUDIO) return "You are not in the arena studio. /createarena takes you there.";
 		String name = ArenaStore.clean(rawName);
 		if (!ArenaStore.validName(name)) return "Arena names use lower case letters, numbers, - and _ (up to 32).";
 		if (DRAFT.equals(name)) return "'" + DRAFT + "' is the name of your draft. Pick another one.";
@@ -223,7 +373,7 @@ public final class ArenaStudio {
 	/** Returns an error text or null. index is 1 or 2. */
 	public static String setSpawn(ServerPlayer p, int index) {
 		Session session = SESSIONS.get(p.getUUID());
-		if (session == null) return "You are not in the arena studio. /createarena takes you there.";
+		if (session == null || session.mode != Mode.STUDIO) return "You are not in the arena studio. /createarena takes you there.";
 		int cx = centerX(session.slot);
 		if (!ArenaPaster.inBox(cx, p.getX(), p.getY(), p.getZ())) return "Stand inside the building box to set a spawn point.";
 		double[] spawn = {p.getX() - cx, p.getY() - Arena.FLOOR_Y, p.getZ(), p.getYRot()};
@@ -239,6 +389,7 @@ public final class ArenaStudio {
 		UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
 			if (!inside(player)) return InteractionResult.PASS;
 			Session s = SESSIONS.get(player.getUUID());
+			if (s.mode == Mode.VIEW) return InteractionResult.FAIL;
 			int cx = centerX(s.slot);
 			BlockPos target = hit.getBlockPos();
 			BlockPos placed = target.relative(hit.getDirection());
@@ -246,10 +397,11 @@ public final class ArenaStudio {
 		});
 		AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) -> {
 			if (!inside(player)) return InteractionResult.PASS;
-			return fits(centerX(SESSIONS.get(player.getUUID()).slot), pos) ? InteractionResult.PASS : InteractionResult.FAIL;
+			Session s = SESSIONS.get(player.getUUID());
+			return s.mode != Mode.VIEW && fits(centerX(s.slot), pos) ? InteractionResult.PASS : InteractionResult.FAIL;
 		});
 		PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) ->
-			!inside(player) || fits(centerX(SESSIONS.get(player.getUUID()).slot), pos));
+			!inside(player) || (SESSIONS.get(player.getUUID()).mode != Mode.VIEW && fits(centerX(SESSIONS.get(player.getUUID()).slot), pos)));
 
 		ServerTickEvents.END_SERVER_TICK.register(ArenaStudio::onTick);
 

@@ -25,6 +25,7 @@ import java.util.stream.Stream;
  */
 public final class ArenaStore {
 	public static final String PUBLIC = "public";
+	private static final String CONTEST = "contest";
 
 	/** A public arena on the shelf. */
 	public record Entry(String name, UUID owner, String ownerName) {}
@@ -41,6 +42,10 @@ public final class ArenaStore {
 
 	private static Path publicFolder() {
 		return root().resolve("publicarenas");
+	}
+
+	private static Path contestFolder() {
+		return root().resolve("contest");
 	}
 
 	/** Arena names are lower case so "Castle" and "castle" are the same on every operating system. */
@@ -60,6 +65,11 @@ public final class ArenaStore {
 		return PUBLIC + "/" + clean(name);
 	}
 
+	/** The key of somebody's entry in the building contest (the player id without hyphens is 32 characters, so it is a valid name). */
+	public static String contestKey(UUID owner) {
+		return CONTEST + "/" + owner.toString().replace("-", "");
+	}
+
 	private static Path fileOf(String key) {
 		int slash = key.indexOf('/');
 		if (slash <= 0) throw new IllegalArgumentException("bad arena key " + key);
@@ -67,6 +77,7 @@ public final class ArenaStore {
 		String name = key.substring(slash + 1);
 		if (!validName(name)) throw new IllegalArgumentException("bad arena name " + name);
 		if (who.equals(PUBLIC)) return publicFolder().resolve(name + ".nbt");
+		if (who.equals(CONTEST)) return contestFolder().resolve(name + ".nbt");
 		return ownFolder(UUID.fromString(who)).resolve(name + ".nbt");
 	}
 
@@ -173,6 +184,17 @@ public final class ArenaStore {
 		if (!admin && !owner.equals(entry.get().owner())) return "Only " + (entry.get().ownerName().isEmpty() ? "its owner" : entry.get().ownerName()) + " can take it off the shelf.";
 		delete(publicKey(clean));
 		return null;
+	}
+
+	/** Throws away every entry of the building contest. */
+	public static void clearContest() {
+		for (String name : names(contestFolder())) {
+			try {
+				delete(CONTEST + "/" + name);
+			} catch (IOException e) {
+				PvpDuelsMod.LOGGER.warn("Could not delete a contest entry: {}", e.toString());
+			}
+		}
 	}
 
 	/** For the self-test: deletes every arena of this player (and their shared copies). */

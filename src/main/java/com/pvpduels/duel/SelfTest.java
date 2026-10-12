@@ -7,6 +7,7 @@ import com.pvpduels.arena.ArenaData;
 import com.pvpduels.arena.ArenaStore;
 import com.pvpduels.arena.ArenaStudio;
 import com.pvpduels.arena.BuilderRank;
+import com.pvpduels.arena.Contest;
 import com.pvpduels.stats.StatsStore;
 import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
@@ -190,6 +191,8 @@ public final class SelfTest {
 
 	private static ItemStack enchantedSword = ItemStack.EMPTY;
 	private static int dummyDuelsBefore;
+	private static final long CONTEST_T0 = 1_800_000_000_000L;
+	private static final long CONTEST_DAY = 24L * 3600_000;
 	private static Dummy a;
 	private static Dummy b;
 	private static final double[] aPos = new double[3];
@@ -2355,6 +2358,201 @@ public final class SelfTest {
 			DuelManager.cancelInvitesOf(a.getUUID());
 			ArenaStore.deleteForTest(a.getUUID());
 			BuilderRank.resetForTest();
+		});
+
+		// ---------------------------------------------------------------- the weekly building contest
+		step("contest: it starts by itself with a category", () -> {
+			BuilderRank.resetForTest();
+			Contest.resetForTest();
+			Contest.setClockForTest(CONTEST_T0);
+			BuilderRank.setClockForTest(CONTEST_T0);
+			check("no contest yet", Contest.phase() == Contest.Phase.NONE);
+			Contest.advance(server);
+			check("a contest is running", Contest.building() && Contest.number() == 1 && !Contest.category().isEmpty(), Contest.category());
+			run(a, "contest");
+			check("/contest tells Alice what to build", a.heard("Build \"" + Contest.category() + "\" on your own plot"));
+			check("and that she has no build", a.heard("You have no build yet"));
+			check("five days to build", Contest.timeLeft().equals("5 days left"), Contest.timeLeft());
+		});
+		step("contest: Alice (not a Builder) builds her entry", () -> {
+			check("Alice is not a Builder", !BuilderRank.hasRank(a.getUUID()));
+			run(a, "contest enter");
+			check("she is on a contest plot", ArenaStudio.modeOf(a.getUUID()) == ArenaStudio.Mode.CONTEST && DuelManager.isBusy(a.getUUID()));
+			studioCx = ArenaStudio.plotOf(a.getUUID());
+			ServerLevel lvl = Arena.level(server);
+			check("the flat template is there", lvl.getBlockState(at(studioCx + 10, 100, 5)).is(Blocks.GRASS_BLOCK) && lvl.getBlockState(at(studioCx + 10, 101, 5)).isAir());
+			run(a, "savearena nope");
+			check("the arena commands don't work here", a.heard("You are not in the arena studio"));
+			run(a, "contest save");
+			check("with nothing built it is refused", a.heard("Your build is too small") && !Contest.hasEntry(a.getUUID()));
+			for (int i = 0; i < 25; i++) lvl.setBlock(at(studioCx + i, 101, 3), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+			run(a, "contest save");
+			check("with 25 blocks it is saved", Contest.hasEntry(a.getUUID()) && a.heard("Your entry was saved (25 blocks built)"));
+			run(a, "leave");
+			check("she left and the plot is clean", !ArenaStudio.isIn(a.getUUID()) && lvl.getBlockState(at(studioCx, 101, 3)).isAir());
+			check("her entry is kept", Contest.hasEntry(a.getUUID()) && Contest.loadEntry(a.getUUID()) != null && a.heard("Your build is your entry"));
+			run(a, "contest");
+			check("/contest says she handed in a build", a.heard("You handed in a build"));
+		});
+		step("contest: Bob builds, Carl builds nothing", () -> {
+			ServerLevel lvl = Arena.level(server);
+			run(b, "contest enter");
+			int cx = ArenaStudio.plotOf(b.getUUID());
+			for (int i = 0; i < 30; i++) lvl.setBlock(at(cx - i, 102, -4), Blocks.IRON_BLOCK.defaultBlockState(), 2);
+			run(b, "leave");
+			check("Bob's entry was kept when he left", Contest.hasEntry(b.getUUID()) && !ArenaStudio.isIn(b.getUUID()));
+			run(carl, "contest enter");
+			check("Carl is on a plot", ArenaStudio.modeOf(carl.getUUID()) == ArenaStudio.Mode.CONTEST);
+			run(carl, "leave");
+			check("a plot with nothing built is not an entry", !Contest.hasEntry(carl.getUUID()) && carl.heard("too small to be an entry"));
+			check("two builds so far", Contest.entryCount() == 2, "" + Contest.entryCount());
+			run(carl, "contest vote");
+			check("nobody can vote yet", carl.heard("The voting is not open"));
+		});
+		step("contest: Dora is still building when the time is up", () -> {
+			ServerLevel lvl = Arena.level(server);
+			run(dora, "contest enter");
+			int cx = ArenaStudio.plotOf(dora.getUUID());
+			for (int i = 0; i < 22; i++) lvl.setBlock(at(cx + 5, 101 + i, 7), Blocks.GOLD_BLOCK.defaultBlockState(), 2);
+			Contest.setClockForTest(CONTEST_T0 + 4 * CONTEST_DAY);
+			BuilderRank.setClockForTest(CONTEST_T0 + 4 * CONTEST_DAY);
+			Contest.advance(server);
+			check("after four days she can still build", Contest.building() && ArenaStudio.isIn(dora.getUUID()));
+			Contest.setClockForTest(CONTEST_T0 + 5 * CONTEST_DAY + 1000);
+			BuilderRank.setClockForTest(CONTEST_T0 + 5 * CONTEST_DAY + 1000);
+			Contest.advance(server);
+			check("after five days the voting is open", Contest.voting());
+			check("Dora was taken out of her plot", !ArenaStudio.isIn(dora.getUUID()) && dora.level().dimension().equals(server.overworld().dimension()), where(dora));
+			check("and her tower is a build too: three in the gallery", Contest.hasEntry(dora.getUUID()) && Contest.gallery().size() == 3, "" + Contest.gallery().size());
+			check("two days to vote", Contest.timeLeft().equals("2 days left"), Contest.timeLeft());
+			check("everybody was told", carl.heard("time to vote"));
+			run(a, "contest enter");
+			check("nobody can build any more", a.heard("no building contest to build for") && !ArenaStudio.isIn(a.getUUID()));
+		});
+		step("contest: the gallery", () -> {
+			int na = Contest.numberOf(a.getUUID());
+			check("every build has a number from 1 to 3", na >= 1 && na <= 3 && Contest.numberOf(b.getUUID()) >= 1 && Contest.numberOf(dora.getUUID()) >= 1);
+			check("Carl (no build) has none", Contest.numberOf(carl.getUUID()) == 0);
+			run(carl, "contest vote");
+			check("Carl sees the three builds without names", menuHas(carl, "Build #1") && menuHas(carl, "Build #2") && menuHas(carl, "Build #3") && !menuHas(carl, "Build #4")
+				&& !menuHas(carl, "Alice") && !menuHas(carl, "Bob"));
+			run(a, "contest vote");
+			check("Alice sees which one is hers", menuHas(a, "Build #" + na + " (yours)"));
+			a.closeContainer();
+			check("Carl clicks Alice's build", clickMenu(carl, "Build #" + na));
+		});
+		step("contest: Carl looks at Alice's build", () -> {
+			int na = Contest.numberOf(a.getUUID());
+			ServerLevel lvl = Arena.level(server);
+			check("Carl is looking at it", ArenaStudio.modeOf(carl.getUUID()) == ArenaStudio.Mode.VIEW && a.getUUID().equals(ArenaStudio.viewing(carl.getUUID())));
+			int cx = ArenaStudio.plotOf(carl.getUUID());
+			check("her stone bricks are in his plot", lvl.getBlockState(at(cx + 10, 101, 3)).is(Blocks.STONE_BRICKS) && lvl.getBlockState(at(cx + 30, 101, 3)).isAir());
+			check("in the duel world, in creative to fly around", carl.level().dimension().equals(Arena.DIMENSION) && carl.gameMode() == GameType.CREATIVE, where(carl));
+			check("the vote button is there", carl.heard("[VOTE FOR #" + na + "]"));
+			BlockHitResult hit = new BlockHitResult(new Vec3(cx + 5.5, 101, 0.5), Direction.UP, at(cx + 5, 100, 0), false);
+			check("he can't place anything", net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.invoker().interact(carl, lvl, InteractionHand.MAIN_HAND, hit) == net.minecraft.world.InteractionResult.FAIL);
+			check("he can't break anything", net.fabricmc.fabric.api.event.player.AttackBlockCallback.EVENT.invoker()
+				.interact(carl, lvl, InteractionHand.MAIN_HAND, at(cx + 10, 101, 3), Direction.UP) == net.minecraft.world.InteractionResult.FAIL
+				&& !net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.invoker().beforeBlockBreak(lvl, carl, at(cx + 10, 101, 3), lvl.getBlockState(at(cx + 10, 101, 3)), null));
+			run(carl, "contest enter");
+			check("he can't start building while looking", !ArenaStudio.modeOf(carl.getUUID()).equals(ArenaStudio.Mode.CONTEST));
+			int nb = Contest.numberOf(b.getUUID());
+			run(carl, "contest view " + nb);
+			check("he moved on to Bob's build", b.getUUID().equals(ArenaStudio.viewing(carl.getUUID())) && lvl.getBlockState(at(cx - 10, 102, -4)).is(Blocks.IRON_BLOCK)
+				&& lvl.getBlockState(at(cx + 10, 101, 3)).isAir());
+			run(carl, "contest view " + na);
+		});
+		step("contest: voting", () -> {
+			int na = Contest.numberOf(a.getUUID());
+			int nb = Contest.numberOf(b.getUUID());
+			int nd = Contest.numberOf(dora.getUUID());
+			run(carl, "contest vote " + na);
+			check("Carl votes for Alice", a.getUUID().equals(Contest.votedFor(carl.getUUID())) && carl.heard("Your vote goes to build #" + na));
+			run(a, "contest vote " + na);
+			check("you can't vote for your own build", a.heard("You can't vote for your own build") && Contest.votedFor(a.getUUID()) == null);
+			run(a, "contest vote 9");
+			check("a build that doesn't exist", a.heard("There is no build number 9"));
+			run(b, "contest vote " + na);
+			run(dora, "contest vote " + nb);
+			run(dora, "contest vote " + na);
+			check("Dora changed her vote", dora.heard("you changed your vote") && a.getUUID().equals(Contest.votedFor(dora.getUUID())));
+			run(a, "contest view " + nb);
+			check("Alice looks at Bob's build", b.getUUID().equals(ArenaStudio.viewing(a.getUUID())) && a.heard("[VOTE FOR #" + nb + "]"));
+			run(a, "contest vote " + nb);
+			check("and votes for it", b.getUUID().equals(Contest.votedFor(a.getUUID())));
+			check("Alice has 3 votes, Bob 1, Dora's tower 0", Contest.votesFor(a.getUUID()) == 3 && Contest.votesFor(b.getUUID()) == 1 && Contest.votesFor(dora.getUUID()) == 0
+				&& Contest.voterCount() == 4, Contest.votesFor(a.getUUID()) + "/" + Contest.votesFor(b.getUUID()) + "/" + Contest.votesFor(dora.getUUID()) + " " + nd);
+			run(carl, "contest");
+			check("/contest shows Carl his vote", carl.heard("You voted for build #" + na));
+			run(a, "leave");
+			check("Alice left the gallery", !ArenaStudio.isIn(a.getUUID()) && a.heard("You left the gallery"));
+		});
+		step("contest: the voting ends and the winners are Builders", () -> {
+			check("Carl is still looking at a build", ArenaStudio.modeOf(carl.getUUID()) == ArenaStudio.Mode.VIEW);
+			Contest.setClockForTest(CONTEST_T0 + 7 * CONTEST_DAY + 2000);
+			BuilderRank.setClockForTest(CONTEST_T0 + 7 * CONTEST_DAY + 2000);
+			Contest.advance(server);
+			check("a new contest started", Contest.building() && Contest.number() == 2, Contest.phase() + " " + Contest.number());
+			check("Carl was taken out of the gallery", !ArenaStudio.isIn(carl.getUUID()));
+			check("Alice is a Builder", BuilderRank.hasRank(a.getUUID()) && BuilderRank.timeLeft(a.getUUID()).equals("21 days left"), BuilderRank.timeLeft(a.getUUID()));
+			check("so is Bob", BuilderRank.hasRank(b.getUUID()));
+			check("Dora (no votes) and Carl (no build) are not", !BuilderRank.hasRank(dora.getUUID()) && !BuilderRank.hasRank(carl.getUUID()));
+			check("the results were announced", carl.heard("1st: Alice - 3 votes") && carl.heard("2nd: Bob - 1 vote") && !carl.heard("3rd: Dora"));
+			check("the winners were told", a.heard("You placed 1st in the building contest") && b.heard("You placed 2nd in the building contest"));
+			check("the last contest is remembered", a.getUUID().equals(Contest.lastWinner(1)) && b.getUUID().equals(Contest.lastWinner(2)) && Contest.lastWinner(3) == null);
+			check("the builds were thrown away", Contest.entryCount() == 0 && !Contest.hasEntry(a.getUUID()) && Contest.loadEntry(a.getUUID()) == null);
+			run(dora, "contest results");
+			check("/contest results prints them", dora.heard("They are Builders for 3 weeks"));
+		});
+		step("contest: the winner can make arenas now", () -> {
+			run(a, "createarena flat");
+			check("Alice is in the arena studio", ArenaStudio.modeOf(a.getUUID()) == ArenaStudio.Mode.STUDIO);
+			run(a, "leave");
+			check("and left", !ArenaStudio.isIn(a.getUUID()));
+			ArenaStore.deleteForTest(a.getUUID());
+			run(carl, "createarena flat");
+			check("Carl still can't", carl.heard("Only Builders can make arenas") && !ArenaStudio.isIn(carl.getUUID()));
+		});
+		step("contest: with one build only the contest is cancelled", () -> {
+			ServerLevel lvl = Arena.level(server);
+			run(a, "contest enter");
+			int cx = ArenaStudio.plotOf(a.getUUID());
+			for (int i = 0; i < 21; i++) lvl.setBlock(at(cx + i, 101, 9), Blocks.OAK_PLANKS.defaultBlockState(), 2);
+			run(a, "leave");
+			check("one build", Contest.entryCount() == 1);
+			long t = CONTEST_T0 + 13 * CONTEST_DAY;
+			Contest.setClockForTest(t);
+			BuilderRank.setClockForTest(t);
+			Contest.advance(server);
+			check("the contest was cancelled and a new one (#3) started", Contest.building() && Contest.number() == 3, Contest.phase() + " " + Contest.number());
+			check("everybody was told", carl.heard("was cancelled: not enough builds"));
+			check("nobody won", Contest.lastWinner(1) == null && Contest.entryCount() == 0);
+			run(carl, "contest end");
+			check("a normal player can't end a contest", Contest.building() && Contest.number() == 3);
+		});
+		step("contest: an admin's category, and a contest where nobody votes", () -> {
+			ServerLevel lvl = Arena.level(server);
+			Contest.startNew(server, "giant pizza");
+			check("the admin's category is used", Contest.category().equals("giant pizza") && Contest.number() == 4, Contest.category() + " " + Contest.number());
+			for (Dummy who : new Dummy[] {a, b}) {
+				run(who, "contest enter");
+				int cx = ArenaStudio.plotOf(who.getUUID());
+				for (int i = 0; i < 20; i++) lvl.setBlock(at(cx + i, 101, 11), Blocks.CLAY.defaultBlockState(), 2);
+				run(who, "leave");
+			}
+			check("two builds", Contest.entryCount() == 2);
+			String said = Contest.skip(server);
+			check("skipping the building time opens the voting", Contest.voting() && said.contains("building time"), said);
+			said = Contest.skip(server);
+			check("skipping the voting ends the contest", Contest.building() && Contest.number() == 5 && said.contains("voting"), said);
+			check("with no votes nobody wins", Contest.lastWinner(1) == null && a.heard("Nobody voted"));
+		});
+		step("contest: clean up", () -> {
+			Contest.resetForTest();
+			BuilderRank.resetForTest();
+			ArenaStore.deleteForTest(a.getUUID());
+			ArenaStore.deleteForTest(b.getUUID());
+			check("nobody is left on a plot", !ArenaStudio.isIn(a.getUUID()) && !ArenaStudio.isIn(b.getUUID()) && !ArenaStudio.isIn(carl.getUUID()) && !ArenaStudio.isIn(dora.getUUID()));
 		});
 
 		step("kits: every item of the game is saved and read back the same", () -> {
