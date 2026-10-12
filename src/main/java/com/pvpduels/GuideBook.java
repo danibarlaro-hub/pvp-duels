@@ -28,7 +28,8 @@ public final class GuideBook {
 		{"During a duel", "Both use the challenger's kit. Your own inventory is saved and comes back after.\n\n/leave quits. /again asks for a rematch.\n/kit load and the Quick kit keys are blocked."},
 		{"How it is decided", "Fixed rounds (max 100, or unlimited), First to N points, or Timed (max 30 min, a tie plays an extra round).\n\nUnlimited duels end when someone uses /leave: most points wins."},
 		{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat terrain inside invisible barriers. Build and dig freely: it resets every round."},
-		{"Practice: /botduel", "/botduel [kit] asks Yes or No, then sends you to a bedrock arena that is 100 blocks each way, with walls.\n\nThe bot stands still and never fights back. Rounds go on until you use /leave.\n\nPractice duels don't count for your stats."},
+		{"Practice: /botduel", "/botduel [kit] sends you to a bedrock arena that is 100 blocks each way, with walls.\n\n'Static bot?' Yes: the bot can't be moved. No: it takes knockback and you pick Passive, Easy, Normal or Hard (the last three fight back).\n\nThe sidebar counts your hits, damage and combo. Rounds go on until you use /leave. Practice doesn't count for your stats."},
+		{"Ranking: /top", "/top shows the best players by Elo. /top wins and /top streak sort by wins or best win streak.\n\nEveryone starts at 1000 Elo. Winning a duel against a real player takes points from your rival; practice duels don't count."},
 		{"Unlimited arena", "Flat terrain with no border.\n\nMore than 100 blocks away from your rival for 5 seconds: the one who ran away loses half of their health and is teleported next to the other."},
 		{"Duel rules", "In the /duel menu you can switch off, for that duel only:\nnatural regeneration, fall damage, hunger and building (circular and unlimited arenas)."},
 		{"Spectate, lobby", "/spectate <player> watches a duel. /leave stops.\n\nAfter a duel you are protected for 5 s.\n\n/setlobby (admin) sets the lobby, /lobby goes there. /lobby return off: after duels go back to where you were."},
@@ -38,7 +39,7 @@ public final class GuideBook {
 		{"Kit workshop", "/kit create [kit] opens a creative void: you can't place or break anything.\n\n/enchant <enchantment> [0-255]\n/infinite <1-99>\n/kit save <name>\n\n/leave or /kit exit brings your inventory back."},
 		{"Layouts", "A layout sorts slots 1-36.\n/layout slot <1-36> <rules...> (32 priority levels)\n/layout inventorycopy\n/layout use <1-21|name>\n/layout auto builds a layout from your kits.\n/layout sort or press R."},
 		{"Keys", "Options > Controls > PvP Duels:\nSort inventory\nQuick kit A / B / C\nQuick layout 1 / 2 / 3\nNext / Previous layout\n\nAll of them can be changed."},
-		{"Sidebar and stats", "/sidebar turns the scoreboard on the right on or off.\n\nIt shows your wins, losses, streak and rounds, and during a duel the score of both players.\n\n/guide book gives you this book again."}
+		{"Sidebar and stats", "/sidebar turns the scoreboard on the right on or off.\n\nIt shows your Elo, wins, losses, streak and rounds, and during a duel the score of both players.\n\n/guide book gives you this book again."}
 	};
 
 	private GuideBook() {}

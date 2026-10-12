@@ -74,6 +74,7 @@ public final class Sidebar {
 			return lines;
 		}
 		StatsStore.Stats s = StatsStore.get(p.getUUID());
+		lines.add("Elo: " + s.elo);
 		lines.add("Wins: " + s.wins);
 		lines.add("Losses: " + s.losses);
 		lines.add("Win rate: " + s.winRate());

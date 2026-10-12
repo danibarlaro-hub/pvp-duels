@@ -53,6 +53,7 @@ public final class DuelManager {
 		ServerTickEvents.END_SERVER_TICK.register(DuelManager::onTick);
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register(DuelManager::allowDamage);
+		ServerLivingEntityEvents.AFTER_DAMAGE.register(DuelManager::afterDamage);
 		ServerLivingEntityEvents.ALLOW_DEATH.register(DuelManager::allowDeath);
 		ServerPlayerEvents.ALLOW_DEATH.register((player, source, amount) -> allowDeath(player, source, amount));
 
@@ -117,11 +118,25 @@ public final class DuelManager {
 		return true;
 	}
 
+	/** Practice duels count every hit between the player and the bot. */
+	private static void afterDamage(LivingEntity entity, DamageSource source, float baseDamageTaken, float damageTaken, boolean blocked) {
+		if (blocked || !(entity instanceof ServerPlayer victim)) return;
+		countPracticeHit(victim, source, damageTaken);
+	}
+
+	private static void countPracticeHit(ServerPlayer victim, DamageSource source, float amount) {
+		Duel duel = BY_PLAYER.get(victim.getUUID());
+		if (duel == null || !duel.practice || source == null || source.getEntity() == null) return;
+		int vi = duel.indexOf(victim.getUUID());
+		if (vi >= 0 && source.getEntity().getUUID().equals(duel.ids[1 - vi])) duel.onPracticeHit(vi, amount);
+	}
+
 	/** Duelists never really die: the round ends instead. */
 	private static boolean allowDeath(LivingEntity entity, DamageSource source, float amount) {
 		if (!(entity instanceof ServerPlayer p)) return true;
 		Duel duel = BY_PLAYER.get(p.getUUID());
 		if (duel == null) return true;
+		countPracticeHit(p, source, Math.min(amount, p.getMaxHealth()));
 		duel.onDeath(p, source);
 		return false;
 	}

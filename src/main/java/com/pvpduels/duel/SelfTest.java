@@ -189,6 +189,8 @@ public final class SelfTest {
 	private static Dummy bot;
 	private static int botTick;
 	private static int botStatsBefore;
+	private static int botEloBefore;
+	private static double botX;
 
 	private static BlockPos at(int x, int y, int z) {
 		return new BlockPos(x, y, z);
@@ -216,6 +218,13 @@ public final class SelfTest {
 		victim.markLoaded();
 		victim.invulnerableTime = 0;
 		victim.hurtServer((ServerLevel) victim.level(), attacker.damageSources().playerAttack(attacker), 1000f);
+	}
+
+	/** A hit that does not kill (the armor of the kit makes it a bit smaller). */
+	private static void softHit(Dummy attacker, Dummy victim, float amount) {
+		victim.markLoaded();
+		victim.invulnerableTime = 0;
+		victim.hurtServer((ServerLevel) victim.level(), attacker.damageSources().playerAttack(attacker), amount);
 	}
 
 	private static boolean clickMenu(Dummy who, String name) {
@@ -1114,21 +1123,27 @@ public final class SelfTest {
 		// ---------------------------------------------------------------- practice duel against a bot
 		step("bot duel: /botduel asks which kit", () -> {
 			botStatsBefore = StatsStore.get(a.getUUID()).duels;
+			botEloBefore = StatsStore.get(a.getUUID()).elo;
 			a.getInventory().clearContent();
 			a.getInventory().setItem(21, new ItemStack(Items.STONE, 3));
 			run(a, "botduel");
 			check("the kit list opens", menuHas(a, "testkit"));
 			menuStep(a, "testkit");
 		});
-		step("bot duel: the Yes / No question, answer No", () -> {
+		step("bot duel: the question 'Static bot?'", () -> {
 			check("the question has a Yes and a No", menuHas(a, "Yes") && menuHas(a, "No"));
 			menuStep(a, "No");
-			check("answering No starts nothing", noDuel(a) && server.getPlayerList().getPlayerByName("Bot") == null);
-			check("the menu was closed", !(a.containerMenu instanceof ChestMenu));
+			check("No leads to the bot types", menuHas(a, "Passive") && menuHas(a, "Easy") && menuHas(a, "Normal") && menuHas(a, "Hard"));
+			menuStep(a, "Back");
+			check("Back returns to the question", menuHas(a, "Yes") && menuHas(a, "No"));
+			a.closeContainer();
+			check("closing the menu starts nothing", noDuel(a) && server.getPlayerList().getPlayerByName("Bot") == null);
 		});
-		step("bot duel: with a kit name, answer Yes", () -> {
+		step("bot duel: static bot, answer Yes", () -> {
 			run(a, "botduel nokit");
 			check("an unknown kit is refused", a.heard("no kit named 'nokit'"));
+			run(a, "botduel testkit weird");
+			check("an unknown bot type is refused and nothing starts", a.heard("The bot can be") && noDuel(a));
 			run(a, "botduel testkit");
 			check("with a kit name the question opens right away", menuHas(a, "Yes") && menuHas(a, "No"));
 			menuStep(a, "Yes");
@@ -1140,6 +1155,7 @@ public final class SelfTest {
 			bot = d.player(1) instanceof Dummy x ? x : null;
 			check("the opponent is the bot", bot != null && bot.getName().getString().equals("Bot") && BotDuel.isBot(bot.getUUID()));
 			if (bot == null) return;
+			check("Yes made it a static bot", BotDuel.levelOf(bot.getUUID()) == BotLevel.STATIC);
 			check("the bot is in the player list", server.getPlayerList().getPlayerByName("Bot") == bot);
 			check("both are in the arena dimension", a.level().dimension().equals(Arena.DIMENSION) && bot.level().dimension().equals(Arena.DIMENSION),
 				where(a) + " / " + where(bot));
@@ -1147,7 +1163,7 @@ public final class SelfTest {
 			check("Alice's old marker item is gone during the duel", a.getInventory().getItem(21).isEmpty());
 			check("Alice's inventory is saved on disk", PlayerBackup.exists(a.getUUID()));
 			check("the invitation text names the bot arena", a.heard("Bot arena (radius 100)") && a.heard("Unlimited rounds"));
-			check("the player is told it is a practice duel", a.heard("never fights back"));
+			check("the player is told what the bot does", a.heard("never fights back"));
 
 			ServerLevel arena = Arena.level(server);
 			int cx = Arena.botCenterX(d.slot);
@@ -1175,7 +1191,7 @@ public final class SelfTest {
 			check("the mess is there", arena.getBlockState(at(cx - 90, fy + 150, -60)).is(Blocks.STONE) && arena.getBlockState(at(cx + 60, fy, -40)).isAir());
 		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
 
-		step("bot duel: the bot is pushed away", () -> {
+		step("bot duel: the static bot is pushed away", () -> {
 			Duel d = duel(a);
 			double[] s = d.space.spawn(1);
 			check("the bot stands at its spawn point", bot.distanceToSqr(s[0], s[1], s[2]) < 0.01, where(bot));
@@ -1184,7 +1200,7 @@ public final class SelfTest {
 			bot.teleportTo(Arena.level(server), s[0] + 6, s[1], s[2] + 3, java.util.Set.of(), 0f, 0f, true);
 			botTick = ticks;
 		}, () -> ticks - botTick > 6, 100);
-		step("bot duel: the bot is back where it was", () -> {
+		step("bot duel: the static bot is back where it was", () -> {
 			Duel d = duel(a);
 			double[] s = d.space.spawn(1);
 			check("the bot cannot be moved", bot.distanceToSqr(s[0], s[1], s[2]) < 0.01 && bot.getDeltaMovement().lengthSqr() < 0.01, where(bot));
@@ -1195,11 +1211,40 @@ public final class SelfTest {
 			botTick = ticks;
 		}, () -> true, 1);
 		step("bot duel: standing in the far corner is fine", () -> {}, () -> ticks - botTick > 20, 100);
-		step("bot duel: Alice kills the bot", () -> {
+		step("bot duel: hit 1", () -> {
 			Duel d = duel(a);
 			check("the far corner did not lose the round", d.phase == Duel.Phase.FIGHTING && d.points[1] == 0, d.phase + " " + d.points[0] + "-" + d.points[1]);
+			softHit(a, bot, 3f);
+			check("the first hit was counted", d.hits == 1 && d.damage > 0f && d.bestCombo == 1, d.hits + " hits, " + d.damage + " damage");
+			botTick = ticks;
+		}, () -> ticks - botTick > 3, 50);
+		step("bot duel: hit 2", () -> {
+			softHit(a, bot, 3f);
+			botTick = ticks;
+		}, () -> ticks - botTick > 3, 50);
+		step("bot duel: hit 3 makes a combo", () -> {
+			softHit(a, bot, 3f);
+			Duel d = duel(a);
+			check("three quick hits make a combo of 3", d.hits == 3 && d.bestCombo == 3, d.hits + " hits, best combo " + d.bestCombo);
+			botTick = ticks;
+		}, () -> ticks - botTick > 30, 100);
+		step("bot duel: a late hit starts a new combo", () -> {
+			softHit(a, bot, 3f);
+			Duel d = duel(a);
+			check("four hits, and the best combo is still 3", d.hits == 4 && d.bestCombo == 3, d.hits + " hits, best combo " + d.bestCombo);
+			botTick = ticks;
+		}, () -> ticks - botTick > 13, 100);
+		step("bot duel: the sidebar shows the counters", () -> {
+			check("the sidebar has hits, damage, combo and the bot type", sidebarHas(a, "Hits: 4") && sidebarHas(a, "Damage: ")
+				&& sidebarHas(a, "Combo: 1 (best 3)") && sidebarHas(a, "Bot: Static"), String.valueOf(sidebar(a)));
+			check("a static bot has no 'hits taken' line", !sidebarHas(a, "Hits taken"));
+		});
+		step("bot duel: Alice kills the bot", () -> {
+			Duel d = duel(a);
 			hit(a, bot);
 			check("round ended, Alice has 1 point", d.phase == Duel.Phase.ROUND_END && d.points[0] == 1, d.phase + " " + d.points[0] + "-" + d.points[1]);
+			check("the killing blow is counted too", d.hits == 5, String.valueOf(d.hits));
+			check("the round summary was sent", a.heard("Round 1: 5 hits"));
 			check("the bot did not really die", bot.isAlive() && bot.getHealth() >= bot.getMaxHealth() - 0.01f);
 		}, () -> phaseIs(a, Duel.Phase.FIGHTING) && duel(a).round == 2, 600);
 		step("bot duel: round 2 started clean", () -> {
@@ -1230,14 +1275,70 @@ public final class SelfTest {
 			check("Alice is out of the duel", noDuel(a));
 			check("she got her inventory back", a.getInventory().getItem(21).is(Items.STONE) && !a.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
 			check("the backup is deleted", !PlayerBackup.exists(a.getUUID()));
-			check("the practice duel is not counted for the stats", StatsStore.get(a.getUUID()).duels == botStatsBefore,
-				StatsStore.get(a.getUUID()).duels + " vs " + botStatsBefore);
-			botTick = ticks;
+			check("the practice total was shown", a.heard("Practice total: 5 hits"));
+			check("the practice duel is not counted for the stats", StatsStore.get(a.getUUID()).duels == botStatsBefore
+				&& StatsStore.get(a.getUUID()).elo == botEloBefore, StatsStore.get(a.getUUID()).duels + " vs " + botStatsBefore);
 		}, () -> server.getPlayerList().getPlayerByName("Bot") == null, 200);
 		step("bot duel: the bot is gone", () -> {
 			check("no bot is left and no arena is in use", server.getPlayerList().getPlayerByName("Bot") == null && DuelManager.activeDuels() == 0,
 				"duels=" + DuelManager.activeDuels());
 			check("the bot's id is forgotten", !BotDuel.isBot(bot.getUUID()));
+		});
+
+		// ---------------------------------------------------------------- a bot that takes knockback
+		step("passive bot: start from the command", () -> {
+			run(a, "botduel testkit passive");
+			Duel d = duel(a);
+			check("a passive bot duel started", d != null && d.practice && BotDuel.levelOf(d.ids[1]) == BotLevel.PASSIVE);
+			bot = d != null && d.player(1) instanceof Dummy x ? x : null;
+			check("the bot was created", bot != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("passive bot: a push moves it", () -> {
+			Duel d = duel(a);
+			double[] s = d.space.spawn(1);
+			check("it stands at its spawn point", bot.distanceToSqr(s[0], s[1], s[2]) < 0.04, where(bot));
+			bot.setDeltaMovement(1.2, 0.3, 0.0);
+			botX = bot.getX();
+			botTick = ticks;
+		}, () -> ticks - botTick > 25, 100);
+		step("passive bot: it flew and landed", () -> {
+			double moved = bot.getX() - botX;
+			log("passive bot moved " + moved + " blocks; now at " + where(bot));
+			check("a push moves a passive bot away", moved > 1.5, "moved " + moved);
+			check("it landed on the floor of the arena", Math.abs(bot.getY() - (Arena.FLOOR_Y + 1)) < 0.2, where(bot));
+			check("and it stopped", bot.getDeltaMovement().horizontalDistanceSqr() < 0.01, String.valueOf(bot.getDeltaMovement()));
+			botX = bot.getX();
+			softHit(a, bot, 3f);
+			botTick = ticks;
+		}, () -> ticks - botTick > 25, 100);
+		step("passive bot: a hit knocks it back", () -> {
+			double moved = bot.getX() - botX;
+			log("a hit moved the passive bot " + moved + " blocks");
+			check("a hit pushes it away from Alice", moved > 0.3, "moved " + moved);
+			check("a passive bot never fights back", duel(a).hitsTaken == 0);
+			run(a, "leave");
+		}, () -> server.getPlayerList().getPlayerByName("Bot") == null, 200);
+
+		// ---------------------------------------------------------------- a bot that fights back
+		step("hard bot: start from the command", () -> {
+			run(a, "botduel testkit hard");
+			Duel d = duel(a);
+			check("a hard bot duel started", d != null && d.practice && BotDuel.levelOf(d.ids[1]) == BotLevel.HARD);
+			bot = d != null && d.player(1) instanceof Dummy x ? x : null;
+			check("the bot was created", bot != null);
+			if (bot != null) log("hard bot starts at " + where(bot) + ", Alice at " + where(a));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("hard bot: it walks up to Alice and hits her", () -> {}, () -> duel(a) != null && duel(a).hitsTaken >= 1, 400);
+		step("hard bot: it was next to Alice", () -> {
+			Duel d = duel(a);
+			log("hard bot at " + where(bot) + ", Alice at " + where(a) + ", hits taken " + d.hitsTaken);
+			check("the bot hit Alice", d.hitsTaken >= 1 && d.damageTaken > 0f, "hits taken " + d.hitsTaken);
+			check("the bot came close to Alice", bot.distanceTo(a) < 5.0, "distance " + bot.distanceTo(a));
+			run(a, "leave");
+		}, () -> server.getPlayerList().getPlayerByName("Bot") == null, 200);
+		step("bots: all gone", () -> {
+			check("no bot is left", server.getPlayerList().getPlayerByName("Bot") == null && DuelManager.activeDuels() == 0);
+			check("and Alice's stats still don't count the practice", StatsStore.get(a.getUUID()).duels == botStatsBefore);
 		});
 
 		step("statistics, sidebar and guide book", () -> {
@@ -1247,6 +1348,17 @@ public final class SelfTest {
 				sa.wins + "W " + sa.losses + "L of " + sa.duels);
 			check("Bob's wins were counted", sb.wins >= 1 && sb.losses >= 1, sb.wins + "W " + sb.losses + "L");
 			check("the best streak is at least the streak", sa.bestStreak >= sa.streak && sa.bestStreak >= 1);
+			check("the ratings of two players who only played each other add up to 2000", sa.elo + sb.elo == 2000, sa.elo + " + " + sb.elo);
+			check("Alice, who won more, has the higher rating", sa.wins > sb.wins ? sa.elo > sb.elo : true, sa.elo + " vs " + sb.elo);
+			check("the sidebar shows the rating", sidebarHas(a, "Elo: " + sa.elo), String.valueOf(sidebar(a)));
+			run(a, "top");
+			check("/top shows the ranking with both players", a.heard("Top 2 by Elo") && a.heard(" 1. ") && a.heard(" 2. ") && a.heard("You: #"));
+			run(a, "top wins");
+			check("/top wins works", a.heard("Top 2 by wins"));
+			run(a, "top streak");
+			check("/top streak works", a.heard("Top 2 by best win streak"));
+			run(a, "top nonsense");
+			check("a wrong ranking name is refused", a.heard("Use /top"));
 			run(a, "sidebar off");
 			check("/sidebar off hides it", sidebar(a).isEmpty());
 			run(a, "sidebar on");

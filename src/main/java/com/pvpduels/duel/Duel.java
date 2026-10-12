@@ -72,6 +72,23 @@ public final class Duel {
 	private boolean warnedTeleport;
 	private boolean finishing;
 	private boolean recorded;
+	/** Practice duels: hits you landed on the bot, the damage they did, your current and best combo, and what the bot did to you. */
+	int hits;
+	int hitsTaken;
+	int bestCombo;
+	float damage;
+	float damageTaken;
+	private int combo;
+	private int lastHitTick = -1000;
+	private int roundHits;
+	private int roundBest;
+	private float roundDamage;
+	private int lastCountedTick = -1;
+	private int lastCountedVictim = -1;
+	/** Two hits count as a combo when they are at most this many ticks apart (1 second). */
+	static final int COMBO_GAP = 20;
+	/** Elo before and after for both players (set when a real duel is recorded). */
+	private int[] eloInfo;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
 	int winner = -2;
 	boolean closed;
@@ -358,6 +375,43 @@ public final class Duel {
 		}
 	}
 
+	// ------------------------------------------------------------------ practice counters
+
+	private static String oneDecimal(float value) {
+		return String.format(java.util.Locale.ROOT, "%.1f", value);
+	}
+
+	/** The combo you have right now (it is over when more than a second passed since your last hit). */
+	int currentCombo() {
+		return elapsed - lastHitTick <= COMBO_GAP ? combo : 0;
+	}
+
+	/** A hit between the player and the bot. "victim" is the duelist who was hurt; amount is the damage it did. */
+	void onPracticeHit(int victim, float amount) {
+		if (!practice || phase != Phase.FIGHTING || amount <= 0f) return;
+		if (lastCountedTick == elapsed && lastCountedVictim == victim) return; // the same blow reported twice
+		lastCountedTick = elapsed;
+		lastCountedVictim = victim;
+		if (BotDuel.isBot(ids[victim])) {
+			hits++;
+			roundHits++;
+			damage += amount;
+			roundDamage += amount;
+			combo = currentCombo() + 1;
+			lastHitTick = elapsed;
+			bestCombo = Math.max(bestCombo, combo);
+			roundBest = Math.max(roundBest, combo);
+			ServerPlayer attacker = player(1 - victim);
+			if (attacker != null) {
+				attacker.sendOverlayMessage(Component.literal("Combo " + combo + "  |  " + oneDecimal(amount) + " damage").withStyle(ChatFormatting.AQUA));
+			}
+		} else {
+			hitsTaken++;
+			damageTaken += amount;
+			combo = 0; // getting hit breaks your combo
+		}
+	}
+
 	// ------------------------------------------------------------------ events from DuelManager
 
 	boolean canTakeDamage() {
@@ -389,6 +443,17 @@ public final class Duel {
 		phaseTicks = 0;
 		if (winnerIdx >= 0) points[winnerIdx]++;
 		decide();
+		if (practice) {
+			ServerPlayer you = player(0);
+			if (you != null) {
+				you.sendSystemMessage(Msg.info("Round " + round + ": " + roundHits + (roundHits == 1 ? " hit, " : " hits, ")
+					+ oneDecimal(roundDamage) + " damage, best combo " + roundBest));
+			}
+			roundHits = 0;
+			roundDamage = 0f;
+			roundBest = 0;
+			combo = 0;
+		}
 
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
@@ -478,6 +543,15 @@ public final class Duel {
 			}
 		}
 		out.add("Kit: " + config.kit());
+		if (practice && i == 0) {
+			BotLevel level = BotDuel.levelOf(ids[1]);
+			out.add("");
+			out.add("Hits: " + hits);
+			out.add("Damage: " + oneDecimal(damage));
+			out.add("Combo: " + currentCombo() + " (best " + bestCombo + ")");
+			if (level != null && level.fights) out.add("Hits taken: " + hitsTaken);
+			if (level != null) out.add("Bot: " + level.label);
+		}
 		if (phase == Phase.ENDED) out.add(winner == -1 ? "Draw" : (winner == i ? "You won!" : "You lost"));
 		return out;
 	}
@@ -502,10 +576,7 @@ public final class Duel {
 		recorded = true;
 		// Practice duels against a /test_dummy don't count.
 		if (TestDummy.accepts(ids[0]) || TestDummy.accepts(ids[1])) return;
-		for (int i = 0; i < 2; i++) {
-			int result = winner == -1 ? 0 : (winner == i ? 1 : -1);
-			StatsStore.record(ids[i], result, points[i], points[1 - i]);
-		}
+		eloInfo = StatsStore.recordDuel(ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
 	}
 
 	private void finish() {
@@ -523,6 +594,19 @@ public final class Duel {
 			else title = Component.literal("DEFEAT").withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
 			sendTitle(p, title, Component.literal("Final score " + score(i)).withStyle(ChatFormatting.WHITE), 5, 80, 15);
 			p.sendSystemMessage(Msg.title("Duel finished: " + names[0] + " " + points[0] + " - " + points[1] + " " + names[1]));
+			if (practice) {
+				if (i == 0) {
+					p.sendSystemMessage(Msg.info("Practice total: " + hits + (hits == 1 ? " hit, " : " hits, ") + oneDecimal(damage)
+						+ " damage, best combo " + bestCombo + (hitsTaken > 0 ? ", " + hitsTaken + " hits taken" : "")));
+					p.sendSystemMessage(Msg.info("Type /botduel to practice again."));
+				}
+				continue;
+			}
+			if (eloInfo != null) {
+				int before = eloInfo[2 * i];
+				int after = eloInfo[2 * i + 1];
+				p.sendSystemMessage(Msg.info("Elo: " + before + " -> " + after + " (" + (after >= before ? "+" : "") + (after - before) + ")"));
+			}
 			p.sendSystemMessage(Msg.info("Type /again to ask for a rematch."));
 		}
 	}

@@ -21,14 +21,17 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * /botduel: a practice duel against a bot that stands still. The command asks Yes or No, then joins a fake player
- * called "Bot", puts you both in the big bedrock practice arena (100 blocks each way, with walls) and starts a duel
- * with unlimited rounds that lasts until you use /leave. The bot is removed again when the duel is over.
- * Practice duels never count for the statistics.
+ * /botduel: a practice duel against a bot. The command asks whether the bot should be static (Yes: it stands still and
+ * can't be pushed) or not (No: it takes knockback, and you choose how it behaves: passive, easy, normal or hard).
+ * It joins a fake player called "Bot", puts you both in the big bedrock practice arena (100 blocks each way, with
+ * walls) and starts a duel with unlimited rounds that lasts until you use /leave. The bot is removed again when the
+ * duel is over. Practice duels never count for the statistics.
  */
 public final class BotDuel {
-	/** Bots that exist right now (id to name). */
-	private static final Map<UUID, String> BOTS = new HashMap<>();
+	private record Bot(String name, BotLevel level) {}
+
+	/** Bots that exist right now. */
+	private static final Map<UUID, Bot> BOTS = new HashMap<>();
 	/** Bots whose duel just closed; they leave the game on the next tick. */
 	private static final List<UUID> LEAVING = new ArrayList<>();
 
@@ -38,10 +41,16 @@ public final class BotDuel {
 		return BOTS.containsKey(id);
 	}
 
+	/** How this bot behaves, or null when the id is not a bot. */
+	public static BotLevel levelOf(UUID id) {
+		Bot bot = BOTS.get(id);
+		return bot == null ? null : bot.level();
+	}
+
 	// ------------------------------------------------------------------ starting
 
 	/** Joins the bot and starts the duel. Returns an error text, or null (also when the reason was already told to the player). */
-	static String start(ServerPlayer player, String kit) {
+	static String start(ServerPlayer player, String kit, BotLevel level) {
 		MinecraftServer server = player.level().getServer();
 		if (DuelManager.isBusy(player.getUUID())) return "You are busy: finish your duel or leave the kit workshop (/leave) first.";
 		if (!KitStore.exists(player.getUUID(), kit)) return "You have no kit named '" + kit + "'. Use /kit list.";
@@ -50,7 +59,7 @@ public final class BotDuel {
 		String name = freeName(server);
 		Dummy bot = TestDummy.create(server, name);
 		bot.setGameMode(GameType.SURVIVAL);
-		BOTS.put(bot.getUUID(), name);
+		BOTS.put(bot.getUUID(), new Bot(name, level));
 
 		DuelConfig config = new DuelConfig(kit, ArenaKind.BOT, true, Arena.BOT_RADIUS, WinMode.ROUNDS, 0, DuelConfig.Rules.DEFAULT);
 		DuelManager.startPractice(player, bot, config);
@@ -61,9 +70,14 @@ public final class BotDuel {
 			LEAVING.add(bot.getUUID());
 			return null;
 		}
-		double[] spot = duel.space.spawn(1);
-		bot.pin(duel.space.dimension(), spot[0], spot[1], spot[2]);
-		player.sendSystemMessage(Msg.info("  Practice duel: " + name + " stands still and never fights back. Rounds go on until you use /leave."
+		if (level.pinned()) {
+			double[] spot = duel.space.spawn(1);
+			bot.pin(duel.space.dimension(), spot[0], spot[1], spot[2]);
+		} else {
+			bot.setBrain(new BotBrain(bot, level, player.getUUID()));
+		}
+		player.sendSystemMessage(Msg.info("  Practice duel against " + name + " (" + level.label + "): " + level.description));
+		player.sendSystemMessage(Msg.info("  Rounds go on until you use /leave. Your hits, damage and combos are on the sidebar."
 			+ " Practice duels don't count for your stats."));
 		return null;
 	}
@@ -72,7 +86,8 @@ public final class BotDuel {
 	private static String freeName(MinecraftServer server) {
 		for (int n = 1; ; n++) {
 			String name = n == 1 ? "Bot" : "Bot" + n;
-			if (server.getPlayerList().getPlayerByName(name) == null && !BOTS.containsValue(name)) return name;
+			final String candidate = name;
+			if (server.getPlayerList().getPlayerByName(name) == null && BOTS.values().stream().noneMatch(b -> b.name().equals(candidate))) return name;
 		}
 	}
 
@@ -113,13 +128,16 @@ public final class BotDuel {
 
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(Commands.literal("botduel")
-			.executes(ctx -> open(ctx.getSource(), null))
+			.executes(ctx -> open(ctx.getSource(), null, null))
 			.then(Commands.argument("kit", StringArgumentType.word())
 				.suggests((ctx, builder) -> SharedSuggestionProvider.suggest(KitStore.list(ctx.getSource().getPlayerOrException().getUUID()), builder))
-				.executes(ctx -> open(ctx.getSource(), StringArgumentType.getString(ctx, "kit")))));
+				.executes(ctx -> open(ctx.getSource(), StringArgumentType.getString(ctx, "kit"), null))
+				.then(Commands.argument("bot", StringArgumentType.word())
+					.suggests((ctx, builder) -> SharedSuggestionProvider.suggest(List.of("static", "passive", "easy", "normal", "hard"), builder))
+					.executes(ctx -> open(ctx.getSource(), StringArgumentType.getString(ctx, "kit"), StringArgumentType.getString(ctx, "bot"))))));
 	}
 
-	private static int open(CommandSourceStack source, String kit) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+	private static int open(CommandSourceStack source, String kit, String botText) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = source.getPlayerOrException();
 		if (DuelManager.isBusy(p.getUUID())) {
 			source.sendFailure(Msg.err("You are busy: finish your duel or leave the kit workshop (/leave) first."));
@@ -128,6 +146,19 @@ public final class BotDuel {
 		if (kit != null && !KitStore.exists(p.getUUID(), kit)) {
 			source.sendFailure(Msg.err("You have no kit named '" + kit + "'. Use /kit list."));
 			return 0;
+		}
+		if (botText != null) {
+			BotLevel level = BotLevel.parse(botText);
+			if (level == null) {
+				source.sendFailure(Msg.err("The bot can be: static, passive, easy, normal or hard."));
+				return 0;
+			}
+			String problem = start(p, kit, level);
+			if (problem != null) {
+				source.sendFailure(Msg.err(problem));
+				return 0;
+			}
+			return 1;
 		}
 		DuelMenus.openBot(p, kit);
 		return 1;

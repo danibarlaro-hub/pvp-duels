@@ -30,7 +30,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ `/kit load` y Quick kit bloqueados durante un duelo
 - ✅ Arena plana: bedrock 21x21 sobre el vacio, con o sin paredes, solo se ponen entidades/bloques con entidad (cofres, shulkers, ender chests, cristales...)
 - ✅ `/test_dummy <nombre>` (solo admins): jugador falso que acepta todo, para probar solo
-- ✅ `/botduel [kit]`: pregunta Yes / No y te manda a una arena de bedrock de 100 bloques hacia cada lado con paredes, contra un bot que no se mueve (no cuenta para tus estadisticas)
+- ✅ `/botduel [kit]`: pregunta "Static bot?" (Yes = no se puede mover, No = recibe knockback) y te manda a una arena de bedrock de 100 bloques hacia cada lado con paredes (no cuenta para tus estadisticas)
 - ✅ Arena circular: mundo normal, piso plano, circulo de barriers, radio 100/150/200, se resetea sola (5 bloques de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60)
 - ✅ Arena sin limites: si te alejas 100 bloques del rival, cuenta de 5 s, perdes la mitad de la vida y te teletransporta al rival
 - ✅ Spawn que vos decoras: un admin hace `/setlobby`; al terminar un duelo te manda ahi (con `/lobby return off` volves a donde estabas); `/lobby` te lleva cuando quieras
@@ -50,9 +50,9 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - Todo el texto en ingles · todas las teclas cambiables en Controles · nada que sea trampa · entregar el mod siempre como archivo `.jar` listo para usar
 
 ## Propuestas mias (todavia no pedidas, para que elijas)
-- ⏳ Bot que pelea de vuelta (se acerca y pega) con niveles de dificultad
-- ⏳ Contador de practica en `/botduel`: golpes, dano, combo mas largo, por ronda
+- ✅ Bot que pelea de vuelta (se acerca y pega) con niveles de dificultad: Passive, Easy, Normal, Hard
+- ✅ Contador de practica en `/botduel`: golpes, dano, combo mas largo, por ronda
+- ✅ `/top`: ranking por Elo, victorias o racha
 - ⏳ `/duels`: lista de duelos en curso con boton [WATCH] para mirar
 - ⏳ Torneos / cola para el grupo de amigos (brackets automaticos, 2v2)
 - ⏳ Arena propia: un admin construye una y `/savearena` hace que los duelos la usen
-- ⏳ Ranking (`/top`) con victorias o Elo

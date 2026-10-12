@@ -12,6 +12,7 @@ import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.ShareCommands;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutCommands;
+import com.pvpduels.stats.TopCommand;
 import com.pvpduels.net.CycleLayoutPayload;
 import com.pvpduels.net.QuickKitPayload;
 import com.pvpduels.net.QuickLayoutPayload;
@@ -63,6 +64,7 @@ public class PvpDuelsMod implements ModInitializer {
 			Lobby.registerCommands(dispatcher);
 			Spectators.registerCommands(dispatcher);
 			BotDuel.registerCommands(dispatcher);
+			TopCommand.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
 		});
 

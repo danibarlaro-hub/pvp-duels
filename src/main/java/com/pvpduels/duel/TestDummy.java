@@ -26,6 +26,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -113,12 +114,22 @@ public final class TestDummy {
 			setDeltaMovement(0, 0, 0);
 		}
 
+		// The behaviour of a movable practice bot (null for the other dummies).
+		private BotBrain brain;
+
+		void setBrain(BotBrain brain) {
+			this.brain = brain;
+		}
+
 		@Override
 		public void tick() {
 			markLoaded();
+			if (brain != null) brain.prepare();
+			Vec3 before = position();
 			super.tick();
 			doTick();
 			holdStill();
+			if (brain != null && pinDimension == null) brain.afterTick(before);
 		}
 
 		@Override

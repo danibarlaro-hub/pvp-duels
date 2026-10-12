@@ -144,22 +144,40 @@ public final class DuelMenus {
 		pickKit(p, "Bot duel: choose a kit", 0, (who, name) -> botQuestion(who, name, true));
 	}
 
+	/** The Yes / No question: Yes = a static bot, No = a bot that can be pushed (then you choose how it behaves). */
 	private static void botQuestion(ServerPlayer p, String kit, boolean canGoBack) {
 		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
 		b.set(13, icon(Items.BOOK, "Practice duel vs a bot", ChatFormatting.GOLD,
 			"Kit: " + kit,
 			"Arena: bedrock platform, " + Arena.BOT_RADIUS + " blocks each way, with walls.",
-			"The bot stands still and never fights back.",
 			"Rounds go on until you use /leave.",
-			"Practice duels don't count for your stats."));
-		b.set(11, icon(Items.EMERALD, "Yes", ChatFormatting.GREEN, "Start the practice duel"), who -> {
-			who.closeContainer();
-			String problem = BotDuel.start(who, kit);
-			if (problem != null) who.sendSystemMessage(Msg.err(problem));
-		});
-		b.set(15, icon(Items.BARRIER, "No", ChatFormatting.RED), ServerPlayer::closeContainer);
+			"Practice duels don't count for your stats.",
+			"",
+			"Yes: a static bot. It can't be moved and never fights back.",
+			"No: a bot that takes knockback. You pick how it behaves."));
+		b.set(11, icon(Items.EMERALD, "Yes", ChatFormatting.GREEN, "Static bot: it can't be moved."), who -> startBot(who, kit, BotLevel.STATIC));
+		b.set(15, icon(Items.BARRIER, "No", ChatFormatting.RED, "The bot can be pushed (knockback)."), who -> botLevels(who, kit, canGoBack));
 		if (canGoBack) b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), DuelMenus::botKits);
-		ChoiceMenu.open(p, Component.literal("Duel the bot?"), 3, b);
+		ChoiceMenu.open(p, Component.literal("Static bot?"), 3, b);
+	}
+
+	private static void botLevels(ServerPlayer p, String kit, boolean canGoBack) {
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
+		Item[] items = {Items.FEATHER, Items.PAPER, Items.DIAMOND_SWORD, Items.NETHERITE_SWORD};
+		BotLevel[] levels = {BotLevel.PASSIVE, BotLevel.EASY, BotLevel.NORMAL, BotLevel.HARD};
+		int[] slots = {10, 12, 14, 16};
+		for (int i = 0; i < levels.length; i++) {
+			BotLevel level = levels[i];
+			b.set(slots[i], icon(items[i], level.label, ChatFormatting.GREEN, level.description, "Click to start"), who -> startBot(who, kit, level));
+		}
+		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> botQuestion(who, kit, canGoBack));
+		ChoiceMenu.open(p, Component.literal("How should the bot behave?"), 3, b);
+	}
+
+	private static void startBot(ServerPlayer who, String kit, BotLevel level) {
+		who.closeContainer();
+		String problem = BotDuel.start(who, kit, level);
+		if (problem != null) who.sendSystemMessage(Msg.err(problem));
 	}
 
 	// ------------------------------------------------------------------ 2. arena
