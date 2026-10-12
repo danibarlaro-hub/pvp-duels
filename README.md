@@ -7,6 +7,9 @@ Todo lo que se ve dentro del juego esta en ingles.
 El `.jar` siempre actualizado esta aca (lo arma GitHub solo en cada cambio):
 https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0.1.0.jar
 
+Si una version nueva falla, hay una copia fija de los duelos (la que se probo primero) en
+https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-duels/pvpduels-0.1.0.jar
+
 ## Instalar
 - Todos los que juegan necesitan: Minecraft 26.2, Fabric Loader, **Fabric API**, Essential y este mismo `.jar` en la carpeta `mods`.
 - Todos con exactamente la misma version del `.jar`.
@@ -23,6 +26,17 @@ https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0
 - `/leave` salir del duelo, `/again` pedir revancha con la misma configuracion.
 - Hasta 3 duelos al mismo tiempo en el mundo.
 - Arena circular y arena ilimitada aparecen como "Coming soon".
+
+## Taller de kits (crear kits en creativo)
+- `/kit create [kit]` te manda a un mundo vacio con una plataforma de piedra, en creativo, pero **sin poder romper ni poner nada**. Si das el nombre de un kit, se carga para editarlo.
+- `/enchant <encantamiento> [nivel 0-255]` encanta el item de tu mano con cualquier encantamiento en cualquier item (nivel 0 lo saca). Reemplaza al `/enchant` de Minecraft; los admins conservan la forma `/enchant <objetivos> <encantamiento> [nivel]`. Tambien existe `/ench`.
+- `/infinite <1-99>` apila items que normalmente no se apilan (totems, etc.). Maximo 99: es el limite de Minecraft para guardar stacks. No funciona con items con durabilidad.
+- `/kit save <nombre>` guarda lo que armaste. `/leave` o `/kit exit` te devuelve tu inventario y tu lugar.
+- `/enchant` e `/infinite` solo funcionan en el taller (los admins los pueden usar en cualquier lado).
+
+## Probar solo (admins)
+- `/test_dummy <nombre>` invoca un jugador falso a tu lado (tambien `/fakeplayer`). No se mueve, no pelea y acepta todos los duelos y revanchas. `/duel <nombre>` y a pegarle. Se saca con `/test_dummy remove <nombre>`.
+- Hace falta tener permisos de admin (en un mundo local: crear el mundo con trucos activados).
 
 ## Kits y layouts
 - `/kit save|load|list|delete <nombre>` (se guardan en `.minecraft/pvpduels`, no dentro del mundo)
@@ -41,4 +55,4 @@ https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0
 
 ## Prueba automatica
 Cada vez que se arma el mod, GitHub levanta un servidor de prueba con dos jugadores falsos que juegan duelos completos
-(menus, invitaciones, rondas, vacio, `/leave`, desconexion, reglas de la arena) y publica el resultado en la rama `selftest-out`.
+(menus, invitaciones, rondas, vacio, `/leave`, desconexion, reglas de la arena, taller de kits, `/enchant`, `/infinite`, `/test_dummy`) y publica el resultado en la rama `selftest-out`.

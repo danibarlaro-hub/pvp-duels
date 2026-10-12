@@ -12,6 +12,8 @@ public final class GuideCommand {
 		"/leave  - quit your duel (you lose, or it ends in a draw/by score if it was unlimited). /again  - ask for a rematch with the same settings",
 		"In a duel both players use the challenger's kit, your own inventory is saved and given back, and /kit load + the Quick kit keys are blocked. 5 minutes without hitting each other teleports one player next to the other.",
 		"Arena: flat 21x21 bedrock platform over the void (with or without walls). Only entities and block entities (chests, shulkers, crystals, boats...) can be placed. Falling off loses the round.",
+		"WORKSHOP: /kit create [kit]  - go to the kit workshop (creative mode, nothing can be placed or broken; give a kit name to edit it). There use /enchant <enchantment> [level 0-255] and /infinite <1-99> on the item in your hand, then /kit save <name>. /leave or /kit exit  - go back to your own inventory",
+		"Admins: /test_dummy <name>  - adds a fake player that accepts every duel, to test alone; /test_dummy remove [name]",
 		"/kit save <name>  - save your current inventory as a kit",
 		"/kit load <name>  - replace your inventory with a kit",
 		"/kit list  - list your kits",
