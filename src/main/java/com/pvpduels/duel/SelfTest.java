@@ -1140,7 +1140,7 @@ public final class SelfTest {
 			check("slot 1 is Send Duel (a sword)", LobbyKit.kindOf(inv.getItem(0)) != null && "send".equals(LobbyKit.kindOf(inv.getItem(0)))
 				&& inv.getItem(0).is(Items.DIAMOND_SWORD) && inv.getItem(0).getHoverName().getString().equals("Send Duel"), inv.getItem(0).toString());
 			check("Send Duel is green", inv.getItem(0).getHoverName().getStyle().getColor() != null
-				&& inv.getItem(0).getHoverName().getStyle().getColor().getValue() == net.minecraft.ChatFormatting.GREEN.getColor());
+				&& inv.getItem(0).getHoverName().getStyle().getColor().getValue() == 0x55FF55);
 			check("slot 2 is the Leave barrier", "leave".equals(LobbyKit.kindOf(inv.getItem(1))) && inv.getItem(1).is(Items.BARRIER)
 				&& inv.getItem(1).getHoverName().getString().equals("Leave"), inv.getItem(1).toString());
 			check("slot 8 is the Create+ grass block", "create".equals(LobbyKit.kindOf(inv.getItem(7))) && inv.getItem(7).is(Items.GRASS_BLOCK)
