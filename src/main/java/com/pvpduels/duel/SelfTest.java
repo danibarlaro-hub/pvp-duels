@@ -733,8 +733,8 @@ public final class SelfTest {
 			hit(a, b);
 			Duel d = duel(a);
 			check("round 1 went to Alice", d.points[0] == 1 && d.phase == Duel.Phase.ROUND_END, d.points[0] + "-" + d.points[1] + " " + d.phase);
-		});
-		step("circular arena: round 2 starts on clean terrain", () -> {
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("circular arena: round 2 started on clean terrain", () -> {
 			int x = circleCx;
 			check("the stone block is gone", isBlock(circleCx - 15, 71, 0, Blocks.AIR), String.valueOf(Terrain.level(server).getBlockState(at(circleCx - 15, 71, 0))));
 			check("the dug hole is filled again", isBlock(circleCx - 16, 70, 1, Blocks.DIRT), String.valueOf(Terrain.level(server).getBlockState(at(circleCx - 16, 70, 1))));
@@ -743,7 +743,7 @@ public final class SelfTest {
 			check("the chest is gone", isBlock(circleCx - 14, 71, 0, Blocks.AIR));
 			check("the ring is still there", isBlock(x + 100, 100, 0, Blocks.BARRIER));
 			check("round 2 is on", duel(a).round == 2);
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		});
 		step("circular arena: leaving the circle loses the round", () -> {
 			ServerLevel lvl = Terrain.level(server);
 			b.teleportTo(lvl, circleCx + 110.5, 71, 0.5, java.util.Set.of(), 0f, 0f, true);
