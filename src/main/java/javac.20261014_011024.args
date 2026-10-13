@@ -1,0 +1,10 @@
+-proc:none
+-d
+/tmp/claude-0/jc
+com/pvpduels/effects/BeamArt.java
+com/pvpduels/effects/GridArt.java
+com/pvpduels/effects/SkyArt.java
+com/pvpduels/effects/ClockArt.java
+com/pvpduels/effects/StormArt.java
+com/pvpduels/duel/Films.java
+com/pvpduels/duel/SelfTest.java

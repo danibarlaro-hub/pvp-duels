@@ -51,6 +51,9 @@ jobs:
           git add -A
           git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "selftest results for ${GITHUB_SHA}"
           git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" selftest-out
+          # a copy per branch, so tests that run at the same time on different branches do not step on each other
+          BRANCH_COPY="selftest-out-$(echo "${GITHUB_REF_NAME}" | tr '/' '-')"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "selftest-out:refs/heads/${BRANCH_COPY}"
       - name: Show the result, the job stays green and the result is read from the selftest-out branch
         run: |
           tail -3 run/selftest-result.txt || true
