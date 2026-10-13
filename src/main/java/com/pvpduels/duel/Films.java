@@ -1,6 +1,7 @@
 package com.pvpduels.duel;
 
 import com.pvpduels.effects.BeamArt;
+import com.pvpduels.effects.ClockArt;
 import com.pvpduels.effects.DomainArt;
 import com.pvpduels.effects.DomeArt;
 import com.pvpduels.effects.ExplosionArt;
@@ -8,6 +9,7 @@ import com.pvpduels.effects.GridArt;
 import com.pvpduels.effects.Props;
 import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.SkyArt;
+import com.pvpduels.effects.StormArt;
 import com.pvpduels.effects.StrikeArt;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -68,6 +70,8 @@ final class Films {
 	static final Film TESSERACT = new TesseractFilm();
 	static final Film ECLIPSE = new EclipseFilm();
 	static final Film MOON = new MoonFilm();
+	static final Film CRONOS = new CronosFilm();
+	static final Film ZEUS = new ZeusFilm();
 	static final Film SHRINE = new DomainFilm(DomeArt.Variant.SHRINE);
 	static final Film VOID = new DomainFilm(DomeArt.Variant.VOID);
 	static final Film SWORDS = new DomainFilm(DomeArt.Variant.SWORDS);
@@ -84,6 +88,8 @@ final class Films {
 			case "tesseract" -> TESSERACT;
 			case "eclipse" -> ECLIPSE;
 			case "moonfall" -> MOON;
+			case "cronos" -> CRONOS;
+			case "zeus" -> ZEUS;
 			case "domain_expansion" -> SHRINE;
 			case "domain_void" -> VOID;
 			case "domain_swords" -> SWORDS;
@@ -736,6 +742,144 @@ final class Films {
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
 				s.flash();
 				s.title(Component.literal("MOONFALL").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Cronos Clock
+
+	private static final class CronosFilm implements Film {
+		/** How long the camera takes to fall from the wide view of the clock to the frozen target. */
+		private static final int DIVE = 14;
+
+		@Override public String id() { return "cronos"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return ClockArt.ticks(true); }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		private static Vec3 flatAround(Vec3 loser, Vec3 side, double rho, double turn, double y) {
+			double phi = Math.atan2(side.z, side.x) + turn;
+			return around(loser, rho, phi, y);
+		}
+
+		/** Face to face with the clock while it draws itself and speeds up, then a fast fall to the frozen target and a slow turn around it. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			double floor = s.center.y;
+			int stop = ClockArt.stop(true);
+			int resume = ClockArt.resume(true);
+			Vec3 wide0 = flatAround(loser, s.side, 30, 0, floor + 2.0);
+			Vec3 wide1 = flatAround(loser, s.side, 24, 0, floor + 11.0);
+			Vec3 close = flatAround(loser, s.side, 9, 0, floor + 2.6);
+			if (a < stop) return lerp(wide0, wide1, Cinema.ease(clamp01(a / (double) stop)));
+			if (a < stop + DIVE) return lerp(wide1, close, Cinema.ease((a - stop) / (double) DIVE));
+			if (a < resume) {
+				double k = clamp01((a - stop - DIVE) / (double) (resume - stop - DIVE));
+				return flatAround(loser, s.side, 9 + 2 * k, 0.015 * (a - stop - DIVE), floor + 2.6 + 0.8 * k);
+			}
+			Vec3 last = flatAround(loser, s.side, 11, 0.015 * (resume - stop - DIVE), floor + 3.4);
+			Vec3 far = flatAround(loser, s.side, 26, 0.015 * (resume - stop - DIVE) * 0.5, floor + 12.0);
+			double e = Cinema.ease(clamp01((a - resume) / (double) ClockArt.finish(true)));
+			Vec3 pos = lerp(last, far, e);
+			if (a - resume < 12) pos = Cinema.Scene.shake(pos, 0.7 * (1 - (a - resume) / 12.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 clock = ClockArt.center(loser, true);
+			int stop = ClockArt.stop(true);
+			int resume = ClockArt.resume(true);
+			Vec3 frozen = loser.add(0, 1.6, 0);
+			Vec3 target;
+			if (a < stop) target = lerp(loser.add(0, 6, 0), clock, Cinema.ease(clamp01(a / 28.0)));
+			else if (a < stop + DIVE) target = lerp(clock, frozen, Cinema.ease((a - stop) / (double) DIVE));
+			else if (a < resume) target = frozen;
+			else target = lerp(frozen, clock.add(0, -4, 0), Cinema.ease(clamp01((a - resume) / 16.0)));
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			Props props = s.props();
+			ClockArt.cronos(s.level, viewers, props, loser, s.side, a, true);
+			for (Vec3 at : props.tick(a)) ExplosionArt.landing(s.level, viewers, at);
+			if (a == ClockArt.stop(true)) {
+				s.flash();
+				s.title(Component.literal("CRONOS CLOCK").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " stops time").withStyle(ChatFormatting.WHITE), 0, 60, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ Zeus Storm
+
+	private static final class ZeusFilm implements Film {
+		@Override public String id() { return "zeus"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return StormArt.ticks(true); }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** A low wide shot that circles slowly under the black clouds and closes in during the storm; it shakes at the great bolt and then rises. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			double floor = s.center.y;
+			int strike = StormArt.strike(true);
+			double k = Cinema.ease(clamp01(a / (double) strike));
+			double rho = 24 - 6 * k;
+			double y = 2.2 + 2.0 * k;
+			double phi = Math.atan2(s.side.z, s.side.x) + 0.006 * Math.min(a, strike);
+			if (a > strike) {
+				double p = Cinema.ease(Math.min(1.0, (a - strike) / (double) StormArt.after(true)));
+				rho = 18 + 10 * p;
+				y = 4.2 + 8.0 * p;
+				phi += 0.004 * (a - strike);
+			}
+			Vec3 pos = around(loser, rho, phi, floor + y);
+			int since = a - strike;
+			if (since >= 0 && since < 16) pos = Cinema.Scene.shake(pos, 1.1 * (1 - since / 16.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			int gather = StormArt.gather(true);
+			int storm = StormArt.storm(true);
+			int strike = StormArt.strike(true);
+			Vec3 target;
+			if (a < gather) {
+				target = loser.add(0, 24, 0);
+			} else if (a < gather + storm) {
+				double k = Cinema.ease(clamp01((a - gather) / (double) storm));
+				target = loser.add(0, 18 - 12 * k, 0);
+			} else if (a < strike) {
+				target = loser.add(0, 6 + 14 * Cinema.ease(clamp01((a - gather - storm) / (double) StormArt.charge(true))), 0);
+			} else {
+				double e = Cinema.ease(Math.min(1.0, (a - strike) / (double) StormArt.after(true)));
+				target = loser.add(0, 10 - 5 * e, 0);
+			}
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			if (a == 0 && s.doubles[s.win] != null) s.doubles[s.win].setXRot(-40f);
+			Props props = s.props();
+			StormArt.zeus(s.level, viewers, props, loser, a, true);
+			for (Vec3 at : props.tick(a)) ExplosionArt.landing(s.level, viewers, at);
+			if (a == StormArt.strike(true)) {
+				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
+				s.flash();
+				s.title(Component.literal("ZEUS STORM").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
 					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
