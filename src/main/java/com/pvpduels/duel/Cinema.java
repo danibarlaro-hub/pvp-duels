@@ -245,6 +245,8 @@ public final class Cinema {
 		private Vec3 smooth;
 		/** The solid parts of a film (null until the film needs them). */
 		Props props;
+		/** The meteors of a Meteor Shower film (the film keeps no state, so the scene holds them). */
+		final List<com.pvpduels.effects.ExplosionArt.Meteor> meteors = new ArrayList<>();
 		private float lastYaw = Float.NaN;
 		/** The last position and look of the camera. */
 		Vec3 cameraAt;

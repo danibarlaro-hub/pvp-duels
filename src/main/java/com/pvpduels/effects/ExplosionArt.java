@@ -62,6 +62,8 @@ public final class ExplosionArt {
 	/** The Meteor Shower: when the last small meteor is born and when the big one is. */
 	public static final int SHOWER_END = 56;
 	public static final int SHOWER_BIG = 58;
+	/** How long the big meteor takes to fall. */
+	public static final int SHOWER_BIG_FLIGHT = 24;
 
 	static final ParticleOptions GOLD = new DustParticleOptions(0xFFD54A, 1.6f);
 	static final ParticleOptions ICE = new DustParticleOptions(0x8FD3FF, 1.5f);
@@ -633,6 +635,14 @@ public final class ExplosionArt {
 
 	// ------------------------------------------------------------------ the Meteor Shower
 
+	/** Where the big meteor of a Meteor Shower is {@code t} ticks after the start (the camera of the finale follows it). */
+	public static Vec3 bigMeteorHead(Vec3 from, Vec3 target, int t) {
+		Vec3 dir = flatDirection(from, target);
+		Vec3 start = target.add(dir.scale(-44)).add(0, 60, 0);
+		double u = Math.max(0, Math.min(1, (t - SHOWER_BIG) / (double) SHOWER_BIG_FLIGHT));
+		return start.add(target.subtract(start).scale(u));
+	}
+
 	private static void makeMeteor(Props props, Meteor m) {
 		Vec3 d = m.end.subtract(m.start).normalize();
 		m.dir = d;
@@ -663,7 +673,7 @@ public final class ExplosionArt {
 			meteors.add(m);
 		}
 		if (t == SHOWER_BIG) {
-			Meteor m = new Meteor(target.add(dir.scale(-44)).add(0, 60, 0), target, t, 24, true);
+			Meteor m = new Meteor(target.add(dir.scale(-44)).add(0, 60, 0), target, t, SHOWER_BIG_FLIGHT, true);
 			makeMeteor(props, m);
 			meteors.add(m);
 			sound(level, target.add(0, 25, 0), SoundEvents.WITHER_SPAWN, 4.0f, 1.6f);

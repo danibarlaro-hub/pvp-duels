@@ -3340,7 +3340,7 @@ public final class SelfTest {
 			check("every explosion has a unique id, and the three domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 16
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_expansion") != null && com.pvpduels.effects.DomeArt.Variant.of("domain_void") != null
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_swords") != null && com.pvpduels.effects.DomeArt.Variant.of("gungnir") == null
-				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("railgun") != null && Films.of("tesseract") != null && Films.of("eclipse") != null && Films.of("moonfall") != null && Films.of("cronos") != null && Films.of("zeus") != null && Films.of("domain_void") != null && Films.of("orbital_strike") == null);
+				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("railgun") != null && Films.of("tesseract") != null && Films.of("eclipse") != null && Films.of("moonfall") != null && Films.of("cronos") != null && Films.of("zeus") != null && Films.of("domain_void") != null && Films.of("orbital_strike") != null && Films.of("orbital_wither") != null && Films.of("black_hole") != null && Films.of("meteor_shower") != null && Films.of("nope") == null);
 			check("the menus have a place for each, inside the six rows", EffectsMenus.explosionSlot(0) == 10 && EffectsMenus.explosionSlot(6) == 16
 				&& EffectsMenus.explosionSlot(7) == 19 && EffectsMenus.explosionSlot(Effects.EXPLOSIONS.length - 1) < 45);
 			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
@@ -4252,6 +4252,10 @@ public final class SelfTest {
 			{"moonfall", "MOONFALL", "FILM", String.valueOf(com.pvpduels.effects.SkyArt.moonLand(true) + 8), "15"},
 			{"cronos", "CRONOS CLOCK", "FILM", String.valueOf(com.pvpduels.effects.ClockArt.stop(true) + 20), "15"},
 			{"zeus", "ZEUS STORM", "FILM", String.valueOf(com.pvpduels.effects.StormArt.strike(true) + 10), "15"},
+			{"orbital_strike", "ORBITAL STRIKE", "FILM", "56", "10"},
+			{"orbital_wither", "WITHER CANNON", "FILM", "56", "10"},
+			{"black_hole", "BLACK HOLE", "FILM", String.valueOf(26 + com.pvpduels.effects.ExplosionArt.HOLE_COLLAPSE - 6), "15"},
+			{"meteor_shower", "METEOR SHOWER", "FILM", String.valueOf(24 + com.pvpduels.effects.ExplosionArt.SHOWER_BIG + 10), "12"},
 			{"seven_stars", "SEVEN STARS", "FILM", String.valueOf(Films.SEVEN_LEAD + 90), "4"}};
 		// the fake connection only keeps the last 4000 packets, so the title is noted as soon as it arrives
 		final boolean[] heard = new boolean[2];
@@ -4349,7 +4353,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.15.0", version.equals("0.15.0"), version);
+			check("the mod says 0.16.0", version.equals("0.16.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
