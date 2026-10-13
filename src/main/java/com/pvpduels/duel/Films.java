@@ -72,6 +72,10 @@ final class Films {
 	static final Film MOON = new MoonFilm();
 	static final Film CRONOS = new CronosFilm();
 	static final Film ZEUS = new ZeusFilm();
+	static final Film ORBITAL = new OrbitalFilm(false);
+	static final Film WITHER = new OrbitalFilm(true);
+	static final Film HOLE = new HoleFilm();
+	static final Film METEORS = new MeteorFilm();
 	static final Film SHRINE = new DomainFilm(DomeArt.Variant.SHRINE);
 	static final Film VOID = new DomainFilm(DomeArt.Variant.VOID);
 	static final Film SWORDS = new DomainFilm(DomeArt.Variant.SWORDS);
@@ -90,6 +94,10 @@ final class Films {
 			case "moonfall" -> MOON;
 			case "cronos" -> CRONOS;
 			case "zeus" -> ZEUS;
+			case "orbital_strike" -> ORBITAL;
+			case "orbital_wither" -> WITHER;
+			case "black_hole" -> HOLE;
+			case "meteor_shower" -> METEORS;
 			case "domain_expansion" -> SHRINE;
 			case "domain_void" -> VOID;
 			case "domain_swords" -> SWORDS;
@@ -109,6 +117,13 @@ final class Films {
 
 	private static Vec3 safe(Vec3 dir) {
 		return dir.lengthSqr() < 1e-6 ? new Vec3(0, 0, 1) : dir.normalize();
+	}
+
+	/** The flat offset {@code rel} from {@code focus}, turned by {@code turn} radians and scaled by {@code grow}, at height {@code y}. */
+	private static Vec3 swing(Vec3 focus, Vec3 rel, double turn, double grow, double y) {
+		double cos = Math.cos(turn);
+		double sin = Math.sin(turn);
+		return new Vec3(focus.x + (rel.x * cos - rel.z * sin) * grow, y, focus.z + (rel.x * sin + rel.z * cos) * grow);
 	}
 
 	/** A point on a circle around {@code focus}. */
@@ -880,6 +895,236 @@ final class Films {
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
 				s.flash();
 				s.title(Component.literal("ZEUS STORM").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Orbital cannons
+
+	private static final class OrbitalFilm implements Film {
+		/** The camera is on the winner and the sky this long before the cannon is aimed. */
+		private static final int LEAD = 30;
+		private static final int AFTER = 96;
+		private final boolean wither;
+
+		OrbitalFilm(boolean wither) {
+			this.wither = wither;
+		}
+
+		@Override public String id() { return wither ? "orbital_wither" : "orbital_strike"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return LEAD + ExplosionArt.ORBITAL_SLAM + AFTER; }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** A low shot from the side, still while the cannon is aimed; after the blow it circles and rises with the smoke. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			Vec3 base = new Vec3(loser.x + s.side.x * 16 - fwd.x * 8, s.center.y + 2.2, loser.z + s.side.z * 16 - fwd.z * 8);
+			int hit = LEAD + ExplosionArt.ORBITAL_SLAM;
+			Vec3 still = base.add(fwd.scale(0.03 * Math.min(a, hit)));
+			if (a <= hit) return still;
+			int b = a - hit;
+			double u = Cinema.ease(Math.min(1.0, b / (double) AFTER));
+			Vec3 rel = new Vec3(still.x - loser.x, 0, still.z - loser.z);
+			Vec3 pos = swing(loser, rel, Math.toRadians(55) * u, 1.0 + 0.5 * u, still.y + 8.0 * u);
+			if (b < 14) pos = Cinema.Scene.shake(pos, 1.0 * (1 - b / 14.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 winner = s.stage[s.win];
+			Vec3 loser = s.stage[1 - s.win];
+			int hit = LEAD + ExplosionArt.ORBITAL_SLAM;
+			Vec3 skyLook = lerp(winner.add(0, 1.4, 0), loser.add(0, 40, 0), 0.85);
+			Vec3 target;
+			if (a < LEAD) {
+				target = lerp(winner.add(0, 1.4, 0), loser.add(0, 40, 0), Cinema.ease(a / (double) LEAD) * 0.85);
+			} else if (a <= hit) {
+				// the sight closes in: the eyes come down the red line to the target
+				target = lerp(skyLook, loser.add(0, 2.0, 0), Cinema.ease((a - LEAD) / (double) ExplosionArt.ORBITAL_SLAM));
+			} else {
+				double u = Cinema.ease(Math.min(1.0, (a - hit) / (double) AFTER));
+				target = loser.add(0, 3.0 + 14.0 * u, 0);
+			}
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			if (a == 0 && s.doubles[s.win] != null) s.doubles[s.win].setXRot(-35f);
+			if (a < LEAD) {
+				if (a == 8 || a == 20) s.sound(loser.add(0, 6, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f + a * 0.03f);
+				return;
+			}
+			int t = a - LEAD;
+			Props props = s.props();
+			ExplosionArt.orbital(s.level, viewers, props, loser, t, wither);
+			for (Vec3 at : props.tick(t)) ExplosionArt.landing(s.level, viewers, at);
+			if (t == ExplosionArt.ORBITAL_SLAM) {
+				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
+				s.flash();
+				s.title(Component.literal(wither ? "WITHER CANNON" : "ORBITAL STRIKE").withStyle(wither ? ChatFormatting.DARK_PURPLE : ChatFormatting.RED, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Black Hole
+
+	private static final class HoleFilm implements Film {
+		/** The winner raises a hand and the camera looks at the empty sky this long before the hole opens. */
+		private static final int LEAD = 26;
+		private static final int AFTER = 60;
+
+		@Override public String id() { return "black_hole"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return LEAD + ExplosionArt.HOLE_BURST + AFTER; }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** A wide shot from the side that turns slowly while the hole grows, trembles when it collapses and pulls back from the burst. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			Vec3 base = new Vec3(loser.x + s.side.x * 20 - fwd.x * 10, s.center.y + 3.0, loser.z + s.side.z * 20 - fwd.z * 10);
+			Vec3 rel = new Vec3(base.x - loser.x, 0, base.z - loser.z);
+			int t = a - LEAD;
+			int collapse = ExplosionArt.HOLE_COLLAPSE;
+			int burst = ExplosionArt.HOLE_BURST;
+			double k = Cinema.ease(clamp01(t / (double) collapse));
+			if (t <= burst) {
+				Vec3 pos = swing(loser, rel, Math.toRadians(30) * k, 1.0 - 0.15 * k, base.y + 2.5 * k);
+				if (t >= collapse) pos = Cinema.Scene.shake(pos, 0.15 + 0.5 * (t - collapse) / (double) (burst - collapse));
+				return pos;
+			}
+			int b = t - burst;
+			double u = Cinema.ease(Math.min(1.0, b / (double) AFTER));
+			Vec3 pos = swing(loser, rel, Math.toRadians(30) + Math.toRadians(40) * u, 0.85 + 0.9 * u, base.y + 2.5 + 8.0 * u);
+			if (b < 20) pos = Cinema.Scene.shake(pos, 1.3 * (1 - b / 20.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 winner = s.stage[s.win];
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 hole = loser.add(0, 6.5, 0);
+			int t = a - LEAD;
+			int burst = ExplosionArt.HOLE_BURST;
+			Vec3 target;
+			if (t < 0) {
+				target = lerp(winner.add(0, 1.3, 0), hole, Cinema.ease(a / (double) LEAD) * 0.75);
+			} else if (t <= burst) {
+				Vec3 early = lerp(winner.add(0, 1.3, 0), hole, 0.75);
+				target = lerp(early, hole, Cinema.ease(clamp01(t / 12.0)));
+			} else {
+				double u = Cinema.ease(Math.min(1.0, (t - burst) / (double) AFTER));
+				target = lerp(hole, loser.add(0, 3.0, 0), u);
+			}
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			if (a == 0 && s.doubles[s.win] != null) s.doubles[s.win].setXRot(-25f);
+			if (a < LEAD) {
+				if (a == 6 || a == 16) s.sound(loser.add(0, 6.5, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.4f + a * 0.02f);
+				return;
+			}
+			int t = a - LEAD;
+			Props props = s.props();
+			ExplosionArt.blackHole(s.level, viewers, props, loser, t);
+			for (Vec3 at : props.tick(t)) ExplosionArt.landing(s.level, viewers, at);
+			if (t == ExplosionArt.HOLE_COLLAPSE && s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
+			if (t == ExplosionArt.HOLE_BURST) {
+				s.flash();
+				s.title(Component.literal("BLACK HOLE").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Meteor Shower
+
+	private static final class MeteorFilm implements Film {
+		/** The winner looks up and the camera follows his eyes this long before the first meteor is born. */
+		private static final int LEAD = 24;
+		private static final int AFTER = 70;
+
+		@Override public String id() { return "meteor_shower"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return LEAD + ExplosionArt.SHOWER_BIG + ExplosionArt.SHOWER_BIG_FLIGHT + AFTER; }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** A low wide shot from the side that drifts toward the target while the sky burns, and circles the crater and rises after the big one lands. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			int t = a - LEAD;
+			int land = ExplosionArt.SHOWER_BIG + ExplosionArt.SHOWER_BIG_FLIGHT;
+			double k = Cinema.ease(clamp01(t / (double) land));
+			Vec3 at = new Vec3(s.center.x + s.side.x * 22 + fwd.x * (-6 + 12 * k), s.center.y + 2.6 + 3.0 * k, s.center.z + s.side.z * 22 + fwd.z * (-6 + 12 * k));
+			if (t <= land) return at;
+			int b = t - land;
+			double u = Cinema.ease(Math.min(1.0, b / (double) AFTER));
+			Vec3 rel = new Vec3(at.x - loser.x, 0, at.z - loser.z);
+			Vec3 pos = swing(loser, rel, Math.toRadians(60) * u, 1.0 + 0.4 * u, at.y + 9.0 * u);
+			if (b < 16) pos = Cinema.Scene.shake(pos, 1.2 * (1 - b / 16.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 winner = s.stage[s.win];
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			int t = a - LEAD;
+			int land = ExplosionArt.SHOWER_BIG + ExplosionArt.SHOWER_BIG_FLIGHT;
+			// where the small meteors cross the sky
+			Vec3 sky = loser.add(fwd.scale(-16)).add(0, 24, 0);
+			Vec3 target;
+			if (t < 0) {
+				target = lerp(winner.add(0, 1.3, 0), sky, Cinema.ease(a / (double) LEAD) * 0.8);
+			} else if (t <= land) {
+				Vec3 head = ExplosionArt.bigMeteorHead(winner, loser, t);
+				Vec3 follow = lerp(head, loser.add(0, 2.0, 0), Cinema.ease(clamp01((t - (land - 12)) / 12.0)));
+				double w = Cinema.ease(clamp01((t - (ExplosionArt.SHOWER_BIG - 8)) / 14.0));
+				Vec3 early = lerp(lerp(winner.add(0, 1.3, 0), sky, 0.8), sky, Cinema.ease(clamp01(t / 12.0)));
+				target = lerp(early, follow, w);
+			} else {
+				double u = Cinema.ease(Math.min(1.0, (t - land) / (double) AFTER));
+				target = loser.add(0, 3.0 + 8.0 * u, 0);
+			}
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 winner = s.stage[s.win];
+			Vec3 loser = s.stage[1 - s.win];
+			if (a == 0 && s.doubles[s.win] != null) s.doubles[s.win].setXRot(-35f);
+			if (a < LEAD) {
+				if (a == 8 || a == 16) s.sound(loser.add(0, 20, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f + a * 0.03f);
+				return;
+			}
+			int t = a - LEAD;
+			Props props = s.props();
+			ExplosionArt.meteorShower(s.level, viewers, props, winner, loser, t, s.meteors);
+			for (Vec3 at : props.tick(t)) ExplosionArt.landing(s.level, viewers, at);
+			if (t == ExplosionArt.SHOWER_BIG && s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
+			if (t == ExplosionArt.SHOWER_BIG + ExplosionArt.SHOWER_BIG_FLIGHT) {
+				s.flash();
+				s.title(Component.literal("METEOR SHOWER").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
 					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}

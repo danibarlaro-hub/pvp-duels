@@ -103,7 +103,7 @@ public final class GuideBook {
 		}),
 		new Topic("Effects", new String[][] {
 			{"Victory effects", "When you win, 3 fireworks go up in a row behind you, and your particles play for 5 seconds.\n\n/effects opens the menu to choose them. /effects preview shows them now."},
-			{"The finale", "After a win the camera zooms out from the middle of the arena and rises 7 blocks. Everybody sees it, spectators too. Sneak to skip it.\n\nWith a Domain you get a real dome over the arena. Most big ones have their own film."},
+			{"The finale", "After a win the camera zooms out from the middle of the arena and rises 7 blocks. Everybody sees it, spectators too. Sneak to skip it.\n\nWith a Domain you get a real dome over the arena. Every big one has its own film."},
 			{"Ties", "A tie breaks your win streak.\n\nTwo normal players, or one Domain Expansion against a normal player: the duel just ends.\n\nTwo Domain Expansions clash and push each other until they tire: I guess it's a tie."},
 			{"Missions", "/missions shows 6 daily missions and 5 weekly ones (they reset on Monday). They count in duels against players.\n\nA duel counts for the day it started, even if it ends after midnight."},
 			{"Rewards", "Each mission gives a firework color or shape, or a particle. A repeated particle is one more copy to use in another slot.\n\nExplosions are very rare: 0.8% daily, 1.5% weekly."},
