@@ -343,6 +343,12 @@ public final class Victory {
 			case "tesseract" -> GridArt.tesseract(s.level, viewers, s.props, s.target, t, false);
 			case "eclipse" -> SkyArt.eclipse(s.level, viewers, s.props, s.target, t, false);
 			case "moonfall" -> SkyArt.moonfall(s.level, viewers, s.props, s.target, t, false);
+			case "cronos" -> {
+				// the clock faces the people watching: the winner's side
+				Vec3 face = Shapes.flatDirection(s.target, from(s, winner));
+				ClockArt.cronos(s.level, viewers, s.props, s.target, face, t, false);
+			}
+			case "zeus" -> StormArt.zeus(s.level, viewers, s.props, s.target, t, false);
 			case "seven_stars" -> {
 				// the figure lies across the arena (its x axis is the side of the line from the winner to the target)
 				Vec3 way = Shapes.flatDirection(from(s, winner), s.target);

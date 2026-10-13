@@ -44,9 +44,9 @@ public final class Effects {
 	 * Expansions are the last ones: {@code domain_expansion} is the first one the mod had and is now the Crimson Shrine.
 	 */
 	public static final String[] EXPLOSIONS = {"orbital_strike", "orbital_wither", "shooting_star", "black_hole", "meteor_shower", "gungnir", "seven_stars",
-		"railgun", "tesseract", "eclipse", "moonfall", "domain_expansion", "domain_void", "domain_swords"};
+		"railgun", "tesseract", "eclipse", "moonfall", "cronos", "zeus", "domain_expansion", "domain_void", "domain_swords"};
 	public static final String[] EXPLOSION_NAMES = {"Orbital Strike Cannon", "Orbital Wither Cannon", "Shooting Star", "Black Hole", "Meteor Shower", "Gungnir", "Seven Stars",
-		"Railgun", "Tesseract", "Eclipse", "Moonfall", "Domain: Crimson Shrine", "Domain: Infinite Void", "Domain: Field of Swords"};
+		"Railgun", "Tesseract", "Eclipse", "Moonfall", "Cronos Clock", "Zeus Storm", "Domain: Crimson Shrine", "Domain: Infinite Void", "Domain: Field of Swords"};
 
 	/** The chances of the rewards of a mission (each mission rolls them). Easy to change here. */
 	public static double fireworkChance = 0.70;
