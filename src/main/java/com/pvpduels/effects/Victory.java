@@ -58,6 +58,8 @@ public final class Victory {
 		final List<ExplosionArt.Meteor> meteors = new ArrayList<>();
 		/** Where the winner stands when the explosion starts (the Shooting Star and the meteors come from behind them). */
 		Vec3 from;
+		/** Set for a try-out on the dummy of the lobby: the Domain Expansion grows around the dummy and not around the player. */
+		boolean tryOut;
 		int age;
 
 		Show(UUID id, ServerLevel level, Vec3 target, String explosion, Vec3 fixed, boolean skipDomain) {
@@ -154,12 +156,42 @@ public final class Victory {
 			}
 		}
 		if (show.floor.isEmpty() && show.area.isEmpty() && show.explosion.isEmpty()) return;
-		if (!show.explosion.isEmpty()) {
-			show.props = new Props(level.getServer(), level);
-			// whoever hides other people's effects, and whoever plays on Potato, does not get the solid parts either
-			show.props.hideFrom(p -> (p != winner && Effects.hideOthers(p.getUUID())) || Effects.quality(p.getUUID()).factor < 0.2);
-		}
+		if (!show.explosion.isEmpty()) show.props = propsFor(level, winner);
 		SHOWS.add(show);
+	}
+
+	/** The solid parts of an explosion: whoever hides other people's effects, and whoever plays on Potato, does not get them. */
+	private static Props propsFor(ServerLevel level, ServerPlayer winner) {
+		Props props = new Props(level.getServer(), level);
+		props.hideFrom(p -> (p != winner && Effects.hideOthers(p.getUUID())) || Effects.quality(p.getUUID()).factor < 0.2);
+		return props;
+	}
+
+	/** At most this many try-outs at the same time, so a crowd around the dummy cannot flood the server. */
+	public static final int MAX_TRY_OUTS = 6;
+
+	/**
+	 * The player tries one of THEIR explosions on a spot (the dummy of the lobby). Everybody nearby can watch it, like a real win.
+	 * Returns null when it started, or what is wrong (in plain words) when it did not.
+	 */
+	public static String tryOn(ServerPlayer p, String explosion, Vec3 target) {
+		UUID id = p.getUUID();
+		if (!Effects.ownsExplosion(id, explosion)) return "You do not own that explosion.";
+		for (Show s : SHOWS) {
+			if (s.id.equals(id)) return "Wait a moment: your effects are still playing.";
+		}
+		if (SHOWS.size() >= MAX_TRY_OUTS) return "Too many effects are playing right now. Try again in a few seconds.";
+		ServerLevel level = (ServerLevel) p.level();
+		started++;
+		Show show = new Show(id, level, target, explosion, null, false);
+		show.tryOut = true;
+		// the star and the meteors come from the player's side of the dummy, high up behind them
+		Vec3 side = new Vec3(p.getX() - target.x, 0, p.getZ() - target.z);
+		side = side.lengthSqr() < 0.25 ? new Vec3(0, 0, 1) : side.normalize();
+		show.from = new Vec3(target.x + side.x * 8, p.getY(), target.z + side.z * 8);
+		show.props = propsFor(level, p);
+		SHOWS.add(show);
+		return null;
 	}
 
 	// ------------------------------------------------------------------ fireworks
@@ -320,7 +352,7 @@ public final class Victory {
 
 	/** A dome of dark particles grows around the winner, with its edge drawn as a line, and stays for a while (the lone Domain Expansion). */
 	private static void domain(Show s, ServerPlayer winner, List<ServerPlayer> viewers, int t) {
-		Vec3 o = s.origin(winner);
+		Vec3 o = s.tryOut ? s.target : s.origin(winner);
 		if (t == 0) s.level.playSound(null, o.x, o.y, o.z, SoundEvents.ENDER_DRAGON_GROWL, SoundSource.MASTER, 4.0f, 0.7f);
 		if (t > 100) return;
 		double radius = Math.min(14.0, 1 + t * 0.4);

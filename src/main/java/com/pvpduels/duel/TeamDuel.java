@@ -45,6 +45,8 @@ public final class TeamDuel {
 	final UUID kitOwner;
 	private final KitStore.Kit kit;
 	final UUID[] ids = new UUID[PLAYERS];
+	/** The last blow each duelist took (it explains a knock-out). */
+	final LastBlow[] blows = {new LastBlow(), new LastBlow(), new LastBlow(), new LastBlow()};
 	final String[] names = new String[PLAYERS];
 	/** Rounds won by each team. */
 	final int[] points = new int[2];
@@ -353,13 +355,14 @@ public final class TeamDuel {
 	// ------------------------------------------------------------------ events from DuelManager
 
 	/** Whether this blow may hurt: only while fighting and never between teammates. */
-	boolean allowDamage(ServerPlayer victim, DamageSource source) {
+	boolean allowDamage(ServerPlayer victim, DamageSource source, float amount) {
 		if (phase != Duel.Phase.FIGHTING) return false;
 		int vi = indexOf(victim.getUUID());
 		if (vi < 0 || dead[vi]) return false;
 		if (!config.rules().fallDamage() && source.is(net.minecraft.tags.DamageTypeTags.IS_FALL)) return false;
 		Entity attacker = source.getEntity();
 		if (attacker != null && attacker.getUUID().equals(ids[mate(vi)])) return false; // no friendly fire
+		blows[vi].note(victim, amount);
 		return true;
 	}
 
@@ -373,7 +376,7 @@ public final class TeamDuel {
 		String reason = killer != null && indexOf(killer.getUUID()) >= 0 && teamOf(indexOf(killer.getUUID())) != teamOf(i)
 			? names[indexOf(killer.getUUID())] + " defeated " + names[i] + "."
 			: names[i] + " died.";
-		knockOut(i, reason);
+		knockOut(i, reason + blows[i].describe(p));
 	}
 
 	/** Player i is out for the rest of the round; when their team is out, the round is over. */

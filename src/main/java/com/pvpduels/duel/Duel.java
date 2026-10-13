@@ -67,6 +67,8 @@ public final class Duel {
 	final boolean practice;
 	private final KitStore.Kit kit;
 	final UUID[] ids = new UUID[2];
+	/** The last blow each duelist took (it explains a round that ends by a death). */
+	final LastBlow[] blows = {new LastBlow(), new LastBlow()};
 	final String[] names = new String[2];
 	final int[] points = new int[2];
 	private final boolean[] restored = new boolean[2];
@@ -563,7 +565,7 @@ public final class Duel {
 		String reason = killer != null && killer.getUUID().equals(ids[1 - i])
 			? names[1 - i] + " defeated " + names[i] + "."
 			: names[i] + " died.";
-		endRound(1 - i, reason);
+		endRound(1 - i, reason + blows[i].describe(p));
 	}
 
 	private void endRound(int winnerIdx, String reason) {

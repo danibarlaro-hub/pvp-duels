@@ -462,6 +462,8 @@ public final class SelfTest {
 	private static void build() {
 		// The finale of a win (camera, doubles) has its own steps; the older steps see the plain end of a duel.
 		Cinema.enabled = false;
+		// the NPCs of the lobby appear by themselves for an admin; their own steps turn that on
+		Npcs.autoPlace = false;
 		step("the arena dimension exists", () -> {
 			StringBuilder keys = new StringBuilder();
 			for (ServerLevel l : server.getAllLevels()) keys.append(l.dimension().identifier()).append(' ');
@@ -1461,7 +1463,7 @@ public final class SelfTest {
 			run(carl, "npc add bot");
 			check("a normal player can't place an NPC", Npcs.around((ServerLevel) carl.level(), carl.getX(), carl.getY(), carl.getZ(), 4).isEmpty());
 		});
-		step("npc: place the three NPCs", () -> {
+		step("npc: place the four NPCs", () -> {
 			ServerLevel level = (ServerLevel) carl.level();
 			int n = 0;
 			for (Npcs.Kind kind : Npcs.Kind.values()) {
@@ -1478,7 +1480,7 @@ public final class SelfTest {
 				}
 				n++;
 			}
-			check("three NPCs in total", Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size() == 3, String.valueOf(Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size()));
+			check("four NPCs in total", Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size() == 4, String.valueOf(Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size()));
 			run(carl, "npc list");
 		});
 		step("npc: clicking them opens the menus", () -> {
@@ -1492,6 +1494,7 @@ public final class SelfTest {
 					case BOT -> check("the Practice Bot opens the bot menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "testkit"));
 					case KIT -> check("the Kit Workshop opens the kit menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "New kit"));
 					case ARENA -> check("the Arena Builder opens the arena menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "Builders only"));
+					case PREVIEW -> check("the Explosion Dummy opens the try-out menu", a.containerMenu instanceof ChoiceMenu && menuHas(a, "Locked: ???"));
 				}
 				check("the click is used up (" + kind.id + ")", result == net.minecraft.world.InteractionResult.SUCCESS, String.valueOf(result));
 				// hitting works like clicking
@@ -1509,7 +1512,7 @@ public final class SelfTest {
 			a.closeContainer();
 			a.getInventory().setSelectedSlot(3);
 			run(a, "npc remove");
-			check("a normal player can't remove one", Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size() == 3);
+			check("a normal player can't remove one", Npcs.around(level, 59.5, carl.getY(), 56.5, 8).size() == 4);
 		});
 		step("npc: they are saved with the world and can be removed", () -> {
 			ServerLevel level = (ServerLevel) a.level();
@@ -1519,6 +1522,51 @@ public final class SelfTest {
 			// every NPC is removed so the next tests are not disturbed
 			for (net.minecraft.world.entity.Entity left : Npcs.around(level, 59.5, carl.getY(), 56.5, 10)) left.discard();
 			check("no NPC is left", Npcs.around(level, 59.5, carl.getY(), 56.5, 10).isEmpty());
+		});
+
+		step("npc: they appear by themselves in front of the lobby spawn", () -> {
+			ServerLevel level = (ServerLevel) carl.level();
+			try {
+				Lobby.setAt(level.dimension().identifier().toString(), 50.5, carl.getY(), 50.5, 0f, 0f);
+			} catch (java.io.IOException e) {
+				check("the lobby can be saved", false, e.toString());
+			}
+			check("a new lobby has no NPCs yet", Lobby.isSet() && !Lobby.npcsPlaced() && Npcs.around(level, 50.5, carl.getY(), 50.5, 20).isEmpty());
+			carl.inbox.clear();
+			Npcs.isAdmin = p -> p == carl;
+			Npcs.autoPlace = true;
+		}, () -> Lobby.npcsPlaced(), 300);
+		step("npc: four of them stand in a row in front of the spawn", () -> {
+			Npcs.autoPlace = false;
+			Npcs.isAdmin = com.pvpduels.arena.BuilderRank::isAdmin;
+			ServerLevel level = (ServerLevel) carl.level();
+			double y = carl.getY();
+			var all = Npcs.around(level, 50.5, y, 50.5, 20);
+			check("four NPCs", all.size() == 4, String.valueOf(all.size()));
+			for (Npcs.Kind kind : Npcs.Kind.values()) {
+				long n = all.stream().filter(e -> Npcs.kindOf(e) == kind).count();
+				check("one " + kind.title, n == 1, String.valueOf(n));
+			}
+			check("they stand 4.5 blocks in front of the spawn, 3 apart", all.stream().allMatch(e -> Math.abs(e.getZ() - 55.0) < 0.6)
+				&& all.stream().map(net.minecraft.world.entity.Entity::getX).distinct().count() == 4, all.toString());
+			check("the admin was told", carl.heard("lobby NPCs are in front of the spawn"), String.valueOf(carl.inbox));
+			check("the lobby remembers it", Lobby.npcsPlaced());
+			var again = Npcs.setup(level, server.createCommandSourceStack(), 50.5, y, 50.5, 0f);
+			check("setup again places nothing", again.placed() == 0 && again.failed() == 0 && Npcs.around(level, 50.5, y, 50.5, 20).size() == 4, again.toString());
+			all.stream().filter(e -> Npcs.kindOf(e) == Npcs.Kind.KIT).findFirst().ifPresent(net.minecraft.world.entity.Entity::discard);
+			again = Npcs.setup(level, server.createCommandSourceStack(), 50.5, y, 50.5, 0f);
+			check("only the missing one is put back", again.placed() == 1 && again.failed() == 0 && Npcs.around(level, 50.5, y, 50.5, 20).size() == 4, again.toString());
+			int before = Npcs.around(level, 50.5, y, 50.5, 20).size();
+			run(a, "npc setup");
+			check("a normal player can't run /npc setup", Npcs.around(level, 50.5, y, 50.5, 20).size() == before);
+			try {
+				Lobby.setAt(level.dimension().identifier().toString(), 50.5, y, 50.5, 0f, 0f);
+			} catch (java.io.IOException e) {
+				check("the lobby can be saved again", false, e.toString());
+			}
+			check("moving the lobby asks for NPCs again", !Lobby.npcsPlaced());
+			for (net.minecraft.world.entity.Entity left : Npcs.around(level, 50.5, y, 50.5, 20)) left.discard();
+			check("every NPC is removed so the next tests are not disturbed", Npcs.around(level, 50.5, y, 50.5, 20).isEmpty());
 		});
 
 		// ---------------------------------------------------------------- lobby protection
@@ -3065,6 +3113,7 @@ public final class SelfTest {
 			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
 			check("the round is still on", t.phase == Duel.Phase.FIGHTING && t.points[0] == 0 && t.points[1] == 0);
 			check("they were told who did it", a.heard("Alice defeated Carl.") && dora.heard("Alice defeated Carl."));
+			check("and what the last blow was", dora.heard("Last blow:"), String.valueOf(dora.inbox));
 			hit(b, carl);
 			check("a player who is out can't be hit again or lose a round twice", t.phase == Duel.Phase.FIGHTING && t.points[0] == 0);
 		}, () -> sidebarHas(a, "Alive: 2 vs 1"), 200);
@@ -4143,7 +4192,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.9.0", version.equals("0.9.0"), version);
+			check("the mod says 0.10.0", version.equals("0.10.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
@@ -4258,6 +4307,50 @@ public final class SelfTest {
 		step("explosions: back to normal", () -> {
 			Effects.setExplosion(a.getUUID(), "");
 			check("Alice has no explosion equipped", Effects.explosionSlot(a.getUUID()).isEmpty());
+		});
+		step("dummy: Dora tries a Shooting Star on the Explosion Dummy", () -> {
+			UUID id = dora.getUUID();
+			check("Dora owns every explosion", Effects.ownedExplosions(id).size() == Effects.EXPLOSIONS.length, String.valueOf(Effects.ownedExplosions(id).size()));
+			net.minecraft.world.phys.Vec3 dummy = dora.position().add(4, 0, 0);
+			check("an explosion nobody owns can't be tried", Victory.tryOn(dora, "nope", dummy) != null && Victory.activeShows() == 0);
+			d8[4] = Victory.showsStarted();
+			xfx[1] = com.pvpduels.effects.Props.createdCount();
+			dora.link.sent.clear();
+			check("an owned one starts", Victory.tryOn(dora, "shooting_star", dummy) == null && Victory.showsStarted() == d8[4] + 1 && Victory.activeShows() == 1);
+			check("a second one while the first plays has to wait", Victory.tryOn(dora, "black_hole", dummy) != null && Victory.activeShows() == 1);
+			xfx[0] = ticks;
+		}, () -> ticks >= xfx[0] + 60, 300);
+		step("dummy: the solid parts are in the world in the middle of the show", () -> {
+			check("display entities were made", com.pvpduels.effects.Props.createdCount() >= xfx[1] + 3, (com.pvpduels.effects.Props.createdCount() - xfx[1]) + " made");
+			check("and they are in the world", com.pvpduels.effects.Props.live() > 0 && com.pvpduels.effects.Props.tagged(server) > 0);
+		}, () -> Victory.activeShows() == 0, 800);
+		step("dummy: the star reached Dora, left nothing behind, and the menu starts the Domain Expansion", () -> {
+			int sum = 0;
+			int packets = 0;
+			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
+				if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) {
+					sum += pk.getCount();
+					packets++;
+				}
+			}
+			check("a lot of particles reached her", sum > 150 && packets > 100, sum + " in " + packets + " packets");
+			check("no display entity is left", com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0);
+			dora.closeContainer();
+			EffectsMenus.openTryOut(dora, dora.position().add(4, 0, 0));
+			check("the dummy's menu shows her explosions", menuHas(dora, "Shooting Star") && menuHas(dora, "Domain Expansion") && menuHas(dora, "Meteor Shower"));
+			dora.link.sent.clear();
+			d8[4] = Victory.showsStarted();
+			menuStep(dora, "Domain Expansion");
+			check("a click starts it and closes the menu", Victory.showsStarted() == d8[4] + 1 && Victory.activeShows() == 1 && !(dora.containerMenu instanceof ChoiceMenu));
+		});
+		step("dummy: the Domain Expansion plays around the dummy", () -> { }, () -> Victory.activeShows() == 0, 800);
+		step("dummy: the dome reached Dora", () -> {
+			int sum = 0;
+			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
+				if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) sum += pk.getCount();
+			}
+			check("the dome sent a lot of particles", sum > 500, String.valueOf(sum));
+			check("the show ended by itself", Victory.activeShows() == 0);
 		});
 
 		// the test bot
@@ -4529,6 +4622,7 @@ public final class SelfTest {
 				a.getStats().getValue(Stats.ITEM_USED, Items.TOTEM_OF_UNDYING) + " vs " + d9[0]);
 			hit(b, a);
 			check("with no totem left the next lethal blow ends the round", d.phase == Duel.Phase.ROUND_END && d.points[1] == 1 && d.points[0] == 0, d.phase + " " + d.points[0] + "-" + d.points[1]);
+			check("Alice is told what the last blow was", a.heard("Last blow:") && a.heard("health +") && a.heard("absorption."), String.valueOf(a.inbox));
 		}, () -> roundIs(a, 2), 600);
 		step("totems: in round 2 a totem in the main hand also counts", () -> {
 			Duel d = duel(a);
@@ -4559,8 +4653,10 @@ public final class SelfTest {
 		step("notch: only when health and absorption are used up the round ends", () -> {
 			Duel d = duel(a);
 			check("two ticks later the apple still protects her", d.phase == Duel.Phase.FIGHTING && a.hasEffect(MobEffects.REGENERATION) && a.isAlive(), d.phase + " " + a.hasEffect(MobEffects.REGENERATION));
+			a.inbox.clear();
 			hit(b, a);
 			check("a huge blow ends the round", d.phase == Duel.Phase.ROUND_END && d.points[1] == 2, d.phase + " " + d.points[1]);
+			check("and the chat says what she had when it landed", a.heard("Last blow:") && a.heard("absorption."), String.valueOf(a.inbox));
 		}, () -> roundIs(a, 4), 600);
 		step("totems: a blow that ignores totems (kill) still ends the round", () -> {
 			Duel d = duel(a);

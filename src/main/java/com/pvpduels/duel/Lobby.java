@@ -50,6 +50,8 @@ public final class Lobby {
 	private static boolean loaded;
 	/** Radius (in blocks, around the lobby) where building and fighting are not allowed. 0 = not protected. */
 	private static int protect;
+	/** True once the NPCs were placed in front of the spawn (see {@link Npcs}); a new /setlobby makes them be placed again. */
+	private static boolean npcs;
 	/** The lobby file of the world that is running now (null before a world starts). */
 	private static Path worldFile;
 
@@ -75,6 +77,7 @@ public final class Lobby {
 		worldFile = file;
 		spot = null;
 		protect = 0;
+		npcs = false;
 		loaded = false;
 	}
 
@@ -89,6 +92,7 @@ public final class Lobby {
 			spot = new Spot(root.get("dimension").getAsString(), root.get("x").getAsDouble(), root.get("y").getAsDouble(),
 				root.get("z").getAsDouble(), root.get("yaw").getAsFloat(), root.get("pitch").getAsFloat());
 			protect = root.has("protect") ? root.get("protect").getAsInt() : 0;
+			npcs = root.has("npcs") && root.get("npcs").getAsBoolean();
 		} catch (Exception e) {
 			PvpDuelsMod.LOGGER.warn("Could not read the lobby file: {}", e.toString());
 		}
@@ -106,6 +110,7 @@ public final class Lobby {
 	public static synchronized void setAt(String dimension, double x, double y, double z, float yaw, float pitch) throws IOException {
 		ensureLoaded();
 		spot = new Spot(dimension, x, y, z, yaw, pitch);
+		npcs = false;
 		save();
 	}
 
@@ -118,6 +123,7 @@ public final class Lobby {
 		root.addProperty("yaw", spot.yaw());
 		root.addProperty("pitch", spot.pitch());
 		root.addProperty("protect", protect);
+		root.addProperty("npcs", npcs);
 		Files.createDirectories(file().getParent());
 		Files.writeString(file(), GSON.toJson(root));
 	}
@@ -127,6 +133,7 @@ public final class Lobby {
 		boolean had = spot != null;
 		spot = null;
 		protect = 0;
+		npcs = false;
 		Files.deleteIfExists(file());
 		Files.deleteIfExists(legacyFile());
 		return had;
@@ -145,6 +152,32 @@ public final class Lobby {
 		if (spot == null) throw new IOException("There is no lobby yet.");
 		protect = Math.max(0, radius);
 		save();
+	}
+
+	/** The lobby spawn with its world, for things that stand in the lobby (the NPCs). */
+	public record Place(ServerLevel level, double x, double y, double z, float yaw) {}
+
+	/** Where the lobby is, or null when there is none or its world is not loaded. */
+	public static synchronized Place spotIn(MinecraftServer server) {
+		ServerLevel level = level(server);
+		if (level == null) return null;
+		return new Place(level, spot.x(), spot.y(), spot.z(), spot.yaw());
+	}
+
+	public static synchronized boolean npcsPlaced() {
+		ensureLoaded();
+		return npcs;
+	}
+
+	public static synchronized void markNpcsPlaced() {
+		ensureLoaded();
+		if (spot == null || npcs) return;
+		npcs = true;
+		try {
+			save();
+		} catch (IOException e) {
+			PvpDuelsMod.LOGGER.warn("Could not save the lobby file: {}", e.toString());
+		}
 	}
 
 	/** True when this place is inside the protected area around the lobby. */

@@ -5,7 +5,6 @@ import com.pvpduels.kit.KitStore;
 import com.pvpduels.util.Msg;
 import com.pvpduels.workshop.Workshop;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -60,7 +59,6 @@ public final class DuelManager {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register(DuelManager::allowDamage);
 		ServerLivingEntityEvents.AFTER_DAMAGE.register(DuelManager::afterDamage);
 		ServerLivingEntityEvents.ALLOW_DEATH.register(DuelManager::allowDeath);
-		ServerPlayerEvents.ALLOW_DEATH.register((player, source, amount) -> allowDeath(player, source, amount));
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> onDisconnect(handler.player));
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> onJoin(server, handler.player));
@@ -146,17 +144,16 @@ public final class DuelManager {
 	private static boolean allowDamage(LivingEntity entity, DamageSource source, float amount) {
 		if (!(entity instanceof ServerPlayer victim)) return true;
 		TeamDuel team = TEAM_BY_PLAYER.get(victim.getUUID());
-		if (team != null) return team.allowDamage(victim, source);
+		if (team != null) return team.allowDamage(victim, source, amount);
 		Duel duel = BY_PLAYER.get(victim.getUUID());
 		if (duel == null) return true;
 		if (!duel.canTakeDamage()) return false;
 		if (!duel.config.rules().fallDamage() && source.is(net.minecraft.tags.DamageTypeTags.IS_FALL)) return false;
 
+		int vi = duel.indexOf(victim.getUUID());
+		if (vi >= 0) duel.blows[vi].note(victim, amount);
 		Entity attacker = source.getEntity();
-		if (attacker != null) {
-			int vi = duel.indexOf(victim.getUUID());
-			if (vi >= 0 && attacker.getUUID().equals(duel.ids[1 - vi])) duel.onContact();
-		}
+		if (attacker != null && vi >= 0 && attacker.getUUID().equals(duel.ids[1 - vi])) duel.onContact();
 		return true;
 	}
 
