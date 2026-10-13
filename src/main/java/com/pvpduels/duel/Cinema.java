@@ -3,6 +3,9 @@ package com.pvpduels.duel;
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.effects.DomainArt;
 import com.pvpduels.effects.Effects;
+import com.pvpduels.effects.ExplosionArt;
+import com.pvpduels.effects.Props;
+import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.Victory;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -48,7 +51,7 @@ import java.util.UUID;
  * (if the finale ended normally) their start place back, and the camera and the doubles disappear.
  */
 public final class Cinema {
-	public enum Kind { NORMAL, DOMAIN, CLASH }
+	public enum Kind { NORMAL, DOMAIN, CLASH, STAR }
 
 	/** The self-test turns the finale off for its older tests and on for its own. */
 	public static boolean enabled = true;
@@ -69,6 +72,10 @@ public final class Cinema {
 	static final int NORMAL_TICKS = 100;
 	/** After the camera stops it stays a little while, so the last fireworks can be seen. */
 	static final int TAIL = 25;
+	/** The cinematic Shooting Star: a calm wish first (the camera looks up), then the flight of the star, then the aftermath. */
+	static final int WISH = 40;
+	static final int IMPACT = WISH + ExplosionArt.CINEMATIC_FLIGHT;
+	static final int STAR_TICKS = IMPACT + ExplosionArt.CINEMATIC_AFTER;
 
 	private static final String DOUBLE_TAG = "pvpduels_double";
 	private static final String CAMERA_TAG = "pvpduels_camera";
@@ -121,6 +128,10 @@ public final class Cinema {
 		return Effects.explosionSlot(id).equals("domain_expansion");
 	}
 
+	private static boolean hasStar(UUID id) {
+		return Effects.explosionSlot(id).equals("shooting_star");
+	}
+
 	/**
 	 * Plans the finale of a duel that just ended. {@code winnerIdx} is the winner (0 or 1), or -1 for a tie. Returns how many ticks the
 	 * duel must wait before it closes, or 0 when there is no finale (then the old, simple celebration is played by the caller).
@@ -133,7 +144,7 @@ public final class Cinema {
 		}
 		Kind kind;
 		if (winnerIdx >= 0) {
-			kind = hasDomain(duel.ids[winnerIdx]) ? Kind.DOMAIN : Kind.NORMAL;
+			kind = hasDomain(duel.ids[winnerIdx]) ? Kind.DOMAIN : (hasStar(duel.ids[winnerIdx]) ? Kind.STAR : Kind.NORMAL);
 		} else {
 			// A tie: nothing happens unless both players have a Domain Expansion.
 			if (!(hasDomain(duel.ids[0]) && hasDomain(duel.ids[1]))) return 0;
@@ -236,6 +247,10 @@ public final class Cinema {
 		int age;
 		boolean ended;
 		private Vec3 smooth;
+		/** The solid parts of the cinematic star (null for the other finales). */
+		Props props;
+		/** The tick of the camera that is being filmed, for the look of the star's camera. */
+		private int filming;
 		private float lastYaw = Float.NaN;
 		/** The last position and look of the camera. */
 		Vec3 cameraAt;
@@ -265,12 +280,14 @@ public final class Cinema {
 				case NORMAL -> NORMAL_TICKS;
 				case DOMAIN -> HANDS + EXPAND + HOLD;
 				case CLASH -> HANDS + CLASH_EXPAND + PUSH;
+				case STAR -> STAR_TICKS;
 			};
 			camTicks = cam;
 			int length2 = switch (kind) {
 				case NORMAL -> NORMAL_TICKS + TAIL;
 				case DOMAIN -> HANDS + EXPAND + HOLD + COLLAPSE + 20;
 				case CLASH -> HANDS + CLASH_EXPAND + PUSH + EXHALE + TIE_TITLE;
+				case STAR -> STAR_TICKS + TAIL;
 			};
 			total = PRE + length2;
 		}
@@ -332,6 +349,7 @@ public final class Cinema {
 
 		/** Where the camera is {@code a} ticks after the viewers got it. */
 		Vec3 cameraPosition(int a) {
+			if (kind == Kind.STAR) return starCamera(a);
 			double p = Math.min(1.0, a / (double) Math.max(1, camTicks));
 			double e = ease(p);
 			double theta = e * Math.PI / 2;
@@ -344,6 +362,7 @@ public final class Cinema {
 
 		/** The way the camera looks: at the loser, turned toward the winner as much as needed to keep both in the picture. */
 		private Vec3 look(Vec3 cam) {
+			if (kind == Kind.STAR) return starLook(cam, filming);
 			if (kind == Kind.CLASH) return center.add(0, 1.5, 0).subtract(cam).normalize();
 			int l = 1 - win;
 			Vec3 dl = stage[l].add(0, 1.0, 0).subtract(cam).normalize();
@@ -355,6 +374,7 @@ public final class Cinema {
 		}
 
 		private void moveCamera(int a) {
+			filming = a;
 			Vec3 pos = cameraPosition(a);
 			Vec3 dir = look(pos);
 			smooth = smooth == null ? dir : smooth.scale(0.65).add(dir.scale(0.35));
@@ -426,6 +446,7 @@ public final class Cinema {
 			if (ended) return;
 			ended = true;
 			for (Rider r : riders) releaseOne(r.id, normal);
+			if (props != null) props.clear();
 			discardEntities();
 		}
 
@@ -485,6 +506,7 @@ public final class Cinema {
 				case NORMAL -> normal(a);
 				case DOMAIN -> domain(a);
 				case CLASH -> clash(a);
+				case STAR -> star(a);
 			}
 			return age < total;
 		}
@@ -538,6 +560,105 @@ public final class Cinema {
 			DomainArt.ring(level, viewers, center, radius, 72, 1.0, DomainArt.LINE, -a * 0.05);
 			DomainArt.haze(level, viewers, center, radius, 6);
 			if (t == EXPAND + HOLD) sound(center, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.5f);
+		}
+
+		// -------------------------------------------------------------- the cinematic Shooting Star
+
+		/** From the winner's end to the loser's end, flat. */
+		private Vec3 forward() {
+			return toWinner.scale(-1);
+		}
+
+		/** The camera of the star: a low wide shot from the side that follows the star across the sky, then circles the landing. */
+		private Vec3 starCamera(int a) {
+			Vec3 fwd = forward();
+			Vec3 loser = stage[1 - win];
+			double e = ease(Math.min(1.0, a / (double) IMPACT));
+			double lateral = half + 9 - 6 * e;
+			double along = -half * 0.9 + half * 1.15 * e;
+			double height = 2.2 + 3.8 * e;
+			Vec3 at = new Vec3(center.x + side.x * lateral + fwd.x * along, center.y + height, center.z + side.z * lateral + fwd.z * along);
+			if (a <= IMPACT) return at;
+			// after the landing it circles the pentagram and rises
+			double p = ease(Math.min(1.0, (a - IMPACT) / (double) ExplosionArt.CINEMATIC_AFTER));
+			Vec3 rel = new Vec3(at.x - loser.x, 0, at.z - loser.z);
+			double turn = Math.toRadians(70) * p;
+			double cos = Math.cos(turn);
+			double sin = Math.sin(turn);
+			double grow = 1.0 + 0.35 * p;
+			Vec3 rotated = new Vec3((rel.x * cos - rel.z * sin) * grow, 0, (rel.x * sin + rel.z * cos) * grow);
+			Vec3 pos = new Vec3(loser.x + rotated.x, at.y + 9.0 * p, loser.z + rotated.z);
+			int since = a - IMPACT;
+			if (since < 16) {
+				// the ground shakes when the star lands
+				double amp = 0.8 * (1.0 - since / 16.0);
+				java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
+				pos = pos.add((rnd.nextDouble() - 0.5) * amp, (rnd.nextDouble() - 0.5) * amp * 0.7, (rnd.nextDouble() - 0.5) * amp);
+			}
+			return pos;
+		}
+
+		/** The direction the star's camera looks in: at the winner, up to the birth of the star, along the star, and at the landing. */
+		private Vec3 starLook(Vec3 cam, int a) {
+			Vec3 winner = stage[win];
+			Vec3 loser = stage[1 - win];
+			Vec3 target;
+			if (a < WISH) {
+				Vec3 born = ExplosionArt.cinematicStarStart(winner, loser);
+				double k = ease(a / (double) WISH) * 0.7;
+				Vec3 low = winner.add(0, 1.3, 0);
+				target = low.add(born.subtract(low).scale(k));
+			} else if (a <= IMPACT) {
+				Vec3 head = ExplosionArt.cinematicStarHead(winner, loser, a - WISH);
+				// in the last moments the camera lowers its eyes to the landing
+				double b = Math.max(0, Math.min(1, (a - (IMPACT - 16)) / 16.0));
+				Vec3 land = loser.add(0, 2.0, 0);
+				target = head.add(land.subtract(head).scale(ease(b)));
+			} else {
+				double p = ease(Math.min(1.0, (a - IMPACT) / (double) ExplosionArt.CINEMATIC_AFTER));
+				target = loser.add(0, 3.0 + 4.0 * p, 0);
+			}
+			Vec3 dir = target.subtract(cam);
+			return dir.lengthSqr() < 1e-6 ? new Vec3(0, 0, 1) : dir.normalize();
+		}
+
+		private void star(int a) {
+			List<ServerPlayer> viewers = audience();
+			Vec3 winner = stage[win];
+			Vec3 loser = stage[1 - win];
+			if (a == 0) {
+				// the winner looks up and makes a wish
+				if (doubles[win] != null) doubles[win].setXRot(-40f);
+				title(Component.literal("Make a wish").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
+					Component.literal(duel.names[win]).withStyle(ChatFormatting.DARK_GRAY), 10, 30, 10);
+			}
+			if (a < WISH) {
+				if (a == 6 || a == 18 || a == 30) sound(winner.add(0, 2, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.7f + a * 0.02f);
+				java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
+				for (ServerPlayer v : viewers) {
+					Quality.send(level, v, ParticleTypes.END_ROD, winner.x + (rnd.nextDouble() - 0.5) * 2.4, winner.y + 0.2, winner.z + (rnd.nextDouble() - 0.5) * 2.4, 2, 0.25, 0.9, 0.25, 0.04);
+				}
+				return;
+			}
+			int t = a - WISH;
+			if (props == null) {
+				props = Victory.propsFor(level, winnerPlayer());
+				if (doubles[win] != null) doubles[win].setXRot(-70f);
+			}
+			ExplosionArt.cinematicStar(level, viewers, props, winner, loser, t);
+			for (Vec3 at : props.tick(t)) ExplosionArt.landing(level, viewers, at);
+			if (t == ExplosionArt.CINEMATIC_FLIGHT) {
+				if (doubles[win] != null) doubles[win].setXRot(0f);
+				// the flash: the camera is swallowed by white sparks for a moment
+				for (Rider r : riders) {
+					ServerPlayer p = r.riding ? server.getPlayerList().getPlayer(r.id) : null;
+					if (p == null) continue;
+					Quality.send(level, p, ParticleTypes.END_ROD, cameraAt.x, cameraAt.y, cameraAt.z, 260, 2.5, 2.5, 2.5, 0.5);
+					Quality.send(level, p, ParticleTypes.FIREWORK, cameraAt.x, cameraAt.y, cameraAt.z, 120, 3.0, 3.0, 3.0, 0.4);
+				}
+				title(Component.literal("SHOOTING STAR").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+					Component.literal(duel.names[win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
 		}
 
 		// -------------------------------------------------------------- the clash

@@ -81,6 +81,8 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Final de un duelo: la camara se aleja desde el centro de la arena y sube 7 bloques, Domain Expansion con el titulo para todos, empates (rompen la racha; dos Domain Expansion chocan y terminan en "I guess it's a tie")
 - ✅ Calidad de efectos por jugador: Potato, Low, Mid, High y Ultra Pro Max
 - ✅ Explosiones nuevas: Shooting Star, Black Hole y Meteor Shower
+- ✅ Shooting Star cinematografica en el final de un 1v1 (camara lateral que sigue a la estrella, deseo, destello, temblor y giro alrededor del pentagrama)
+- ⏳ Que el Explosion Dummy y `/effects preview` tambien puedan mostrar la version cinematografica
 - ✅ `/unlock_all <codigo>` (admins): desbloquea todos los cosmeticos
 - ✅ La version del mod ya no es 0.1.0 (ahora 0.9.0, y el nombre del `.jar` la lleva)
 - ✅ Totems que saltan en los duelos, muerte segun vida real (absorcion de la notch), capa de pasto en las arenas circular y sin limites

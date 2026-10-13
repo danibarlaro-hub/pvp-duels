@@ -161,7 +161,7 @@ public final class Victory {
 	}
 
 	/** The solid parts of an explosion: whoever hides other people's effects, and whoever plays on Potato, does not get them. */
-	private static Props propsFor(ServerLevel level, ServerPlayer winner) {
+	public static Props propsFor(ServerLevel level, ServerPlayer winner) {
 		Props props = new Props(level.getServer(), level);
 		props.hideFrom(p -> (p != winner && Effects.hideOthers(p.getUUID())) || Effects.quality(p.getUUID()).factor < 0.2);
 		return props;

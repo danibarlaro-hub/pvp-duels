@@ -53,6 +53,9 @@ public final class ExplosionArt {
 	public static final int ORBITAL_SLAM = 16;
 	/** How long the Shooting Star flies before it lands. */
 	public static final int STAR_FLIGHT = 36;
+	/** How long the long star of the cinematic finale flies, and how long the camera stays after it lands. */
+	public static final int CINEMATIC_FLIGHT = 84;
+	public static final int CINEMATIC_AFTER = 90;
 	/** The Black Hole collapses at this tick and bursts a few ticks later. */
 	public static final int HOLE_COLLAPSE = 72;
 	public static final int HOLE_BURST = 80;
@@ -291,49 +294,104 @@ public final class ExplosionArt {
 		}
 	}
 
+	/** How a Shooting Star looks and how long it flies: the quick one of a normal win and the long one of the cinematic finale. */
+	private record StarLook(int flight, double distance, double height, double scale, double tail, boolean cinema) {}
+
+	private static final StarLook QUICK_STAR = new StarLook(STAR_FLIGHT, 80, 62, 1.0, 0.6, false);
+	private static final StarLook CINEMATIC_STAR = new StarLook(CINEMATIC_FLIGHT, 130, 85, 1.8, 1.5, true);
+
+	private static Vec3 starStart(StarLook look, Vec3 from, Vec3 target) {
+		return target.add(flatDirection(from, target).scale(-look.distance)).add(0, look.height, 0);
+	}
+
+	/** Where the long star of the cinematic finale is born (high in the sky behind the winner). */
+	public static Vec3 cinematicStarStart(Vec3 from, Vec3 target) {
+		return starStart(CINEMATIC_STAR, from, target);
+	}
+
+	/** Where the head of the long star is {@code t} ticks after it was born (the camera of the finale follows it). */
+	public static Vec3 cinematicStarHead(Vec3 from, Vec3 target, int t) {
+		double u = Math.max(0, Math.min(1, t / (double) CINEMATIC_FLIGHT));
+		return starAt(starStart(CINEMATIC_STAR, from, target), target, u);
+	}
+
 	/**
 	 * A star (a flat picture of a nether star) with a long glowing tail crosses the sky from behind the winner and lands on the target:
 	 * a white flash, a pillar of light made of beams, a nova, a pentagram of light on the ground with a ring around it, shock waves, star
 	 * fireworks and star dust that falls for a while.
 	 */
 	public static void shootingStar(ServerLevel level, List<ServerPlayer> viewers, Props props, Vec3 from, Vec3 target, int t) {
-		Vec3 dir = flatDirection(from, target);
-		Vec3 start = target.add(dir.scale(-80)).add(0, 62, 0);
+		star(level, viewers, props, from, target, t, QUICK_STAR);
+	}
+
+	/**
+	 * The same star for the cinematic finale: it is born much higher and farther, grows out of a glint, takes {@link #CINEMATIC_FLIGHT}
+	 * ticks to cross the sky (slowly at first, then faster and faster), is twice as big, and the ground draws converging rings before
+	 * it lands. The camera of the finale follows it.
+	 */
+	public static void cinematicStar(ServerLevel level, List<ServerPlayer> viewers, Props props, Vec3 from, Vec3 target, int t) {
+		star(level, viewers, props, from, target, t, CINEMATIC_STAR);
+	}
+
+	private static void star(ServerLevel level, List<ServerPlayer> viewers, Props props, Vec3 from, Vec3 target, int t, StarLook look) {
+		int flight = look.flight();
+		double sc = look.scale();
+		Vec3 start = starStart(look, from, target);
 		Vec3 way = target.subtract(start).normalize();
 		ThreadLocalRandom rnd = ThreadLocalRandom.current();
 		if (t == 0) {
-			sound(level, target.add(0, 25, 0), SoundEvents.FIREWORK_ROCKET_LAUNCH, 5.0f, 0.6f);
-			sound(level, target.add(0, 25, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 5.0f, 0.5f);
-			props.name("halo", props.item("minecraft:firework_star", start, 20.0));
-			props.name("star", props.item("minecraft:nether_star", start, 10.0));
-			props.name("tail0", props.block("minecraft:white_concrete", start.subtract(way.scale(14)), new Vec3(0.35, 0.35, 28), Q.fromZ(way), true));
-			props.name("tail1", props.block("minecraft:yellow_stained_glass", start.subtract(way.scale(11)), new Vec3(1.0, 1.0, 22), Q.fromZ(way), true));
-			props.name("tail2", props.block("minecraft:light_blue_stained_glass", start.subtract(way.scale(8)), new Vec3(2.0, 2.0, 16), Q.fromZ(way), true));
+			sound(level, look.cinema() ? start : target.add(0, 25, 0), SoundEvents.FIREWORK_ROCKET_LAUNCH, 5.0f, 0.6f);
+			sound(level, look.cinema() ? start : target.add(0, 25, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 5.0f, 0.5f);
+			double halo = 20.0 * sc;
+			double body = 10.0 * sc;
+			props.name("halo", props.item("minecraft:firework_star", start, look.cinema() ? 1.0 : halo));
+			props.name("star", props.item("minecraft:nether_star", start, look.cinema() ? 0.5 : body));
+			if (look.cinema()) {
+				// it grows out of a glint
+				props.resize(props.named("halo"), halo, 16);
+				props.resize(props.named("star"), body, 16);
+			}
+			props.name("tail0", props.block("minecraft:white_concrete", start.subtract(way.scale(14 * sc)), new Vec3(0.35 * sc, 0.35 * sc, 28 * sc), Q.fromZ(way), true));
+			props.name("tail1", props.block("minecraft:yellow_stained_glass", start.subtract(way.scale(11 * sc)), new Vec3(1.0 * sc, 1.0 * sc, 22 * sc), Q.fromZ(way), true));
+			props.name("tail2", props.block("minecraft:light_blue_stained_glass", start.subtract(way.scale(8 * sc)), new Vec3(2.0 * sc, 2.0 * sc, 16 * sc), Q.fromZ(way), true));
 		}
-		if (t < STAR_FLIGHT) {
-			double u = t / (double) STAR_FLIGHT;
+		if (t < flight) {
+			double u = t / (double) flight;
 			Vec3 head = starAt(start, target, u);
 			if (t % 2 == 0) {
 				props.move(props.named("star"), head);
 				props.move(props.named("halo"), head);
-				props.move(props.named("tail0"), head.subtract(way.scale(14)));
-				props.move(props.named("tail1"), head.subtract(way.scale(11)));
-				props.move(props.named("tail2"), head.subtract(way.scale(8)));
+				props.move(props.named("tail0"), head.subtract(way.scale(14 * sc)));
+				props.move(props.named("tail1"), head.subtract(way.scale(11 * sc)));
+				props.move(props.named("tail2"), head.subtract(way.scale(8 * sc)));
 			}
-			emit(level, viewers, ParticleTypes.END_ROD, head, 12, 0.5, 0.03);
-			emit(level, viewers, ParticleTypes.FIREWORK, head, 6, 0.8, 0.06);
+			emit(level, viewers, ParticleTypes.END_ROD, head, 12, 0.5 * sc, 0.03);
+			emit(level, viewers, ParticleTypes.FIREWORK, head, 6, 0.8 * sc, 0.06);
 			// the tail: gold close to the star, then blue, then violet
 			for (int k = 1; k <= 26; k += 2) {
-				double back = u - k * 0.6 / STAR_FLIGHT;
+				double back = u - k * look.tail() / flight;
 				if (back < 0) break;
 				Vec3 p = starAt(start, target, back);
 				ParticleOptions o = k < 8 ? GOLD : (k < 17 ? ICE : VIOLET);
-				emit(level, viewers, o, p.x, p.y, p.z, 2, 0.15 + k * 0.014, 0.15 + k * 0.014, 0.15 + k * 0.014, 0.0);
-				if (k % 3 == 1) emit(level, viewers, ParticleTypes.END_ROD, p, 1, 0.25, 0.0);
+				emit(level, viewers, o, p.x, p.y, p.z, 2, 0.15 + k * 0.014 * sc, 0.15 + k * 0.014 * sc, 0.15 + k * 0.014 * sc, 0.0);
+				if (k % 3 == 1) emit(level, viewers, ParticleTypes.END_ROD, p, 1, 0.25 * sc, 0.0);
+			}
+			if (look.cinema()) {
+				// a rising whistle, and rings on the ground that close in on the place where it will land
+				if (t % 8 == 0) sound(level, head, SoundEvents.FIREWORK_ROCKET_LAUNCH, 6.0f, (float) (0.5 + 1.2 * u));
+				if (t % 16 == 0 && t > 0) sound(level, target, SoundEvents.AMETHYST_BLOCK_RESONATE, 4.0f, (float) (0.6 + 0.9 * u));
+				int left = flight - t;
+				if (left <= 30) {
+					double radius = 3.0 + left * 0.3;
+					ring(level, viewers, ParticleTypes.END_ROD, target.add(0, 0.25, 0), radius, 40, t * 0.2, 0);
+					if (left <= 16) ring(level, viewers, GOLD, target.add(0, 0.25, 0), radius * 0.6, 28, -t * 0.25, 0);
+				}
 			}
 			return;
 		}
-		int w = t - STAR_FLIGHT;
+		int w = t - flight;
+		boolean cine = look.cinema();
+		double fat = cine ? 1.35 : 1.0;
 		Vec3 ground = target.add(0, 0.3, 0);
 		Vec3 pillarMiddle = target.add(0, 70, 0);
 		if (w == 0) {
@@ -349,12 +407,12 @@ public final class ExplosionArt {
 			emit(level, viewers, ParticleTypes.EXPLOSION_EMITTER, target.x, target.y + 1, target.z, 1, 0, 0, 0, 0);
 			emit(level, viewers, ParticleTypes.SONIC_BOOM, target.x, target.y + 2, target.z, 1, 0, 0, 0, 0);
 			// the pillar of light: a white core in two layers of glass
-			props.name("pillar0", props.block("minecraft:white_concrete", pillarMiddle, new Vec3(1.2, 140, 1.2), Q.ID, true));
-			props.name("pillar1", props.block("minecraft:yellow_stained_glass", pillarMiddle, new Vec3(3.2, 140, 3.2), Q.ID, true));
-			props.name("pillar2", props.block("minecraft:light_blue_stained_glass", pillarMiddle, new Vec3(5.8, 140, 5.8), Q.ID, true));
+			props.name("pillar0", props.block("minecraft:white_concrete", pillarMiddle, new Vec3(1.2 * fat, 140, 1.2 * fat), Q.ID, true));
+			props.name("pillar1", props.block("minecraft:yellow_stained_glass", pillarMiddle, new Vec3(3.2 * fat, 140, 3.2 * fat), Q.ID, true));
+			props.name("pillar2", props.block("minecraft:light_blue_stained_glass", pillarMiddle, new Vec3(5.8 * fat, 140, 5.8 * fat), Q.ID, true));
 			// the nova
 			props.name("nova", props.item("minecraft:nether_star", target.add(0, 3, 0), 4.0));
-			props.resize(props.named("nova"), 28.0, 8);
+			props.resize(props.named("nova"), 28.0 * fat, 8);
 			props.lifetime(props.named("nova"), t + 22);
 			// the star on the ground, and the ring around it
 			pentagram(props, target, 0, true, 0);
@@ -368,6 +426,12 @@ public final class ExplosionArt {
 			shockwave(level, viewers, GOLD, ground, 90, 1.1, 0.03);
 			shockwave(level, viewers, ICE, ground, 72, 0.7, 0.04);
 			blast(level, viewers, ParticleTypes.FIREWORK, target.add(0, 1, 0), 60, 1.2, true);
+			if (cine) {
+				// the cinematic landing is bigger: a second blast, a violet wave and a ball of sparks
+				shockwave(level, viewers, VIOLET, ground, 96, 2.3, 0.05);
+				blast(level, viewers, ParticleTypes.END_ROD, target.add(0, 1.5, 0), 120, 1.6, true);
+				debris(props, target.add(0, 1, 0), target.y, new String[] {"minecraft:gold_block", "minecraft:sea_lantern", "minecraft:amethyst_block"}, 16, 1.4, 1.7, t, 70);
+			}
 			int[] white = {0xFFFFFF, 0xFFD54A, 0x8FD3FF};
 			int[] fade = {0xB06CFF};
 			firework(level, target.add(0, 12, 0), FireworkExplosion.Shape.STAR, white, fade);
@@ -377,6 +441,12 @@ public final class ExplosionArt {
 		if (w == 3) {
 			firework(level, target.add(2, 18, 6), FireworkExplosion.Shape.BURST, new int[] {0xFFD54A, 0xFFFFFF}, new int[] {0x8FD3FF});
 			firework(level, target.add(-3, 18, -6), FireworkExplosion.Shape.LARGE_BALL, new int[] {0x8FD3FF, 0xFFFFFF}, new int[] {0xB06CFF});
+		}
+		if (cine && (w == 12 || w == 24)) {
+			firework(level, target.add(rnd.nextDouble() * 10 - 5, 16 + rnd.nextDouble() * 6, rnd.nextDouble() * 10 - 5), FireworkExplosion.Shape.STAR,
+				new int[] {0xFFFFFF, 0xFFD54A}, new int[] {0x8FD3FF});
+			firework(level, target.add(rnd.nextDouble() * 10 - 5, 16 + rnd.nextDouble() * 6, rnd.nextDouble() * 10 - 5), FireworkExplosion.Shape.BURST,
+				new int[] {0x8FD3FF, 0xB06CFF}, new int[] {0xFFFFFF});
 		}
 		if (w == 8) props.resize(props.named("nova"), 0.5, 14);
 		if (w == 10) {
@@ -397,9 +467,9 @@ public final class ExplosionArt {
 			double radius = 0.8 + w * 0.6;
 			ring(level, viewers, ParticleTypes.END_ROD, target.add(0, 0.25, 0), radius, 36, w * 0.1, 0);
 		}
-		if (w > 4 && w < 70) {
+		if (w > 4 && w < (cine ? 90 : 70)) {
 			// star dust that falls
-			for (int k = 0; k < 8; k++) {
+			for (int k = 0; k < (cine ? 12 : 8); k++) {
 				double a = rnd.nextDouble() * Math.PI * 2;
 				double r = Math.sqrt(rnd.nextDouble()) * 9;
 				emit(level, viewers, k % 2 == 0 ? ParticleTypes.FIREWORK : ParticleTypes.END_ROD, target.x + Math.cos(a) * r, target.y + 2 + rnd.nextDouble() * 9,

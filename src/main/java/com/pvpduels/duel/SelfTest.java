@@ -4175,6 +4175,58 @@ public final class SelfTest {
 			Missions.setDayForTest(day1);
 			check("on the day the duel started, it counts as his first win", Missions.progress(b.getUUID(), Missions.fixed().get(4)) == 1, "" + Missions.progress(b.getUUID(), Missions.fixed().get(4)));
 		});
+		// ---------------------------------------------------------------- the cinematic Shooting Star
+		step("finale star: Alice has the Shooting Star", () -> {
+			Effects.grantExplosion(a.getUUID(), "shooting_star");
+			check("Alice equips the Shooting Star", Effects.setExplosion(a.getUUID(), "shooting_star") == null && Victory.explosionMode(a.getUUID()));
+			Effects.setExplosion(b.getUUID(), "");
+			for (Dummy p : new Dummy[] {a, b}) p.inbox.clear();
+			cine[4] = Cinema.scenesStarted();
+			cine[5] = Cinema.cameraMoves();
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("finale star: Alice wins", () -> {
+			cine[0] = ticks;
+			cine[6] = com.pvpduels.effects.Props.createdCount();
+			a.link.sent.clear();
+			hit(a, b);
+		}, () -> Cinema.scenesStarted() > cine[4] && a.getCamera() != a, 200);
+		step("finale star: a low shot from the side, with the winner looking up", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("a finale of the Shooting Star kind for Alice", scene != null && scene.kind == Cinema.Kind.STAR && scene.win == 0);
+			if (scene == null) return;
+			check("Alice and Bob ride the camera", a.getCamera() == scene.camera && b.getCamera() == scene.camera);
+			check("the camera is low and to the side of the arena", scene.cameraAt.y < scene.center.y + 3.5 && Math.abs(scene.cameraAt.z - scene.center.z) > scene.half,
+				scene.cameraAt + " center " + scene.center + " half " + scene.half);
+			check("Alice's double looks up to make a wish", scene.doubles[0].getXRot() < -20f, String.valueOf(scene.doubles[0].getXRot()));
+			check("Alice's fireworks do not go up: she has an explosion", Victory.fireworkLaunches() == 0);
+		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Cinema.WISH + 60, 600);
+		step("finale star: the star is crossing the sky and the camera follows it", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("display entities were made (the star, its halo and its tail)", com.pvpduels.effects.Props.createdCount() >= cine[6] + 5, (com.pvpduels.effects.Props.createdCount() - cine[6]) + " made");
+			check("and they are in the world", com.pvpduels.effects.Props.live() > 0 && com.pvpduels.effects.Props.tagged(server) > 0);
+			check("the camera looks up at the star", scene.cameraPitch < -5f, String.valueOf(scene.cameraPitch));
+			check("the camera has moved toward the loser's end", scene.cameraAt.x > scene.center.x - scene.half * 0.5, scene.cameraAt + " center " + scene.center);
+			check("the camera sent many position packets", Cinema.cameraMoves() > cine[5] + 60, (Cinema.cameraMoves() - cine[5]) + " moves");
+			check("the title 'Make a wish' reached Alice", titleHeard(a, "Make a wish"));
+		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Cinema.IMPACT + 30, 600);
+		step("finale star: it landed, with a flash and a title", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("the title SHOOTING STAR reached Alice and Bob", titleHeard(a, "SHOOTING STAR") && titleHeard(b, "SHOOTING STAR"));
+			check("the pillar and the pentagram stand on the loser's place", com.pvpduels.effects.Props.live() >= 20, String.valueOf(com.pvpduels.effects.Props.live()));
+			check("the camera circles up above the landing", scene.cameraAt.y > scene.center.y + 4, String.valueOf(scene.cameraAt));
+			check("lots of particles reached Alice (tail, flash, shock waves)", particlePackets(a) > 800, String.valueOf(particlePackets(a)));
+			check("the double stopped looking up", scene.doubles[0].getXRot() > -5f, String.valueOf(scene.doubles[0].getXRot()));
+		}, () -> noDuel(a) && noDuel(b), 900);
+		step("finale star: everything is put back and nothing is left", () -> {
+			check("the finale lasted about eleven seconds", ticks - cine[0] > 200, (ticks - cine[0]) + " ticks");
+			check("nobody is looking through the camera and nobody is a spectator", a.getCamera() == a && b.getCamera() == b
+				&& a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+			check("no camera, no double and no display entity is left", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0
+				&& com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0,
+				Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera") + " / " + com.pvpduels.effects.Props.live());
+			Effects.setExplosion(a.getUUID(), "");
+		});
 		step("finale: clean up", () -> {
 			Cinema.resetForTest();
 			Cinema.enabled = false;
@@ -4192,7 +4244,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.10.0", version.equals("0.10.0"), version);
+			check("the mod says 0.11.0", version.equals("0.11.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
