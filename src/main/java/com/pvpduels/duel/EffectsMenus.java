@@ -25,8 +25,11 @@ public final class EffectsMenus {
 
 	/** The wool of a firework color, used as its icon. */
 	private static Item woolOf(String color) {
-		Identifier id = Identifier.parse(color + "_wool");
-		return BuiltInRegistries.ITEM.containsKey(id) ? BuiltInRegistries.ITEM.getValue(id) : Items.WHITE_WOOL;
+		for (String suffix : new String[] {"_wool", "_dye"}) {
+			Identifier id = Identifier.parse(color + suffix);
+			if (BuiltInRegistries.ITEM.containsKey(id)) return BuiltInRegistries.ITEM.getValue(id);
+		}
+		return Items.PAPER;
 	}
 
 	private static void report(ServerPlayer p, String problem) {
