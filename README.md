@@ -8,7 +8,10 @@ El `.jar` siempre actualizado esta aca (lo arma GitHub solo en cada cambio):
 https://github.com/danibarlaro-hub/pvp-duels/releases/download/latest/pvpduels-0.1.0.jar
 
 Si una version nueva falla, hay copias fijas que nunca cambian:
-- **Ultima**: todo el mod con el bot que se levanta despues de un KO sin reiniciar nada, `/kit save` que verifica lo que guardo, `/kit show` para mirar adentro de un kit y aviso si un duelo arranca con un kit vacio, y el Sort que se pone la mejor armadura (sin Curse of Binding), probado con 422 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-armor/pvpduels-0.1.0.jar
+- **Ultima**: efectos de victoria (3 fireworks, particulas, explosiones) y misiones diarias (`/effects`, `/missions`), 2 semanas de descanso entre concursos, cola random con kits publicos y personales, parejas (`/party`) y duelos 2v2, logros y titulos, arenas propias para Builders, concurso de construccion, cola `/queue`, ranking por kit, items del lobby, NPCs, `/duels` y resumen despues de cada duelo; probado con mas de 1090 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-effects/pvpduels-0.1.0.jar
+- Sin efectos ni misiones (2v2, logros, arenas, concurso, cola; unos 900 chequeos): https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-2v2/pvpduels-0.1.0.jar
+- Sin 2v2 (logros, arenas, concurso, cola; unos 810 chequeos): https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-achievements/pvpduels-0.1.0.jar
+- Mas viejo: todo el mod con el bot que se levanta despues de un KO sin reiniciar nada, `/kit save` que verifica lo que guardo, `/kit show` para mirar adentro de un kit y aviso si un duelo arranca con un kit vacio, y el Sort que se pone la mejor armadura (sin Curse of Binding), probado con 422 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-armor/pvpduels-0.1.0.jar
 - Con el lobby protegido y el mundo de la isla flotante, 370 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-lobby/pvpduels-0.1.0.jar
 - Todo el mod con `/botduel` con niveles (estatico, passive, easy, normal, hard), contadores de practica, Elo y `/top`, probado con 356 chequeos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botlevels/pvpduels-0.1.0.jar
 - Todo el mod con `/botduel` basico (bot siempre estatico), probado con 323 chequeos automaticos: https://github.com/danibarlaro-hub/pvp-duels/releases/download/stable-botduel/pvpduels-0.1.0.jar
@@ -157,6 +160,7 @@ La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar 
 2. Arma un inventario y `/kit save prueba`.
 3. Con un amigo: `/duel nombre`, elegi `prueba`, la arena, y manda el desafio. El otro hace click en [ACCEPT].
 4. Probar matar, caerse al vacio, `/leave` y `/again`.
+5. Efectos de victoria: un admin hace `/effects unlockall`, despues `/effects` para elegir (fireworks, particulas, explosion) y `/effects preview` para verlos; `/missions` muestra las misiones del dia.
 
 ## Prueba automatica
 Cada vez que se arma el mod, GitHub levanta un servidor de prueba con dos jugadores falsos que juegan duelos completos
