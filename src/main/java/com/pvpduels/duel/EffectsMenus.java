@@ -231,7 +231,7 @@ public final class EffectsMenus {
 
 	/** The icons of the explosions (same order as {@link Effects#EXPLOSIONS}). */
 	private static final Item[] EXPLOSION_ICONS = {Items.TNT, Items.WITHER_SKELETON_SKULL, Items.NETHER_STAR, Items.END_PORTAL_FRAME, Items.FIRE_CHARGE,
-		Items.TRIDENT, Items.AMETHYST_SHARD, Items.BONE_BLOCK, Items.ENDER_EYE, Items.IRON_SWORD};
+		Items.TRIDENT, Items.AMETHYST_SHARD, Items.END_ROD, Items.END_CRYSTAL, Items.BONE_BLOCK, Items.ENDER_EYE, Items.IRON_SWORD};
 
 	/** Where explosion number {@code i} sits in the menus: rows of seven, with a margin of one slot on each side. */
 	static int explosionSlot(int i) {
