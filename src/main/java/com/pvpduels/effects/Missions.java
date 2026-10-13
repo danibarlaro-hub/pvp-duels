@@ -19,9 +19,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The daily missions. Five are fixed every day and one bonus mission changes with the date. Duels against real players (1v1 and 2v2)
- * feed them; each mission completed rolls a reward ({@link Effects#roll}). The day changes at midnight (the clock of the computer
- * that runs the world).
+ * The daily and the weekly missions. Five daily missions are fixed every day and one bonus mission changes with the date; five weekly
+ * missions are harder and start again every Monday. Duels against real players (1v1 and 2v2) feed them; each mission completed rolls a
+ * reward ({@link Effects#roll}; an explosion is a bit more likely from a weekly one). The day changes at midnight (the clock of the
+ * computer that runs the world). A duel counts for the day it STARTED, even if it ends after midnight. A tie breaks the win runs.
  */
 public final class Missions {
 	public enum Kind { SUM, BEST, RUN, DISTINCT }
@@ -48,8 +49,17 @@ public final class Missions {
 		new Def("kits2", "Win with 2 different kits", 2, Kind.DISTINCT, Items.CHEST),
 		new Def("team1", "Win a 2v2 duel", 1, Kind.SUM, Items.LEAD));
 
+	private static final List<Def> WEEKLY = List.of(
+		new Def("w_wins15", "Win 15 duels this week", 15, Kind.SUM, Items.DIAMOND_SWORD),
+		new Def("w_kits4", "Win with 4 different kits this week", 4, Kind.DISTINCT, Items.CHEST),
+		new Def("w_run5", "Win 5 duels in a row", 5, Kind.RUN, Items.BLAZE_ROD),
+		new Def("w_hits500", "Land 500 hits in duels", 500, Kind.SUM, Items.IRON_AXE),
+		new Def("w_team3", "Win 3 2v2 duels this week", 3, Kind.SUM, Items.LEAD));
+
 	/** What happened to one player in one duel. */
 	public static final class Facts {
+		/** The day the duel started (null = today). A duel that started at 23:59 counts for that day even if it ends after midnight. */
+		public LocalDate day;
 		public boolean won;
 		public boolean lost;
 		public boolean team;
@@ -100,13 +110,33 @@ public final class Missions {
 
 	/** The six missions of today. */
 	public static List<Def> today(UUID id) {
+		return dailyOf(today());
+	}
+
+	/** The six daily missions of a date. */
+	public static List<Def> dailyOf(LocalDate day) {
 		List<Def> all = new ArrayList<>(FIXED);
-		all.add(bonusOf(today()));
+		all.add(bonusOf(day));
 		return all;
 	}
 
-	private static void rollover(Effects.Data d) {
-		String day = today().toString();
+	/** The five weekly missions (the same all week). */
+	public static List<Def> weekly() {
+		return WEEKLY;
+	}
+
+	public static boolean isWeekly(Def m) {
+		return m.id().startsWith("w_");
+	}
+
+	/** The Monday of the week of this date, as text. */
+	public static String weekOf(LocalDate day) {
+		return day.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)).toString();
+	}
+
+	/** Starts a new day for this player when the duel is of a new date. Only {@link #record} changes the data; looking never does. */
+	private static void rolloverDay(Effects.Data d, LocalDate date) {
+		String day = date.toString();
 		if (day.equals(d.day)) return;
 		d.day = day;
 		d.progress.clear();
@@ -115,22 +145,36 @@ public final class Missions {
 		d.kitsWon.clear();
 	}
 
+	private static void rolloverWeek(Effects.Data d, LocalDate date) {
+		String week = weekOf(date);
+		if (week.equals(d.week)) return;
+		d.week = week;
+		d.weekProgress.clear();
+		d.weekDone.clear();
+		d.weekRun = 0;
+		d.weekKits.clear();
+	}
+
 	public static synchronized double progress(UUID id, Def m) {
 		Effects.Data d = Effects.data(id, null);
-		rollover(d);
-		return d.progress.getOrDefault(m.id(), 0.0);
+		if (isWeekly(m)) return weekOf(today()).equals(d.week) ? d.weekProgress.getOrDefault(m.id(), 0.0) : 0.0;
+		return today().toString().equals(d.day) ? d.progress.getOrDefault(m.id(), 0.0) : 0.0;
 	}
 
 	public static synchronized boolean isDone(UUID id, Def m) {
 		Effects.Data d = Effects.data(id, null);
-		rollover(d);
-		return d.done.contains(m.id());
+		if (isWeekly(m)) return weekOf(today()).equals(d.week) && d.weekDone.contains(m.id());
+		return today().toString().equals(d.day) && d.done.contains(m.id());
 	}
 
 	public static synchronized int doneCount(UUID id) {
 		Effects.Data d = Effects.data(id, null);
-		rollover(d);
-		return d.done.size();
+		return today().toString().equals(d.day) ? d.done.size() : 0;
+	}
+
+	public static synchronized int weeklyDoneCount(UUID id) {
+		Effects.Data d = Effects.data(id, null);
+		return weekOf(today()).equals(d.week) ? d.weekDone.size() : 0;
 	}
 
 	public static synchronized int pendingCount(UUID id) {
@@ -138,18 +182,29 @@ public final class Missions {
 	}
 
 	/**
-	 * Adds what happened in a duel to the missions of today and returns the ones it completed. The player is told a few seconds
-	 * later (after the summary of the duel).
+	 * Adds what happened in a duel to the missions of the day it started (and of that week) and returns the ones it completed. The
+	 * player is told a few seconds later (after the summary of the duel).
 	 */
 	public static synchronized List<Completion> record(UUID id, String name, Facts f) {
+		LocalDate date = f.day != null ? f.day : today();
 		Effects.Data d = Effects.data(id, name);
-		rollover(d);
+		rolloverDay(d, date);
+		rolloverWeek(d, date);
 		List<Completion> completed = new ArrayList<>();
-		if (f.won) d.winRun++;
-		else if (f.lost) d.winRun = 0;
-		if (f.won && !f.kit.isEmpty() && !d.kitsWon.contains(f.kit)) d.kitsWon.add(f.kit);
+		if (f.won) {
+			d.winRun++;
+			d.weekRun++;
+		} else {
+			// a loss or a tie breaks the run
+			d.winRun = 0;
+			d.weekRun = 0;
+		}
+		if (f.won && !f.kit.isEmpty()) {
+			if (!d.kitsWon.contains(f.kit)) d.kitsWon.add(f.kit);
+			if (!d.weekKits.contains(f.kit)) d.weekKits.add(f.kit);
+		}
 
-		for (Def m : today(id)) {
+		for (Def m : dailyOf(date)) {
 			if (d.done.contains(m.id())) continue;
 			double value = d.progress.getOrDefault(m.id(), 0.0);
 			switch (m.id()) {
@@ -170,19 +225,40 @@ public final class Missions {
 			d.progress.put(m.id(), value);
 			if (value + 1e-9 >= m.goal()) {
 				d.done.add(m.id());
-				List<Effects.Gained> rewards = Effects.roll(id, name);
-				completed.add(new Completion(m, rewards));
-				StringBuilder what = new StringBuilder();
-				for (Effects.Gained g : rewards) {
-					if (!what.isEmpty()) what.append("  |  ");
-					what.append(g.label());
-				}
-				d.unannounced.add(m.text() + "\n" + what);
+				complete(d, id, name, m, false, completed);
+			}
+		}
+		for (Def m : WEEKLY) {
+			if (d.weekDone.contains(m.id())) continue;
+			double value = d.weekProgress.getOrDefault(m.id(), 0.0);
+			switch (m.id()) {
+				case "w_wins15" -> value += f.won ? 1 : 0;
+				case "w_kits4" -> value = d.weekKits.size();
+				case "w_run5" -> value = Math.max(value, d.weekRun);
+				case "w_hits500" -> value += f.hits;
+				case "w_team3" -> value += f.won && f.team ? 1 : 0;
+				default -> { }
+			}
+			d.weekProgress.put(m.id(), value);
+			if (value + 1e-9 >= m.goal()) {
+				d.weekDone.add(m.id());
+				complete(d, id, name, m, true, completed);
 			}
 		}
 		if (!completed.isEmpty()) DUE.put(id, ticks + ANNOUNCE_DELAY);
 		Effects.save();
 		return completed;
+	}
+
+	private static void complete(Effects.Data d, UUID id, String name, Def m, boolean weekly, List<Completion> completed) {
+		List<Effects.Gained> rewards = Effects.roll(id, name, weekly);
+		completed.add(new Completion(m, rewards));
+		StringBuilder what = new StringBuilder();
+		for (Effects.Gained g : rewards) {
+			if (!what.isEmpty()) what.append("  |  ");
+			what.append(g.label());
+		}
+		d.unannounced.add((weekly ? "Weekly: " : "") + m.text() + "\n" + what);
 	}
 
 	// ------------------------------------------------------------------ telling the player

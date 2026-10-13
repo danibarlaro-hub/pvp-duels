@@ -104,6 +104,7 @@ public class PvpDuelsMod implements ModInitializer {
 		Party.register();
 		Missions.register();
 		Victory.register();
+		com.pvpduels.duel.Cinema.register();
 		DuelManager.register();
 		Terrain.register();
 		Spectators.register();

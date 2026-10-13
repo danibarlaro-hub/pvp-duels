@@ -66,6 +66,8 @@ public final class TeamDuel {
 	boolean tiebreak;
 	private boolean finishing;
 	private boolean recorded;
+	/** The day the duel started: its missions count for that day even if it ends after midnight. */
+	private final java.time.LocalDate startedOn = Missions.today();
 	/** -2 undecided, -1 draw, 0 or 1 the winning team. */
 	int winner = -2;
 	boolean closed;
@@ -475,6 +477,7 @@ public final class TeamDuel {
 				boolean won = winner >= 0 && teamOf(i) == winner;
 				if (won) Achievements.add(ids[i], names[i], "team_wins", 1);
 				Missions.Facts facts = new Missions.Facts();
+				facts.day = startedOn;
 				facts.won = won;
 				facts.lost = winner >= 0 && !won;
 				facts.team = true;

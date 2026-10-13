@@ -117,8 +117,14 @@ public final class Duel {
 	private int[] kitEloInfo;
 	/** True when the duel came from the queue. */
 	boolean queued;
+	/** The day the duel started: its missions count for that day even if it ends after midnight. */
+	private final java.time.LocalDate startedOn = Missions.today();
 	/** The winner's victory effects were played. */
 	private boolean celebrated;
+	/** How long the ENDED phase lasts (the finale makes it longer). */
+	private int endTicks = END_TICKS;
+	/** Somebody left: there is no finale, the winner just celebrates where they stand. */
+	private boolean forfeited;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
 	int winner = -2;
 	boolean closed;
@@ -149,6 +155,17 @@ public final class Duel {
 
 	ServerPlayer player(int i) {
 		return server.getPlayerList().getPlayer(ids[i]);
+	}
+
+	/** True once this duelist got their things back (they left, or the duel closed). */
+	boolean isRestored(int i) {
+		return restored[i];
+	}
+
+	/** For the self-test: ends the duel as a tie, as if nobody had left. */
+	void finishAsTieForTest() {
+		winner = -1;
+		finish();
 	}
 
 	int indexOf(UUID id) {
@@ -623,6 +640,7 @@ public final class Duel {
 		} else {
 			winner = 1 - idx;
 		}
+		forfeited = true;
 		finish();
 	}
 
@@ -708,6 +726,7 @@ public final class Duel {
 			}
 			ServerPlayer p = player(i);
 			Missions.Facts facts = new Missions.Facts();
+			facts.day = startedOn;
 			facts.won = won;
 			facts.lost = winner == 1 - i;
 			facts.kit = config.kit();
@@ -735,9 +754,13 @@ public final class Duel {
 		if (traceEnd) PvpDuelsMod.LOGGER.info("Duel {} vs {} is finishing (round {}, phase {}, practice {})", names[0], names[1], round, phase, practice,
 			new Throwable("who finished the duel"));
 		recordStats();
-		if (!celebrated && !practice && winner >= 0 && player(winner) != null) {
+		if (!celebrated && !practice) {
 			celebrated = true;
-			Victory.play(player(winner), player(1 - winner));
+			// A real 1v1 ends with the finale (camera, doubles, effects); a tie with two domains makes them clash. Without a
+			// finale the winner just celebrates where they stand.
+			int finale = forfeited ? 0 : Cinema.begin(this, winner);
+			if (finale > 0) endTicks = Math.max(END_TICKS, finale);
+			else if (winner >= 0 && player(winner) != null) Victory.play(player(winner), player(1 - winner));
 		}
 		DuelManager.onFinished(this);
 		phase = Phase.ENDED;
@@ -799,6 +822,7 @@ public final class Duel {
 		DuelManager.onLeft(ids[i]);
 		ServerPlayer p = player(i);
 		if (p != null) {
+			Cinema.release(p);
 			boolean lobby = Lobby.appliesTo(server, p);
 			PlayerBackup.restore(server, p, true);
 			// A few seconds of protection, so nobody is hurt right after being put back.
@@ -818,6 +842,7 @@ public final class Duel {
 	private void close() {
 		if (closed) return;
 		closed = true;
+		Cinema.stop(this);
 		restore(0);
 		restore(1);
 		Spectators.release(this);
@@ -830,6 +855,7 @@ public final class Duel {
 	void abort() {
 		if (closed) return;
 		closed = true;
+		Cinema.stop(this);
 		restore(0);
 		restore(1);
 		DuelManager.onClosed(this);

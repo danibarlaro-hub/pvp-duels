@@ -92,9 +92,23 @@ public final class Spectators {
 		p.setDeltaMovement(0, 0, 0);
 	}
 
+	/** The players who are watching this duel right now. */
+	static java.util.List<ServerPlayer> watchers(Duel duel) {
+		java.util.List<ServerPlayer> out = new java.util.ArrayList<>();
+		MinecraftServer server = duelServer(duel);
+		if (server == null) return out;
+		for (Map.Entry<UUID, Duel> entry : WATCHING.entrySet()) {
+			if (entry.getValue() != duel) continue;
+			ServerPlayer p = server.getPlayerList().getPlayer(entry.getKey());
+			if (p != null) out.add(p);
+		}
+		return out;
+	}
+
 	public static void exit(ServerPlayer p) {
 		Duel duel = WATCHING.remove(p.getUUID());
 		if (duel == null) return;
+		Cinema.release(p);
 		PlayerBackup.restore(p.level().getServer(), p);
 		p.sendSystemMessage(Msg.ok("You stopped watching. Your inventory was restored."));
 	}

@@ -98,6 +98,7 @@ public final class StatsStore {
 			s.streak = 0;
 		} else {
 			s.draws++;
+			s.streak = 0; // a tie breaks the win streak
 		}
 	}
 

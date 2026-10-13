@@ -36,12 +36,27 @@ public final class EffectsMenus {
 		if (problem != null) p.sendSystemMessage(Msg.err(problem));
 	}
 
+	/** Runs an equip action and says so when it took something else off (you can have effects OR an explosion). */
+	private static void equip(ServerPlayer p, java.util.function.Supplier<String> action) {
+		UUID me = p.getUUID();
+		boolean hadExplosion = !Effects.explosionSlot(me).isEmpty();
+		boolean hadEffects = Effects.hasEffects(me);
+		String problem = action.get();
+		report(p, problem);
+		if (problem != null) return;
+		if (hadExplosion && Effects.explosionSlot(me).isEmpty()) {
+			p.sendSystemMessage(Msg.info("Your explosion was taken off: you can have effects OR an explosion, not both."));
+		} else if (hadEffects && !Effects.hasEffects(me) && !Effects.explosionSlot(me).isEmpty()) {
+			p.sendSystemMessage(Msg.info("Your fireworks and particles were taken off: you can have effects OR an explosion, not both."));
+		}
+	}
+
 	// ------------------------------------------------------------------ main menu
 
 	public static void openMain(ServerPlayer p) {
 		UUID me = p.getUUID();
 		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
-		b.set(10, DuelMenus.icon(Items.FIREWORK_ROCKET, "Fireworks", ChatFormatting.GOLD, "Three fireworks go up when you win:", "behind you, to your left and to your right.",
+		b.set(10, DuelMenus.icon(Items.FIREWORK_ROCKET, "Fireworks", ChatFormatting.GOLD, "Three fireworks go up in a row behind you", "when you win (the middle one is higher).",
 			"Unlocked: " + Effects.ownedItemCount(me) + "/" + Effects.allFireworkItems().size()), EffectsMenus::openFireworks);
 		b.set(12, DuelMenus.icon(Items.FIREWORK_STAR, "Particles", ChatFormatting.AQUA, "2 under your feet and 4 around the arena.",
 			"Unlocked: " + Effects.ownedParticles(me).size() + "/" + Particles.all().size()), EffectsMenus::openParticles);
@@ -92,7 +107,7 @@ public final class EffectsMenus {
 				boolean on = chosen.contains(color);
 				b.set(position, DuelMenus.icon(woolOf(color), Effects.pretty(color), on ? ChatFormatting.GREEN : ChatFormatting.WHITE,
 					on ? "On this firework. Click to take it off." : "Click to add it (up to " + Effects.MAX_COLORS + " colors)."), who -> {
-					report(who, Effects.toggleColor(who.getUUID(), slot, color));
+					equip(who, () -> Effects.toggleColor(who.getUUID(), slot, color));
 					openFireworkSlot(who, slot);
 				});
 			} else {
@@ -185,7 +200,7 @@ public final class EffectsMenus {
 			boolean here = id.equals(now);
 			b.set(i, DuelMenus.icon(Items.FIREWORK_STAR, def == null ? id : def.name(), here ? ChatFormatting.GREEN : ChatFormatting.WHITE,
 				"Copies: " + copies + ", equipped: " + used, here ? "In this slot." : "Click to put it here."), who -> {
-				report(who, Effects.setParticle(who.getUUID(), area, index, id));
+				equip(who, () -> Effects.setParticle(who.getUUID(), area, index, id));
 				openParticles(who);
 			});
 		}
@@ -215,7 +230,7 @@ public final class EffectsMenus {
 				boolean on = id.equals(equipped);
 				b.set(position, DuelMenus.icon(Items.TNT, Effects.EXPLOSION_NAMES[i], on ? ChatFormatting.GREEN : ChatFormatting.GOLD,
 					on ? "Equipped. Click to take it off." : "Click to equip it."), who -> {
-					report(who, Effects.setExplosion(who.getUUID(), on ? "" : id));
+					equip(who, () -> Effects.setExplosion(who.getUUID(), on ? "" : id));
 					openExplosions(who);
 				});
 			} else {
@@ -231,18 +246,27 @@ public final class EffectsMenus {
 	public static void openMissions(ServerPlayer p) {
 		UUID me = p.getUUID();
 		List<Missions.Def> today = Missions.today(me);
-		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(4);
 		for (int i = 0; i < today.size() && i < 7; i++) {
 			Missions.Def m = today.get(i);
 			boolean done = Missions.isDone(me, m);
 			int value = (int) Math.floor(Math.min(Missions.progress(me, m), m.goal()));
-			String bonus = i == Missions.fixed().size() ? "Today's bonus mission" : "";
+			String bonus = i == Missions.fixed().size() ? "Today's bonus mission" : "Daily mission";
 			b.set(9 + i, DuelMenus.icon(done ? Items.EMERALD : m.icon(), m.text(), done ? ChatFormatting.GREEN : ChatFormatting.WHITE,
 				done ? "Done! The reward is yours." : "Progress: " + value + "/" + m.goalInt(), bonus));
 		}
-		b.set(18, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
-		b.set(22, DuelMenus.icon(Items.PAPER, "How it works", ChatFormatting.GRAY, "Missions count in duels against players (1v1 and 2v2).",
-			"They reset at midnight. Each one you complete", "can give a firework color or shape, a particle", "or, very rarely, an explosion."));
-		ChoiceMenu.open(p, Component.literal("Daily missions"), 3, b);
+		List<Missions.Def> weekly = Missions.weekly();
+		for (int i = 0; i < weekly.size() && i < 7; i++) {
+			Missions.Def m = weekly.get(i);
+			boolean done = Missions.isDone(me, m);
+			int value = (int) Math.floor(Math.min(Missions.progress(me, m), m.goal()));
+			b.set(19 + i, DuelMenus.icon(done ? Items.EMERALD_BLOCK : m.icon(), m.text(), done ? ChatFormatting.GREEN : ChatFormatting.GOLD,
+				done ? "Done! The reward is yours." : "Progress: " + value + "/" + m.goalInt(), "Weekly mission: better chance of an explosion"));
+		}
+		b.set(27, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
+		b.set(31, DuelMenus.icon(Items.PAPER, "How it works", ChatFormatting.GRAY, "Missions count in duels against players (1v1 and 2v2).",
+			"Daily ones reset at midnight, weekly ones on Monday.", "A duel counts for the day it started. A tie breaks win runs.",
+			"A mission can give a firework color or shape, a particle", "or, very rarely, an explosion (0.8% daily, 1.5% weekly)."));
+		ChoiceMenu.open(p, Component.literal("Missions"), 4, b);
 	}
 }

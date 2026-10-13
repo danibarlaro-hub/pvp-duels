@@ -19,13 +19,13 @@ import java.util.UUID;
 
 /**
  * What a player owns to celebrate a victory (firework colors and shapes, particles, explosions) and what they have equipped, plus the
- * progress of their daily missions. Missions give rewards ({@link #roll}); the equipped things are played when they win a duel
+ * progress of their daily and weekly missions. You can have effects (fireworks and particles) OR an explosion equipped, not both. Missions give rewards ({@link #roll}); the equipped things are played when they win a duel
  * ({@link Victory}). Saved in pvpduels/effects.json.
  */
 public final class Effects {
-	/** Three fireworks go up when you win: behind you (one block higher), to your left and to your right. */
+	/** Three fireworks go up in a row behind you when you win: the middle one (a block higher), the left one and the right one. */
 	public static final int FIREWORK_SLOTS = 3;
-	public static final String[] SLOT_NAMES = {"Behind you", "Left", "Right"};
+	public static final String[] SLOT_NAMES = {"Middle", "Left", "Right"};
 	public static final int MAX_COLORS = 5;
 	public static final int FLOOR_SLOTS = 2;
 	public static final int AREA_SLOTS = 4;
@@ -45,7 +45,9 @@ public final class Effects {
 	/** The chances of the rewards of a mission (each mission rolls them). Easy to change here. */
 	public static double fireworkChance = 0.70;
 	public static double particleChance = 0.40;
-	public static double explosionChance = 0.01;
+	/** Chance of an explosion: 0.8% for a daily mission, 1.5% for a weekly one. */
+	public static double explosionChance = 0.008;
+	public static double weeklyExplosionChance = 0.015;
 	/** After this many missions without an explosion the next one gives it. */
 	public static int explosionPity = 100;
 
@@ -74,6 +76,12 @@ public final class Effects {
 		/** Missions completed since the last explosion reward. */
 		int sinceExplosion;
 		int completedTotal;
+		/** The weekly missions: the Monday of the week, the progress of each, the ones done, the win run and the kits won this week. */
+		String week = "";
+		Map<String, Double> weekProgress = new HashMap<>();
+		List<String> weekDone = new ArrayList<>();
+		int weekRun;
+		List<String> weekKits = new ArrayList<>();
 		/** Messages about rewards the player has not seen yet. */
 		List<String> unannounced = new ArrayList<>();
 		/** The player does not want to see other players' victory effects. */
@@ -113,6 +121,10 @@ public final class Effects {
 		if (d.progress == null) d.progress = new HashMap<>();
 		if (d.done == null) d.done = new ArrayList<>();
 		if (d.kitsWon == null) d.kitsWon = new ArrayList<>();
+		if (d.week == null) d.week = "";
+		if (d.weekProgress == null) d.weekProgress = new HashMap<>();
+		if (d.weekDone == null) d.weekDone = new ArrayList<>();
+		if (d.weekKits == null) d.weekKits = new ArrayList<>();
 		if (d.unannounced == null) d.unannounced = new ArrayList<>();
 	}
 
@@ -147,7 +159,8 @@ public final class Effects {
 		random = new Random();
 		fireworkChance = 0.70;
 		particleChance = 0.40;
-		explosionChance = 0.01;
+		explosionChance = 0.008;
+		weeklyExplosionChance = 0.015;
 		explosionPity = 100;
 		try {
 			Files.deleteIfExists(file());
@@ -323,6 +336,7 @@ public final class Effects {
 		}
 		if (colors.size() >= MAX_COLORS) return "A firework has up to " + MAX_COLORS + " colors. Take one off first.";
 		colors.add(color);
+		d.explosion = ""; // effects OR an explosion
 		save();
 		return null;
 	}
@@ -386,6 +400,7 @@ public final class Effects {
 		if (slots[index].equals(particle)) used--; // it is already in this slot
 		if (used >= owned) return "You only have " + owned + (owned == 1 ? " copy" : " copies") + " of that particle and all of them are equipped.";
 		slots[index] = particle;
+		d.explosion = ""; // effects OR an explosion
 		save();
 		return null;
 	}
@@ -394,11 +409,28 @@ public final class Effects {
 		return data(id, null).explosion;
 	}
 
-	/** Equips an explosion ("" takes it off). Returns an error text or null. */
+	/** True when any firework color or particle is equipped. */
+	public static synchronized boolean hasEffects(UUID id) {
+		Data d = data(id, null);
+		for (List<String> colors : d.fwColors) if (!colors.isEmpty()) return true;
+		for (String s : d.floor) if (!s.isEmpty()) return true;
+		for (String s : d.area) if (!s.isEmpty()) return true;
+		return false;
+	}
+
+	/**
+	 * Equips an explosion ("" takes it off). Returns an error text or null. You can have effects OR an explosion: equipping an
+	 * explosion takes every firework color and every particle off (everything you own stays yours).
+	 */
 	public static synchronized String setExplosion(UUID id, String ex) {
 		Data d = data(id, null);
 		if (!ex.isEmpty() && explosionIndex(ex) < 0) return "That is not an explosion.";
 		if (!ex.isEmpty() && !d.explosions.contains(ex)) return "You haven't unlocked that explosion yet.";
+		if (!ex.isEmpty()) {
+			for (List<String> colors : d.fwColors) colors.clear();
+			for (int i = 0; i < d.floor.length; i++) d.floor[i] = "";
+			for (int i = 0; i < d.area.length; i++) d.area[i] = "";
+		}
 		d.explosion = ex;
 		save();
 		return null;
@@ -423,6 +455,11 @@ public final class Effects {
 	 * particle. If nothing comes out, a particle is given anyway.
 	 */
 	public static synchronized List<Gained> roll(UUID id, String name) {
+		return roll(id, name, false);
+	}
+
+	/** The reward of a weekly mission has a better chance of an explosion (1.5% instead of 0.8%). */
+	public static synchronized List<Gained> roll(UUID id, String name, boolean weekly) {
 		Data d = data(id, name);
 		List<Gained> out = new ArrayList<>();
 		d.completedTotal++;
@@ -430,7 +467,7 @@ public final class Effects {
 
 		List<String> lockedExplosions = new ArrayList<>();
 		for (String ex : EXPLOSIONS) if (!d.explosions.contains(ex)) lockedExplosions.add(ex);
-		if (!lockedExplosions.isEmpty() && (d.sinceExplosion >= explosionPity || random.nextDouble() < explosionChance)) {
+		if (!lockedExplosions.isEmpty() && (d.sinceExplosion >= explosionPity || random.nextDouble() < (weekly ? weeklyExplosionChance : explosionChance))) {
 			String ex = lockedExplosions.get(random.nextInt(lockedExplosions.size()));
 			d.explosions.add(ex);
 			d.sinceExplosion = 0;

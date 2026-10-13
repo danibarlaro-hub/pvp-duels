@@ -25,16 +25,17 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * What happens when you win a duel: the three fireworks you chose go up (behind you, one block higher, to your left and to your
- * right), your particles play under your feet and around the arena for five seconds, and your explosion (if you have one) goes off.
- * It is only light and sound: nothing is damaged and nothing is broken. It starts after the duel is decided, so it never gets in the way
- * of a fight.
+ * What happens when you win a duel: the three fireworks you chose go up in a row behind you (the middle one a block higher), your
+ * particles play under your feet and around the arena for five seconds, or your explosion goes off instead (you can have effects OR an
+ * explosion, not both). It is only light and sound: nothing is damaged and nothing is broken. It starts after the duel is decided, so
+ * it never gets in the way of a fight. In a 1v1 the finale ({@code Cinema}) plays it from the winner's place while the camera rises.
  */
 public final class Victory {
 	/** How long the particles and the explosion last. */
 	public static final int SHOW_TICKS = 100;
-	/** How far to the side and behind the fireworks start. */
+	/** How far apart the fireworks of the row are, and how far behind the winner the row is. */
 	private static final double SIDE = 2.5;
+	private static final double BEHIND = 2.5;
 	/** Fireworks fly this long (3 = about 20 blocks up). */
 	private static final int FLIGHT = 3;
 	/** The explosion starts this many ticks after the win. */
@@ -48,13 +49,22 @@ public final class Victory {
 		final List<String> floor = new ArrayList<>();
 		final List<String> area = new ArrayList<>();
 		final String explosion;
+		/** Where the show is played when it does not follow the winner (the finale puts the winner's double there), else null. */
+		final Vec3 fixed;
+		final boolean skipDomain;
 		int age;
 
-		Show(UUID id, ServerLevel level, Vec3 target, String explosion) {
+		Show(UUID id, ServerLevel level, Vec3 target, String explosion, Vec3 fixed, boolean skipDomain) {
 			this.id = id;
 			this.level = level;
 			this.target = target;
 			this.explosion = explosion;
+			this.fixed = fixed;
+			this.skipDomain = skipDomain;
+		}
+
+		Vec3 origin(ServerPlayer winner) {
+			return fixed != null ? fixed : winner.position();
 		}
 	}
 
@@ -83,32 +93,49 @@ public final class Victory {
 		started = 0;
 	}
 
-	/** The winner celebrates; the target of the explosion is where the loser is. */
+	/** The winner celebrates where they stand; the target of the explosion is where the loser is. */
 	public static void play(ServerPlayer winner, ServerPlayer loser) {
-		start(winner, loser == null ? null : loser.position());
+		start(winner, loser == null ? null : loser.position(), null, winner.getYRot(), false);
+	}
+
+	/**
+	 * The winner celebrates at a fixed place (the winner's double in the finale), looking the way {@code yaw} says. The Domain Expansion
+	 * is not drawn here: the finale does it.
+	 */
+	public static void playAt(ServerPlayer winner, Vec3 origin, float yaw, Vec3 loserAt) {
+		start(winner, loserAt, origin, yaw, true);
 	}
 
 	/** Shows a player their own effects (from the menu). The explosion lands a few blocks in front of them. */
 	public static void preview(ServerPlayer p) {
 		double yaw = Math.toRadians(p.getYRot());
-		start(p, p.position().add(-Math.sin(yaw) * 7, 0, Math.cos(yaw) * 7));
+		start(p, p.position().add(-Math.sin(yaw) * 7, 0, Math.cos(yaw) * 7), null, p.getYRot(), false);
 	}
 
-	private static void start(ServerPlayer winner, Vec3 target) {
+	/** True when this player has an explosion equipped: then the fireworks and the particles are not played. */
+	public static boolean explosionMode(UUID id) {
+		return !Effects.explosionSlot(id).isEmpty();
+	}
+
+	private static void start(ServerPlayer winner, Vec3 target, Vec3 fixed, float yaw, boolean skipDomain) {
 		UUID id = winner.getUUID();
 		ServerLevel level = (ServerLevel) winner.level();
 		started++;
-		launchFireworks(level, winner);
+		boolean explosionOnly = explosionMode(id);
+		Vec3 origin = fixed != null ? fixed : winner.position();
+		if (!explosionOnly) launchFireworks(level, id, origin, yaw);
 
-		Vec3 where = target != null ? target : winner.position();
-		Show show = new Show(id, level, where, Effects.explosionSlot(id));
-		for (int i = 0; i < Effects.FLOOR_SLOTS; i++) {
-			String p = Effects.particleSlot(id, false, i);
-			if (!p.isEmpty() && Particles.find(p) != null) show.floor.add(p);
-		}
-		for (int i = 0; i < Effects.AREA_SLOTS; i++) {
-			String p = Effects.particleSlot(id, true, i);
-			if (!p.isEmpty() && Particles.find(p) != null) show.area.add(p);
+		Vec3 where = target != null ? target : origin;
+		Show show = new Show(id, level, where, Effects.explosionSlot(id), fixed, skipDomain);
+		if (!explosionOnly) {
+			for (int i = 0; i < Effects.FLOOR_SLOTS; i++) {
+				String p = Effects.particleSlot(id, false, i);
+				if (!p.isEmpty() && Particles.find(p) != null) show.floor.add(p);
+			}
+			for (int i = 0; i < Effects.AREA_SLOTS; i++) {
+				String p = Effects.particleSlot(id, true, i);
+				if (!p.isEmpty() && Particles.find(p) != null) show.area.add(p);
+			}
 		}
 		if (show.floor.isEmpty() && show.area.isEmpty() && show.explosion.isEmpty()) return;
 		SHOWS.add(show);
@@ -126,9 +153,9 @@ public final class Victory {
 		};
 	}
 
-	private static void launchFireworks(ServerLevel level, ServerPlayer winner) {
-		UUID id = winner.getUUID();
-		double yaw = Math.toRadians(winner.getYRot());
+	/** The three fireworks stand in a row behind the winner, the middle one a block higher. */
+	private static void launchFireworks(ServerLevel level, UUID id, Vec3 origin, float yawDegrees) {
+		double yaw = Math.toRadians(yawDegrees);
 		double fx = -Math.sin(yaw);
 		double fz = Math.cos(yaw);
 		double rx = -Math.cos(yaw);
@@ -146,20 +173,11 @@ public final class Victory {
 				Effects.fireworkTrail(id, slot), Effects.fireworkTwinkle(id, slot));
 			ItemStack rocket = new ItemStack(Items.FIREWORK_ROCKET);
 			rocket.set(DataComponents.FIREWORKS, new Fireworks(FLIGHT, List.of(explosion)));
-			double x = winner.getX();
-			double y = winner.getY();
-			double z = winner.getZ();
-			if (slot == 0) {
-				x -= fx * SIDE;
-				z -= fz * SIDE;
-				y += 1; // the one behind you starts a block higher
-			} else if (slot == 1) {
-				x -= rx * SIDE;
-				z -= rz * SIDE;
-			} else {
-				x += rx * SIDE;
-				z += rz * SIDE;
-			}
+			// slot 0 is the middle one, slot 1 the one on the left and slot 2 the one on the right
+			int column = slot == 0 ? 0 : (slot == 1 ? -1 : 1);
+			double x = origin.x - fx * BEHIND - rx * SIDE * column;
+			double y = origin.y + (slot == 0 ? 1 : 0);
+			double z = origin.z - fz * BEHIND - rz * SIDE * column;
 			level.addFreshEntity(new FireworkRocketEntity(level, x, y, z, rocket));
 			launches++;
 		}
@@ -183,18 +201,19 @@ public final class Victory {
 				continue;
 			}
 			s.age++;
-			List<ServerPlayer> viewers = viewers(s.level, winner);
+			List<ServerPlayer> viewers = viewers(s, winner);
 			floor(s, winner, viewers);
 			area(s, winner, viewers);
 			if (!s.explosion.isEmpty() && s.age >= EXPLOSION_DELAY) explosion(s, winner, viewers, s.age - EXPLOSION_DELAY);
 		}
 	}
 
-	/** Players near the winner who want to see it (the winner always does). */
-	private static List<ServerPlayer> viewers(ServerLevel level, ServerPlayer winner) {
+	/** Players near the show who want to see it (the winner always does). */
+	private static List<ServerPlayer> viewers(Show s, ServerPlayer winner) {
+		Vec3 origin = s.origin(winner);
 		List<ServerPlayer> out = new ArrayList<>();
-		for (ServerPlayer p : level.players()) {
-			if (p.distanceToSqr(winner) > VIEW_DISTANCE_SQR) continue;
+		for (ServerPlayer p : s.level.players()) {
+			if (p != winner && p.getCamera() == p && p.distanceToSqr(origin) > VIEW_DISTANCE_SQR) continue;
 			if (p != winner && Effects.hideOthers(p.getUUID())) continue;
 			out.add(p);
 		}
@@ -203,12 +222,13 @@ public final class Victory {
 
 	private static void emit(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, double x, double y, double z, int count,
 		double dx, double dy, double dz, double speed) {
-		for (ServerPlayer v : viewers) level.sendParticles(v, options, false, false, x, y, z, count, dx, dy, dz, speed);
+		for (ServerPlayer v : viewers) level.sendParticles(v, options, false, true, x, y, z, count, dx, dy, dz, speed);
 	}
 
 	/** Particles on the ground: a ring that turns around the winner. */
 	private static void floor(Show s, ServerPlayer winner, List<ServerPlayer> viewers) {
 		if (s.floor.isEmpty() || s.age % 2 != 0) return;
+		Vec3 o = s.origin(winner);
 		for (int j = 0; j < s.floor.size(); j++) {
 			Particles.Def def = Particles.find(s.floor.get(j));
 			if (def == null) continue;
@@ -216,7 +236,7 @@ public final class Victory {
 			int points = 8;
 			for (int k = 0; k < points; k++) {
 				double angle = s.age * 0.22 * (j % 2 == 0 ? 1 : -1) + k * Math.PI * 2 / points;
-				emit(s.level, viewers, def.options(), winner.getX() + Math.cos(angle) * radius, winner.getY() + 0.1, winner.getZ() + Math.sin(angle) * radius,
+				emit(s.level, viewers, def.options(), o.x + Math.cos(angle) * radius, o.y + 0.1, o.z + Math.sin(angle) * radius,
 					1, 0.03, 0.05, 0.03, 0.01);
 			}
 		}
@@ -225,6 +245,7 @@ public final class Victory {
 	/** Particles around the arena: waves that start at the winner and spread out quickly. */
 	private static void area(Show s, ServerPlayer winner, List<ServerPlayer> viewers) {
 		if (s.area.isEmpty()) return;
+		Vec3 o = s.origin(winner);
 		for (int j = 0; j < s.area.size(); j++) {
 			if ((s.age + j) % 2 != 0) continue;
 			Particles.Def def = Particles.find(s.area.get(j));
@@ -234,7 +255,7 @@ public final class Victory {
 			double height = 0.4 + (j % 2) * 1.0;
 			for (int k = 0; k < points; k++) {
 				double angle = s.age * 0.1 + j * 0.4 + k * Math.PI * 2 / points;
-				emit(s.level, viewers, def.options(), winner.getX() + Math.cos(angle) * radius, winner.getY() + height, winner.getZ() + Math.sin(angle) * radius,
+				emit(s.level, viewers, def.options(), o.x + Math.cos(angle) * radius, o.y + height, o.z + Math.sin(angle) * radius,
 					1, 0.05, 0.2, 0.05, 0.02);
 			}
 		}
