@@ -147,7 +147,7 @@ public final class SelfTest {
 	private static void tick() {
 		ticks++;
 		if (ticks % 10 == 0) clearMonsters();
-		if (ticks > 20 * 600) {
+		if (ticks > 20 * 800) {
 			check("whole test finishes in time", false);
 			finish();
 			return;
@@ -346,6 +346,30 @@ public final class SelfTest {
 		return ok;
 	}
 
+	private static boolean titleHeard(Dummy who, String text) {
+		for (Packet<?> packet : List.copyOf(who.link.sent)) {
+			if (packet instanceof net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket title && title.text().getString().contains(text)) return true;
+		}
+		return false;
+	}
+
+	private static int packetCount(Dummy who, String simpleName) {
+		int n = 0;
+		for (Packet<?> packet : List.copyOf(who.link.sent)) if (packet.getClass().getSimpleName().equals(simpleName)) n++;
+		return n;
+	}
+
+	/** How many entities of the arena world have a tag that starts like this. */
+	private static int taggedCount(String prefix) {
+		int n = 0;
+		ServerLevel level = Arena.level(server);
+		if (level == null) return 0;
+		for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
+			for (String tag : e.entityTags()) if (tag.startsWith(prefix)) n++;
+		}
+		return n;
+	}
+
 	private static int particlePackets(Dummy who) {
 		int n = 0;
 		for (Packet<?> packet : who.link.sent) if (packet.getClass().getSimpleName().equals("ClientboundLevelParticlesPacket")) n++;
@@ -426,6 +450,8 @@ public final class SelfTest {
 	// ------------------------------------------------------------------ the test
 
 	private static void build() {
+		// The finale of a win (camera, doubles) has its own steps; the older steps see the plain end of a duel.
+		Cinema.enabled = false;
 		step("the arena dimension exists", () -> {
 			StringBuilder keys = new StringBuilder();
 			for (ServerLevel l : server.getAllLevels()) keys.append(l.dimension().identifier()).append(' ');
@@ -3219,7 +3245,7 @@ public final class SelfTest {
 				&& Effects.SHAPES.length == 5);
 			check("3 explosions with a name each", Effects.EXPLOSIONS.length == 3 && Effects.EXPLOSION_NAMES.length == 3 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon"));
 			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
-			check("the chances are the ones asked for", Effects.fireworkChance == 0.70 && Effects.particleChance == 0.40 && Effects.explosionChance == 0.01 && Effects.explosionPity == 100);
+			check("the chances are the ones asked for", Effects.fireworkChance == 0.70 && Effects.particleChance == 0.40 && Effects.explosionChance == 0.008 && Effects.weeklyExplosionChance == 0.015 && Effects.explosionPity == 100);
 		});
 		step("effects: a new player owns almost nothing", () -> {
 			UUID id = UUID.nameUUIDFromBytes("fresh-player".getBytes());
@@ -3349,8 +3375,32 @@ public final class SelfTest {
 			Effects.grantExplosion(id, "orbital_strike");
 			check("an unlocked explosion can be equipped and taken off", Effects.setExplosion(id, "orbital_strike") == null && Effects.explosionSlot(id).equals("orbital_strike")
 				&& Effects.setExplosion(id, "") == null && Effects.explosionSlot(id).isEmpty());
-			Effects.setExplosion(id, "orbital_strike");
 			Effects.setHideOthers(id, true);
+		});
+		step("effects: effects OR an explosion, never both", () -> {
+			UUID id = UUID.nameUUIDFromBytes("either-or".getBytes());
+			Effects.grantItem(id, "color:red");
+			Effects.grantParticle(id, "flame");
+			Effects.grantExplosion(id, "orbital_strike");
+			Effects.grantExplosion(id, "domain_expansion");
+			Effects.grantExplosion(id, "orbital_wither");
+			check("a new player has the first firework and no explosion", Effects.hasEffects(id) && Effects.explosionSlot(id).isEmpty() && !Victory.explosionMode(id));
+			check("a color and a particle go on", Effects.toggleColor(id, 1, "red") == null && Effects.setParticle(id, false, 0, "flame") == null);
+			check("equipping an explosion takes every color and every particle off", Effects.setExplosion(id, "orbital_strike") == null && Effects.explosionSlot(id).equals("orbital_strike")
+				&& !Effects.hasEffects(id) && Effects.fireworkColors(id, 0).isEmpty() && Effects.fireworkColors(id, 1).isEmpty() && Effects.particleSlot(id, false, 0).isEmpty());
+			check("but everything stays owned", Effects.ownsItem(id, "color:red") && Effects.particleCount(id, "flame") == 1 && Effects.ownsItem(id, "color:white"));
+			check("with an explosion on, the fireworks and particles are not played", Victory.explosionMode(id));
+			check("another explosion replaces the first", Effects.setExplosion(id, "domain_expansion") == null && Effects.explosionSlot(id).equals("domain_expansion"));
+			check("equipping a color takes the explosion off", Effects.toggleColor(id, 0, "red") == null && Effects.explosionSlot(id).isEmpty() && Effects.fireworkColors(id, 0).equals(List.of("red"))
+				&& !Victory.explosionMode(id));
+			check("equipping a particle takes it off too", Effects.setExplosion(id, "orbital_strike") == null && Effects.setParticle(id, true, 0, "flame") == null
+				&& Effects.explosionSlot(id).isEmpty() && Effects.particleSlot(id, true, 0).equals("flame"));
+			check("taking an explosion off leaves nothing equipped", Effects.setExplosion(id, "domain_expansion") == null && Effects.setExplosion(id, "") == null && !Effects.hasEffects(id)
+				&& Effects.explosionSlot(id).isEmpty());
+			Effects.setExplosion(id, "orbital_wither");
+			Effects.reloadForTest();
+			check("it is saved like that", Effects.explosionSlot(id).equals("orbital_wither") && !Effects.hasEffects(id));
+			Effects.setExplosion(id, "");
 		});
 		step("effects: it is saved in the file", () -> {
 			UUID id = loadoutId;
@@ -3358,7 +3408,7 @@ public final class SelfTest {
 			check("the colors are still on the fireworks", Effects.fireworkColors(id, 0).equals(List.of("red", "yellow", "blue", "green", "pink")) && Effects.fireworkColors(id, 1).equals(List.of("red")));
 			check("so are the shape, the trail and the twinkle", Effects.fireworkShape(id, 1).equals("star") && Effects.fireworkTwinkle(id, 0) && !Effects.fireworkTrail(id, 2));
 			check("the particles and their copies", Effects.particleSlot(id, false, 0).equals("flame") && Effects.particleCount(id, "flame") == 6);
-			check("the explosion and the option to hide others", Effects.explosionSlot(id).equals("orbital_strike") && Effects.ownsExplosion(id, "orbital_strike") && Effects.hideOthers(id));
+			check("the explosion you own and the option to hide others", Effects.ownsExplosion(id, "orbital_strike") && Effects.explosionSlot(id).isEmpty() && Effects.hideOthers(id));
 			check("what a new player gets is saved too", Effects.ownedItemCount(UUID.nameUUIDFromBytes("reward-player".getBytes())) == 23);
 		});
 
@@ -3436,7 +3486,10 @@ public final class SelfTest {
 			Missions.record(missionId, "Mia", win);
 			check("two wins: 2 of 3", Missions.progress(missionId, streak) == 2 && !Missions.isDone(missionId, streak));
 			Missions.record(missionId, "Mia", new Missions.Facts());
-			check("a draw does not break the run", Missions.progress(missionId, streak) == 2);
+			check("a tie breaks the run", Missions.progress(missionId, streak) == 0);
+			Missions.record(missionId, "Mia", win);
+			Missions.record(missionId, "Mia", win);
+			check("two wins after the tie: 2 of 3", Missions.progress(missionId, streak) == 2 && !Missions.isDone(missionId, streak));
 			List<Missions.Completion> c4 = Missions.record(missionId, "Mia", win);
 			check("the third win in a row completes it", c4.size() == 1 && c4.get(0).mission().id().equals("streak3") && Missions.isDone(missionId, streak) && Missions.doneCount(missionId) == 5);
 			check("and gives its reward", c4.get(0).rewards().size() == 1 && Effects.ownedItemCount(missionId) == 7);
@@ -3560,7 +3613,6 @@ public final class SelfTest {
 			problems += join(Effects.setParticle(id, false, 0, "flame"), Effects.setParticle(id, false, 1, "heart"), Effects.setParticle(id, true, 0, "end_rod"),
 				Effects.setParticle(id, true, 1, "happy_villager"), Effects.setParticle(id, true, 2, "dust_red"), Effects.setParticle(id, true, 3, "flame"));
 			Effects.grantExplosion(id, "orbital_strike");
-			problems += join(Effects.setExplosion(id, "orbital_strike"));
 			check("Alice equipped everything without errors", problems.isEmpty(), problems);
 			check("three fireworks with 3, 5 and 1 colors, a star with trail in the middle", Effects.fireworkColors(id, 0).size() == 3 && Effects.fireworkColors(id, 1).size() == 5
 				&& Effects.fireworkColors(id, 2).size() == 1 && Effects.fireworkShape(id, 1).equals("star") && Effects.fireworkTrail(id, 1));
@@ -3581,7 +3633,7 @@ public final class SelfTest {
 			int rockets = 0;
 			for (net.minecraft.world.entity.Entity e : ((ServerLevel) a.level()).getAllEntities()) if (e instanceof net.minecraft.world.entity.projectile.FireworkRocketEntity) rockets++;
 			check("the rockets are flying in the arena", rockets >= 1, "" + rockets);
-			check("the particles and the explosion are playing", Victory.activeShows() == 1);
+			check("the particles are playing", Victory.activeShows() == 1);
 			fx[1] = particlePackets(a);
 			fx[2] = particlePackets(b);
 		}, () -> particlePackets(a) > fx[1] + 3 && particlePackets(b) > fx[2] + 3, 200);
@@ -3630,10 +3682,10 @@ public final class SelfTest {
 		// ---------------------------------------------------------------- the menus
 		step("menus: Alice's fireworks (some are locked)", () -> {
 			run(a, "effects");
-			check("the main menu has its options", menuHas(a, "Fireworks") && menuHas(a, "Particles") && menuHas(a, "Explosions") && menuHas(a, "Daily missions") && menuHas(a, "Preview")
+			check("the main menu has its options", menuHas(a, "Fireworks") && menuHas(a, "Particles") && menuHas(a, "Explosions") && menuHas(a, "Missions") && menuHas(a, "Preview")
 				&& menuHas(a, "Other players' effects: shown"));
 			menuStep(a, "Fireworks");
-			check("the three fireworks", menuHas(a, "Behind you") && menuHas(a, "Left") && menuHas(a, "Right") && menuHas(a, "Back"));
+			check("the three fireworks", menuHas(a, "Middle") && menuHas(a, "Left") && menuHas(a, "Right") && menuHas(a, "Back"));
 			menuStep(a, "Left");
 			check("10 of the 23 things are still locked", menuCount(a, "Locked: ") == 10, "" + menuCount(a, "Locked: "));
 			check("the unlocked colors and shapes are there", menuHas(a, "Orange") && menuHas(a, "Yellow") && menuHas(a, "Star") && menuHas(a, "Trail: on") && menuHas(a, "Small ball"), "");
@@ -3649,7 +3701,7 @@ public final class SelfTest {
 			menuStep(a, "Trail: on");
 			check("the trail switches off from the menu", !Effects.fireworkTrail(a.getUUID(), 1) && menuHas(a, "Trail: off"));
 			menuStep(a, "Back");
-			check("Back goes to the three fireworks", menuHas(a, "Behind you") && menuHas(a, "Right"));
+			check("Back goes to the three fireworks", menuHas(a, "Middle") && menuHas(a, "Right"));
 			menuStep(a, "Back");
 			check("and Back again to the main menu", menuHas(a, "Fireworks") && menuHas(a, "Preview"));
 		});
@@ -3657,12 +3709,15 @@ public final class SelfTest {
 			menuStep(a, "Explosions");
 			check("she owns the Orbital Strike Cannon, two are still unknown", menuHas(a, "Orbital Strike Cannon") && menuCount(a, "Locked: ???") == 2, "" + menuCount(a, "Locked: ???"));
 			menuStep(a, "Orbital Strike Cannon");
-			check("clicking an equipped explosion takes it off", Effects.explosionSlot(a.getUUID()).isEmpty());
+			check("clicking an explosion equips it and takes her fireworks and particles off", Effects.explosionSlot(a.getUUID()).equals("orbital_strike") && !Effects.hasEffects(a.getUUID()));
+			check("and she was told why", a.heard("Your fireworks and particles were taken off"));
 			menuStep(a, "Orbital Strike Cannon");
-			check("and again puts it on", Effects.explosionSlot(a.getUUID()).equals("orbital_strike"));
+			check("clicking an equipped explosion takes it off", Effects.explosionSlot(a.getUUID()).isEmpty());
 			run(a, "missions");
 			check("the six missions of the day", menuHas(a, "Regenerate 100 hearts in duels") && menuHas(a, "Land a 15-hit combo in one duel") && menuHas(a, "Eat 40 foods in duels")
 				&& menuHas(a, "Drink or throw 10 potions in duels") && menuHas(a, "Win 3 duels in a row") && menuHas(a, Missions.bonusOf(day1).text()) && menuHas(a, "How it works"));
+			check("and the five weekly ones", menuHas(a, "Win 15 duels this week") && menuHas(a, "Win with 4 different kits this week") && menuHas(a, "Win 5 duels in a row")
+				&& menuHas(a, "Land 500 hits in duels") && menuHas(a, "Win 3 2v2 duels this week"));
 			check("the one she completed is an emerald, the others are not", menuItem(a, "Win 3 duels in a row").is(Items.EMERALD) && !menuItem(a, "Eat 40 foods in duels").is(Items.EMERALD));
 			a.closeContainer();
 		});
@@ -3713,18 +3768,19 @@ public final class SelfTest {
 			menuStep(b, "Explosions");
 			check("nothing is unknown to Bob", menuCount(b, "Locked: ???") == 0 && menuHas(b, "Orbital Wither Cannon") && menuHas(b, "Domain Expansion"));
 			menuStep(b, "Orbital Wither Cannon");
-			check("Orbital Wither Cannon is equipped", Effects.explosionSlot(id).equals("orbital_wither"));
+			check("Orbital Wither Cannon is equipped and his colors are off", Effects.explosionSlot(id).equals("orbital_wither") && !Effects.hasEffects(id));
 			menuStep(b, "Back");
 			menuStep(b, "Other players' effects: shown");
 			check("the switch hides other players' effects", Effects.hideOthers(id) && menuHas(b, "Other players' effects: hidden"));
 			menuStep(b, "Other players' effects: hidden");
 			check("and shows them again", !Effects.hideOthers(id) && menuHas(b, "Other players' effects: shown"));
-			menuStep(b, "Daily missions");
+			menuStep(b, "Missions");
 			check("the missions show Bob's progress", menuHas(b, "Win 3 duels in a row") && menuItem(b, "Win 3 duels in a row").is(net.minecraft.world.item.Items.BLAZE_POWDER));
 			menuStep(b, "Back");
 			Victory.resetForTest();
 			menuStep(b, "Preview");
-			check("Preview closes the menu and plays his effects", Victory.showsStarted() == 1 && Victory.fireworkLaunches() == 2 && Victory.activeShows() == 1, Victory.fireworkLaunches() + " / " + Victory.showsStarted());
+			check("Preview closes the menu and plays only his explosion (no fireworks, he has an explosion on)", Victory.showsStarted() == 1 && Victory.fireworkLaunches() == 0 && Victory.activeShows() == 1,
+				Victory.fireworkLaunches() + " / " + Victory.showsStarted());
 			check("the menu is closed", !(b.containerMenu instanceof ChestMenu));
 		}, () -> Victory.activeShows() == 0, 400);
 		step("effects: clean up", () -> {
@@ -3734,6 +3790,302 @@ public final class SelfTest {
 			Victory.resetForTest();
 			check("everything is reset", Effects.ownedItemCount(a.getUUID()) == 2 && Missions.doneCount(a.getUUID()) == 0 && Victory.activeShows() == 0);
 			Effects.resetForTest();
+		});
+
+		// ---------------------------------------------------------------- weekly missions and the midnight rule
+		final UUID weekId = UUID.nameUUIDFromBytes("weekly-player".getBytes());
+		step("weekly: five missions that last a week", () -> {
+			Effects.resetForTest();
+			Missions.resetForTest();
+			check("5 weekly missions with the goals 15, 4, 5, 500 and 3", Missions.weekly().size() == 5 && Missions.weekly().get(0).goalInt() == 15 && Missions.weekly().get(1).goalInt() == 4
+				&& Missions.weekly().get(2).goalInt() == 5 && Missions.weekly().get(3).goalInt() == 500 && Missions.weekly().get(4).goalInt() == 3);
+			check("the weekly ones are marked and the daily ones are not", Missions.weekly().stream().allMatch(Missions::isWeekly) && Missions.fixed().stream().noneMatch(Missions::isWeekly));
+			check("the week starts on Monday", Missions.weekOf(java.time.LocalDate.of(2031, 5, 11)).equals("2031-05-05") && Missions.weekOf(java.time.LocalDate.of(2031, 5, 12)).equals("2031-05-12")
+				&& Missions.weekOf(java.time.LocalDate.of(2031, 5, 5)).equals("2031-05-05"));
+			check("explosion chances: 0.8% for a daily mission, 1.5% for a weekly one", Effects.explosionChance == 0.008 && Effects.weeklyExplosionChance == 0.015);
+		});
+		step("weekly: they fill up over several wins and pay the weekly explosion chance", () -> {
+			Effects.fireworkChance = 1;
+			Effects.particleChance = 0;
+			Effects.explosionChance = 0; // a daily mission never gives an explosion here
+			Effects.weeklyExplosionChance = 1; // a weekly one always does
+			Missions.setDayForTest(java.time.LocalDate.of(2031, 5, 7));
+			List<Missions.Completion> all = new ArrayList<>();
+			String[] kits = {"k1", "k2", "k3", "k4", "k1"};
+			for (int i = 0; i < 5; i++) {
+				Missions.Facts f = new Missions.Facts();
+				f.won = true;
+				f.kit = kits[i];
+				f.hits = 100;
+				all.addAll(Missions.record(weekId, "Wendy", f));
+			}
+			java.util.Set<String> weeklyDone = new java.util.TreeSet<>();
+			for (Missions.Completion c : all) if (Missions.isWeekly(c.mission())) weeklyDone.add(c.mission().id());
+			check("5 wins in a row with 4 kits and 500 hits complete three weekly missions", weeklyDone.equals(new java.util.TreeSet<>(List.of("w_kits4", "w_run5", "w_hits500"))), weeklyDone.toString());
+			check("each one paid an explosion (weekly chance 100%)", Effects.ownedExplosions(weekId).size() == 3 && Missions.weeklyDoneCount(weekId) == 3, Effects.ownedExplosions(weekId).toString());
+			check("the daily 'Win 3 duels in a row' is done too", Missions.isDone(weekId, Missions.fixed().get(4)));
+			for (int i = 0; i < 10; i++) {
+				Missions.Facts f = new Missions.Facts();
+				f.won = true;
+				f.kit = "k1";
+				Missions.record(weekId, "Wendy", f);
+			}
+			check("the 15th win completes 'Win 15 duels'", Missions.isDone(weekId, Missions.weekly().get(0)) && Missions.weeklyDoneCount(weekId) == 4 && !Missions.isDone(weekId, Missions.weekly().get(4)));
+			for (int i = 0; i < 3; i++) {
+				Missions.Facts f = new Missions.Facts();
+				f.won = true;
+				f.team = true;
+				f.kit = "k1";
+				Missions.record(weekId, "Wendy", f);
+			}
+			check("three 2v2 wins complete the last one: 5 of 5", Missions.weeklyDoneCount(weekId) == 5 && Missions.isDone(weekId, Missions.weekly().get(4)));
+		});
+		step("weekly: they last all week, the daily ones do not, and a new week starts from zero", () -> {
+			Missions.setDayForTest(java.time.LocalDate.of(2031, 5, 11));
+			check("on Sunday the weekly progress is still there", Missions.weeklyDoneCount(weekId) == 5 && Missions.progress(weekId, Missions.weekly().get(0)) == 15, "" + Missions.progress(weekId, Missions.weekly().get(0)));
+			check("but the daily missions of Wednesday are gone", Missions.doneCount(weekId) == 0);
+			Missions.setDayForTest(java.time.LocalDate.of(2031, 5, 12));
+			check("on the next Monday the week starts again", Missions.weeklyDoneCount(weekId) == 0 && Missions.progress(weekId, Missions.weekly().get(0)) == 0 && !Missions.isDone(weekId, Missions.weekly().get(2)));
+			Missions.Facts f = new Missions.Facts();
+			f.won = true;
+			f.kit = "k9";
+			Missions.record(weekId, "Wendy", f);
+			check("the first win of the new week counts once", Missions.progress(weekId, Missions.weekly().get(0)) == 1 && Missions.progress(weekId, Missions.weekly().get(2)) == 1
+				&& Missions.progress(weekId, Missions.weekly().get(1)) == 1);
+			check("and what was won stays (the three explosions)", Effects.ownedExplosions(weekId).size() == 3);
+			Missions.setDayForTest(null);
+		});
+		step("midnight: a duel counts for the day it started", () -> {
+			Effects.resetForTest();
+			Missions.resetForTest();
+			Effects.fireworkChance = 1;
+			Effects.particleChance = 0;
+			Effects.explosionChance = 0;
+			Effects.weeklyExplosionChance = 0;
+			UUID id = UUID.nameUUIDFromBytes("midnight-player".getBytes());
+			Missions.setDayForTest(day1.plusDays(1)); // it is already past midnight when the duel is written down
+			Missions.Facts f = new Missions.Facts();
+			f.day = day1; // but it started the day before
+			f.won = true;
+			f.combo = 15;
+			List<Missions.Completion> c = Missions.record(id, "Moon", f);
+			check("it completes the combo mission of the day it started and pays the reward", c.size() == 1 && c.get(0).mission().id().equals("combo15") && c.get(0).rewards().size() == 1, c.toString());
+			check("the new day shows nothing", Missions.doneCount(id) == 0 && Missions.progress(id, Missions.fixed().get(1)) == 0);
+			Missions.setDayForTest(day1);
+			check("the day it started shows the mission done and the win in the run", Missions.isDone(id, Missions.fixed().get(1)) && Missions.progress(id, Missions.fixed().get(4)) == 1);
+			Missions.setDayForTest(day1.plusDays(1));
+			Missions.Facts g = new Missions.Facts();
+			g.won = true;
+			Missions.record(id, "Moon", g);
+			check("a duel that starts on the new day counts for the new day", Missions.progress(id, Missions.fixed().get(4)) == 1 && Missions.doneCount(id) == 0);
+			Missions.resetForTest();
+		});
+
+		// ---------------------------------------------------------------- the finale of a win
+		final int[] cine = new int[8];
+		final double[] cam = new double[4];
+		step("finale: Alice has the Domain Expansion and Carl will watch", () -> {
+			Cinema.resetForTest();
+			Effects.resetForTest();
+			Missions.resetForTest();
+			Victory.resetForTest();
+			Missions.setDayForTest(day1);
+			Effects.grantExplosion(a.getUUID(), "domain_expansion");
+			check("Alice equips the Domain Expansion", Effects.setExplosion(a.getUUID(), "domain_expansion") == null && Victory.explosionMode(a.getUUID()));
+			for (Dummy p : new Dummy[] {a, b, carl}) p.inbox.clear();
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("finale: Carl watches and Alice wins", () -> {
+			run(carl, "spectate Alice");
+			check("Carl is watching the duel", Spectators.isIn(carl.getUUID()));
+			cine[0] = ticks;
+			cine[3] = StatsStore.get(a.getUUID()).streak;
+			hit(a, b);
+		}, () -> Cinema.scenesStarted() >= 1, 200);
+		step("finale: it is a Domain Expansion, with a camera and a double of each player", () -> {
+			Duel d = duel(a);
+			Cinema.Scene scene = Cinema.sceneOf(d);
+			check("a finale of the Domain Expansion kind for Alice", scene != null && scene.kind == Cinema.Kind.DOMAIN && scene.win == 0);
+			if (scene == null) return;
+			check("a camera exists", scene.camera != null && scene.camera.isAlive() && scene.camera instanceof net.minecraft.world.entity.Display);
+			check("each player has a double (a mannequin) where they started", scene.doubles[0] instanceof net.minecraft.world.entity.decoration.Mannequin && scene.doubles[1] instanceof net.minecraft.world.entity.decoration.Mannequin
+				&& scene.doubles[0].isAlive() && scene.doubles[1].isAlive() && scene.doubles[0].position().distanceTo(scene.stage[0]) < 0.3 && scene.doubles[1].position().distanceTo(scene.stage[1]) < 0.3,
+				scene.doubles[0].position() + " " + scene.stage[0]);
+			check("the doubles face the middle", Math.abs(scene.doubles[0].getYRot() - scene.yaw[0]) < 1 && Math.abs(scene.doubles[1].getYRot() - scene.yaw[1]) < 1);
+			check("both doubles are tagged so they can be found and removed", taggedCount("pvpduels_double") == 2 && taggedCount("pvpduels_camera") == 1, taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera"));
+			check("the duel waits for the finale before it closes", d.phase == Duel.Phase.ENDED);
+		}, () -> a.getCamera() != a && b.getCamera() != b, 100);
+		step("finale: everybody looks through the camera, the winner's hands are joined", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("Alice and Bob see through the camera entity", a.getCamera() == scene.camera && b.getCamera() == scene.camera);
+			check("and so does Carl, who is watching", carl.getCamera() == scene.camera);
+			check("all in spectator mode, so nothing can touch them", a.gameMode() == net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() == net.minecraft.world.level.GameType.SPECTATOR
+				&& carl.gameMode() == net.minecraft.world.level.GameType.SPECTATOR);
+			check("the camera was given to three viewers", Cinema.cameraSets() == 3, "" + Cinema.cameraSets());
+			check("the game was told to switch the camera", packetCount(a, "ClientboundSetCameraPacket") >= 1 && packetCount(b, "ClientboundSetCameraPacket") >= 1);
+			check("the winner's double has the hands joined (the crouching pose), the loser's stands", scene.doubles[0].getPose() == net.minecraft.world.entity.Pose.CROUCHING
+				&& scene.doubles[1].getPose() == net.minecraft.world.entity.Pose.STANDING);
+			check("the camera starts at the floor in the middle of the arena", scene.cameraAt != null && Math.abs(scene.cameraAt.x - scene.center.x) < 1.5 && Math.abs(scene.cameraAt.z - scene.center.z) < 1.5
+				&& scene.cameraAt.y < scene.center.y + 1.5, String.valueOf(scene.cameraAt));
+			check("the viewers' bodies are where the camera is", a.position().distanceTo(scene.cameraAt) < 2.5 && b.position().distanceTo(scene.cameraAt) < 2.5, a.position() + " " + scene.cameraAt);
+			check("Alice's fireworks do not go up: she has an explosion, not effects", Victory.fireworkLaunches() == 0);
+			cam[0] = scene.cameraAt.y;
+		}, () -> titleHeard(a, "Domain Expansion: I win!") && titleHeard(b, "Domain Expansion: I win!"), 200);
+		step("finale: the title reached everybody and the hands come apart", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("the title 'Domain Expansion: I win!' reached Alice, Bob and Carl", titleHeard(a, "Domain Expansion: I win!") && titleHeard(b, "Domain Expansion: I win!") && titleHeard(carl, "Domain Expansion: I win!"));
+			check("1.5 seconds passed with the hands joined", scene.doubles[0].getPose() != net.minecraft.world.entity.Pose.CROUCHING || scene.doubles[0].getPose() == net.minecraft.world.entity.Pose.STANDING);
+			check("the camera has risen a little by now", scene.cameraAt.y > cam[0] + 1.0, scene.cameraAt.y + " vs " + cam[0]);
+			check("the dome is being drawn (many particles reach the players)", particlePackets(a) > 150 && particlePackets(b) > 150, particlePackets(a) + " / " + particlePackets(b));
+		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).cameraAt.y > Cinema.sceneOf(duel(a)).center.y + 6.9, 400);
+		step("finale: the camera ends 7 blocks up, to the side and toward the winner's end", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			double rise = scene.cameraAt.y - scene.center.y;
+			check("it rose about 7 blocks", rise > 6.9 && rise < 7.8, "" + rise);
+			check("it curved to the side of the arena", Math.abs(scene.cameraAt.z - scene.center.z) > scene.half * 0.8, scene.cameraAt + " half " + scene.half);
+			check("and bent toward the winner's end (Alice started on the west side)", scene.cameraAt.x < scene.center.x - scene.half * 0.3, scene.cameraAt + " center " + scene.center);
+			check("it looks down at the arena", scene.cameraPitch > 10, "" + scene.cameraPitch);
+			check("the camera sent many position packets", Cinema.cameraMoves() > 100, "" + Cinema.cameraMoves());
+			check("the double of the winner stands again", scene.doubles[0].getPose() == net.minecraft.world.entity.Pose.STANDING);
+		}, () -> true, 1);
+		step("finale: the duel closes and everything is put back", () -> {
+			cine[2] = ticks;
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("finale: after it", () -> {
+			check("the finale lasted longer than a normal end (more than 8 seconds from the win)", cine[2] - cine[0] >= 0 && ticks - cine[0] >= 170, (ticks - cine[0]) + " ticks");
+			check("nobody is looking through the camera any more", a.getCamera() == a && b.getCamera() == b && carl.getCamera() == carl);
+			check("nobody is left in spectator mode (Carl stopped watching too)", a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR
+				&& carl.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && !Spectators.isIn(carl.getUUID()));
+			check("the camera and the doubles are gone", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0,
+				Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera"));
+			check("Alice saw VICTORY, Bob saw DEFEAT", titleHeard(a, "VICTORY") && titleHeard(b, "DEFEAT"));
+			check("she won, so her streak went up", StatsStore.get(a.getUUID()).streak == cine[3] + 1, StatsStore.get(a.getUUID()).streak + " vs " + cine[3]);
+		});
+
+		// ---------------------------------------------------------------- ties
+		step("tie: both with normal effects, nothing happens", () -> {
+			Effects.setExplosion(a.getUUID(), "");
+			cine[0] = Cinema.scenesStarted();
+			cine[1] = StatsStore.get(b.getUUID()).draws;
+			cine[3] = StatsStore.get(a.getUUID()).streak;
+			check("Alice has a win streak before the tie", cine[3] >= 1, "" + cine[3]);
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("tie: the duel just ends, with no finale", () -> {
+			Duel d = duel(a);
+			d.finishAsTieForTest();
+			check("no finale for a tie of normal effects", Cinema.sceneOf(d) == null && Cinema.scenesStarted() == cine[0]);
+			check("the DRAW title, nothing else", titleHeard(a, "DRAW") && !titleHeard(a, "Domain Expansion!") && !titleHeard(a, "I guess it's a tie"));
+			check("it is a draw in the stats and it broke Alice's win streak", StatsStore.get(b.getUUID()).draws == cine[1] + 1 && StatsStore.get(a.getUUID()).streak == 0,
+				StatsStore.get(a.getUUID()).streak + " / " + StatsStore.get(b.getUUID()).draws);
+			check("the players stay in their bodies", a.getCamera() == a && b.getCamera() == b && taggedCount("pvpduels_double") == 0);
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("tie: one Domain Expansion and one normal player, nothing happens either", () -> {
+			Effects.setExplosion(a.getUUID(), "domain_expansion");
+			Effects.setExplosion(b.getUUID(), "");
+			cine[0] = Cinema.scenesStarted();
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("tie: the duel just ends", () -> {
+			Duel d = duel(a);
+			d.finishAsTieForTest();
+			check("no finale, no domain", Cinema.sceneOf(d) == null && Cinema.scenesStarted() == cine[0] && !titleHeard(a, "Domain Expansion!") && !titleHeard(b, "Domain Expansion!"));
+			check("nobody was moved", a.getCamera() == a && b.getCamera() == b && a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("tie: two Domain Expansions clash", () -> {
+			Effects.grantExplosion(b.getUUID(), "domain_expansion");
+			check("Bob equips the Domain Expansion too", Effects.setExplosion(b.getUUID(), "domain_expansion") == null);
+			cine[0] = Cinema.scenesStarted();
+			cine[1] = Cinema.cameraSets();
+			for (Dummy p : new Dummy[] {a, b}) p.inbox.clear();
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("tie: the clash starts", () -> {
+			cine[2] = ticks;
+			Duel d = duel(a);
+			d.finishAsTieForTest();
+			Cinema.Scene scene = Cinema.sceneOf(d);
+			check("a clash finale starts", scene != null && scene.kind == Cinema.Kind.CLASH && scene.win == -1 && Cinema.scenesStarted() == cine[0] + 1);
+		}, () -> a.getCamera() != a && b.getCamera() != b, 100);
+		step("tie: both domains grow and meet", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("both players ride the camera", Cinema.cameraSets() == cine[1] + 2 && a.getCamera() == scene.camera && b.getCamera() == scene.camera);
+			check("both doubles join their hands", scene.doubles[0].getPose() == net.minecraft.world.entity.Pose.CROUCHING && scene.doubles[1].getPose() == net.minecraft.world.entity.Pose.CROUCHING);
+		}, () -> titleHeard(a, "Domain Expansion!") && titleHeard(b, "Domain Expansion!"), 200);
+		step("tie: the domains push each other", () -> {
+			check("the two domains are drawn (the red one, the blue one and the dark gray line)", particlePackets(a) > 50 && particlePackets(b) > 50, particlePackets(a) + " / " + particlePackets(b));
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("the doubles stand again", scene.doubles[0].getPose() == net.minecraft.world.entity.Pose.STANDING && scene.doubles[1].getPose() == net.minecraft.world.entity.Pose.STANDING);
+		}, () -> titleHeard(a, "I guess it's a tie") && titleHeard(b, "I guess it's a tie"), 500);
+		step("tie: they get tired and the title says it is a tie", () -> {
+			check("both heard 'I guess it's a tie'", titleHeard(a, "I guess it's a tie") && titleHeard(b, "I guess it's a tie"));
+			check("the clash was longer than 9 seconds", ticks - cine[2] >= 180, (ticks - cine[2]) + " ticks");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("tie: everything is put back", () -> {
+			check("nobody looks through the camera and nobody is in spectator mode", a.getCamera() == a && b.getCamera() == b && a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR
+				&& b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+			check("no camera and no doubles are left", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0);
+		});
+
+		// ---------------------------------------------------------------- a normal win with fireworks, and somebody leaving during the finale
+		step("finale: Bob wins with three fireworks (the duel started before midnight)", () -> {
+			Effects.setExplosion(a.getUUID(), "");
+			Effects.setExplosion(b.getUUID(), "");
+			UUID bob = b.getUUID();
+			Effects.grantItem(bob, "color:red");
+			Effects.grantItem(bob, "color:blue");
+			check("Bob puts red and blue on the left and right fireworks", Effects.toggleColor(bob, 1, "red") == null && Effects.toggleColor(bob, 2, "blue") == null && Effects.fireworkColors(bob, 0).equals(List.of("white")));
+			Victory.resetForTest();
+			cine[4] = Cinema.scenesStarted();
+			Missions.setDayForTest(day1); // the duel starts "yesterday"
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("finale: midnight passes and Bob wins", () -> {
+			Missions.setDayForTest(day1.plusDays(1));
+			hit(b, a);
+		}, () -> Cinema.scenesStarted() > cine[4] && Victory.fireworkLaunches() == 3, 300);
+		step("finale: the three fireworks stand in a row behind Bob, the middle one a block higher", () -> {
+			Cinema.Scene scene = Cinema.sceneOf(duel(a));
+			check("a normal finale for Bob", scene != null && scene.kind == Cinema.Kind.NORMAL && scene.win == 1);
+			List<net.minecraft.world.entity.projectile.FireworkRocketEntity> rockets = new ArrayList<>();
+			for (net.minecraft.world.entity.Entity e : Arena.level(server).getAllEntities()) {
+				if (e instanceof net.minecraft.world.entity.projectile.FireworkRocketEntity r && r.position().distanceTo(scene.stage[1]) < 12) rockets.add(r);
+			}
+			check("three rockets are flying near Bob's place", rockets.size() == 3, "" + rockets.size());
+			boolean behind = true;
+			double minZ = 1e9, maxZ = -1e9, minY = 1e9, maxY = -1e9;
+			for (var r : rockets) {
+				if (r.getX() < scene.stage[1].x + 1.5) behind = false; // Bob stands east and looks west: behind him is further east
+				minZ = Math.min(minZ, r.getZ());
+				maxZ = Math.max(maxZ, r.getZ());
+				minY = Math.min(minY, r.getY());
+				maxY = Math.max(maxY, r.getY());
+			}
+			check("all of them are behind him", behind);
+			check("in a row: one in front of him and two 2.5 blocks to each side", Math.abs((maxZ - minZ) - 5.0) < 1.0, "" + (maxZ - minZ));
+			check("the middle one started a block higher", Math.abs((maxY - minY) - 1.0) < 0.6, "" + (maxY - minY));
+			check("Alice did not get fireworks and Bob's explosion slot is empty, so only fireworks", Victory.fireworkLaunches() == 3 && Effects.explosionSlot(b.getUUID()).isEmpty());
+		}, () -> a.getCamera() != a && b.getCamera() != b, 100);
+		step("finale: Alice leaves during the finale", () -> {
+			run(a, "leave");
+			check("Alice has her own eyes back at once", a.getCamera() == a && a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+			check("Bob still watches the show", b.getCamera() != b && Cinema.activeScenes() == 1);
+		}, () -> noDuel(b), 800);
+		step("finale: Bob's duel counted for the day it started", () -> {
+			check("Bob is back in his own eyes", b.getCamera() == b && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+			check("no finale is left", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0);
+			Missions.setDayForTest(day1.plusDays(1));
+			check("on the day after, Bob's win run is empty", Missions.progress(b.getUUID(), Missions.fixed().get(4)) == 0);
+			Missions.setDayForTest(day1);
+			check("on the day the duel started, it counts as his first win", Missions.progress(b.getUUID(), Missions.fixed().get(4)) == 1, "" + Missions.progress(b.getUUID(), Missions.fixed().get(4)));
+		});
+		step("finale: clean up", () -> {
+			Cinema.resetForTest();
+			Cinema.enabled = false;
+			Effects.resetForTest();
+			Missions.resetForTest();
+			Victory.resetForTest();
+			check("everything is reset and the older tests see the plain end of a duel again", Cinema.activeScenes() == 0 && !Cinema.enabled);
 		});
 
 		step("sanity: commands from outside a duel", () -> {
