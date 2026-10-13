@@ -1,5 +1,6 @@
 package com.pvpduels.effects;
 
+import com.pvpduels.PvpDuelsMod;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -40,6 +41,8 @@ public final class Props {
 	private static int alive;
 	private static int created;
 	private static int bursts;
+	/** How many props a finished show had to sweep up because it had made them but never found them again (the self-test reads it). */
+	private static int swept;
 
 	/** A rotation as a quaternion (x, y, z, w). */
 	public record Q(double x, double y, double z, double w) {
@@ -179,6 +182,10 @@ public final class Props {
 
 	public static int burstCount() {
 		return bursts;
+	}
+
+	public static int sweptCount() {
+		return swept;
 	}
 
 	public static void resetForTest() {
@@ -408,13 +415,29 @@ public final class Props {
 		return n;
 	}
 
-	/** Discards every prop of this show. */
+	/**
+	 * Discards every prop of this show. It also looks for the props that carry the tag of this show but are not in the list (one that was
+	 * made but could not be found again at that moment), so nothing of a finished show is left floating in the world.
+	 */
 	public void clear() {
 		for (Prop p : props) remove(p);
 		props.clear();
 		balls.clear();
 		spirals.clear();
 		named.clear();
+		String mine = prefix + "_";
+		List<Entity> loose = new ArrayList<>();
+		for (Entity e : level.getAllEntities()) {
+			for (String tag : e.entityTags()) {
+				if (tag.startsWith(mine)) {
+					loose.add(e);
+					break;
+				}
+			}
+		}
+		for (Entity e : loose) e.discard();
+		swept += loose.size();
+		if (!loose.isEmpty()) PvpDuelsMod.LOGGER.warn("A finished show left {} props behind (they were removed): {}", loose.size(), loose.get(0).getClass().getSimpleName() + " at " + loose.get(0).blockPosition());
 	}
 
 	// ------------------------------------------------------------------ fireworks

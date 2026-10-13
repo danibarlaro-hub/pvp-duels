@@ -364,6 +364,26 @@ public final class SelfTest {
 	}
 
 	/** How many entities of the arena world have a tag that starts like this. */
+	/** The first few props that are still in the world (what they are and where), for the message of a failed check. */
+	private static String leftovers() {
+		StringBuilder sb = new StringBuilder();
+		int n = 0;
+		for (ServerLevel l : server.getAllLevels()) {
+			for (net.minecraft.world.entity.Entity e : l.getAllEntities()) {
+				boolean ours = false;
+				for (String tag : e.entityTags()) {
+					if (tag.startsWith("pvpduels_fx")) {
+						ours = true;
+						break;
+					}
+				}
+				if (!ours) continue;
+				if (n++ < 4) sb.append(e.getClass().getSimpleName()).append('@').append(String.format(java.util.Locale.ROOT, "%.0f,%.0f,%.0f", e.getX(), e.getY(), e.getZ())).append(" removed=").append(e.isRemoved()).append("; ");
+			}
+		}
+		return sb.toString();
+	}
+
 	private static int taggedCount(String prefix) {
 		int n = 0;
 		ServerLevel level = Arena.level(server);
@@ -3331,15 +3351,15 @@ public final class SelfTest {
 			check("no two particles share an id or a name", all.stream().map(Particles.Def::id).distinct().count() == all.size() && all.stream().map(Particles.Def::name).distinct().count() == all.size());
 			check("23 firework things: 16 colors, 5 shapes, the trail and the twinkle", Effects.allFireworkItems().size() == 23 && Effects.COLORS.length == 16 && Effects.COLOR_RGB.length == 16
 				&& Effects.SHAPES.length == 5);
-			check("12 explosions with a name each", Effects.EXPLOSIONS.length == 12 && Effects.EXPLOSION_NAMES.length == 12 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
+			check("14 explosions with a name each", Effects.EXPLOSIONS.length == 14 && Effects.EXPLOSION_NAMES.length == 14 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
 				&& Effects.EXPLOSION_NAMES[2].equals("Shooting Star") && Effects.EXPLOSION_NAMES[3].equals("Black Hole") && Effects.EXPLOSION_NAMES[4].equals("Meteor Shower")
 				&& Effects.EXPLOSION_NAMES[5].equals("Gungnir") && Effects.EXPLOSION_NAMES[6].equals("Seven Stars") && Effects.EXPLOSION_NAMES[7].equals("Railgun")
-				&& Effects.EXPLOSION_NAMES[8].equals("Tesseract") && Effects.EXPLOSION_NAMES[9].equals("Domain: Crimson Shrine")
-				&& Effects.EXPLOSION_NAMES[10].equals("Domain: Infinite Void") && Effects.EXPLOSION_NAMES[11].equals("Domain: Field of Swords"));
-			check("every explosion has a unique id, and the three domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 12
+				&& Effects.EXPLOSION_NAMES[8].equals("Tesseract") && Effects.EXPLOSION_NAMES[9].equals("Eclipse") && Effects.EXPLOSION_NAMES[10].equals("Moonfall")
+				&& Effects.EXPLOSION_NAMES[11].equals("Domain: Crimson Shrine") && Effects.EXPLOSION_NAMES[12].equals("Domain: Infinite Void") && Effects.EXPLOSION_NAMES[13].equals("Domain: Field of Swords"));
+			check("every explosion has a unique id, and the three domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 14
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_expansion") != null && com.pvpduels.effects.DomeArt.Variant.of("domain_void") != null
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_swords") != null && com.pvpduels.effects.DomeArt.Variant.of("gungnir") == null
-				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("railgun") != null && Films.of("tesseract") != null && Films.of("domain_void") != null && Films.of("orbital_strike") == null);
+				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("railgun") != null && Films.of("tesseract") != null && Films.of("eclipse") != null && Films.of("moonfall") != null && Films.of("domain_void") != null && Films.of("orbital_strike") == null);
 			check("the menus have a place for each, inside the six rows", EffectsMenus.explosionSlot(0) == 10 && EffectsMenus.explosionSlot(6) == 16
 				&& EffectsMenus.explosionSlot(7) == 19 && EffectsMenus.explosionSlot(Effects.EXPLOSIONS.length - 1) < 45);
 			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
@@ -4247,9 +4267,12 @@ public final class SelfTest {
 			{"gungnir", "GUNGNIR", "FILM", String.valueOf(Films.GUNGNIR_WAIT + 40), "4"},
 			{"railgun", "RAILGUN", "FILM", String.valueOf(com.pvpduels.effects.BeamArt.railImpact(true) + 10), "15"},
 			{"tesseract", "TESSERACT", "FILM", String.valueOf(com.pvpduels.effects.GridArt.climax(true) + 6), "15"},
+			{"eclipse", "ECLIPSE", "FILM", String.valueOf(com.pvpduels.effects.SkyArt.eclipseImpact(true) + 10), "15"},
+			{"moonfall", "MOONFALL", "FILM", String.valueOf(com.pvpduels.effects.SkyArt.moonLand(true) + 8), "15"},
 			{"seven_stars", "SEVEN STARS", "FILM", String.valueOf(Films.SEVEN_LEAD + 90), "4"}};
 		// the fake connection only keeps the last 4000 packets, so the title is noted as soon as it arrives
 		final boolean[] heard = new boolean[2];
+		final int[] drain = new int[1];
 		for (String[] f : films) {
 			final boolean skipTest = f[0].equals("seven_stars");
 			final java.util.function.BooleanSupplier note = () -> {
@@ -4315,6 +4338,8 @@ public final class SelfTest {
 				});
 			}
 			step("finale " + f[0] + ": the film ends", () -> { }, () -> note.getAsBoolean() && noDuel(a) && noDuel(b), 900);
+			// the last props may still be on their way out of the world: wait for them (this never fails by itself; the next step does)
+			step("finale " + f[0] + ": the last props leave the world", () -> drain[0] = 0, () -> com.pvpduels.effects.Props.tagged(server) == 0 || ++drain[0] > 100, 200);
 			step("finale " + f[0] + ": everything is put back and nothing is left", () -> {
 				check("the title " + f[1] + " reached Alice", heard[0]);
 				if (!skipTest) check("and Bob", heard[1]);
@@ -4323,7 +4348,8 @@ public final class SelfTest {
 					&& a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
 				check("no camera, no double and no display entity is left", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0
 					&& com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0,
-					Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera") + " / " + com.pvpduels.effects.Props.live());
+					Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera") + " / " + com.pvpduels.effects.Props.live()
+						+ " / waited " + drain[0] + " / swept " + com.pvpduels.effects.Props.sweptCount() + " / tagged " + com.pvpduels.effects.Props.tagged(server) + " " + leftovers());
 				Effects.setExplosion(a.getUUID(), "");
 			});
 		}
@@ -4344,7 +4370,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.13.0", version.equals("0.13.0"), version);
+			check("the mod says 0.14.0", version.equals("0.14.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
@@ -4489,7 +4515,7 @@ public final class SelfTest {
 			check("no display entity is left", com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0);
 			dora.closeContainer();
 			EffectsMenus.openTryOut(dora, dora.position().add(4, 0, 0));
-			check("the dummy's menu shows her explosions", menuHas(dora, "Shooting Star") && menuHas(dora, "Domain: Crimson Shrine") && menuHas(dora, "Meteor Shower") && menuHas(dora, "Gungnir") && menuHas(dora, "Seven Stars") && menuHas(dora, "Railgun") && menuHas(dora, "Tesseract")
+			check("the dummy's menu shows her explosions", menuHas(dora, "Shooting Star") && menuHas(dora, "Domain: Crimson Shrine") && menuHas(dora, "Meteor Shower") && menuHas(dora, "Gungnir") && menuHas(dora, "Seven Stars") && menuHas(dora, "Railgun") && menuHas(dora, "Tesseract") && menuHas(dora, "Eclipse") && menuHas(dora, "Moonfall")
 				&& menuHas(dora, "Domain: Infinite Void") && menuHas(dora, "Domain: Field of Swords"));
 			dora.link.sent.clear();
 			d8[4] = Victory.showsStarted();
@@ -4517,7 +4543,7 @@ public final class SelfTest {
 		});
 
 		// ---------------------------------------------------------------- the new explosions of 0.12 on the dummy (their quick versions)
-		final String[][] quick = {{"gungnir", "Gungnir", "25"}, {"seven_stars", "Seven Stars", "25"}, {"railgun", "Railgun", "25"}, {"tesseract", "Tesseract", "25"}, {"domain_void", "Domain: Infinite Void", "25"},
+		final String[][] quick = {{"gungnir", "Gungnir", "25"}, {"seven_stars", "Seven Stars", "25"}, {"railgun", "Railgun", "25"}, {"tesseract", "Tesseract", "25"}, {"eclipse", "Eclipse", "25"}, {"moonfall", "Moonfall", "25"}, {"domain_void", "Domain: Infinite Void", "25"},
 			{"domain_swords", "Domain: Field of Swords", "50"}};
 		for (String[] q : quick) {
 			step("quick " + q[1] + ": Dora tries it on the dummy", () -> {
