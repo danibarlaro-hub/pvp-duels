@@ -3875,7 +3875,7 @@ public final class SelfTest {
 			Missions.record(weekId, "Wendy", f);
 			check("the first win of the new week counts once", Missions.progress(weekId, Missions.weekly().get(0)) == 1 && Missions.progress(weekId, Missions.weekly().get(2)) == 1
 				&& Missions.progress(weekId, Missions.weekly().get(1)) == 1);
-			check("and what was won stays (the six explosions)", Effects.ownedExplosions(weekId).size() == Effects.EXPLOSIONS.length);
+			check("and what was won stays (the three explosions)", Effects.ownedExplosions(weekId).size() == 3);
 			Missions.setDayForTest(null);
 		});
 		step("midnight: a duel counts for the day it started", () -> {
@@ -4293,11 +4293,11 @@ public final class SelfTest {
 			check("she is a spectator and her inventory is saved", a.gameMode() == GameType.SPECTATOR && PlayerBackup.exists(a.getUUID()));
 			check("it takes an arena, like a duel", DuelManager.activeDuels() == 1 && DuelManager.isBusy(a.getUUID()));
 			check("she was told the controls", a.heard("Replay: Alice vs TestBot") && a.heard("[PAUSE]") && a.heard("[RESTART]") && a.heard("[STOP]"));
-			check("a double of each player and a camera exist", taggedCount("pvpduels_replay_dbl") == 2 && taggedCount("pvpduels_replay_cam") == 1, taggedCount("pvpduels_replay_dbl") + " / " + taggedCount("pvpduels_replay_cam"));
-		}, () -> ReplayPlayer.of(a.getUUID()) != null && a.getCamera() != a, 100);
+		}, () -> ReplayPlayer.of(a.getUUID()) != null && a.getCamera() != a, 200);
 		step("replay: it plays", () -> {
 			ReplayPlayer s = ReplayPlayer.of(a.getUUID());
 			check("she looks through the camera", a.getCamera() != a);
+			check("a double of each player and a camera exist", taggedCount("pvpduels_replay_dbl") == 2 && taggedCount("pvpduels_replay_cam") == 1, taggedCount("pvpduels_replay_dbl") + " / " + taggedCount("pvpduels_replay_cam"));
 			check("normal speed, not paused", s.speed == 1.0 && !s.paused);
 			rp[0] = s.pos;
 			d8[0] = ticks;

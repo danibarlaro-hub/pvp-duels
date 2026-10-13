@@ -85,6 +85,8 @@ public final class ReplayPlayer {
 	private int endTimer;
 	private boolean riding;
 	private boolean ended;
+	private boolean spawned;
+	private int waiting;
 	private int processed = -1;
 	private int eventCursor;
 	private final boolean[] swingBefore = new boolean[2];
@@ -159,11 +161,11 @@ public final class ReplayPlayer {
 		}
 		ReplayPlayer session = new ReplayPlayer(server, viewer, data, slot, space, level);
 		try {
+			if (data.frames == 0) throw new IllegalStateException("the replay has no pictures");
 			space.begin(level);
-			session.spawnEntities();
+			session.prepare();
 		} catch (RuntimeException e) {
 			PvpDuelsMod.LOGGER.warn("Could not start the replay {}: {}", data.id, e.toString());
-			session.discardEntities();
 			space.end(level);
 			DuelManager.releaseSlot(slot);
 			PlayerBackup.restore(server, viewer);
@@ -186,25 +188,32 @@ public final class ReplayPlayer {
 		return new Vec3(data.refX + data.x[p][frame], data.refY + data.y[p][frame], data.refZ + data.z[p][frame]);
 	}
 
-	private void spawnEntities() {
-		// the camera first, then the two doubles where the players were on the first picture
-		if (data.frames == 0) throw new IllegalStateException("the replay has no pictures");
-		spot0 = space_ref(0);
-		spot1 = space_ref(1);
+	/** Works out where everything goes. The doubles and the camera are created a few ticks later, when the arena has loaded. */
+	private void prepare() {
+		spot0 = absoluteAt(0, 0);
+		spot1 = absoluteAt(1, 0);
 		camPos = directorTarget(0.0, 0, true);
 		camLook = spot0.add(spot1).scale(0.5).add(0, 1.2, 0);
+	}
+
+	/** Creates the camera and the two doubles. Returns false (and leaves nothing behind) when the arena is not ready yet. */
+	private boolean trySpawn() {
+		// the viewer waits next to the first player, so the chunks around the arena get loaded
 		camera = summon("minecraft:text_display", TAG + "_cam_" + code, camPos, 0f, "");
-		if (camera == null) throw new IllegalStateException("could not create the camera");
+		if (camera == null) return false;
 		if (camera instanceof net.minecraft.world.entity.Display display) display.setPosRotInterpolationDuration(2);
 		for (int i = 0; i < 2; i++) {
 			Vec3 at = i == 0 ? spot0 : spot1;
 			doubles[i] = summon("minecraft:mannequin", TAG + "_dbl_" + code + "_" + i, at, ReplayData.angle(data.yaw[i][0]), doubleNbt(i));
-			if (doubles[i] == null) throw new IllegalStateException("could not create the doubles");
+			if (doubles[i] == null) {
+				discardEntities();
+				camera = null;
+				doubles[0] = null;
+				doubles[1] = null;
+				return false;
+			}
 		}
-	}
-
-	private Vec3 space_ref(int p) {
-		return absoluteAt(p, 0);
+		return true;
 	}
 
 	/** Where the double of player p is at this (possibly fractional) tick, in the arena of the replay. */
@@ -358,6 +367,16 @@ public final class ReplayPlayer {
 		ServerPlayer viewer = viewer();
 		if (viewer == null) {
 			end(false);
+			return;
+		}
+		if (!spawned) {
+			// the arena has to be loaded before anything can be created in it
+			waiting++;
+			if (waiting >= 3 && trySpawn()) spawned = true;
+			else if (waiting > 200) {
+				viewer.sendSystemMessage(Msg.err("The replay arena did not load, so it stopped."));
+				end(true);
+			}
 			return;
 		}
 		if (camera == null || !camera.isAlive() || doubles[0] == null || !doubles[0].isAlive() || doubles[1] == null || !doubles[1].isAlive()) {
