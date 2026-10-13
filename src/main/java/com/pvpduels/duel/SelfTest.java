@@ -3243,7 +3243,8 @@ public final class SelfTest {
 			check("no two particles share an id or a name", all.stream().map(Particles.Def::id).distinct().count() == all.size() && all.stream().map(Particles.Def::name).distinct().count() == all.size());
 			check("23 firework things: 16 colors, 5 shapes, the trail and the twinkle", Effects.allFireworkItems().size() == 23 && Effects.COLORS.length == 16 && Effects.COLOR_RGB.length == 16
 				&& Effects.SHAPES.length == 5);
-			check("3 explosions with a name each", Effects.EXPLOSIONS.length == 3 && Effects.EXPLOSION_NAMES.length == 3 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon"));
+			check("6 explosions with a name each", Effects.EXPLOSIONS.length == 6 && Effects.EXPLOSION_NAMES.length == 6 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
+				&& Effects.EXPLOSION_NAMES[3].equals("Shooting Star") && Effects.EXPLOSION_NAMES[4].equals("Black Hole") && Effects.EXPLOSION_NAMES[5].equals("Meteor Shower"));
 			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
 			check("the chances are the ones asked for", Effects.fireworkChance == 0.70 && Effects.particleChance == 0.40 && Effects.explosionChance == 0.008 && Effects.weeklyExplosionChance == 0.015 && Effects.explosionPity == 100);
 		});

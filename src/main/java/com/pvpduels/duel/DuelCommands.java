@@ -58,6 +58,20 @@ public final class DuelCommands {
 			return 1;
 		}));
 
+		dispatcher.register(Commands.literal("draw")
+			.executes(ctx -> {
+				Draws.handle(ctx.getSource().getPlayerOrException(), null);
+				return 1;
+			})
+			.then(Commands.literal("accept").executes(ctx -> {
+				Draws.handle(ctx.getSource().getPlayerOrException(), "accept");
+				return 1;
+			}))
+			.then(Commands.literal("deny").executes(ctx -> {
+				Draws.handle(ctx.getSource().getPlayerOrException(), "deny");
+				return 1;
+			})));
+
 		dispatcher.register(Commands.literal("duels").executes(ctx -> {
 			DuelManager.listDuels(ctx.getSource().getPlayerOrException());
 			return 1;

@@ -97,6 +97,10 @@ public final class TeamDuel {
 		return index ^ 1;
 	}
 
+	MinecraftServer server() {
+		return server;
+	}
+
 	ServerPlayer player(int i) {
 		return server.getPlayerList().getPlayer(ids[i]);
 	}
@@ -451,6 +455,13 @@ public final class TeamDuel {
 		phase = Duel.Phase.STARTING;
 		phaseTicks = 0;
 		countdownTotal = Duel.ROUND_COUNTDOWN;
+	}
+
+	/** Both teams agreed to a draw (/draw): the duel ends as a tie. */
+	void agreeDraw() {
+		if (phase == Duel.Phase.ENDED || closed) return;
+		winner = -1;
+		finish();
 	}
 
 	/** Someone left, disconnected or typed /leave: their team forfeits. */

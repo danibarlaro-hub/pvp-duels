@@ -39,8 +39,8 @@ public final class Effects {
 		11250603, 2651799, 8073150, 2437522, 5320730, 3887386, 11743532, 1973019};
 	public static final String[] SHAPES = {"small_ball", "large_ball", "star", "creeper", "burst"};
 	public static final String[] SHAPE_NAMES = {"Small ball", "Large ball", "Star", "Creeper", "Burst"};
-	public static final String[] EXPLOSIONS = {"orbital_strike", "orbital_wither", "domain_expansion"};
-	public static final String[] EXPLOSION_NAMES = {"Orbital Strike Cannon", "Orbital Wither Cannon", "Domain Expansion"};
+	public static final String[] EXPLOSIONS = {"orbital_strike", "orbital_wither", "domain_expansion", "shooting_star", "black_hole", "meteor_shower"};
+	public static final String[] EXPLOSION_NAMES = {"Orbital Strike Cannon", "Orbital Wither Cannon", "Domain Expansion", "Shooting Star", "Black Hole", "Meteor Shower"};
 
 	/** The chances of the rewards of a mission (each mission rolls them). Easy to change here. */
 	public static double fireworkChance = 0.70;
@@ -86,6 +86,8 @@ public final class Effects {
 		List<String> unannounced = new ArrayList<>();
 		/** The player does not want to see other players' victory effects. */
 		boolean hideOthers;
+		/** How many particles this player gets from the heavy effects: the number of a {@link Quality} (3 = High). */
+		int quality = Quality.HIGH.ordinal();
 	}
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -126,6 +128,7 @@ public final class Effects {
 		if (d.weekDone == null) d.weekDone = new ArrayList<>();
 		if (d.weekKits == null) d.weekKits = new ArrayList<>();
 		if (d.unannounced == null) d.unannounced = new ArrayList<>();
+		if (d.quality < 0 || d.quality >= Quality.values().length) d.quality = Quality.HIGH.ordinal();
 	}
 
 	private static synchronized void ensureLoaded() {
@@ -438,6 +441,16 @@ public final class Effects {
 
 	public static synchronized boolean hideOthers(UUID id) {
 		return data(id, null).hideOthers;
+	}
+
+	/** How many particles this player wants from the heavy effects. */
+	public static synchronized Quality quality(UUID id) {
+		return Quality.of(data(id, null).quality);
+	}
+
+	public static synchronized void setQuality(UUID id, Quality quality) {
+		data(id, null).quality = quality.ordinal();
+		save();
 	}
 
 	public static synchronized void setHideOthers(UUID id, boolean hide) {

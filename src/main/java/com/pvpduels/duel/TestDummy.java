@@ -39,8 +39,10 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * A fake player for testing duels alone. Admin-only command: /test_dummy &lt;name&gt; (and /test_dummy remove [name]).
- * The dummy stands still, never fights back, and accepts every duel request or rematch automatically.
+ * A fake player for testing duels alone. Admin-only command: /testbot [name] [level] (also /test_dummy and /fakeplayer), and
+ * /testbot remove [name]. The bot accepts every duel request or rematch automatically; without a level it never fights back,
+ * with a level (static, passive, easy, normal, hard) it behaves like the /botduel bot of that level. Duels against it never
+ * count for the statistics.
  * The same fake player class is used by the automatic self-test.
  */
 public final class TestDummy {
@@ -48,6 +50,8 @@ public final class TestDummy {
 	private static final int MAX_DUMMIES = 4;
 	/** Dummies spawned by the command (they auto-accept duels). Name to player id. */
 	private static final Map<String, UUID> AUTO = new HashMap<>();
+	/** The level asked for with the command (a bot made without one is not in this map). Player id to level. */
+	private static final Map<UUID, BotLevel> LEVELS = new HashMap<>();
 
 	private TestDummy() {}
 
@@ -113,6 +117,11 @@ public final class TestDummy {
 			pinX = x;
 			pinY = y;
 			pinZ = z;
+		}
+
+		/** The bot is free again (it was nailed to the ground for one duel). */
+		void unpin() {
+			pinDimension = null;
 		}
 
 		// A push (knockback) that vanilla only sent to the "client" of this fake player; it is applied on its next tick.
@@ -186,14 +195,28 @@ public final class TestDummy {
 
 	/** Returns an error text, or null when the dummy was created. */
 	static String spawn(ServerPlayer owner, String name) {
+		return spawn(owner, name, null);
+	}
+
+	/** The first free "TestBot", "TestBot2"... */
+	static String freeName(MinecraftServer server) {
+		for (int n = 1; ; n++) {
+			String name = n == 1 ? "TestBot" : "TestBot" + n;
+			if (server.getPlayerList().getPlayerByName(name) == null && !AUTO.containsKey(name.toLowerCase())) return name;
+		}
+	}
+
+	/** {@code level} is how it behaves in a duel (null: it just stands there and never fights back). */
+	static String spawn(ServerPlayer owner, String name, BotLevel level) {
 		MinecraftServer server = owner.level().getServer();
 		if (!NAME.matcher(name).matches()) return "A name can only have letters, numbers and _ (up to 16 characters).";
 		if (DuelManager.isInDuel(owner.getUUID())) return "You can't do that during a duel.";
 		if (server.getPlayerList().getPlayerByName(name) != null) return "A player named '" + name + "' is already online.";
-		if (AUTO.size() >= MAX_DUMMIES) return "There are already " + MAX_DUMMIES + " test dummies. Remove one with /test_dummy remove <name>.";
+		if (AUTO.size() >= MAX_DUMMIES) return "There are already " + MAX_DUMMIES + " test bots. Remove one with /testbot remove <name>.";
 
 		Dummy dummy = create(server, name);
 		AUTO.put(name.toLowerCase(), dummy.getUUID());
+		if (level != null) LEVELS.put(dummy.getUUID(), level);
 		dummy.setGameMode(GameType.SURVIVAL);
 		dummy.teleportTo((ServerLevel) owner.level(), owner.getX() + 2.5, owner.getY(), owner.getZ(),
 			Set.of(), owner.getYRot() + 180f, 0f, true);
@@ -219,6 +242,7 @@ public final class TestDummy {
 			UUID id = AUTO.get(key);
 			ServerPlayer p = id == null ? null : server.getPlayerList().getPlayer(id);
 			if (p == null) {
+				LEVELS.remove(id);
 				AUTO.remove(key);
 				continue;
 			}
@@ -228,45 +252,98 @@ public final class TestDummy {
 			}
 			if (p.connection != null) p.connection.onDisconnect(new DisconnectionDetails(Component.literal("Test dummy removed")));
 			AUTO.remove(key);
+			LEVELS.remove(id);
 			removed++;
 		}
 		return removed;
 	}
 
+	// ------------------------------------------------------------------ behaviour inside a duel
+
+	/** A duel just started: a bot made with a level takes its place (nailed down, or walking up to the other player). */
+	static void duelStarted(Duel duel) {
+		for (int i = 0; i < 2; i++) {
+			BotLevel level = LEVELS.get(duel.ids[i]);
+			if (level == null || BotDuel.isBot(duel.ids[i])) continue;
+			ServerPlayer p = duel.player(i);
+			if (!(p instanceof Dummy bot)) continue;
+			if (level.pinned()) {
+				double[] spot = duel.space.spawn(i);
+				bot.pin(duel.space.dimension(), spot[0], spot[1], spot[2]);
+			} else {
+				bot.setBrain(new BotBrain(bot, level, duel.ids[1 - i]));
+			}
+		}
+	}
+
+	/** The duel is over: the bot goes back to just standing there. */
+	static void duelEnded(Duel duel) {
+		MinecraftServer server = duel.server();
+		for (int i = 0; i < 2; i++) {
+			if (!LEVELS.containsKey(duel.ids[i])) continue;
+			if (server.getPlayerList().getPlayer(duel.ids[i]) instanceof Dummy bot) {
+				bot.setBrain(null);
+				bot.unpin();
+			}
+		}
+	}
+
+	/** The level a bot was made with, or null. */
+	static BotLevel levelOf(UUID id) {
+		return LEVELS.get(id);
+	}
+
 	// ------------------------------------------------------------------ command
 
+	private static int create(CommandSourceStack source, String nameText, String levelText) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer owner = source.getPlayerOrException();
+		String name = nameText != null ? nameText : freeName(owner.level().getServer());
+		BotLevel level = null;
+		if (levelText != null) {
+			level = BotLevel.parse(levelText);
+			if (level == null) {
+				source.sendFailure(Msg.err("The bot can be: static, passive, easy, normal or hard."));
+				return 0;
+			}
+		}
+		String problem = spawn(owner, name, level);
+		if (problem != null) {
+			source.sendFailure(Msg.err(problem));
+			return 0;
+		}
+		final String shown = name;
+		final String how = level == null ? "It never fights back" : "Level " + level.label + ": " + level.description;
+		source.sendSuccess(() -> Msg.ok("Test bot '" + shown + "' created next to you. Challenge it with /duel " + shown + ". " + how
+			+ " It accepts every duel, and its duels don't count for the stats. Remove it with /testbot remove " + shown + "."), false);
+		return 1;
+	}
+
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		for (String root : new String[] {"test_dummy", "fakeplayer"}) {
+		for (String root : new String[] {"testbot", "test_dummy", "fakeplayer"}) {
 			LiteralArgumentBuilder<CommandSourceStack> cmd = Commands.literal(root)
 				.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+				.executes(ctx -> create(ctx.getSource(), null, null))
 				.then(Commands.literal("remove")
 					.executes(ctx -> {
 						int n = remove(ctx.getSource().getServer(), null);
-						ctx.getSource().sendSuccess(() -> Msg.ok("Removed " + n + " test dummies."), false);
+						ctx.getSource().sendSuccess(() -> Msg.ok("Removed " + n + " test bots."), false);
 						return n;
 					})
 					.then(Commands.argument("name", StringArgumentType.word()).executes(ctx -> {
 						String name = StringArgumentType.getString(ctx, "name");
 						int n = remove(ctx.getSource().getServer(), name);
 						if (n == 0) {
-							ctx.getSource().sendFailure(Msg.err("There is no test dummy named '" + name + "'."));
+							ctx.getSource().sendFailure(Msg.err("There is no test bot named '" + name + "'."));
 							return 0;
 						}
-						ctx.getSource().sendSuccess(() -> Msg.ok("Removed the test dummy '" + name + "'."), false);
+						ctx.getSource().sendSuccess(() -> Msg.ok("Removed the test bot '" + name + "'."), false);
 						return 1;
 					})))
-				.then(Commands.argument("name", StringArgumentType.word()).executes(ctx -> {
-					ServerPlayer owner = ctx.getSource().getPlayerOrException();
-					String name = StringArgumentType.getString(ctx, "name");
-					String problem = spawn(owner, name);
-					if (problem != null) {
-						ctx.getSource().sendFailure(Msg.err(problem));
-						return 0;
-					}
-					ctx.getSource().sendSuccess(() -> Msg.ok("Test dummy '" + name + "' created next to you. Challenge it with /duel "
-						+ name + ". It never fights back and accepts every duel. Remove it with /test_dummy remove " + name + "."), false);
-					return 1;
-				}));
+				.then(Commands.argument("name", StringArgumentType.word())
+					.executes(ctx -> create(ctx.getSource(), StringArgumentType.getString(ctx, "name"), null))
+					.then(Commands.argument("level", StringArgumentType.word())
+						.suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(List.of("static", "passive", "easy", "normal", "hard"), builder))
+						.executes(ctx -> create(ctx.getSource(), StringArgumentType.getString(ctx, "name"), StringArgumentType.getString(ctx, "level")))));
 			dispatcher.register(cmd);
 		}
 	}

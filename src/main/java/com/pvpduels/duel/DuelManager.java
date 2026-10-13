@@ -206,6 +206,8 @@ public final class DuelManager {
 		BY_PLAYER.remove(d.ids[0], d);
 		BY_PLAYER.remove(d.ids[1], d);
 		BotDuel.release(d);
+		TestDummy.duelEnded(d);
+		Draws.forget(d);
 	}
 
 	/** The duel is decided: remember it so /again works right away. */
@@ -226,6 +228,7 @@ public final class DuelManager {
 			if (TEAM_SLOTS[i] == t) TEAM_SLOTS[i] = null;
 		}
 		for (UUID id : t.ids) TEAM_BY_PLAYER.remove(id, t);
+		Draws.forget(t);
 	}
 
 	/** A 2v2 is decided. There is no /again for it. */
@@ -509,6 +512,7 @@ public final class DuelManager {
 		BY_PLAYER.put(b.getUUID(), duel);
 		try {
 			duel.begin(arena);
+			TestDummy.duelStarted(duel);
 			PvpDuelsMod.LOGGER.info("Duel started: {} vs {} ({}, slot {})", duel.names[0], duel.names[1], invite.config(), slot);
 		} catch (IOException | RuntimeException e) {
 			PvpDuelsMod.LOGGER.error("Could not start the duel", e);

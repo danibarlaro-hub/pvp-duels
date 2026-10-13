@@ -162,6 +162,13 @@ public final class Duel {
 		return restored[i];
 	}
 
+	/** Both agreed to a draw (/draw): the duel ends as a tie. */
+	void agreeDraw() {
+		if (phase == Phase.ENDED || closed) return;
+		winner = -1;
+		finish();
+	}
+
 	/** For the self-test: ends the duel as a tie, as if nobody had left. */
 	void finishAsTieForTest() {
 		winner = -1;

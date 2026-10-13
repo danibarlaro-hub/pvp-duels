@@ -3,6 +3,7 @@ package com.pvpduels.duel;
 import com.pvpduels.effects.Effects;
 import com.pvpduels.effects.Missions;
 import com.pvpduels.effects.Particles;
+import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.Victory;
 import com.pvpduels.util.Msg;
 import net.minecraft.ChatFormatting;
@@ -69,6 +70,13 @@ public final class EffectsMenus {
 		b.set(22, DuelMenus.icon(Items.FIREWORK_STAR, "Preview", ChatFormatting.YELLOW, "See your effects right now."), who -> {
 			who.closeContainer();
 			Victory.preview(who);
+		});
+		Quality quality = Effects.quality(me);
+		b.set(18, DuelMenus.icon(quality.icon, "Effect quality: " + quality.label, ChatFormatting.LIGHT_PURPLE, quality.description,
+			"This is only for you: it changes how many particles", "you get from big effects. Lower it if the game lags.",
+			"Click to change it (Potato, Low, Mid, High, Ultra Pro Max)."), who -> {
+			Effects.setQuality(who.getUUID(), Effects.quality(who.getUUID()).next());
+			openMain(who);
 		});
 		b.set(26, DuelMenus.icon(hide ? Items.ENDER_EYE : Items.ENDER_PEARL, "Other players' effects: " + (hide ? "hidden" : "shown"), hide ? ChatFormatting.RED : ChatFormatting.GREEN,
 			"Click to " + (hide ? "show" : "hide") + " the particles of other players' wins."), who -> {
@@ -223,23 +231,25 @@ public final class EffectsMenus {
 	public static void openExplosions(ServerPlayer p) {
 		UUID me = p.getUUID();
 		String equipped = Effects.explosionSlot(me);
-		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(4);
+		int[] places = {10, 12, 14, 16, 20, 24};
+		net.minecraft.world.item.Item[] icons = {Items.TNT, Items.WITHER_SKELETON_SKULL, Items.CRYING_OBSIDIAN, Items.NETHER_STAR, Items.END_PORTAL_FRAME, Items.FIRE_CHARGE};
 		for (int i = 0; i < Effects.EXPLOSIONS.length; i++) {
 			String id = Effects.EXPLOSIONS[i];
-			int position = 11 + i * 2;
+			int position = places[i];
 			if (Effects.ownsExplosion(me, id)) {
 				boolean on = id.equals(equipped);
-				b.set(position, DuelMenus.icon(Items.TNT, Effects.EXPLOSION_NAMES[i], on ? ChatFormatting.GREEN : ChatFormatting.GOLD,
+				b.set(position, DuelMenus.icon(icons[i], Effects.EXPLOSION_NAMES[i], on ? ChatFormatting.GREEN : ChatFormatting.GOLD,
 					on ? "Equipped. Click to take it off." : "Click to equip it."), who -> {
 					equip(who, () -> Effects.setExplosion(who.getUUID(), on ? "" : id));
 					openExplosions(who);
 				});
 			} else {
-				b.set(position, DuelMenus.icon(Items.COAL, "Locked: ???", ChatFormatting.DARK_GRAY, "A very rare reward of the daily missions."));
+				b.set(position, DuelMenus.icon(Items.COAL, "Locked: ???", ChatFormatting.DARK_GRAY, "A very rare reward of the missions."));
 			}
 		}
-		b.set(18, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
-		ChoiceMenu.open(p, Component.literal("Explosions"), 3, b);
+		b.set(27, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
+		ChoiceMenu.open(p, Component.literal("Explosions"), 4, b);
 	}
 
 	// ------------------------------------------------------------------ missions

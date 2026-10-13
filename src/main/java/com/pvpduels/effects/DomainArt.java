@@ -43,7 +43,7 @@ public final class DomainArt {
 
 	private static void emit(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, double x, double y, double z, int count,
 		double dx, double dy, double dz, double speed) {
-		for (ServerPlayer v : viewers) level.sendParticles(v, options, false, true, x, y, z, count, dx, dy, dz, speed);
+		for (ServerPlayer v : viewers) Quality.send(level, v, options, x, y, z, count, dx, dy, dz, speed);
 	}
 
 	/** A flat circle of particles (on the ground or higher up). */

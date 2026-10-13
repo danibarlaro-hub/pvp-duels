@@ -52,6 +52,10 @@ public final class Victory {
 		/** Where the show is played when it does not follow the winner (the finale puts the winner's double there), else null. */
 		final Vec3 fixed;
 		final boolean skipDomain;
+		/** The meteors of a Meteor Shower that are still flying. */
+		final List<ExplosionArt.Meteor> meteors = new ArrayList<>();
+		/** Where the winner stands when the explosion starts (the Shooting Star and the meteors come from behind them). */
+		Vec3 from;
 		int age;
 
 		Show(UUID id, ServerLevel level, Vec3 target, String explosion, Vec3 fixed, boolean skipDomain) {
@@ -222,7 +226,7 @@ public final class Victory {
 
 	private static void emit(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, double x, double y, double z, int count,
 		double dx, double dy, double dz, double speed) {
-		for (ServerPlayer v : viewers) level.sendParticles(v, options, false, true, x, y, z, count, dx, dy, dz, speed);
+		for (ServerPlayer v : viewers) Quality.send(level, v, options, x, y, z, count, dx, dy, dz, speed);
 	}
 
 	/** Particles on the ground: a ring that turns around the winner. */
@@ -268,8 +272,17 @@ public final class Victory {
 			case "orbital_strike" -> orbital(s, viewers, t, ParticleTypes.END_ROD, ParticleTypes.FLAME, ParticleTypes.LARGE_SMOKE, false);
 			case "orbital_wither" -> orbital(s, viewers, t, ParticleTypes.SOUL_FIRE_FLAME, ParticleTypes.SOUL, ParticleTypes.SQUID_INK, true);
 			case "domain_expansion" -> domain(s, winner, viewers, t);
+			case "shooting_star" -> ExplosionArt.shootingStar(s.level, viewers, from(s, winner), s.target, t);
+			case "black_hole" -> ExplosionArt.blackHole(s.level, viewers, s.target, t);
+			case "meteor_shower" -> ExplosionArt.meteorShower(s.level, viewers, from(s, winner), s.target, t, s.meteors);
 			default -> { }
 		}
+	}
+
+	/** Where the winner stood when the explosion began (kept the first time it is asked). */
+	private static Vec3 from(Show s, ServerPlayer winner) {
+		if (s.from == null) s.from = s.origin(winner);
+		return s.from;
 	}
 
 	private static void sound(ServerLevel level, double x, double y, double z, boolean thunder, boolean wither) {
