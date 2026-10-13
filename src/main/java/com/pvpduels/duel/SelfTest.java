@@ -4138,9 +4138,9 @@ public final class SelfTest {
 		final int[] d8 = new int[10];
 		final double[] rp = new double[4];
 		final int[] sums = new int[5];
-		step("delivery 8: the mod is not on its first version any more", () -> {
+		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.8.0", version.equals("0.8.0"), version);
+			check("the mod says 0.9.0", version.equals("0.9.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
@@ -4195,22 +4195,42 @@ public final class SelfTest {
 			check("Low about a third", sums[1] >= 650 && sums[1] <= 750, "" + sums[1]);
 			check("Mid about two thirds", sums[2] >= 1250 && sums[2] <= 1350, "" + sums[2]);
 		});
-		for (String ex : new String[] {"shooting_star", "black_hole", "meteor_shower"}) {
+		final int[] fx = new int[4];
+		for (String ex : new String[] {"orbital_strike", "orbital_wither", "shooting_star", "black_hole", "meteor_shower"}) {
 			step("explosions: " + ex + " plays", () -> {
 				Effects.grantExplosion(a.getUUID(), ex);
 				check("Alice equips it", Effects.setExplosion(a.getUUID(), ex) == null && Effects.explosionSlot(a.getUUID()).equals(ex) && Victory.explosionMode(a.getUUID()));
 				a.link.sent.clear();
 				d8[4] = Victory.showsStarted();
+				fx[0] = ticks;
+				fx[1] = com.pvpduels.effects.Props.createdCount();
+				fx[2] = com.pvpduels.effects.Props.burstCount();
 				Victory.preview(a);
 				check("a show started", Victory.showsStarted() == d8[4] + 1 && Victory.activeShows() >= 1);
+			}, () -> ticks >= fx[0] + 75, 300);
+			step("explosions: " + ex + " has its solid parts in the middle of the show", () -> {
+				check("the show is still on", Victory.activeShows() == 1);
+				check("display entities were made (" + ex + ")", com.pvpduels.effects.Props.createdCount() >= fx[1] + 3, (com.pvpduels.effects.Props.createdCount() - fx[1]) + " made");
+				check("and they are in the world", com.pvpduels.effects.Props.live() > 0 && com.pvpduels.effects.Props.tagged(server) > 0, com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
 			}, () -> Victory.activeShows() == 0, 800);
-			step("explosions: " + ex + " reached Alice", () -> {
+			step("explosions: " + ex + " reached Alice and left nothing behind", () -> {
 				int sum = 0;
-				for (Packet<?> packet : List.copyOf(a.link.sent)) if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) sum += pk.getCount();
-				check("a lot of particles reached her (" + ex + ")", sum > 150, "" + sum);
-				check("and the show ended by itself", Victory.activeShows() == 0);
+				int packets = 0;
+				for (Packet<?> packet : List.copyOf(a.link.sent)) {
+					if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) {
+						sum += pk.getCount();
+						packets++;
+					}
+				}
+				check("a lot of particles reached her (" + ex + ")", sum > 150 && packets > 150, sum + " in " + packets + " packets");
+				check("the show ended by itself", Victory.activeShows() == 0);
+				check("no display entity is left", com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0, com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
 			});
 		}
+		step("explosions: fireworks burst in the sky of the big ones", () -> {
+			check("the shows launched real firework bursts", com.pvpduels.effects.Props.burstCount() >= 12, String.valueOf(com.pvpduels.effects.Props.burstCount()));
+			check("the sweep finds nothing to clean", com.pvpduels.effects.Props.sweep(server) == 0);
+		});
 		step("explosions: back to normal", () -> {
 			Effects.setExplosion(a.getUUID(), "");
 			check("Alice has no explosion equipped", Effects.explosionSlot(a.getUUID()).isEmpty());

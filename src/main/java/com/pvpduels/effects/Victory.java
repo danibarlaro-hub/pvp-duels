@@ -5,7 +5,6 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * What happens when you win a duel: the three fireworks you chose go up in a row behind you (the middle one a block higher), your
@@ -31,8 +29,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * it never gets in the way of a fight. In a 1v1 the finale ({@code Cinema}) plays it from the winner's place while the camera rises.
  */
 public final class Victory {
-	/** How long the particles and the explosion last. */
+	/** How long the particles last. */
 	public static final int SHOW_TICKS = 100;
+	/** How long an explosion lasts: the big ones need more time to build up, hit and fade. */
+	public static final int EXPLOSION_SHOW_TICKS = 125;
 	/** How far apart the fireworks of the row are, and how far behind the winner the row is. */
 	private static final double SIDE = 2.5;
 	private static final double BEHIND = 2.5;
@@ -52,6 +52,8 @@ public final class Victory {
 		/** Where the show is played when it does not follow the winner (the finale puts the winner's double there), else null. */
 		final Vec3 fixed;
 		final boolean skipDomain;
+		/** The solid parts of the explosion (display entities); null when there is no explosion. */
+		Props props;
 		/** The meteors of a Meteor Shower that are still flying. */
 		final List<ExplosionArt.Meteor> meteors = new ArrayList<>();
 		/** Where the winner stands when the explosion starts (the Shooting Star and the meteors come from behind them). */
@@ -69,6 +71,15 @@ public final class Victory {
 
 		Vec3 origin(ServerPlayer winner) {
 			return fixed != null ? fixed : winner.position();
+		}
+
+		int limit() {
+			return explosion.isEmpty() ? SHOW_TICKS : EXPLOSION_SHOW_TICKS;
+		}
+
+		/** The show is over: its display entities go away. */
+		void close() {
+			if (props != null) props.clear();
 		}
 	}
 
@@ -92,6 +103,7 @@ public final class Victory {
 	}
 
 	public static void resetForTest() {
+		for (Show s : SHOWS) s.close();
 		SHOWS.clear();
 		launches = 0;
 		started = 0;
@@ -142,6 +154,11 @@ public final class Victory {
 			}
 		}
 		if (show.floor.isEmpty() && show.area.isEmpty() && show.explosion.isEmpty()) return;
+		if (!show.explosion.isEmpty()) {
+			show.props = new Props(level.getServer(), level);
+			// whoever hides other people's effects, and whoever plays on Potato, does not get the solid parts either
+			show.props.hideFrom(p -> (p != winner && Effects.hideOthers(p.getUUID())) || Effects.quality(p.getUUID()).factor < 0.2);
+		}
 		SHOWS.add(show);
 	}
 
@@ -191,7 +208,13 @@ public final class Victory {
 
 	public static void register() {
 		ServerTickEvents.END_SERVER_TICK.register(Victory::tick);
-		ServerLifecycleEvents.SERVER_STOPPING.register(s -> SHOWS.clear());
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+			for (Show s : SHOWS) s.close();
+			SHOWS.clear();
+			Props.sweep(server);
+		});
+		// a show that was cut by a crash must not leave its display entities in the world
+		ServerLifecycleEvents.SERVER_STARTED.register(Props::sweep);
 	}
 
 	private static void tick(MinecraftServer server) {
@@ -200,15 +223,23 @@ public final class Victory {
 		while (it.hasNext()) {
 			Show s = it.next();
 			ServerPlayer winner = server.getPlayerList().getPlayer(s.id);
-			if (winner == null || winner.level() != s.level || s.age >= SHOW_TICKS) {
+			if (winner == null || winner.level() != s.level || s.age >= s.limit()) {
 				it.remove();
+				s.close();
 				continue;
 			}
 			s.age++;
 			List<ServerPlayer> viewers = viewers(s, winner);
 			floor(s, winner, viewers);
 			area(s, winner, viewers);
-			if (!s.explosion.isEmpty() && s.age >= EXPLOSION_DELAY) explosion(s, winner, viewers, s.age - EXPLOSION_DELAY);
+			if (!s.explosion.isEmpty() && s.age >= EXPLOSION_DELAY) {
+				int t = s.age - EXPLOSION_DELAY;
+				explosion(s, winner, viewers, t);
+				// the display entities: flying pieces move, the ones whose time is up go away
+				if (s.props != null) {
+					for (Vec3 at : s.props.tick(t)) ExplosionArt.landing(s.level, viewers, at);
+				}
+			}
 		}
 	}
 
@@ -269,12 +300,14 @@ public final class Victory {
 
 	private static void explosion(Show s, ServerPlayer winner, List<ServerPlayer> viewers, int t) {
 		switch (s.explosion) {
-			case "orbital_strike" -> orbital(s, viewers, t, ParticleTypes.END_ROD, ParticleTypes.FLAME, ParticleTypes.LARGE_SMOKE, false);
-			case "orbital_wither" -> orbital(s, viewers, t, ParticleTypes.SOUL_FIRE_FLAME, ParticleTypes.SOUL, ParticleTypes.SQUID_INK, true);
-			case "domain_expansion" -> domain(s, winner, viewers, t);
-			case "shooting_star" -> ExplosionArt.shootingStar(s.level, viewers, from(s, winner), s.target, t);
-			case "black_hole" -> ExplosionArt.blackHole(s.level, viewers, s.target, t);
-			case "meteor_shower" -> ExplosionArt.meteorShower(s.level, viewers, from(s, winner), s.target, t, s.meteors);
+			case "orbital_strike" -> ExplosionArt.orbital(s.level, viewers, s.props, s.target, t, false);
+			case "orbital_wither" -> ExplosionArt.orbital(s.level, viewers, s.props, s.target, t, true);
+			case "domain_expansion" -> {
+				if (!s.skipDomain) domain(s, winner, viewers, t);
+			}
+			case "shooting_star" -> ExplosionArt.shootingStar(s.level, viewers, s.props, from(s, winner), s.target, t);
+			case "black_hole" -> ExplosionArt.blackHole(s.level, viewers, s.props, s.target, t);
+			case "meteor_shower" -> ExplosionArt.meteorShower(s.level, viewers, s.props, from(s, winner), s.target, t, s.meteors);
 			default -> { }
 		}
 	}
@@ -285,50 +318,13 @@ public final class Victory {
 		return s.from;
 	}
 
-	private static void sound(ServerLevel level, double x, double y, double z, boolean thunder, boolean wither) {
-		if (wither) level.playSound(null, x, y, z, SoundEvents.WITHER_SPAWN, SoundSource.MASTER, 2.0f, 1.2f);
-		else level.playSound(null, x, y, z, SoundEvents.BEACON_ACTIVATE, SoundSource.MASTER, 2.0f, 1.5f);
-		if (thunder) level.playSound(null, x, y, z, SoundEvents.GENERIC_EXPLODE, SoundSource.MASTER, 4.0f, 0.8f);
-	}
-
-	/** A beam from the sky lands on the target, and a column of fire (or souls) rises. The provisional version of the two cannons. */
-	private static void orbital(Show s, List<ServerPlayer> viewers, int t, ParticleOptions beam, ParticleOptions flame, ParticleOptions smoke, boolean wither) {
-		Vec3 c = s.target;
-		if (t == 0) sound(s.level, c.x, c.y + 20, c.z, false, wither);
-		if (t < 20) {
-			double head = c.y + 60 - t * 3.0;
-			for (int k = 0; k < 8; k++) emit(s.level, viewers, beam, c.x, head + k, c.z, 1, 0.1, 0.0, 0.1, 0.0);
-			return;
-		}
-		if (t == 20) {
-			sound(s.level, c.x, c.y, c.z, true, wither);
-			emit(s.level, viewers, ParticleTypes.EXPLOSION_EMITTER, c.x, c.y + 1, c.z, 1, 0, 0, 0, 0);
-			for (int k = 0; k < 24; k++) {
-				double angle = k * Math.PI * 2 / 24;
-				for (int r = 1; r <= 5; r += 2) emit(s.level, viewers, flame, c.x + Math.cos(angle) * r, c.y + 0.2, c.z + Math.sin(angle) * r, 2, 0.1, 0.3, 0.1, 0.05);
-			}
-		}
-		if (t > 20 && t < 50) {
-			ThreadLocalRandom rnd = ThreadLocalRandom.current();
-			double height = (t - 20) * 0.4;
-			emit(s.level, viewers, flame, c.x, c.y + height, c.z, 6, 0.6, 0.4, 0.6, 0.03);
-			emit(s.level, viewers, smoke, c.x + rnd.nextGaussian() * 0.3, c.y + height + 1, c.z + rnd.nextGaussian() * 0.3, 3, 0.8, 0.4, 0.8, 0.02);
-		}
-	}
-
-	/** A dome of dark particles grows around the winner and stays for a moment. The provisional version of Domain Expansion. */
+	/** A dome of dark particles grows around the winner, with its edge drawn as a line, and stays for a while (the lone Domain Expansion). */
 	private static void domain(Show s, ServerPlayer winner, List<ServerPlayer> viewers, int t) {
-		if (t == 0) s.level.playSound(null, winner.getX(), winner.getY(), winner.getZ(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.MASTER, 3.0f, 0.7f);
-		if (t > 70) return;
-		double radius = Math.min(12.0, 1 + t * 0.6);
-		ThreadLocalRandom rnd = ThreadLocalRandom.current();
-		for (int k = 0; k < 14; k++) {
-			double a = rnd.nextDouble() * Math.PI * 2;
-			double b = Math.acos(2 * rnd.nextDouble() - 1);
-			double x = winner.getX() + radius * Math.sin(b) * Math.cos(a);
-			double y = winner.getY() + radius * Math.cos(b) * 0.6 + 1;
-			double z = winner.getZ() + radius * Math.sin(b) * Math.sin(a);
-			emit(s.level, viewers, k % 3 == 0 ? ParticleTypes.SQUID_INK : (k % 3 == 1 ? ParticleTypes.PORTAL : ParticleTypes.REVERSE_PORTAL), x, y, z, 1, 0.05, 0.05, 0.05, 0.02);
-		}
+		Vec3 o = s.origin(winner);
+		if (t == 0) s.level.playSound(null, o.x, o.y, o.z, SoundEvents.ENDER_DRAGON_GROWL, SoundSource.MASTER, 4.0f, 0.7f);
+		if (t > 100) return;
+		double radius = Math.min(14.0, 1 + t * 0.4);
+		DomainArt.dome(s.level, viewers, o, radius, 80, DomainArt.voidLook());
+		DomainArt.ring(s.level, viewers, o, radius, 44, 0.15, DomainArt.LINE, t * 0.05);
 	}
 }

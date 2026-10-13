@@ -57,4 +57,15 @@ public enum Quality {
 		if (n <= 0) return;
 		level.sendParticles(viewer, options, false, true, x, y, z, n, dx, dy, dz, speed);
 	}
+
+	/**
+	 * One particle that flies from (x, y, z) in the direction (dx, dy, dz) at {@code speed}: the client moves it by itself, so a ring or a
+	 * burst that spreads costs one packet per particle at the start instead of one per particle every tick.
+	 */
+	public static void sendFlying(ServerLevel level, ServerPlayer viewer, ParticleOptions options, double x, double y, double z,
+		double dx, double dy, double dz, double speed) {
+		int n = Effects.quality(viewer.getUUID()).scale(1);
+		if (n <= 0) return;
+		level.sendParticles(viewer, options, false, true, x, y, z, 0, dx, dy, dz, speed);
+	}
 }
