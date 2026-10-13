@@ -11,7 +11,8 @@
         { "block": "minecraft:bedrock", "height": 1 },
         { "block": "minecraft:deepslate", "height": 59 },
         { "block": "minecraft:stone", "height": 66 },
-        { "block": "minecraft:dirt", "height": 5 }
+        { "block": "minecraft:dirt", "height": 4 },
+        { "block": "minecraft:grass_block", "height": 1 }
       ],
       "structure_overrides": []
     }

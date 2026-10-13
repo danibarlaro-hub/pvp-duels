@@ -27,7 +27,7 @@ import java.util.Set;
 
 /**
  * The "normal" arenas (circular and unlimited) live in the flat dimension pvpduels:normal_arena. Its terrain is
- * always the same stack of layers (bedrock at y-60, deepslate up to y-1, stone up to y65, 5 dirt blocks up to y70),
+ * always the same stack of layers (bedrock at y-60, deepslate up to y-1, stone up to y65, 4 dirt blocks up to y69, a layer of grass on top at y70),
  * so the world generator makes it and this class only has to put things back the way they were:
  * <ul>
  *   <li>before every round every loaded chunk of the arena is compared with the layers and fixed;</li>
@@ -45,7 +45,7 @@ public final class Terrain {
 	public static final int SURFACE_Y = 70;
 	/** Barriers go up to the build limit of the overworld type. */
 	public static final int MAX_Y = 319;
-	/** Players stand on the dirt, so they appear one block above it. */
+	/** Players stand on the grass, so they appear one block above it. */
 	public static final int SPAWN_Y = SURFACE_Y + 1;
 
 	public static final int CIRCLE_SPACING = 1024;
@@ -69,7 +69,8 @@ public final class Terrain {
 		if (y == BEDROCK_Y) return Blocks.BEDROCK.defaultBlockState();
 		if (y < 0) return Blocks.DEEPSLATE.defaultBlockState();
 		if (y <= STONE_TOP_Y) return Blocks.STONE.defaultBlockState();
-		if (y <= SURFACE_Y) return Blocks.DIRT.defaultBlockState();
+		if (y < SURFACE_Y) return Blocks.DIRT.defaultBlockState();
+		if (y == SURFACE_Y) return Blocks.GRASS_BLOCK.defaultBlockState();
 		return air();
 	}
 

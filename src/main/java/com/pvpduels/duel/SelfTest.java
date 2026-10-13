@@ -31,6 +31,7 @@ import net.minecraft.network.protocol.game.ClientboundSetObjectivePacket;
 import net.minecraft.network.protocol.game.ClientboundSetScorePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.stats.Stats;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
@@ -412,6 +413,12 @@ public final class SelfTest {
 	private static boolean phaseIs(Dummy who, Duel.Phase phase) {
 		Duel d = duel(who);
 		return d != null && d.phase == phase;
+	}
+
+	/** A duel in this round of the match and in the fighting phase. */
+	private static boolean roundIs(Dummy who, int round) {
+		Duel d = duel(who);
+		return d != null && d.round == round && d.phase == Duel.Phase.FIGHTING;
 	}
 
 	private static boolean noDuel(Dummy who) {
@@ -863,8 +870,9 @@ public final class SelfTest {
 				where(a) + " / " + where(b));
 			check("Terrain keeps one arena open", Terrain.activeRegions() == 1, String.valueOf(Terrain.activeRegions()));
 			int x = circleCx;
-			check("y70 is dirt", isBlock(x, 70, 0, Blocks.DIRT));
-			check("y66 is dirt (5 blocks of dirt)", isBlock(x, 66, 0, Blocks.DIRT));
+			check("y70 is grass", isBlock(x, 70, 0, Blocks.GRASS_BLOCK));
+			check("y69 is dirt", isBlock(x, 69, 0, Blocks.DIRT));
+			check("y66 is dirt (4 blocks of dirt under the grass)", isBlock(x, 66, 0, Blocks.DIRT));
 			check("y65 is stone", isBlock(x, 65, 0, Blocks.STONE));
 			check("y0 is stone", isBlock(x, 0, 0, Blocks.STONE));
 			check("y-1 is deepslate", isBlock(x, -1, 0, Blocks.DEEPSLATE));
@@ -872,7 +880,7 @@ public final class SelfTest {
 			check("y-60 is bedrock", isBlock(x, -60, 0, Blocks.BEDROCK));
 			check("y-61 is air", isBlock(x, -61, 0, Blocks.AIR));
 			check("y71 is air", isBlock(x, 71, 0, Blocks.AIR));
-			check("the players stand on the dirt", Math.abs(a.getY() - 71) < 0.5 && Math.abs(b.getY() - 71) < 0.5, where(a) + " / " + where(b));
+			check("the players stand on the grass", Math.abs(a.getY() - 71) < 0.5 && Math.abs(b.getY() - 71) < 0.5, where(a) + " / " + where(b));
 			check("they are 32 blocks apart", Math.abs(a.distanceTo(b) - 32) < 1.5, String.valueOf(a.distanceTo(b)));
 			Terrain.level(server).getChunk((x + 100) >> 4, 0);
 			Terrain.level(server).getChunk((x - 100) >> 4, 0);
@@ -920,7 +928,7 @@ public final class SelfTest {
 		step("circular arena: round 2 started on clean terrain", () -> {
 			int x = circleCx;
 			check("the stone block is gone", isBlock(circleCx - 15, 71, 0, Blocks.AIR), String.valueOf(Terrain.level(server).getBlockState(at(circleCx - 15, 71, 0))));
-			check("the dug hole is filled again", isBlock(circleCx - 16, 70, 1, Blocks.DIRT), String.valueOf(Terrain.level(server).getBlockState(at(circleCx - 16, 70, 1))));
+			check("the dug hole is filled again", isBlock(circleCx - 16, 70, 1, Blocks.GRASS_BLOCK), String.valueOf(Terrain.level(server).getBlockState(at(circleCx - 16, 70, 1))));
 			check("the obsidian inside the ground is gone", isBlock(x - 5, 40, 0, Blocks.STONE));
 			check("the TNT on the surface is gone", isBlock(x + 30, 71, 3, Blocks.AIR));
 			check("the chest is gone", isBlock(circleCx - 14, 71, 0, Blocks.AIR));
@@ -1087,7 +1095,7 @@ public final class SelfTest {
 			check("placing a chest is refused too", lvl.getBlockState(base.above()).isAir());
 			a.setItemInHand(InteractionHand.MAIN_HAND, sword);
 			boolean dug = a.gameMode.destroyBlock(ground.south());
-			check("digging is refused", !dug && lvl.getBlockState(ground.south()).is(Blocks.DIRT));
+			check("digging is refused", !dug && lvl.getBlockState(ground.south()).is(Blocks.GRASS_BLOCK));
 
 			a.markLoaded();
 			a.invulnerableTime = 0;
@@ -3038,6 +3046,16 @@ public final class SelfTest {
 			run(b, "party leave");
 			check("a partner can't leave in the middle of a duel", b.heard("You are in a duel: finish it or use /leave first.") && Party.inParty(b.getUUID()));
 		});
+		step("2v2: a totem in hand saves Carl from the knockout", () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			carl.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+			hit(a, carl);
+			check("Carl popped the totem and is still in the fight", carl.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL
+				&& carl.getMainHandItem().isEmpty() && carl.getHealth() > 0f && carl.getHealth() <= 1.01f, carl.getMainHandItem() + " " + carl.getHealth());
+			check("and the round goes on with four alive", t.phase == Duel.Phase.FIGHTING && t.points[0] == 0 && t.points[1] == 0 && sidebarHas(a, "Alive: 2 vs 2"), String.valueOf(sidebar(a)));
+			carl.setHealth(carl.getMaxHealth());
+			carl.removeAllEffects();
+		});
 		step("2v2: Alice knocks Carl out; the round goes on", () -> {
 			hit(a, carl);
 			check("Carl is a spectator now", carl.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SPECTATOR);
@@ -4446,6 +4464,69 @@ public final class SelfTest {
 			Missions.resetForTest();
 			ReplayCommands.resetForTest();
 		});
+
+		// ---------------------------------------------------------------- Delivery 9: totems and real health
+		final float[] d9 = new float[6];
+		step("totems: a duel to try them in", () -> {
+			for (Dummy p : new Dummy[] {a, b}) p.inbox.clear();
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 5));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("totems: a lethal blow pops the totem and the round goes on", () -> {
+			Duel d = duel(a);
+			a.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+			d9[0] = a.getStats().getValue(Stats.ITEM_USED, Items.TOTEM_OF_UNDYING);
+			hit(b, a);
+			check("the round did not end", d.phase == Duel.Phase.FIGHTING && d.points[0] == 0 && d.points[1] == 0, d.phase + " " + d.points[0] + "-" + d.points[1]);
+			check("the totem is gone from the off hand", a.getOffhandItem().isEmpty(), String.valueOf(a.getOffhandItem()));
+			check("Alice is alive with 1 health", a.isAlive() && a.getHealth() > 0f && a.getHealth() <= 1.01f && a.gameMode() == GameType.SURVIVAL, String.valueOf(a.getHealth()));
+			check("the totem effects are on", a.hasEffect(MobEffects.REGENERATION) && a.hasEffect(MobEffects.ABSORPTION) && a.hasEffect(MobEffects.FIRE_RESISTANCE));
+			check("the use of the totem counts in her statistics", a.getStats().getValue(Stats.ITEM_USED, Items.TOTEM_OF_UNDYING) == d9[0] + 1,
+				a.getStats().getValue(Stats.ITEM_USED, Items.TOTEM_OF_UNDYING) + " vs " + d9[0]);
+			hit(b, a);
+			check("with no totem left the next lethal blow ends the round", d.phase == Duel.Phase.ROUND_END && d.points[1] == 1 && d.points[0] == 0, d.phase + " " + d.points[0] + "-" + d.points[1]);
+		}, () -> roundIs(a, 2), 600);
+		step("totems: in round 2 a totem in the main hand also counts", () -> {
+			Duel d = duel(a);
+			check("Alice is whole again", a.getHealth() == a.getMaxHealth() && !a.hasEffect(MobEffects.REGENERATION), String.valueOf(a.getHealth()));
+			b.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING, 2));
+			hit(a, b);
+			check("Bob popped one of two totems", b.getMainHandItem().is(Items.TOTEM_OF_UNDYING) && b.getMainHandItem().getCount() == 1 && d.phase == Duel.Phase.FIGHTING && d.points[0] == 0,
+				b.getMainHandItem() + " " + d.phase);
+			hit(a, b);
+			check("and then the second", b.getMainHandItem().isEmpty() && d.phase == Duel.Phase.FIGHTING && d.points[0] == 0, b.getMainHandItem() + " " + d.phase);
+			hit(a, b);
+			check("with none left Alice wins the round", d.phase == Duel.Phase.ROUND_END && d.points[0] == 1, d.phase + " " + d.points[0] + "-" + d.points[1]);
+		}, () -> roundIs(a, 3), 600);
+		step("notch: eating an enchanted golden apple gives absorption and regeneration", () -> {
+			Duel d = duel(a);
+			a.setHealth(6f);
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.ENCHANTED_GOLDEN_APPLE));
+			a.setItemInHand(InteractionHand.MAIN_HAND, a.getItemInHand(InteractionHand.MAIN_HAND).finishUsingItem((ServerLevel) a.level(), a));
+			check("the apple gave absorption and regeneration", a.getAbsorptionAmount() >= 15.9f && a.hasEffect(MobEffects.REGENERATION), a.getAbsorptionAmount() + " " + a.hasEffect(MobEffects.REGENERATION));
+			d9[1] = a.getHealth();
+			softHit(b, a, 14f);
+			check("a blow that would be lethal on 6 health alone does not end the round: the absorption takes it", d.phase == Duel.Phase.FIGHTING && d.points[1] == 1 && a.isAlive(),
+				d.phase + " " + d.points[1] + " health " + a.getHealth() + " abs " + a.getAbsorptionAmount());
+			check("the health did not go down", a.getHealth() >= d9[1] - 0.01f, a.getHealth() + " vs " + d9[1]);
+			check("the blow was taken by the absorption", a.getAbsorptionAmount() < 15.9f, String.valueOf(a.getAbsorptionAmount()));
+			d9[2] = ticks;
+		}, () -> ticks >= d9[2] + 2, 50);
+		step("notch: only when health and absorption are used up the round ends", () -> {
+			Duel d = duel(a);
+			check("two ticks later the apple still protects her", d.phase == Duel.Phase.FIGHTING && a.hasEffect(MobEffects.REGENERATION) && a.isAlive(), d.phase + " " + a.hasEffect(MobEffects.REGENERATION));
+			hit(b, a);
+			check("a huge blow ends the round", d.phase == Duel.Phase.ROUND_END && d.points[1] == 2, d.phase + " " + d.points[1]);
+		}, () -> roundIs(a, 4), 600);
+		step("totems: a blow that ignores totems (kill) still ends the round", () -> {
+			Duel d = duel(a);
+			a.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+			a.invulnerableTime = 0;
+			a.hurtServer((ServerLevel) a.level(), a.damageSources().genericKill(), 1000f);
+			check("the round ended and the totem was not used", d.phase == Duel.Phase.ROUND_END && d.points[1] == 3 && a.getOffhandItem().is(Items.TOTEM_OF_UNDYING),
+				d.phase + " " + d.points[1] + " " + a.getOffhandItem());
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 300);
 
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");

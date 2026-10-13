@@ -178,11 +178,17 @@ public final class DuelManager {
 		if (!(entity instanceof ServerPlayer p)) return true;
 		TeamDuel team = TEAM_BY_PLAYER.get(p.getUUID());
 		if (team != null) {
+			// a totem in hand saves the duelist first, like in vanilla (Fabric asks us before the game looks for it)
+			if (team.phase == Duel.Phase.FIGHTING && Totems.tryPop(p, source)) return false;
 			team.onDeath(p, source);
 			return false;
 		}
 		Duel duel = BY_PLAYER.get(p.getUUID());
 		if (duel == null) return true;
+		if (duel.canTakeDamage() && Totems.tryPop(p, source)) {
+			countHit(p, source, Math.min(amount, p.getMaxHealth()));
+			return false;
+		}
 		countHit(p, source, Math.min(amount, p.getMaxHealth()));
 		duel.onDeath(p, source);
 		return false;
