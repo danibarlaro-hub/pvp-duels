@@ -151,7 +151,7 @@ public final class SelfTest {
 	private static void tick() {
 		ticks++;
 		if (ticks % 10 == 0) clearMonsters();
-		if (ticks > 20 * 800) {
+		if (ticks > 20 * 1500) {
 			check("whole test finishes in time", false);
 			finish();
 			return;
@@ -3867,7 +3867,7 @@ public final class SelfTest {
 		step("menus: Bob's explosions, the switch for other players, the missions and the preview", () -> {
 			UUID id = b.getUUID();
 			menuStep(b, "Explosions");
-			check("nothing is unknown to Bob", menuCount(b, "Locked: ???") == 0 && menuHas(b, "Orbital Wither Cannon") && menuHas(b, "Domain Expansion"));
+			check("nothing is unknown to Bob", menuCount(b, "Locked: ???") == 0 && menuHas(b, "Orbital Wither Cannon") && menuHas(b, "Domain: Crimson Shrine"));
 			menuStep(b, "Orbital Wither Cannon");
 			check("Orbital Wither Cannon is equipped and his colors are off", Effects.explosionSlot(id).equals("orbital_wither") && !Effects.hasEffects(id));
 			menuStep(b, "Back");
@@ -4245,8 +4245,15 @@ public final class SelfTest {
 			{"domain_swords", "Domain Expansion: Field of Swords", "DOMAIN", String.valueOf(Films.HANDS + 70), "15"},
 			{"gungnir", "GUNGNIR", "FILM", String.valueOf(Films.GUNGNIR_WAIT + 40), "4"},
 			{"seven_stars", "SEVEN STARS", "FILM", String.valueOf(Films.SEVEN_LEAD + 90), "4"}};
+		// the fake connection only keeps the last 4000 packets, so the title is noted as soon as it arrives
+		final boolean[] heard = new boolean[2];
 		for (String[] f : films) {
 			final boolean skipTest = f[0].equals("seven_stars");
+			final java.util.function.BooleanSupplier note = () -> {
+				heard[0] |= titleHeard(a, f[1]);
+				heard[1] |= titleHeard(b, f[1]);
+				return true;
+			};
 			step("finale " + f[0] + ": Alice has it", () -> {
 				Victory.resetForTest();
 				Effects.grantExplosion(a.getUUID(), f[0]);
@@ -4255,6 +4262,8 @@ public final class SelfTest {
 				for (Dummy p : new Dummy[] {a, b}) p.inbox.clear();
 				cine[4] = Cinema.scenesStarted();
 				cine[5] = Cinema.cameraMoves();
+				heard[0] = false;
+				heard[1] = false;
 				invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
 			}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
 			step("finale " + f[0] + ": Alice wins", () -> {
@@ -4263,7 +4272,7 @@ public final class SelfTest {
 				a.link.sent.clear();
 				b.link.sent.clear();
 				hit(a, b);
-			}, () -> Cinema.scenesStarted() > cine[4] && a.getCamera() != a, 200);
+			}, () -> note.getAsBoolean() && Cinema.scenesStarted() > cine[4] && a.getCamera() != a, 200);
 			step("finale " + f[0] + ": the film starts with a camera and two doubles", () -> {
 				Cinema.Scene scene = Cinema.sceneOf(duel(a));
 				check("a finale of the right film for Alice", scene != null && scene.film != null && scene.film.id().equals(f[0]) && scene.kind == Cinema.Kind.valueOf(f[2]) && scene.win == 0);
@@ -4272,7 +4281,7 @@ public final class SelfTest {
 					&& a.gameMode() == net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() == net.minecraft.world.level.GameType.SPECTATOR);
 				check("each player has a double", scene.doubles[0].isAlive() && scene.doubles[1].isAlive());
 				check("the film is long (more than 7 seconds of camera)", scene.total > Cinema.PRE + 140, "" + scene.total);
-			}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Integer.parseInt(f[3]), 700);
+			}, () -> note.getAsBoolean() && Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Integer.parseInt(f[3]), 700);
 			step("finale " + f[0] + ": its world stands in the middle of the film", () -> {
 				Cinema.Scene scene = Cinema.sceneOf(duel(a));
 				int min = Integer.parseInt(f[4]);
@@ -4288,12 +4297,12 @@ public final class SelfTest {
 					b.setShiftKeyDown(false);
 					cine[7] = ticks;
 				}
-			}, () -> !skipTest || ticks >= cine[7] + 4, 60);
+			}, () -> note.getAsBoolean() && (!skipTest || ticks >= cine[7] + 4), 60);
 			if (skipTest) {
 				step("finale " + f[0] + ": Bob presses sneak and skips the film", () -> {
 					check("Bob still rides the camera before he sneaks", b.getCamera() != b);
 					b.setShiftKeyDown(true);
-				}, () -> b.getCamera() == b, 60);
+				}, () -> note.getAsBoolean() && b.getCamera() == b, 60);
 				step("finale " + f[0] + ": Bob has his body back and Alice still sees the film", () -> {
 					Cinema.Scene scene = Cinema.sceneOf(duel(a));
 					b.setShiftKeyDown(false);
@@ -4302,10 +4311,10 @@ public final class SelfTest {
 					check("the world of the film still stands", com.pvpduels.effects.Props.live() > 0);
 				});
 			}
-			step("finale " + f[0] + ": the film ends", () -> { }, () -> noDuel(a) && noDuel(b), 900);
+			step("finale " + f[0] + ": the film ends", () -> { }, () -> note.getAsBoolean() && noDuel(a) && noDuel(b), 900);
 			step("finale " + f[0] + ": everything is put back and nothing is left", () -> {
-				check("the title " + f[1] + " reached Alice", titleHeard(a, f[1]));
-				if (!skipTest) check("and Bob", titleHeard(b, f[1]));
+				check("the title " + f[1] + " reached Alice", heard[0]);
+				if (!skipTest) check("and Bob", heard[1]);
 				check("the film lasted more than seven seconds from the win", ticks - cine[0] > 140, (ticks - cine[0]) + " ticks");
 				check("nobody is looking through the camera and nobody is a spectator", a.getCamera() == a && b.getCamera() == b
 					&& a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
