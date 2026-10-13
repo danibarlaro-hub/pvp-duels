@@ -4330,7 +4330,10 @@ public final class SelfTest {
 			run(a, "leave");
 			check("/leave stops the replay", !ReplayPlayer.isIn(a.getUUID()));
 			check("Alice has her own eyes and mode back", a.getCamera() == a && a.gameMode() != GameType.SPECTATOR);
-			check("her inventory was given back, the camera and the doubles are gone, the arena is free", !PlayerBackup.exists(a.getUUID()) && taggedCount("pvpduels_replay") == 0 && DuelManager.activeDuels() == 0);
+		}, () -> true, 1);
+		step("replay: after /leave nothing is left", () -> {
+			check("her inventory was given back, the camera and the doubles are gone, the arena is free", !PlayerBackup.exists(a.getUUID()) && taggedCount("pvpduels_replay") == 0 && DuelManager.activeDuels() == 0,
+				PlayerBackup.exists(a.getUUID()) + " " + taggedCount("pvpduels_replay") + " " + DuelManager.activeDuels());
 		});
 		step("replay: to the end at 8x", () -> {
 			a.link.sent.clear();
@@ -4352,8 +4355,11 @@ public final class SelfTest {
 			check("two people can watch at the same time", ReplayPlayer.sessions() == 2 && DuelManager.activeDuels() == 2, ReplayPlayer.sessions() + " / " + DuelManager.activeDuels());
 			run(carl, "leave");
 			run(dora, "leave");
-			check("both leave with /leave", ReplayPlayer.sessions() == 0 && DuelManager.activeDuels() == 0 && taggedCount("pvpduels_replay") == 0);
+			check("both leave with /leave", ReplayPlayer.sessions() == 0 && !PlayerBackup.exists(carl.getUUID()) && !PlayerBackup.exists(dora.getUUID()));
 		}, () -> true, 1);
+		step("replay: the arenas are free again", () -> {
+			check("no camera, no doubles, no arena taken", DuelManager.activeDuels() == 0 && taggedCount("pvpduels_replay") == 0, DuelManager.activeDuels() + " " + taggedCount("pvpduels_replay"));
+		});
 		step("replay: delete", () -> {
 			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "replay delete " + rid[0]);
 			check("it is gone from the store and from the disk", ReplayStore.count() == 0 && !Files.exists(ReplayStore.fileOf(rid[0])));
