@@ -35,16 +35,18 @@ import java.util.function.Predicate;
 /**
  * The weekly building contest. Every contest has a category picked at random ("castle"): everybody can build it on a plot
  * for {@link #BUILD_DAYS} days, then the builds are shown anonymously and everybody votes for the best one for
- * {@link #VOTE_DAYS} days. The top three (with at least one vote) get the Builder rank for three weeks. Then a new contest
- * starts by itself. Admins can start or end one by hand with /contest start and /contest end.
+ * {@link #VOTE_DAYS} days. The top three (with at least one vote) get the Builder rank for three weeks. Then there is a break of
+ * {@link #REST_DAYS} days and a new contest starts by itself. Admins can start or end one by hand with /contest start and /contest end.
  * The state is kept in pvpduels/contest.json and the builds in pvpduels/contest/.
  */
 public final class Contest {
-	public enum Phase { NONE, BUILD, VOTE }
+	public enum Phase { NONE, BUILD, VOTE, REST }
 
 	public static final long DAY_MILLIS = 24L * 60 * 60 * 1000;
 	public static final int BUILD_DAYS = 5;
 	public static final int VOTE_DAYS = 2;
+	/** The break between the end of one contest and the start of the next one. */
+	public static final int REST_DAYS = 14;
 	/** A build needs this many blocks changed from the template to be an entry. */
 	public static final int MIN_BLOCKS = 20;
 	/** With fewer builds than this the contest is cancelled (there is nothing to vote for). */
@@ -87,6 +89,8 @@ public final class Contest {
 		Phase phase = Phase.NONE;
 		long buildEnd;
 		long voteEnd;
+		/** When the break after a contest ends. */
+		long restEnd;
 		/** Player id -> name of everybody who handed in a build. */
 		Map<String, String> entries = new LinkedHashMap<>();
 		/** The ids of the builds in the order of their numbers (set when the voting opens). */
@@ -188,7 +192,7 @@ public final class Contest {
 	/** "3 days left", "5 hours left" and so on for the phase that is running. */
 	public static synchronized String timeLeft() {
 		ensureLoaded();
-		long end = state.phase == Phase.BUILD ? state.buildEnd : state.phase == Phase.VOTE ? state.voteEnd : 0;
+		long end = state.phase == Phase.BUILD ? state.buildEnd : state.phase == Phase.VOTE ? state.voteEnd : state.phase == Phase.REST ? state.restEnd : 0;
 		long left = end - now();
 		if (state.phase == Phase.NONE) return "no time";
 		if (left <= 0) return "a moment left";
@@ -343,6 +347,7 @@ public final class Contest {
 			if (state.phase == Phase.NONE) startNew(server, null);
 			else if (state.phase == Phase.BUILD && t >= state.buildEnd) startVoting(server);
 			else if (state.phase == Phase.VOTE && t >= state.voteEnd) finish(server);
+			else if (state.phase == Phase.REST && t >= state.restEnd) startNew(server, null);
 		}
 	}
 
@@ -470,7 +475,22 @@ public final class Contest {
 			if (p != null) tellWinner(p, r, w);
 		}
 		save();
-		startNew(server, null);
+		startRest(server);
+	}
+
+	/** The break after a contest: the builds are put away and nobody can enter until the next one starts. */
+	private static void startRest(MinecraftServer server) {
+		ArenaStudio.exitAll(server, ArenaStudio.Mode.CONTEST, ArenaStudio.Mode.VIEW);
+		ArenaStore.clearContest();
+		state.phase = Phase.REST;
+		state.restEnd = now() + REST_DAYS * DAY_MILLIS;
+		state.buildEnd = 0;
+		state.voteEnd = 0;
+		state.entries.clear();
+		state.order.clear();
+		state.votes.clear();
+		save();
+		broadcast(server, Msg.info("The next building contest starts in " + REST_DAYS + " days."));
 	}
 
 	private static void tellWinner(ServerPlayer p, Result r, Winner w) {
@@ -513,6 +533,10 @@ public final class Contest {
 		UUID me = p.getUUID();
 		if (s.phase == Phase.NONE) {
 			p.sendSystemMessage(Msg.info("There is no building contest yet. One starts by itself in a moment."));
+			return;
+		}
+		if (s.phase == Phase.REST) {
+			p.sendSystemMessage(Msg.info("There is no building contest right now. The next one starts in " + timeLeft().replace(" left", "") + ". /contest results shows the last one."));
 			return;
 		}
 		p.sendSystemMessage(Msg.title("Building contest #" + s.number + ": " + s.category));
@@ -564,6 +588,8 @@ public final class Contest {
 				p.sendSystemMessage(Msg.info("Building contest: \"" + state.category + "\" (" + timeLeft() + " to build). /contest"));
 			} else if (state.phase == Phase.VOTE) {
 				p.sendSystemMessage(Msg.info("Building contest: the voting is open (" + timeLeft() + "). /contest"));
+			} else if (state.phase == Phase.REST) {
+				p.sendSystemMessage(Msg.info("Next building contest in " + timeLeft().replace(" left", "") + ". /contest"));
 			}
 			if (state.last != null) {
 				for (Winner w : state.last.winners) {

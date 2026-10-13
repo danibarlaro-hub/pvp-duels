@@ -2532,7 +2532,10 @@ public final class SelfTest {
 			Contest.setClockForTest(CONTEST_T0 + 7 * CONTEST_DAY + 2000);
 			BuilderRank.setClockForTest(CONTEST_T0 + 7 * CONTEST_DAY + 2000);
 			Contest.advance(server);
-			check("a new contest started", Contest.building() && Contest.number() == 2, Contest.phase() + " " + Contest.number());
+			check("the contest is over and the two-week break starts", Contest.phase() == Contest.Phase.REST && Contest.number() == 1 && Contest.timeLeft().equals("14 days left"),
+				Contest.phase() + " " + Contest.number() + " " + Contest.timeLeft());
+			check("nobody can build during the break", !Contest.building() && !Contest.voting());
+			check("everybody was told about the break", carl.heard("The next building contest starts in 14 days."));
 			check("Carl was taken out of the gallery", !ArenaStudio.isIn(carl.getUUID()));
 			check("Alice is a Builder", BuilderRank.hasRank(a.getUUID()) && BuilderRank.timeLeft(a.getUUID()).equals("21 days left"), BuilderRank.timeLeft(a.getUUID()));
 			check("so is Bob", BuilderRank.hasRank(b.getUUID()));
@@ -2543,6 +2546,10 @@ public final class SelfTest {
 			check("the builds were thrown away", Contest.entryCount() == 0 && !Contest.hasEntry(a.getUUID()) && Contest.loadEntry(a.getUUID()) == null);
 			run(dora, "contest results");
 			check("/contest results prints them", dora.heard("They are Builders for 3 weeks"));
+			run(dora, "contest");
+			check("/contest says when the next one starts", dora.heard("There is no building contest right now. The next one starts in 14 days."));
+			run(dora, "contest enter");
+			check("nobody can enter during the break", dora.heard("no building contest to build for") && !ArenaStudio.isIn(dora.getUUID()));
 		});
 		step("contest: the winner can make arenas now", () -> {
 			run(a, "createarena flat");
@@ -2553,6 +2560,18 @@ public final class SelfTest {
 			run(carl, "createarena flat");
 			check("Carl still can't", carl.heard("Only Builders can make arenas") && !ArenaStudio.isIn(carl.getUUID()));
 		});
+		step("contest: after the break a new contest starts", () -> {
+			long t = CONTEST_T0 + 7 * CONTEST_DAY + 2000 + Contest.REST_DAYS * CONTEST_DAY - 1000;
+			Contest.setClockForTest(t);
+			BuilderRank.setClockForTest(t);
+			Contest.advance(server);
+			check("a second before the break ends there is still no contest", Contest.phase() == Contest.Phase.REST, Contest.phase() + "");
+			Contest.setClockForTest(t + 2000);
+			BuilderRank.setClockForTest(t + 2000);
+			Contest.advance(server);
+			check("two weeks after the results the contest #2 starts", Contest.building() && Contest.number() == 2, Contest.phase() + " " + Contest.number());
+			check("it was announced", carl.heard("Building contest #2"));
+		});
 		step("contest: with one build only the contest is cancelled", () -> {
 			ServerLevel lvl = Arena.level(server);
 			run(a, "contest enter");
@@ -2560,7 +2579,7 @@ public final class SelfTest {
 			for (int i = 0; i < 21; i++) lvl.setBlock(at(cx + i, 101, 9), Blocks.OAK_PLANKS.defaultBlockState(), 2);
 			run(a, "leave");
 			check("one build", Contest.entryCount() == 1);
-			long t = CONTEST_T0 + 13 * CONTEST_DAY;
+			long t = CONTEST_T0 + 27 * CONTEST_DAY;
 			Contest.setClockForTest(t);
 			BuilderRank.setClockForTest(t);
 			Contest.advance(server);
@@ -2584,8 +2603,10 @@ public final class SelfTest {
 			String said = Contest.skip(server);
 			check("skipping the building time opens the voting", Contest.voting() && said.contains("building time"), said);
 			said = Contest.skip(server);
-			check("skipping the voting ends the contest", Contest.building() && Contest.number() == 5 && said.contains("voting"), said);
+			check("skipping the voting ends the contest and starts the break", Contest.phase() == Contest.Phase.REST && Contest.number() == 4 && said.contains("voting"), said + " " + Contest.phase());
 			check("with no votes nobody wins", Contest.lastWinner(1) == null && a.heard("Nobody voted"));
+			said = Contest.skip(server);
+			check("an admin can end the break early", Contest.building() && Contest.number() == 5 && said.contains("new contest"), said + " " + Contest.phase());
 		});
 		step("contest: clean up", () -> {
 			Contest.resetForTest();

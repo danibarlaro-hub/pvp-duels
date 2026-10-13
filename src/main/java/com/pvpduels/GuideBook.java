@@ -64,7 +64,7 @@ public final class GuideBook {
 			{"Builder rank", "Only Builders make arenas. Place 1st, 2nd or 3rd in the weekly building contest to get it for 3 weeks.\n\n/builder shows yours."}
 		}),
 		new Topic("Contest", new String[][] {
-			{"Building contest", "Every week there is a category (a castle, a pirate ship...). Everybody can build it: /contest enter.\n\n5 days to build, then 2 days to vote."},
+			{"Building contest", "There is a category (a castle, a pirate ship...). Everybody can build it: /contest enter.\n\n5 days to build, then 2 days to vote. Then a 2-week break."},
 			{"Your build", "Your plot is 64x64. Change at least 20 blocks.\n/contest save keeps it, /leave goes back. It is kept as your entry, and you can come back to improve it."},
 			{"Voting", "/contest vote opens the gallery: the builds have numbers, not names.\n\nVisit them and click [VOTE]. One vote each, you can change it, and not for your own."},
 			{"Prize", "The top 3 become Builders for 3 weeks and can make their own arenas (/createarena).\n\n/contest shows how it is going, /contest results the last one.\n\nAdmins: /contest start [category], /contest end"}
