@@ -451,6 +451,10 @@ public final class Cinema {
 			level.playSound(null, at.x, at.y, at.z, event, SoundSource.MASTER, volume, pitch);
 		}
 
+		private void sound(Vec3 at, net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> event, float volume, float pitch) {
+			level.playSound(null, at.x, at.y, at.z, event, SoundSource.MASTER, volume, pitch);
+		}
+
 		private void pose(int i, Pose pose) {
 			if (doubles[i] != null && doubles[i].isAlive()) doubles[i].setPose(pose);
 		}
