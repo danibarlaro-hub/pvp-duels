@@ -57,6 +57,27 @@ public final class Shapes {
 		}
 	}
 
+	/**
+	 * A flat disk whose slabs have names ({@code key + k}), so it can be found again later with {@link #diskTo}. It starts tiny and is
+	 * reshaped next tick (the client only draws growth that starts a tick after the block was made). Gone when the show is {@code dieAt} ticks old.
+	 */
+	public static void diskMake(Props props, String key, String state, Vec3 center, double thickness, int count, boolean bright, int dieAt) {
+		double step = 90.0 / count;
+		for (int k = 0; k < count; k++) {
+			Props.Prop p = props.block(state, center, new Vec3(0.3, thickness, 0.3), Q.yaw(k * step), bright);
+			props.lifetime(props.name(key + k, p), dieAt);
+		}
+	}
+
+	/** The named disk moves to this middle and takes this radius and thickness over {@code ticks}. */
+	public static void diskTo(Props props, String key, Vec3 center, double radius, double thickness, int count, int ticks) {
+		double step = 90.0 / count;
+		double side = Disk.sideFor(Math.max(0.03, radius), count);
+		for (int k = 0; k < count; k++) {
+			props.reshape(props.named(key + k), center, new Vec3(side, thickness, side), Q.yaw(k * step), ticks);
+		}
+	}
+
 	/** A thin beam from {@code a} to {@code b}. */
 	public static Props.Prop line(Props props, String state, Vec3 a, Vec3 b, double thick, boolean bright) {
 		Vec3 mid = a.add(b).scale(0.5);

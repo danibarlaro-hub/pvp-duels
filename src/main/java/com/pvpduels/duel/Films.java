@@ -7,6 +7,7 @@ import com.pvpduels.effects.ExplosionArt;
 import com.pvpduels.effects.GridArt;
 import com.pvpduels.effects.Props;
 import com.pvpduels.effects.Quality;
+import com.pvpduels.effects.SkyArt;
 import com.pvpduels.effects.StrikeArt;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -65,6 +66,8 @@ final class Films {
 	static final Film SEVEN = new SevenFilm();
 	static final Film RAIL = new RailFilm();
 	static final Film TESSERACT = new TesseractFilm();
+	static final Film ECLIPSE = new EclipseFilm();
+	static final Film MOON = new MoonFilm();
 	static final Film SHRINE = new DomainFilm(DomeArt.Variant.SHRINE);
 	static final Film VOID = new DomainFilm(DomeArt.Variant.VOID);
 	static final Film SWORDS = new DomainFilm(DomeArt.Variant.SWORDS);
@@ -79,6 +82,8 @@ final class Films {
 			case "seven_stars" -> SEVEN;
 			case "railgun" -> RAIL;
 			case "tesseract" -> TESSERACT;
+			case "eclipse" -> ECLIPSE;
+			case "moonfall" -> MOON;
 			case "domain_expansion" -> SHRINE;
 			case "domain_void" -> VOID;
 			case "domain_swords" -> SWORDS;
@@ -598,6 +603,139 @@ final class Films {
 			if (a == GridArt.climax(true)) {
 				s.flash();
 				s.title(Component.literal("TESSERACT").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Eclipse
+
+	private static final class EclipseFilm implements Film {
+		@Override public String id() { return "eclipse"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return SkyArt.eclipseTicks(true); }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** A low shot that looks up at the black disk, then pulls out to see the beams come down, then circles the crater. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 winner = s.stage[s.win];
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			double floor = s.center.y;
+			int strike = SkyArt.eclipseStrike(true);
+			int impact = SkyArt.eclipseImpact(true);
+			Vec3 p0 = new Vec3(winner.x + s.side.x * 5 - fwd.x * 2, floor + 1.6, winner.z + s.side.z * 5 - fwd.z * 2);
+			Vec3 p1 = new Vec3(loser.x + s.side.x * 16 - fwd.x * 8, floor + 2.2, loser.z + s.side.z * 16 - fwd.z * 8);
+			Vec3 p2 = new Vec3(loser.x + s.side.x * 22 - fwd.x * 10, floor + 5.0, loser.z + s.side.z * 22 - fwd.z * 10);
+			if (a < strike) return lerp(p0, p1, Cinema.ease(clamp01(a / (double) strike)));
+			if (a < impact) return lerp(p1, p2, Cinema.ease(clamp01((a - strike) / (double) SkyArt.eclipseBeams(true))));
+			int b = a - impact;
+			double e = Cinema.ease(Math.min(1.0, b / (double) SkyArt.eclipseAfter(true)));
+			Vec3 rel = new Vec3(p2.x - loser.x, 0, p2.z - loser.z);
+			double turn = Math.toRadians(60) * e;
+			double cos = Math.cos(turn);
+			double sin = Math.sin(turn);
+			double grow = 1.0 + 0.3 * e;
+			Vec3 pos = new Vec3(loser.x + (rel.x * cos - rel.z * sin) * grow, p2.y + 9.0 * e, loser.z + (rel.x * sin + rel.z * cos) * grow);
+			if (b < 14) pos = Cinema.Scene.shake(pos, 0.9 * (1 - b / 14.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 disk = SkyArt.eclipseCenter(loser, true);
+			int sweep = SkyArt.eclipseSweep(true);
+			int strike = SkyArt.eclipseStrike(true);
+			int impact = SkyArt.eclipseImpact(true);
+			Vec3 target;
+			if (a < strike) {
+				target = lerp(loser.add(0, 8, 0), disk, Cinema.ease(clamp01(a / (double) sweep)));
+			} else if (a < impact) {
+				target = lerp(disk, loser.add(0, 1.0, 0), Cinema.ease(clamp01((a - strike) / (double) SkyArt.eclipseBeams(true))));
+			} else {
+				double e = Cinema.ease(Math.min(1.0, (a - impact) / (double) SkyArt.eclipseAfter(true)));
+				target = loser.add(0, 2.5 + 3.0 * e, 0);
+			}
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			if (a == 0 && s.doubles[s.win] != null) s.doubles[s.win].setXRot(-35f);
+			Props props = s.props();
+			SkyArt.eclipse(s.level, viewers, props, loser, a, true);
+			for (Vec3 at : props.tick(a)) ExplosionArt.landing(s.level, viewers, at);
+			if (a == SkyArt.eclipseStrike(true) && s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
+			if (a == SkyArt.eclipseImpact(true)) {
+				s.flash();
+				s.title(Component.literal("ECLIPSE").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Moonfall
+
+	private static final class MoonFilm implements Film {
+		@Override public String id() { return "moonfall"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return SkyArt.moonTicks(true); }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** A low shot from the side that backs away a little while the moon comes down; after the landing it circles the crater and rises. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			int land = SkyArt.moonLand(true);
+			double floor = s.center.y;
+			double e = Cinema.ease(clamp01(a / (double) land));
+			Vec3 still = new Vec3(loser.x + s.side.x * (26 + 5 * e) - fwd.x * 6, floor + 2.4 + 1.4 * e, loser.z + s.side.z * (26 + 5 * e) - fwd.z * 6);
+			if (a <= land) return still;
+			double u = Cinema.ease(Math.min(1.0, (a - land) / (double) SkyArt.moonAfter(true)));
+			Vec3 rel = new Vec3(still.x - loser.x, 0, still.z - loser.z);
+			double turn = Math.toRadians(70) * u;
+			double cos = Math.cos(turn);
+			double sin = Math.sin(turn);
+			double grow = 1.0 + 0.4 * u;
+			Vec3 pos = new Vec3(loser.x + (rel.x * cos - rel.z * sin) * grow, still.y + 9.0 * u, loser.z + (rel.x * sin + rel.z * cos) * grow);
+			int since = a - land;
+			if (since < 18) pos = Cinema.Scene.shake(pos, 1.2 * (1 - since / 18.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			int land = SkyArt.moonLand(true);
+			Vec3 target;
+			if (a <= land) {
+				Vec3 moon = SkyArt.moonCenter(loser, a, true);
+				double b = clamp01((a - (land - 16)) / 16.0);
+				target = lerp(moon, loser.add(0, 4.0, 0), Cinema.ease(b));
+			} else {
+				double u = Cinema.ease(Math.min(1.0, (a - land) / (double) SkyArt.moonAfter(true)));
+				target = loser.add(0, 3.0 + 5.0 * u, 0);
+			}
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			if (a == 0 && s.doubles[s.win] != null) s.doubles[s.win].setXRot(-45f);
+			Props props = s.props();
+			SkyArt.moonfall(s.level, viewers, props, loser, a, true);
+			for (Vec3 at : props.tick(a)) ExplosionArt.landing(s.level, viewers, at);
+			if (a == SkyArt.moonLand(true)) {
+				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
+				s.flash();
+				s.title(Component.literal("MOONFALL").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
 					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
