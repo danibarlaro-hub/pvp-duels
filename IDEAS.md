@@ -29,7 +29,9 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Los dos juegan con el kit de quien desafia; inventario guardado en disco y devuelto al terminar/desconectar
 - ✅ `/kit load` y Quick kit bloqueados durante un duelo
 - ✅ Arena plana: bedrock 21x21 sobre el vacio, con o sin paredes, solo se ponen entidades/bloques con entidad (cofres, shulkers, ender chests, cristales...)
-- ✅ `/test_dummy <nombre>` (solo admins): jugador falso que acepta todo, para probar solo
+- ✅ `/testbot [nombre] [nivel]` (solo admins; tambien `/test_dummy`): jugador falso que acepta duelos, revanchas y empates, para desafiarlo y matarlo y probar todo; con nivel pelea como el bot de practica
+- ✅ `/draw`: ofrecer un empate en cualquier duelo (1v1 y 2v2), el rival acepta con un click
+- ✅ `/replay`: cada duelo 1v1 se graba entero; los jugadores se lo piden al admin (el pedido queda guardado y les llega un mensaje) y el admin se lo manda; se mira con dobles, camara, pausa, velocidad y 4 angulos
 - ✅ `/botduel [kit]`: pregunta "Static bot?" (Yes = no se puede mover, No = recibe knockback) y te manda a una arena de bedrock de 100 bloques hacia cada lado con paredes (no cuenta para tus estadisticas)
 - ✅ Arena circular: mundo normal, piso plano, circulo de barriers, radio 100/150/200, se resetea sola (5 bloques de tierra, piedra hasta y0, deepslate hasta y-59, bedrock en y-60)
 - ✅ Arena sin limites: si te alejas 100 bloques del rival, cuenta de 5 s, perdes la mitad de la vida y te teletransporta al rival
@@ -75,4 +77,8 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ 2v2 / equipos: `/party` (parejas de dos) y duelos de cuatro con sus rondas, sin fuego amigo, con logros (Better Together, Clutch...)
 - ✅ Efectos de victoria: 3 fireworks en fila atras del ganador, particulas en el piso y en toda la arena, explosiones raras (efectos O explosion, no las dos), menu `/effects`, misiones diarias y semanales `/missions` que desbloquean todo
 - ✅ Final de un duelo: la camara se aleja desde el centro de la arena y sube 7 bloques, Domain Expansion con el titulo para todos, empates (rompen la racha; dos Domain Expansion chocan y terminan en "I guess it's a tie")
+- ✅ Calidad de efectos por jugador: Potato, Low, Mid, High y Ultra Pro Max
+- ✅ Explosiones nuevas: Shooting Star, Black Hole y Meteor Shower
+- ✅ `/unlock_all <codigo>` (admins): desbloquea todos los cosmeticos
+- ✅ La version del mod ya no es 0.1.0 (ahora 0.8.0, y el nombre del `.jar` la lleva)
 - ⏳ Aprobadas pero todavia no hechas: racha de dias, regalar particulas, coleccion, sonidos de victoria, NPC del guardarropa, efecto de GG/derrota, kit de la semana, cola 2v2
