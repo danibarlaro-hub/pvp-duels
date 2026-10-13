@@ -29,8 +29,8 @@ import java.util.UUID;
  * /queue: wait for somebody to play with, without having to ask. There are three queues:
  * <ul>
  * <li><b>public</b>: you pick a public kit (or "random public kit"); you are matched with somebody who picked the same one.</li>
- * <li><b>random</b>: the kit is a surprise. It comes from the public shelf, from your kits, from your rival's kits or from a
- * kit somebody is offering in the own-kit queue.</li>
+ * <li><b>random</b>: the kit is a surprise. It comes from the public shelf or from the personal kits of the two players (yours or
+ * your rival's).</li>
  * <li><b>own kit</b>: you offer one of your kits and wait. Somebody who opens this queue sees what is offered and can take it:
  * the two of you then fight with the kit of the one who waited.</li>
  * </ul>
@@ -229,14 +229,12 @@ public final class Queue {
 		return PublicKits.find(pick).map(e -> new Choice(e.owner(), e.name(), true, "random public kit")).orElse(null);
 	}
 
-	/** Picks a source at random (public shelf, the two players' kits, kits offered in the own-kit queue), then a kit from it. */
+	/** Picks a source at random (public shelf, the kits of one player, the kits of the other), then a kit from it. */
 	static Choice randomChoice(ServerPlayer a, ServerPlayer b) {
 		List<String> shelf = PublicKits.names();
 		List<String> mineA = KitStore.list(a.getUUID());
 		List<String> mineB = KitStore.list(b.getUUID());
-		List<Entry> offers = new ArrayList<>();
-		for (Entry e : ENTRIES) if (e.mode() == Mode.OWN) offers.add(e);
-		int kinds = (shelf.isEmpty() ? 0 : 1) + (mineA.isEmpty() ? 0 : 1) + (mineB.isEmpty() ? 0 : 1) + (offers.isEmpty() ? 0 : 1);
+		int kinds = (shelf.isEmpty() ? 0 : 1) + (mineA.isEmpty() ? 0 : 1) + (mineB.isEmpty() ? 0 : 1);
 		if (kinds == 0) return null;
 		int n = random.nextInt(kinds); // which of the sources that have kits
 		if (!shelf.isEmpty() && n-- == 0) {
@@ -247,12 +245,8 @@ public final class Queue {
 			String name = mineA.get(random.nextInt(mineA.size()));
 			return new Choice(a.getUUID(), name, false, "random queue: " + a.getName().getString() + "'s kit " + name);
 		}
-		if (!mineB.isEmpty() && n-- == 0) {
-			String name = mineB.get(random.nextInt(mineB.size()));
-			return new Choice(b.getUUID(), name, false, "random queue: " + b.getName().getString() + "'s kit " + name);
-		}
-		Entry offer = offers.get(random.nextInt(offers.size()));
-		return new Choice(offer.id(), offer.kit(), false, "random queue: " + offer.name() + "'s kit " + offer.kit());
+		String name = mineB.get(random.nextInt(mineB.size()));
+		return new Choice(b.getUUID(), name, false, "random queue: " + b.getName().getString() + "'s kit " + name);
 	}
 
 	private static KitStore.Kit load(MinecraftServer server, Choice choice) {
@@ -291,7 +285,7 @@ public final class Queue {
 		b.set(10, DuelMenus.icon(Items.ENDER_CHEST, "Public queue", ChatFormatting.AQUA,
 			"Pick a public kit (or a random one).", "You play against somebody who picked the same."), Queue::openPublicMenu);
 		b.set(13, DuelMenus.icon(Items.ENDER_PEARL, "Random queue", ChatFormatting.LIGHT_PURPLE,
-			"The kit is a surprise:", "a public one, one of yours or your rival's,", "or one offered in the own-kit queue."), who -> {
+			"The kit is a surprise:", "a public one, or a personal kit", "of yours or of your rival."), who -> {
 				who.closeContainer();
 				report(who, joinRandom(who));
 			});

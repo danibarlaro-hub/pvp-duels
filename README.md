@@ -85,7 +85,7 @@ La primera vez que se carga, Minecraft calcula la luz de la isla y puede tardar 
 ## Cola (`/queue`)
 - Para jugar sin tener que pedirle a nadie: `/queue` abre un menu con **tres colas**. Cuando hay otro jugador esperando en la misma cola el duelo arranca solo: arena plana con paredes, el primero en llegar a 3 puntos (cuenta para el Elo).
 - **Publica** (`/queue public [kit]`): elegis un kit publico (o "Random public kit") y te toca alguien que eligio lo mismo.
-- **Random** (`/queue random`): el kit es sorpresa. Sale de los kits publicos, de los tuyos, de los de tu rival o de uno que alguien este ofreciendo en la cola de kit propio.
+- **Random** (`/queue random`): el kit es sorpresa. Sale de los **kits publicos** o de los **kits personales** de los dos (los tuyos o los de tu rival).
 - **Kit propio** (`/queue own <kit>`): ofreces uno de tus kits y esperas; otro jugador lo ve en `/queue` (o usa `/queue take <jugador>`) y los dos pelean con ese kit.
 - `/queue list` muestra quien espera, `/queue leave` o el boton **[LEAVE QUEUE]** o el barrier **Leave** del lobby te sacan. Si te desconectas o entras a un duelo/taller/modo espectador te saca solo. Mientras esperas ves un cartelito con el tiempo.
 - **Ranking por kit**: cada kit tiene su propio Elo (todos arrancan en 1000 con cada kit). `/top kit` lista los kits con ranking y `/top kit <nombre> [elo|wins|streak]` muestra los mejores con ese kit. Al terminar un duelo ves cuanto cambio tu Elo del kit. Los kits se distinguen por nombre: dos kits que se llamen igual comparten ranking. Se guarda en `pvpduels/kitstats.json`.

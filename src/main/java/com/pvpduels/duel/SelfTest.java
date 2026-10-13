@@ -2045,7 +2045,7 @@ public final class SelfTest {
 			check("it can be a public kit", shelf);
 			check("it can be one of Alice's", owners.contains(a.getUUID().toString()));
 			check("it can be one of Bob's", owners.contains(b.getUUID().toString()));
-			check("it can be one offered in the own kit queue", owners.contains(dora.getUUID().toString()));
+			check("it is never one offered in the own kit queue by somebody else", !owners.contains(dora.getUUID().toString()));
 			run(dora, "queue leave");
 			check("Dora left", !Queue.isQueued(dora.getUUID()));
 		});
