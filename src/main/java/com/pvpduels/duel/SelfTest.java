@@ -3667,9 +3667,11 @@ public final class SelfTest {
 			a.closeContainer();
 		});
 		step("menus: an admin unlocks everything for Bob", () -> {
-			run(a, "effects unlockall Bob");
 			UUID id = b.getUUID();
-			check("Bob has all 23 firework things", Effects.ownedItemCount(id) == 23);
+			run(a, "effects unlockall Bob");
+			check("a normal player can't unlock everything", Effects.ownedItemCount(id) == 2 && Effects.ownedParticles(id).isEmpty() && Effects.ownedExplosions(id).isEmpty());
+			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "effects unlockall Bob");
+			check("the console (an admin) can", Effects.ownedItemCount(id) == 23);
 			check("every particle with 3 copies", Effects.ownedParticles(id).size() == Particles.all().size() && Effects.particleCount(id, "flame") == 3);
 			check("and the three explosions", Effects.ownedExplosions(id).size() == 3);
 			check("Bob was told", b.heard("You got all the victory effects"));
