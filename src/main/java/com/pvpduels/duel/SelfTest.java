@@ -3918,6 +3918,7 @@ public final class SelfTest {
 			check("the doubles face the middle", Math.abs(scene.doubles[0].getYRot() - scene.yaw[0]) < 1 && Math.abs(scene.doubles[1].getYRot() - scene.yaw[1]) < 1);
 			check("both doubles are tagged so they can be found and removed", taggedCount("pvpduels_double") == 2 && taggedCount("pvpduels_camera") == 1, taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera"));
 			check("the duel waits for the finale before it closes", d.phase == Duel.Phase.ENDED);
+			check("Alice saw VICTORY and Bob saw DEFEAT first, as always", titleHeard(a, "VICTORY") && titleHeard(b, "DEFEAT"));
 		}, () -> a.getCamera() != a && b.getCamera() != b, 100);
 		step("finale: everybody looks through the camera, the winner's hands are joined", () -> {
 			Cinema.Scene scene = Cinema.sceneOf(duel(a));
@@ -3962,7 +3963,6 @@ public final class SelfTest {
 				&& carl.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && !Spectators.isIn(carl.getUUID()));
 			check("the camera and the doubles are gone", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0,
 				Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera"));
-			check("Alice saw VICTORY, Bob saw DEFEAT", titleHeard(a, "VICTORY") && titleHeard(b, "DEFEAT"));
 			check("she won, so her streak went up", StatsStore.get(a.getUUID()).streak == cine[3] + 1, StatsStore.get(a.getUUID()).streak + " vs " + cine[3]);
 		});
 
@@ -4038,6 +4038,7 @@ public final class SelfTest {
 			UUID bob = b.getUUID();
 			Effects.grantItem(bob, "color:red");
 			Effects.grantItem(bob, "color:blue");
+			Effects.toggleColor(bob, 0, "white"); // the Domain Expansion of the clash took his white off
 			check("Bob puts red and blue on the left and right fireworks", Effects.toggleColor(bob, 1, "red") == null && Effects.toggleColor(bob, 2, "blue") == null && Effects.fireworkColors(bob, 0).equals(List.of("white")));
 			Victory.resetForTest();
 			cine[4] = Cinema.scenesStarted();
