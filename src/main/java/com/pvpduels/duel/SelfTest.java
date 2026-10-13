@@ -4207,7 +4207,7 @@ public final class SelfTest {
 				xfx[2] = com.pvpduels.effects.Props.burstCount();
 				Victory.preview(a);
 				check("a show started", Victory.showsStarted() == d8[4] + 1 && Victory.activeShows() >= 1);
-			}, () -> ticks >= xfx[0] + 75, 300);
+			}, () -> ticks >= xfx[0] + 60, 300);
 			step("explosions: " + ex + " has its solid parts in the middle of the show", () -> {
 				check("the show is still on", Victory.activeShows() == 1);
 				check("display entities were made (" + ex + ")", com.pvpduels.effects.Props.createdCount() >= xfx[1] + 3, (com.pvpduels.effects.Props.createdCount() - xfx[1]) + " made");
@@ -4230,6 +4230,27 @@ public final class SelfTest {
 		step("explosions: fireworks burst in the sky of the big ones", () -> {
 			check("the shows launched real firework bursts", com.pvpduels.effects.Props.burstCount() >= 12, String.valueOf(com.pvpduels.effects.Props.burstCount()));
 			check("the sweep finds nothing to clean", com.pvpduels.effects.Props.sweep(server) == 0);
+		});
+		step("explosions: on Potato the solid parts are taken off the screen", () -> {
+			Effects.grantExplosion(a.getUUID(), "orbital_strike");
+			Effects.setExplosion(a.getUUID(), "orbital_strike");
+			Effects.setQuality(a.getUUID(), com.pvpduels.effects.Quality.POTATO);
+			a.link.sent.clear();
+			Victory.preview(a);
+		}, () -> Victory.activeShows() == 0, 600);
+		step("explosions: Potato got the remove-entity packets and High did not", () -> {
+			int removed = 0;
+			for (Packet<?> packet : List.copyOf(a.link.sent)) if (packet instanceof net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket) removed++;
+			xfx[3] = removed;
+			check("every prop was removed from her screen the moment it appeared", removed >= 15, String.valueOf(removed));
+			Effects.setQuality(a.getUUID(), com.pvpduels.effects.Quality.HIGH);
+			a.link.sent.clear();
+			Victory.preview(a);
+		}, () -> Victory.activeShows() == 0, 600);
+		step("explosions: High keeps them", () -> {
+			int removed = 0;
+			for (Packet<?> packet : List.copyOf(a.link.sent)) if (packet instanceof net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket) removed++;
+			check("on High far fewer were taken off (only the cleanup, in batches)", removed < xfx[3] / 2, removed + " vs " + xfx[3]);
 		});
 		step("explosions: back to normal", () -> {
 			Effects.setExplosion(a.getUUID(), "");

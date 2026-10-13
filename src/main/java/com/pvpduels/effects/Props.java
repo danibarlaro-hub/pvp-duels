@@ -1,6 +1,7 @@
 package com.pvpduels.effects;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.server.MinecraftServer;
@@ -238,6 +239,8 @@ public final class Props {
 	}
 
 	private Prop spawn(String type, Vec3 at, String nbt) {
+		// a prop in a chunk that is not loaded could not be found again and would stay in the world
+		if (!level.hasChunkAt(BlockPos.containing(at))) return null;
 		String tag = prefix + "_" + (next++);
 		String command = String.format(Locale.ROOT, "summon %s %.3f %.3f %.3f {Tags:[\"%s\"]%s}", type, at.x, at.y, at.z, tag, nbt);
 		run(command);
