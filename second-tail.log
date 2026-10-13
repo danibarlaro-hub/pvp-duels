@@ -1,0 +1,300 @@
+[23:13:20] [Server thread/INFO] (pvpduels) [selftest] PASS  the next free name is TestBot2
+[23:13:20] [Server thread/INFO] (Minecraft) Easy1[local] logged in with entity id 43194 at (0.0, 0.0, 0.0)
+[23:13:20] [Server thread/INFO] (Minecraft) Easy1 joined the game
+[23:13:20] [Server thread/INFO] (pvpduels) Test dummy 'Easy1' created by Alice
+[23:13:20] [Server thread/INFO] (pvpduels) [selftest] PASS  a second bot with another level
+[23:13:20] [Server thread/INFO] (pvpduels) [selftest] PASS  it has the level Easy
+[23:13:20] [Server thread/INFO] (Minecraft) Easy1 lost connection: Test dummy removed
+[23:13:20] [Server thread/INFO] (Minecraft) Easy1 left the game
+[23:13:20] [Server thread/INFO] (pvpduels) [selftest] PASS  /testbot remove takes it away
+[23:13:20] [Server thread/INFO] (pvpduels) [selftest] --- test bot: Alice challenges it
+[23:13:20] [Server thread/INFO] (pvpduels) Duel started: Alice vs TestBot (DuelConfig[kit=qkit, arena=FLAT, walls=false, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[23:13:20] [Server thread/INFO] (pvpduels) [selftest] PASS  the bot accepted by itself
+[23:13:25] [Server thread/INFO] (pvpduels) [selftest] --- test bot: the fight goes on for a while (it is being recorded)
+[23:13:29] [Server thread/INFO] (pvpduels) [selftest] --- test bot: Alice kills it
+[23:13:29] [Server thread/INFO] (pvpduels) [selftest] PASS  first to 1: Alice wins
+[23:13:32] [Server thread/INFO] (pvpduels) Duel Alice vs TestBot is finishing (round 1, phase ROUND_END, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:773)
+	at knot//com.pvpduels.duel.Duel.tick(Duel.java:305)
+	at knot//com.pvpduels.duel.DuelManager.onTick(DuelManager.java:136)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zmm000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:4945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[23:13:32] [Server thread/INFO] (pvpduels) Replay 6igb0 saved: Alice vs TestBot, 11 seconds, 0 KB
+[23:13:37] [Server thread/INFO] (pvpduels) Duel Alice vs TestBot closed (1 - 0).
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] --- replay: the duel was recorded and kept
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  one replay is in the store   (1)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  with the players, the score and the winner   (Alice TestBot 0)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  it lasted a few seconds and the file is on disk   (11 s 319 bytes)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the file reads back with a picture of every tick   (229)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  with the kit and the rounds
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the two players start on different sides   (-7.5 / 8.5)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the recording is not just one picture repeated (Alice moved or turned)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] --- replay: the list, asking an admin and the answers
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice sees her replay with a button to ask an admin
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob took no part: his list is empty
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  without permission she can't watch it
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob can't ask for a duel he did not play
+[23:13:37] [Server thread/INFO] (pvpduels) Alice asked for the replay 6igb0
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice asks for her latest replay
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  asking twice does not make a second request
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the request is in a file: it survives a restart
+[23:13:37] [Server thread/INFO] (Minecraft) Denied #6igb0 for 1 player.
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  an admin says no: Alice is told and nothing is waiting
+[23:13:37] [Server thread/INFO] (pvpduels) Alice asked for the replay 6igb0
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  after a no she can ask again
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  an answer given while she is away waits for her
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  she hears it when she is back, only once
+[23:13:37] [Server thread/INFO] (pvpduels) Alice asked for the replay 6igb0
+[23:13:37] [Server thread/INFO] (Minecraft) Sent #6igb0 to 1 player.
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  an admin sends it: Alice is told with a button and can watch
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob still can't
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] --- replay: Alice watches it
+[23:13:37] [Server thread/INFO] (pvpduels) Alice is watching the replay 6igb0 (Alice vs TestBot)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the replay started
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  she is a spectator and her inventory is saved
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  it takes an arena, like a duel
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  she was told the controls
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] --- replay: it plays
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  she looks through the camera
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  a double of each player and a camera exist   (2 / 1)
+[23:13:37] [Server thread/INFO] (pvpduels) [selftest] PASS  normal speed, not paused
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] --- replay: pause
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] PASS  the picture moved on   (1.0 -> 13.0)
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] PASS  the heads-up line (vida, tiempo, velocidad) is being sent
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] PASS  paused
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] --- replay: speed, view and restart
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] PASS  while paused the picture stays   (13.0 -> 13.0)
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] PASS  a speed makes it play again
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] PASS  the view changes
+[23:13:38] [Server thread/INFO] (pvpduels) [selftest] PASS  restart goes back to the start   (0.0)
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] --- replay: twice as fast
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] PASS  about 20 pictures in 10 ticks   (20.0)
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] PASS  somebody who is not watching gets an error
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] PASS  /leave stops the replay
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice has her own eyes and mode back
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] --- replay: after /leave nothing is left
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] PASS  her inventory was given back, the camera and the doubles are gone, the arena is free   (false 0 0)
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] --- replay: to the end at 8x
+[23:13:39] [Server thread/INFO] (pvpduels) Alice is watching the replay 6igb0 (Alice vs TestBot)
+[23:13:39] [Server thread/INFO] (pvpduels) [selftest] PASS  watching again works
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] --- replay: it ended by itself and put everything back
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  the title named the winner
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is back to normal
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  nothing is left
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] --- replay: an admin watches without asking
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  a player with no permission can't
+[23:13:46] [Server thread/INFO] (pvpduels) Carl is watching the replay 6igb0 (Alice vs TestBot)
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  an admin can
+[23:13:46] [Server thread/INFO] (pvpduels) Dora is watching the replay 6igb0 (Alice vs TestBot)
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  two people can watch at the same time   (2 / 2)
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  both leave with /leave
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] --- replay: the arenas are free again
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  no camera, no doubles, no arena taken   (0 0)
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] --- replay: delete
+[23:13:46] [Server thread/INFO] (Minecraft) Replay #6igb0 deleted.
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  it is gone from the store and from the disk
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  and it can't be watched
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] --- draw: the test bot accepts a draw right away
+[23:13:46] [Server thread/INFO] (pvpduels) Duel started: Alice vs TestBot (DuelConfig[kit=qkit, arena=FLAT, walls=false, radius=0, mode=FIRST_TO, limit=3, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[23:13:46] [Server thread/INFO] (pvpduels) [selftest] PASS  a duel with the bot
+[23:13:51] [Server thread/INFO] (pvpduels) [selftest] --- draw: Alice offers
+[23:13:51] [Server thread/INFO] (pvpduels) Duel Alice vs TestBot is finishing (round 1, phase FIGHTING, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:773)
+	at knot//com.pvpduels.duel.Duel.agreeDraw(Duel.java:173)
+	at knot//com.pvpduels.duel.Draws.agree(Draws.java:102)
+	at knot//com.pvpduels.duel.Draws.handle(Draws.java:93)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$9(DuelCommands.java:64)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zme000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zmd000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:232)
+	at knot//com.pvpduels.duel.SelfTest.lambda$build$550(SelfTest.java:4765)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:188)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:101)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zmm000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:4945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[23:13:51] [Server thread/INFO] (pvpduels) Replay 1bwf6 saved: Alice vs TestBot, 5 seconds, 0 KB
+[23:13:51] [Server thread/INFO] (pvpduels) [selftest] PASS  the bot agreed and the duel is a tie   (ENDED -1)
+[23:13:56] [Server thread/INFO] (pvpduels) Duel Alice vs TestBot closed (0 - 0).
+[23:13:56] [Server thread/INFO] (pvpduels) [selftest] --- draw: the replay of a tie says so, and bot duels don't change the stats
+[23:13:56] [Server thread/INFO] (pvpduels) [selftest] PASS  one replay, a draw
+[23:13:56] [Server thread/INFO] (pvpduels) [selftest] PASS  no draw in the statistics (it was a bot)   (3 vs 3)
+[23:13:56] [Server thread/INFO] (Minecraft) TestBot lost connection: Test dummy removed
+[23:13:56] [Server thread/INFO] (Minecraft) TestBot left the game
+[23:13:56] [Server thread/INFO] (pvpduels) [selftest] PASS  TestBot is removed with /testbot remove
+[23:13:56] [Server thread/INFO] (pvpduels) [selftest] --- draw: Alice and Bob, the countdown first
+[23:13:56] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bob (DuelConfig[kit=qkit, arena=FLAT, walls=false, radius=0, mode=FIRST_TO, limit=3, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[23:13:56] [Server thread/INFO] (pvpduels) [selftest] PASS  a duel started
+[23:13:56] [Server thread/INFO] (pvpduels) [selftest] PASS  during the countdown a draw can't be offered
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] --- draw: an offer, a no, and a second offer
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  nothing to accept yet
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob got the offer with the buttons
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice was told it was sent
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  offering twice only reminds her
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  you can't accept your own offer
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob says no: Alice is told and the fight goes on
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  nobody offered now
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  a new offer
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] --- draw: an offer that was not answered runs out
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  too late: it expired
+[23:14:01] [Server thread/INFO] (pvpduels) Duel Alice vs Bob is finishing (round 1, phase FIGHTING, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:773)
+	at knot//com.pvpduels.duel.Duel.agreeDraw(Duel.java:173)
+	at knot//com.pvpduels.duel.Draws.agree(Draws.java:102)
+	at knot//com.pvpduels.duel.Draws.handle(Draws.java:74)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$10(DuelCommands.java:68)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zme000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zmd000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:232)
+	at knot//com.pvpduels.duel.SelfTest.lambda$build$557(SelfTest.java:4813)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:188)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:101)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zmm000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:4945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[23:14:01] [Server thread/INFO] (pvpduels) Replay 9mbfc saved: Alice vs Bob, 5 seconds, 0 KB
+[23:14:01] [Server thread/INFO] (pvpduels) [selftest] PASS  accepted: the duel ends in a tie
+[23:14:06] [Server thread/INFO] (pvpduels) Duel Alice vs Bob closed (0 - 0).
+[23:14:06] [Server thread/INFO] (pvpduels) [selftest] --- draw: the stats
+[23:14:06] [Server thread/INFO] (pvpduels) [selftest] PASS  it counts as a draw for both   (4 / 4)
+[23:14:06] [Server thread/INFO] (pvpduels) [selftest] PASS  and breaks the win streak
+[23:14:06] [Server thread/INFO] (pvpduels) [selftest] PASS  the replay of that duel is a tie
+[23:14:06] [Server thread/INFO] (pvpduels) [selftest] PASS  no offer is left behind
+[23:14:06] [Server thread/INFO] (pvpduels) [selftest] --- totems: a duel to try them in
+[23:14:06] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bob (DuelConfig[kit=qkit, arena=FLAT, walls=false, radius=0, mode=FIRST_TO, limit=5, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[23:14:06] [Server thread/INFO] (pvpduels) [selftest] PASS  a duel started
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] --- totems: a lethal blow pops the totem and the round goes on
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] PASS  the round did not end   (FIGHTING 0-0)
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] PASS  the totem is gone from the off hand   (0 minecraft:air)
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is alive with 1 health   (1.0)
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] PASS  the totem effects are on
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] PASS  the use of the totem counts in her statistics   (1 vs 0.0)
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] PASS  with no totem left the next lethal blow ends the round   (ROUND_END 0-1)
+[23:14:11] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is told what the last blow was   ([Duel request sent to Bob. It expires in 60 seconds., Duel vs Bob,   Kit: qkit   Arena: Flat arena (no walls),   Mode: First to 5 points   Use /leave to quit., Bob defeated Alice. Last blow: 1000.0 damage before armor, against 1.0 health + 8.0 absorption.  Score: 0 - 1])
+[23:14:17] [Server thread/INFO] (pvpduels) [selftest] --- totems: in round 2 a totem in the main hand also counts
+[23:14:17] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is whole again   (20.0)
+[23:14:17] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob popped one of two totems   (1 minecraft:totem_of_undying FIGHTING)
+[23:14:17] [Server thread/INFO] (pvpduels) [selftest] PASS  and then the second   (0 minecraft:air FIGHTING)
+[23:14:17] [Server thread/INFO] (pvpduels) [selftest] PASS  with none left Alice wins the round   (ROUND_END 1-1)
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] --- notch: eating an enchanted golden apple gives absorption and regeneration
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] PASS  the apple gave absorption and regeneration   (16.0 true)
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] PASS  a blow that would be lethal on 6 health alone does not end the round: the absorption takes it   (FIGHTING 1 health 6.0 abs 4.8)
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] PASS  the health did not go down   (6.0 vs 6.0)
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] PASS  the blow was taken by the absorption   (4.8)
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] --- notch: only when health and absorption are used up the round ends
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] PASS  two ticks later the apple still protects her   (FIGHTING true)
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] PASS  a huge blow ends the round   (ROUND_END 2)
+[23:14:23] [Server thread/INFO] (pvpduels) [selftest] PASS  and the chat says what she had when it landed   ([Bob defeated Alice. Last blow: 1000.0 damage before armor, against 7.0 health + 4.8 absorption.  Score: 1 - 2])
+[23:14:29] [Server thread/INFO] (pvpduels) [selftest] --- totems: a blow that ignores totems (kill) still ends the round
+[23:14:29] [Server thread/INFO] (pvpduels) [selftest] PASS  the round ended and the totem was not used   (ROUND_END 3 1 minecraft:totem_of_undying)
+[23:14:29] [Server thread/INFO] (pvpduels) Duel Alice vs Bob: Alice left (round 4, phase ROUND_END, practice false)
+[23:14:29] [Server thread/INFO] (pvpduels) Duel Alice vs Bob is finishing (round 4, phase ROUND_END, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:773)
+	at knot//com.pvpduels.duel.Duel.forfeit(Duel.java:663)
+	at knot//com.pvpduels.duel.DuelManager.leave(DuelManager.java:572)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$8(DuelCommands.java:58)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zme000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zmd000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:232)
+	at knot//com.pvpduels.duel.SelfTest.lambda$build$570(SelfTest.java:4892)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:188)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:101)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zmm000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:4945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[23:14:29] [Server thread/INFO] (pvpduels) Replay 7p8j saved: Alice vs Bob, 23 seconds, 1 KB
+[23:14:34] [Server thread/INFO] (pvpduels) Duel Alice vs Bob closed (1 - 3).
+[23:14:34] [Server thread/INFO] (pvpduels) [selftest] --- sanity: commands from outside a duel
+[23:14:34] [Server thread/INFO] (pvpduels) [selftest] PASS  /leave outside a duel gives an error
+[23:14:34] [Server thread/INFO] (pvpduels) [selftest] PASS  you can't duel yourself
+[23:14:34] [Server thread/INFO] (pvpduels) [selftest] --- shutdown while somebody is in the workshop
+[23:14:34] [Server thread/INFO] (pvpduels) Alice opened the kit workshop
+[23:14:34] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is in the workshop when the server stops
+[23:14:34] [Server thread/INFO] (pvpduels) [selftest] RESULT: PASS
+[23:14:34] [Server thread/INFO] (Minecraft) Stopping server
+[23:14:34] [Server thread/INFO] (Minecraft) Saving players
+[23:14:34] [Server thread/INFO] (Minecraft) Saving worlds
+[23:14:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[23:14:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[23:14:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[23:14:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[23:14:35] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[23:14:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[23:14:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[23:14:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[23:14:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[23:14:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[23:14:35] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1791932217578.json
+
+BUILD SUCCESSFUL in 17m 42s
+5 actionable tasks: 2 executed, 3 up-to-date
+Configuration cache entry stored.
