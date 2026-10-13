@@ -44,7 +44,7 @@ public final class EffectCommands {
 	private static int unlock(CommandSourceStack source, ServerPlayer target) {
 		Effects.unlockAll(target.getUUID());
 		source.sendSuccess(() -> Msg.ok(target.getName().getString() + " has every firework color and shape, every particle (3 copies) and every explosion now."), true);
-		if (!source.getEntityOrException().getUUID().equals(target.getUUID())) target.sendSystemMessage(Msg.ok("You got all the victory effects. /effects to choose."));
+		if (source.getEntity() == null || !source.getEntity().getUUID().equals(target.getUUID())) target.sendSystemMessage(Msg.ok("You got all the victory effects. /effects to choose."));
 		return 1;
 	}
 }
