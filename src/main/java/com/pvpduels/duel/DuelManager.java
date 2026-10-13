@@ -39,6 +39,8 @@ public final class DuelManager {
 	private static final Map<UUID, Duel> BY_PLAYER = new HashMap<>();
 	/** The 2v2 duels use the same arena slots as the 1v1 ones. */
 	private static final TeamDuel[] TEAM_SLOTS = new TeamDuel[MAX_DUELS];
+	/** Arena slots a replay is being played in (see {@link ReplayPlayer}): no duel can use them meanwhile. */
+	private static final boolean[] REPLAY_SLOTS = new boolean[MAX_DUELS];
 	private static final Map<UUID, TeamDuel> TEAM_BY_PLAYER = new HashMap<>();
 	private static final List<Invite> INVITES = new ArrayList<>();
 	private static final Map<UUID, Last> LAST = new HashMap<>();
@@ -77,7 +79,7 @@ public final class DuelManager {
 
 	/** True while the player can't take a new duel: they are in one that has not finished yet. */
 	public static boolean isBusy(UUID id) {
-		if (Workshop.isIn(id) || Spectators.isIn(id) || com.pvpduels.arena.ArenaStudio.isIn(id)) return true;
+		if (Workshop.isIn(id) || Spectators.isIn(id) || com.pvpduels.arena.ArenaStudio.isIn(id) || ReplayPlayer.isIn(id)) return true;
 		Duel d = BY_PLAYER.get(id);
 		if (d != null && d.phase != Duel.Phase.ENDED) return true;
 		TeamDuel t = TEAM_BY_PLAYER.get(id);
@@ -103,7 +105,23 @@ public final class DuelManager {
 		int n = 0;
 		for (Duel d : SLOTS) if (d != null) n++;
 		for (TeamDuel t : TEAM_SLOTS) if (t != null) n++;
+		for (boolean r : REPLAY_SLOTS) if (r) n++;
 		return n;
+	}
+
+	/** Takes a free arena slot for a replay. Returns its number, or -1 when all of them are busy. */
+	static int reserveSlot() {
+		for (int i = 0; i < SLOTS.length; i++) {
+			if (SLOTS[i] == null && TEAM_SLOTS[i] == null && !REPLAY_SLOTS[i]) {
+				REPLAY_SLOTS[i] = true;
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	static void releaseSlot(int slot) {
+		if (slot >= 0 && slot < REPLAY_SLOTS.length) REPLAY_SLOTS[slot] = false;
 	}
 
 	public static List<String> pendingFrom(UUID to) {
@@ -454,7 +472,7 @@ public final class DuelManager {
 		}
 
 		int slot = -1;
-		for (int i = 0; i < SLOTS.length && slot < 0; i++) if (SLOTS[i] == null && TEAM_SLOTS[i] == null) slot = i;
+		for (int i = 0; i < SLOTS.length && slot < 0; i++) if (SLOTS[i] == null && TEAM_SLOTS[i] == null && !REPLAY_SLOTS[i]) slot = i;
 		if (problem == null && slot < 0) problem = "All " + MAX_DUELS + " arenas are busy right now. Try again in a minute.";
 
 		ServerLevel arena = slot >= 0 ? Space.of(invite.config(), slot).level(server) : null;

@@ -123,6 +123,8 @@ public final class Duel {
 	private boolean celebrated;
 	/** How long the ENDED phase lasts (the finale makes it longer). */
 	private int endTicks = END_TICKS;
+	/** Writes the duel down for /replay (null in practice duels). */
+	private ReplayRecorder replay;
 	/** Somebody left: there is no finale, the winner just celebrates where they stand. */
 	private boolean forfeited;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
@@ -228,6 +230,10 @@ public final class Duel {
 		phase = Phase.STARTING;
 		phaseTicks = 0;
 		countdownTotal = FIRST_COUNTDOWN;
+		if (!practice) {
+			replay = new ReplayRecorder(this);
+			replay.roundStart(1);
+		}
 
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
@@ -302,6 +308,7 @@ public final class Duel {
 				if (phaseTicks >= endTicks) close();
 			}
 		}
+		if (replay != null && phase != Phase.ENDED) replay.sample();
 	}
 
 	/** Rules "no natural regeneration" (food stays at 17: no regeneration, you can still sprint) and "no hunger". */
@@ -490,6 +497,7 @@ public final class Duel {
 		recapLast[hitter] = elapsed;
 		recapBest[hitter] = Math.max(recapBest[hitter], recapCombo[hitter]);
 		recapCombo[victim] = 0; // getting hit breaks your combo
+		if (replay != null) replay.hit(victim, amount);
 	}
 
 	/** A hit between the player and the bot. "victim" is the duelist who was hurt; amount is the damage it did. */
@@ -563,6 +571,7 @@ public final class Duel {
 		phase = Phase.ROUND_END;
 		phaseTicks = 0;
 		if (winnerIdx >= 0) points[winnerIdx]++;
+		if (replay != null) replay.roundEnd(winnerIdx, points[0], points[1]);
 		decide();
 		if (practice) printPracticeSummary("Round " + round);
 
@@ -622,6 +631,7 @@ public final class Duel {
 			forfeit(0);
 			return;
 		}
+		if (replay != null) replay.roundStart(round);
 		space.begin(arena);
 		for (int i = 0; i < 2; i++) setupPlayer(i, arena);
 		phase = Phase.STARTING;
@@ -761,6 +771,10 @@ public final class Duel {
 		if (traceEnd) PvpDuelsMod.LOGGER.info("Duel {} vs {} is finishing (round {}, phase {}, practice {})", names[0], names[1], round, phase, practice,
 			new Throwable("who finished the duel"));
 		recordStats();
+		if (replay != null) {
+			if (winner != -2) ReplayStore.add(replay.finish(winner, points));
+			replay = null;
+		}
 		if (!celebrated && !practice) {
 			celebrated = true;
 			// A real 1v1 ends with the finale (camera, doubles, effects); a tie with two domains makes them clash. Without a

@@ -17,6 +17,7 @@ import com.pvpduels.effects.EffectCommands;
 import com.pvpduels.effects.Missions;
 import com.pvpduels.effects.Victory;
 import com.pvpduels.duel.Queue;
+import com.pvpduels.duel.ReplayCommands;
 import com.pvpduels.duel.Spectators;
 import com.pvpduels.duel.Terrain;
 import com.pvpduels.duel.SelfTest;
@@ -87,6 +88,7 @@ public class PvpDuelsMod implements ModInitializer {
 			Party.registerCommands(dispatcher);
 			EffectCommands.register(dispatcher);
 			BotDuel.registerCommands(dispatcher);
+			ReplayCommands.register(dispatcher);
 			TopCommand.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
 		});
@@ -103,6 +105,7 @@ public class PvpDuelsMod implements ModInitializer {
 		Achievements.register();
 		Party.register();
 		Missions.register();
+		ReplayCommands.register();
 		Victory.register();
 		com.pvpduels.duel.Cinema.register();
 		DuelManager.register();

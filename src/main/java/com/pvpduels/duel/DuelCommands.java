@@ -54,6 +54,7 @@ public final class DuelCommands {
 			if (com.pvpduels.workshop.Workshop.isIn(p.getUUID())) com.pvpduels.workshop.Workshop.exit(p);
 			else if (com.pvpduels.arena.ArenaStudio.isIn(p.getUUID())) com.pvpduels.arena.ArenaStudio.exit(p);
 			else if (Spectators.isIn(p.getUUID())) Spectators.exit(p);
+			else if (ReplayPlayer.isIn(p.getUUID())) ReplayPlayer.stop(p);
 			else DuelManager.leave(p);
 			return 1;
 		}));
