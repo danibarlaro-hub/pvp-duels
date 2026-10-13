@@ -2,6 +2,8 @@ package com.pvpduels.duel;
 
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.achievements.Achievements;
+import com.pvpduels.effects.Missions;
+import com.pvpduels.effects.Victory;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutStore;
@@ -49,6 +51,11 @@ public final class TeamDuel {
 	private final boolean[] restored = new boolean[PLAYERS];
 	/** Out for the round. */
 	private final boolean[] dead = new boolean[PLAYERS];
+	/** For the daily missions: what each player had used and eaten before the duel, and the health they regained while fighting. */
+	private final int[][] usedAtStart = new int[PLAYERS][RecapItems.COUNT];
+	private final int[] foodsAtStart = new int[PLAYERS];
+	private final float[] healed = new float[PLAYERS];
+	private final float[] lastHealth = {-1, -1, -1, -1};
 
 	Duel.Phase phase = Duel.Phase.STARTING;
 	private int phaseTicks;
@@ -73,6 +80,8 @@ public final class TeamDuel {
 		for (int i = 0; i < PLAYERS; i++) {
 			ids[i] = players[i].getUUID();
 			names[i] = players[i].getName().getString();
+			usedAtStart[i] = RecapItems.snapshot(players[i]);
+			foodsAtStart[i] = RecapItems.foods(players[i]);
 		}
 	}
 
@@ -257,6 +266,7 @@ public final class TeamDuel {
 
 	private void tickStarting() {
 		phaseTicks++;
+		java.util.Arrays.fill(lastHealth, -1f);
 		ServerLevel arena = space.level(server);
 		for (int i = 0; i < PLAYERS; i++) {
 			ServerPlayer p = player(i);
@@ -298,6 +308,9 @@ public final class TeamDuel {
 		for (int i = 0; i < PLAYERS; i++) {
 			ServerPlayer p = player(i);
 			if (p == null || dead[i]) continue;
+			float health = p.getHealth();
+			if (lastHealth[i] >= 0 && health > lastHealth[i]) healed[i] += health - lastHealth[i];
+			lastHealth[i] = health;
 			boolean wrongWorld = !p.level().dimension().equals(space.dimension());
 			String out = wrongWorld ? "left the arena." : space.outOfBounds(p);
 			if (out != null) {
@@ -459,7 +472,29 @@ public final class TeamDuel {
 		if (!recorded) {
 			recorded = true;
 			for (int i = 0; i < PLAYERS; i++) {
-				if (winner >= 0 && teamOf(i) == winner) Achievements.add(ids[i], names[i], "team_wins", 1);
+				boolean won = winner >= 0 && teamOf(i) == winner;
+				if (won) Achievements.add(ids[i], names[i], "team_wins", 1);
+				Missions.Facts facts = new Missions.Facts();
+				facts.won = won;
+				facts.lost = winner >= 0 && !won;
+				facts.team = true;
+				facts.kit = config.kit();
+				facts.roundsWon = points[teamOf(i)];
+				facts.hearts = healed[i] / 2.0;
+				ServerPlayer p = player(i);
+				if (p != null) {
+					int[] now = RecapItems.snapshot(p);
+					facts.pearls = now[1] - usedAtStart[i][1];
+					facts.apples = now[2] - usedAtStart[i][2];
+					facts.potions = now[3] - usedAtStart[i][3];
+					facts.foods = RecapItems.foods(p) - foodsAtStart[i];
+				}
+				Missions.record(ids[i], names[i], facts);
+			}
+			if (winner >= 0) {
+				for (int i = 0; i < PLAYERS; i++) {
+					if (teamOf(i) == winner && player(i) != null) Victory.play(player(i), player(2 * (1 - winner)));
+				}
 			}
 		}
 		DuelManager.onTeamFinished(this);

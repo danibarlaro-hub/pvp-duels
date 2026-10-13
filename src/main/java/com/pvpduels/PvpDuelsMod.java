@@ -13,6 +13,9 @@ import com.pvpduels.duel.Lobby;
 import com.pvpduels.duel.LobbyKit;
 import com.pvpduels.duel.Npcs;
 import com.pvpduels.duel.Party;
+import com.pvpduels.effects.EffectCommands;
+import com.pvpduels.effects.Missions;
+import com.pvpduels.effects.Victory;
 import com.pvpduels.duel.Queue;
 import com.pvpduels.duel.Spectators;
 import com.pvpduels.duel.Terrain;
@@ -82,6 +85,7 @@ public class PvpDuelsMod implements ModInitializer {
 			Contest.registerCommands(dispatcher);
 			AchievementCommands.register(dispatcher);
 			Party.registerCommands(dispatcher);
+			EffectCommands.register(dispatcher);
 			BotDuel.registerCommands(dispatcher);
 			TopCommand.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
@@ -98,6 +102,8 @@ public class PvpDuelsMod implements ModInitializer {
 		Contest.register();
 		Achievements.register();
 		Party.register();
+		Missions.register();
+		Victory.register();
 		DuelManager.register();
 		Terrain.register();
 		Spectators.register();

@@ -2,6 +2,8 @@ package com.pvpduels.duel;
 
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.achievements.Achievements;
+import com.pvpduels.effects.Missions;
+import com.pvpduels.effects.Victory;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutStore;
@@ -106,11 +108,17 @@ public final class Duel {
 	private final int[] recapLast = {-1000, -1000};
 	/** What each duelist had used (Stats.ITEM_USED) when the duel began, for the items listed in RecapItems. */
 	private final int[][] usedAtStart = new int[2][RecapItems.COUNT];
+	/** For the daily missions: foods eaten before the duel, and the health each duelist regained while fighting (-1 = not tracked). */
+	private final int[] foodsAtStart = new int[2];
+	private final float[] healed = new float[2];
+	private final float[] lastHealth = {-1, -1};
 	/** Elo before and after for both players (set when a real duel is recorded). */
 	private int[] eloInfo;
 	private int[] kitEloInfo;
 	/** True when the duel came from the queue. */
 	boolean queued;
+	/** The winner's victory effects were played. */
+	private boolean celebrated;
 	/** -2 undecided, -1 draw, 0 or 1 the winning index. */
 	int winner = -2;
 	boolean closed;
@@ -129,6 +137,8 @@ public final class Duel {
 		names[1] = b.getName().getString();
 		usedAtStart[0] = RecapItems.snapshot(a);
 		usedAtStart[1] = RecapItems.snapshot(b);
+		foodsAtStart[0] = RecapItems.foods(a);
+		foodsAtStart[1] = RecapItems.foods(b);
 	}
 
 	// ------------------------------------------------------------------ helpers
@@ -289,6 +299,8 @@ public final class Duel {
 
 	private void tickStarting(ServerPlayer a, ServerPlayer b) {
 		phaseTicks++;
+		lastHealth[0] = -1;
+		lastHealth[1] = -1;
 		ServerLevel arena = space.level(server);
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
@@ -326,6 +338,11 @@ public final class Duel {
 	private void tickFighting(ServerPlayer a, ServerPlayer b) {
 		phaseTicks++;
 		noContact++;
+		for (int i = 0; i < 2; i++) {
+			float health = player(i).getHealth();
+			if (lastHealth[i] >= 0 && health > lastHealth[i]) healed[i] += health - lastHealth[i];
+			lastHealth[i] = health;
+		}
 
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
@@ -690,6 +707,14 @@ public final class Duel {
 				if (points[1 - i] == 0 && points[i] >= 2) Achievements.add(id, name, "flawless", 1);
 			}
 			ServerPlayer p = player(i);
+			Missions.Facts facts = new Missions.Facts();
+			facts.won = won;
+			facts.lost = winner == 1 - i;
+			facts.kit = config.kit();
+			facts.combo = recapBest[i];
+			facts.hits = recapHits[i];
+			facts.roundsWon = points[i];
+			facts.hearts = healed[i] / 2.0;
 			if (p != null) {
 				int[] now = RecapItems.snapshot(p);
 				String[] counters = {"totems", "pearls", "apples"};
@@ -697,7 +722,12 @@ public final class Duel {
 					int used = now[g] - usedAtStart[i][g];
 					if (used > 0) Achievements.add(id, name, counters[g], used);
 				}
+				facts.pearls = now[1] - usedAtStart[i][1];
+				facts.apples = now[2] - usedAtStart[i][2];
+				facts.potions = now[3] - usedAtStart[i][3];
+				facts.foods = RecapItems.foods(p) - foodsAtStart[i];
 			}
+			Missions.record(id, name, facts);
 		}
 	}
 
@@ -705,6 +735,10 @@ public final class Duel {
 		if (traceEnd) PvpDuelsMod.LOGGER.info("Duel {} vs {} is finishing (round {}, phase {}, practice {})", names[0], names[1], round, phase, practice,
 			new Throwable("who finished the duel"));
 		recordStats();
+		if (!celebrated && !practice && winner >= 0 && player(winner) != null) {
+			celebrated = true;
+			Victory.play(player(winner), player(1 - winner));
+		}
 		DuelManager.onFinished(this);
 		phase = Phase.ENDED;
 		phaseTicks = 0;
