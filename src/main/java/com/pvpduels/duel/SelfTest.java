@@ -4195,22 +4195,22 @@ public final class SelfTest {
 			check("Low about a third", sums[1] >= 650 && sums[1] <= 750, "" + sums[1]);
 			check("Mid about two thirds", sums[2] >= 1250 && sums[2] <= 1350, "" + sums[2]);
 		});
-		final int[] fx = new int[4];
+		final int[] xfx = new int[4];
 		for (String ex : new String[] {"orbital_strike", "orbital_wither", "shooting_star", "black_hole", "meteor_shower"}) {
 			step("explosions: " + ex + " plays", () -> {
 				Effects.grantExplosion(a.getUUID(), ex);
 				check("Alice equips it", Effects.setExplosion(a.getUUID(), ex) == null && Effects.explosionSlot(a.getUUID()).equals(ex) && Victory.explosionMode(a.getUUID()));
 				a.link.sent.clear();
 				d8[4] = Victory.showsStarted();
-				fx[0] = ticks;
-				fx[1] = com.pvpduels.effects.Props.createdCount();
-				fx[2] = com.pvpduels.effects.Props.burstCount();
+				xfx[0] = ticks;
+				xfx[1] = com.pvpduels.effects.Props.createdCount();
+				xfx[2] = com.pvpduels.effects.Props.burstCount();
 				Victory.preview(a);
 				check("a show started", Victory.showsStarted() == d8[4] + 1 && Victory.activeShows() >= 1);
-			}, () -> ticks >= fx[0] + 75, 300);
+			}, () -> ticks >= xfx[0] + 75, 300);
 			step("explosions: " + ex + " has its solid parts in the middle of the show", () -> {
 				check("the show is still on", Victory.activeShows() == 1);
-				check("display entities were made (" + ex + ")", com.pvpduels.effects.Props.createdCount() >= fx[1] + 3, (com.pvpduels.effects.Props.createdCount() - fx[1]) + " made");
+				check("display entities were made (" + ex + ")", com.pvpduels.effects.Props.createdCount() >= xfx[1] + 3, (com.pvpduels.effects.Props.createdCount() - xfx[1]) + " made");
 				check("and they are in the world", com.pvpduels.effects.Props.live() > 0 && com.pvpduels.effects.Props.tagged(server) > 0, com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
 			}, () -> Victory.activeShows() == 0, 800);
 			step("explosions: " + ex + " reached Alice and left nothing behind", () -> {
