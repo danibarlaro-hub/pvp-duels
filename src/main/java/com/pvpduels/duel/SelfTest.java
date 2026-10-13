@@ -139,9 +139,12 @@ public final class SelfTest {
 	/** The test world is a superflat with the usual mob spawning: a slime once killed a fake player in the middle of the test. */
 	private static void clearMonsters() {
 		for (ServerLevel level : server.getAllLevels()) {
+			// first collect, then discard: removing while the game's own list is being walked broke it ("Index 121 out of bounds")
+			List<net.minecraft.world.entity.Entity> monsters = new ArrayList<>();
 			for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
-				if (e instanceof net.minecraft.world.entity.monster.Enemy) e.discard();
+				if (e instanceof net.minecraft.world.entity.monster.Enemy) monsters.add(e);
 			}
+			for (net.minecraft.world.entity.Entity e : monsters) e.discard();
 		}
 	}
 
