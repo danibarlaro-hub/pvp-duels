@@ -96,6 +96,12 @@ public final class GuideBook {
 			{"Rounds", "A player who is hit out watches until the round ends. A round is won when both rivals are out. No friendly fire.\n\nWin a round alone for the Clutch achievement."},
 			{"Good to know", "/leave makes your team forfeit.\n\n2v2 does not change the Elo, can't be watched yet, and the queue is 1v1 only."}
 		}),
+		new Topic("Effects", new String[][] {
+			{"Victory effects", "When you win, 3 fireworks go up (behind you, left and right), and your particles and explosion play for 5 seconds.\n\n/effects opens the menu to choose them. /effects preview shows them now."},
+			{"Daily missions", "/missions shows 6 missions a day: heal 100 hearts, a 15-hit combo, eat 40 foods, use 10 potions, win 3 in a row and a bonus one.\n\nThey count in duels against players and reset at midnight."},
+			{"Rewards", "Each mission gives a firework color or shape, or a particle. A repeated particle is one more copy to use in another slot.\n\nExplosions are very rare."},
+			{"Your slots", "Particles: 2 on the floor and 4 around the arena.\n\nFireworks: up to 5 colors each.\n\nThe menu can hide the effects of other players."}
+		}),
 		new Topic("About", new String[][] {
 			{"About this server", "A place to duel your friends 1v1 with your own kits, in arenas made for it.\n\nThe world runs on the host's computer and is shared with Essential."},
 			{"Have fun", "Everything is a command or a click. If you get lost, this book is always in slot 9 and /guide lists the commands.\n\nBe fair and good luck!"}
@@ -114,8 +120,8 @@ public final class GuideBook {
 			next += TOPICS[t].pages().length + 1;
 		}
 
-		MutableComponent index = Component.literal("PvP Duels\n").withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD)
-			.append(Component.literal("Click a topic:\n").withStyle(ChatFormatting.DARK_GRAY));
+		// a book page has 14 lines: the title and one line per topic (13 topics)
+		MutableComponent index = Component.literal("PvP Duels\n").withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD);
 		for (int t = 0; t < TOPICS.length; t++) {
 			int page = firstPage[t];
 			index.append(Component.literal("> " + TOPICS[t].name() + "\n").withStyle(style -> style.withColor(ChatFormatting.DARK_AQUA)

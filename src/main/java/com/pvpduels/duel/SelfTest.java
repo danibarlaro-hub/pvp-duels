@@ -1235,7 +1235,7 @@ public final class SelfTest {
 					&& links == GuideBook.topicCount(), links + " links");
 				StringBuilder all = new StringBuilder();
 				for (var page : pages) all.append(page.getString()).append('\n');
-				for (String word : new String[] {"/duels", "/npc", "/queue", "/top kit", "Send Duel", "Create+", "/botduel", "/kit save", "/layout", "/top", "/spectate", "About this server"}) {
+				for (String word : new String[] {"/duels", "/npc", "/queue", "/top kit", "Send Duel", "Create+", "/botduel", "/kit save", "/layout", "/top", "/spectate", "About this server", "/effects", "/missions"}) {
 					check("the book mentions " + word, all.toString().contains(word));
 				}
 			}
