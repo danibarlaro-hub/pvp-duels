@@ -1,3 +1,0 @@
-\.StructureTemplateManager$
-\.templatesystem\.
-^net\.minecraft\.world\.level\.block\.Block$

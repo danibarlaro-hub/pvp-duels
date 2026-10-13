@@ -1,0 +1,2 @@
+net.minecraft.world.item.component.FireworkExplosion$Shape
+net.minecraft.server.level.ServerLevel
