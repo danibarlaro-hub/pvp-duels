@@ -94,7 +94,8 @@ public final class Missions {
 
 	/** The bonus mission of this date. */
 	public static Def bonusOf(LocalDate day) {
-		return BONUS.get(Math.floorMod((int) (day.toEpochDay() * 7 + 3), BONUS.size()));
+		// 3 and 7 have nothing in common, so the seven bonus missions come one after another in any 7 days
+		return BONUS.get((int) Math.floorMod(day.toEpochDay() * 3 + 1, (long) BONUS.size()));
 	}
 
 	/** The six missions of today. */

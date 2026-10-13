@@ -9,6 +9,10 @@ import com.pvpduels.arena.ArenaStore;
 import com.pvpduels.arena.ArenaStudio;
 import com.pvpduels.arena.BuilderRank;
 import com.pvpduels.arena.Contest;
+import com.pvpduels.effects.Effects;
+import com.pvpduels.effects.Missions;
+import com.pvpduels.effects.Particles;
+import com.pvpduels.effects.Victory;
 import com.pvpduels.stats.StatsStore;
 import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
@@ -340,6 +344,41 @@ public final class SelfTest {
 		boolean ok = clickMenu(who, name);
 		check("menu has the option '" + name + "'", ok);
 		return ok;
+	}
+
+	private static int particlePackets(Dummy who) {
+		int n = 0;
+		for (Packet<?> packet : who.link.sent) if (packet.getClass().getSimpleName().equals("ClientboundLevelParticlesPacket")) n++;
+		return n;
+	}
+
+	/** How many items of the open menu have a name that starts like this. */
+	private static int menuCount(Dummy who, String prefix) {
+		AbstractContainerMenu menu = who.containerMenu;
+		if (!(menu instanceof ChestMenu chest)) return -1;
+		int n = 0;
+		for (int i = 0; i < chest.getRowCount() * 9; i++) {
+			ItemStack stack = menu.getSlot(i).getItem();
+			if (!stack.isEmpty() && stack.getHoverName().getString().startsWith(prefix)) n++;
+		}
+		return n;
+	}
+
+	private static ItemStack menuItem(Dummy who, String name) {
+		AbstractContainerMenu menu = who.containerMenu;
+		if (!(menu instanceof ChestMenu chest)) return ItemStack.EMPTY;
+		for (int i = 0; i < chest.getRowCount() * 9; i++) {
+			ItemStack stack = menu.getSlot(i).getItem();
+			if (!stack.isEmpty() && stack.getHoverName().getString().equals(name)) return stack;
+		}
+		return ItemStack.EMPTY;
+	}
+
+	/** The error texts that are not null, one after another (empty when everything went well). */
+	private static String join(String... results) {
+		StringBuilder out = new StringBuilder();
+		for (String r : results) if (r != null) out.append(r).append(' ');
+		return out.toString();
 	}
 
 	private static double dist(Dummy p, double[] pos) {
@@ -2900,6 +2939,7 @@ public final class SelfTest {
 			check("Carl and Dora are a party again", Party.isFull(carl.getUUID()) && Party.isFull(dora.getUUID()));
 		});
 		step("2v2: Alice challenges Carl, who accepts", () -> {
+			Victory.resetForTest();
 			for (Dummy p : new Dummy[] {a, b, carl, dora}) p.getInventory().clearContent();
 			team2v2Before[0] = StatsStore.get(a.getUUID()).elo;
 			team2v2Before[1] = StatsStore.get(carl.getUUID()).elo;
@@ -3011,6 +3051,7 @@ public final class SelfTest {
 			check("a 2v2 does not touch the Elo or the 1v1 numbers", StatsStore.get(a.getUUID()).elo == team2v2Before[0] && StatsStore.get(carl.getUUID()).elo == team2v2Before[1]
 				&& StatsStore.get(a.getUUID()).duels == team2v2Before[2], StatsStore.get(a.getUUID()).elo + " / " + StatsStore.get(carl.getUUID()).elo + " / " + StatsStore.get(a.getUUID()).duels);
 			check("the sidebar says who won", sidebarHas(a, "You won!") && sidebarHas(dora, "You lost"), String.valueOf(sidebar(a)));
+			check("the two winners' fireworks went up and the losers' did not", Victory.fireworkLaunches() == 2 && Victory.showsStarted() == 2, Victory.fireworkLaunches() + " / " + Victory.showsStarted());
 			run(carl, "leave");
 			check("Carl got himself back", !DuelManager.isInDuel(carl.getUUID()) && carl.getInventory().getItem(22).is(Items.COBBLESTONE) && carl.getInventory().getItem(22).getCount() == 5);
 			check("the others are still there until it closes", DuelManager.isInDuel(a.getUUID()) && t.phase == Duel.Phase.ENDED);
@@ -3133,6 +3174,543 @@ public final class SelfTest {
 		step("achievements: clean up", () -> {
 			Achievements.resetForTest();
 			check("Carl has no team left", server.getScoreboard().getPlayersTeam(carl.getScoreboardName()) == null);
+		});
+
+		// ---------------------------------------------------------------- victory effects and daily missions
+		java.time.LocalDate quietDay = java.time.LocalDate.of(2031, 5, 5);
+		while (!Missions.bonusOf(quietDay).id().equals("team1")) quietDay = quietDay.plusDays(1); // a bonus these tests never complete by accident
+		final java.time.LocalDate day1 = quietDay;
+		final UUID loadoutId = UUID.nameUUIDFromBytes("loadout".getBytes());
+		final UUID missionId = UUID.nameUUIDFromBytes("mission-player".getBytes());
+		final int[] fx = new int[8];
+
+		step("effects: the catalog of things to win", () -> {
+			Effects.resetForTest();
+			Missions.resetForTest();
+			Victory.resetForTest();
+			var all = Particles.all();
+			check("there are many particles (" + all.size() + ")", all.size() > 50);
+			check("flame and the colored dust exist", Particles.find("flame") != null && Particles.find("dust_red") != null && Particles.find("dust_black") != null
+				&& Particles.find("heart") != null && Particles.find("end_rod") != null && Particles.find("happy_villager") != null);
+			check("the ones that cover the screen do not", Particles.find("elder_guardian") == null && Particles.find("explosion_emitter") == null && Particles.find("sonic_boom") == null);
+			check("no two particles share an id or a name", all.stream().map(Particles.Def::id).distinct().count() == all.size() && all.stream().map(Particles.Def::name).distinct().count() == all.size());
+			check("23 firework things: 16 colors, 5 shapes, the trail and the twinkle", Effects.allFireworkItems().size() == 23 && Effects.COLORS.length == 16 && Effects.COLOR_RGB.length == 16
+				&& Effects.SHAPES.length == 5);
+			check("3 explosions with a name each", Effects.EXPLOSIONS.length == 3 && Effects.EXPLOSION_NAMES.length == 3 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon"));
+			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
+			check("the chances are the ones asked for", Effects.fireworkChance == 0.70 && Effects.particleChance == 0.40 && Effects.explosionChance == 0.01 && Effects.explosionPity == 100);
+		});
+		step("effects: a new player owns almost nothing", () -> {
+			UUID id = UUID.nameUUIDFromBytes("fresh-player".getBytes());
+			check("only the white color and the small ball", Effects.ownedItemCount(id) == 2 && Effects.ownsItem(id, "color:white") && Effects.ownsItem(id, "shape:small_ball"));
+			check("white is on the firework behind you, the other two are empty", Effects.fireworkColors(id, 0).equals(List.of("white")) && Effects.fireworkColors(id, 1).isEmpty()
+				&& Effects.fireworkColors(id, 2).isEmpty());
+			check("no particles and no explosions", Effects.ownedParticles(id).isEmpty() && Effects.ownedExplosions(id).isEmpty());
+			check("every particle slot is empty", Effects.particleSlot(id, false, 0).isEmpty() && Effects.particleSlot(id, false, 1).isEmpty() && Effects.particleSlot(id, true, 0).isEmpty()
+				&& Effects.particleSlot(id, true, 3).isEmpty());
+			check("no explosion is equipped and other players' effects are shown", Effects.explosionSlot(id).isEmpty() && !Effects.hideOthers(id));
+		});
+		step("effects: the reward of a mission", () -> {
+			Effects.useRandom(new java.util.Random(1234));
+			UUID id = UUID.nameUUIDFromBytes("reward-player".getBytes());
+			Effects.fireworkChance = 1;
+			Effects.particleChance = 0;
+			Effects.explosionChance = 0;
+			List<Effects.Gained> first = Effects.roll(id, "Rewarded");
+			check("with a 100% firework chance a mission gives one new firework thing", first.size() == 1 && first.get(0).kind().equals("firework") && Effects.ownedItemCount(id) == 3, first.toString());
+			List<String> given = new ArrayList<>();
+			given.add(first.get(0).id());
+			boolean distinct = true;
+			for (int i = 0; i < 20; i++) {
+				List<Effects.Gained> g = Effects.roll(id, "Rewarded");
+				if (g.size() != 1 || !g.get(0).kind().equals("firework") || given.contains(g.get(0).id())) distinct = false;
+				else given.add(g.get(0).id());
+			}
+			check("21 missions give 21 different things, so everything gets unlocked", distinct && given.size() == 21 && Effects.ownedItemCount(id) == Effects.allFireworkItems().size(),
+				given.size() + " " + Effects.ownedItemCount(id));
+			List<Effects.Gained> rest = Effects.roll(id, "Rewarded");
+			check("when there is nothing left to unlock the firework roll becomes a particle", rest.size() == 1 && rest.get(0).kind().equals("particle") && Effects.ownedParticles(id).size() == 1, rest.toString());
+
+			UUID none = UUID.nameUUIDFromBytes("consolation".getBytes());
+			Effects.fireworkChance = 0;
+			Effects.particleChance = 0;
+			List<Effects.Gained> consolation = Effects.roll(none, "Consoled");
+			check("a mission that rolls nothing still gives a particle", consolation.size() == 1 && consolation.get(0).kind().equals("particle") && Effects.ownedItemCount(none) == 2, consolation.toString());
+
+			UUID both = UUID.nameUUIDFromBytes("both".getBytes());
+			Effects.fireworkChance = 1;
+			Effects.particleChance = 1;
+			List<Effects.Gained> two = Effects.roll(both, "Lucky");
+			check("both rolls can hit: a firework thing and a particle", two.size() == 2 && two.get(0).kind().equals("firework") && two.get(1).kind().equals("particle"), two.toString());
+
+			UUID boom = UUID.nameUUIDFromBytes("explosions".getBytes());
+			Effects.fireworkChance = 0;
+			Effects.particleChance = 0;
+			Effects.explosionChance = 1;
+			boolean allExplosions = true;
+			List<String> blasts = new ArrayList<>();
+			for (int i = 0; i < 3; i++) {
+				List<Effects.Gained> g = Effects.roll(boom, "Boom");
+				if (g.size() != 1 || !g.get(0).kind().equals("explosion") || blasts.contains(g.get(0).id())) allExplosions = false;
+				else blasts.add(g.get(0).id());
+			}
+			check("three lucky missions give the three different explosions", allExplosions && Effects.ownedExplosions(boom).size() == 3, blasts.toString());
+			List<Effects.Gained> afterBlasts = Effects.roll(boom, "Boom");
+			check("with all of them owned a lucky roll gives a particle instead", afterBlasts.size() == 1 && afterBlasts.get(0).kind().equals("particle"), afterBlasts.toString());
+
+			UUID pity = UUID.nameUUIDFromBytes("pity".getBytes());
+			Effects.explosionChance = 0;
+			Effects.explosionPity = 3;
+			boolean[] got = new boolean[5];
+			for (int i = 0; i < 5; i++) {
+				boolean explosion = false;
+				for (Effects.Gained g : Effects.roll(pity, "Patient")) if (g.kind().equals("explosion")) explosion = true;
+				got[i] = explosion;
+			}
+			check("the third mission without luck gives the explosion for sure (pity), then it starts over", !got[0] && !got[1] && got[2] && !got[3] && !got[4],
+				java.util.Arrays.toString(got));
+
+			UUID copies = UUID.nameUUIDFromBytes("copies".getBytes());
+			Effects.unlockAll(copies);
+			int before = 0;
+			for (int n : Effects.ownedParticles(copies).values()) before += n;
+			Effects.explosionPity = 100;
+			Effects.fireworkChance = 0;
+			Effects.particleChance = 1;
+			List<Effects.Gained> dupes = Effects.roll(copies, "Collector");
+			int after = 0;
+			for (int n : Effects.ownedParticles(copies).values()) after += n;
+			check("a repeated particle is a new copy, and the message says so", dupes.size() == 1 && dupes.get(0).duplicate() && dupes.get(0).label().contains("(now x4)") && after == before + 1,
+				dupes + " " + before + "->" + after);
+			check("/effects unlockall style: 3 copies of every particle", before == 3 * Particles.all().size() && Effects.ownedItemCount(copies) == 23 && Effects.ownedExplosions(copies).size() == 3);
+		});
+		step("effects: what can be equipped", () -> {
+			UUID id = loadoutId;
+			check("a locked color is refused", Effects.toggleColor(id, 1, "red") != null && Effects.fireworkColors(id, 1).isEmpty());
+			check("a color that does not exist is refused", Effects.toggleColor(id, 1, "plaid") != null);
+			for (String c : new String[] {"red", "yellow", "blue", "green", "pink"}) Effects.grantItem(id, "color:" + c);
+			boolean ok = Effects.toggleColor(id, 0, "red") == null && Effects.toggleColor(id, 0, "yellow") == null && Effects.toggleColor(id, 0, "blue") == null
+				&& Effects.toggleColor(id, 0, "green") == null;
+			check("white and four more make 5 colors on one firework", ok && Effects.fireworkColors(id, 0).size() == 5, String.valueOf(Effects.fireworkColors(id, 0)));
+			String sixth = Effects.toggleColor(id, 0, "pink");
+			check("a sixth color is refused", sixth != null && sixth.contains("up to 5 colors") && Effects.fireworkColors(id, 0).size() == 5, String.valueOf(sixth));
+			check("taking one off makes room", Effects.toggleColor(id, 0, "white") == null && Effects.fireworkColors(id, 0).size() == 4 && Effects.toggleColor(id, 0, "pink") == null
+				&& Effects.fireworkColors(id, 0).size() == 5 && !Effects.fireworkColors(id, 0).contains("white"));
+			check("the same color can be on two fireworks", Effects.toggleColor(id, 1, "red") == null && Effects.fireworkColors(id, 1).equals(List.of("red")) && Effects.fireworkColors(id, 2).isEmpty());
+
+			check("a locked shape is refused", Effects.setShape(id, 1, "star") != null && Effects.fireworkShape(id, 1).equals("small_ball"));
+			Effects.grantItem(id, "shape:star");
+			check("an unlocked shape goes to that firework only", Effects.setShape(id, 1, "star") == null && Effects.fireworkShape(id, 1).equals("star")
+				&& Effects.fireworkShape(id, 0).equals("small_ball") && Effects.fireworkShape(id, 2).equals("small_ball"));
+			check("a shape that does not exist is refused", Effects.setShape(id, 1, "heart") != null && Effects.fireworkShape(id, 1).equals("star"));
+			check("the trail and the twinkle are locked at first", Effects.toggleTrail(id, 2) != null && Effects.toggleTwinkle(id, 2) != null);
+			Effects.grantItem(id, "trail");
+			Effects.grantItem(id, "twinkle");
+			check("and switch on and off after that", Effects.toggleTrail(id, 2) == null && Effects.fireworkTrail(id, 2) && !Effects.fireworkTrail(id, 1)
+				&& Effects.toggleTrail(id, 2) == null && !Effects.fireworkTrail(id, 2) && Effects.toggleTwinkle(id, 0) == null && Effects.fireworkTwinkle(id, 0));
+
+			check("a particle you don't have is refused", Effects.setParticle(id, false, 0, "flame") != null && Effects.particleSlot(id, false, 0).isEmpty());
+			Effects.grantParticle(id, "flame");
+			check("with one copy it fits in one slot", Effects.setParticle(id, false, 0, "flame") == null && Effects.particleSlot(id, false, 0).equals("flame"));
+			String second = Effects.setParticle(id, true, 0, "flame");
+			check("a second slot is refused with one copy", second != null && second.contains("only have 1 copy") && Effects.particleSlot(id, true, 0).isEmpty(), String.valueOf(second));
+			check("the same slot again is fine", Effects.setParticle(id, false, 0, "flame") == null);
+			Effects.grantParticle(id, "flame");
+			check("a duplicate gives a second slot", Effects.setParticle(id, true, 0, "flame") == null && Effects.equippedCount(id, "flame") == 2 && Effects.particleCount(id, "flame") == 2);
+			check("and a third one is refused", Effects.setParticle(id, true, 1, "flame") != null && Effects.equippedCount(id, "flame") == 2);
+			check("a slot that does not exist is refused", Effects.setParticle(id, true, 9, "flame") != null && Effects.setParticle(id, false, 2, "flame") != null);
+			check("an empty id empties the slot", Effects.setParticle(id, true, 0, "") == null && Effects.particleSlot(id, true, 0).isEmpty() && Effects.equippedCount(id, "flame") == 1);
+			for (int i = 0; i < 10; i++) Effects.grantParticle(id, "flame");
+			check("you can own up to 6 copies", Effects.MAX_COPIES == 6 && Effects.particleCount(id, "flame") == 6);
+
+			check("a locked explosion is refused", Effects.setExplosion(id, "orbital_strike") != null && Effects.explosionSlot(id).isEmpty());
+			check("an explosion that does not exist is refused", Effects.setExplosion(id, "big_bang") != null);
+			Effects.grantExplosion(id, "orbital_strike");
+			check("an unlocked explosion can be equipped and taken off", Effects.setExplosion(id, "orbital_strike") == null && Effects.explosionSlot(id).equals("orbital_strike")
+				&& Effects.setExplosion(id, "") == null && Effects.explosionSlot(id).isEmpty());
+			Effects.setExplosion(id, "orbital_strike");
+			Effects.setHideOthers(id, true);
+		});
+		step("effects: it is saved in the file", () -> {
+			UUID id = loadoutId;
+			Effects.reloadForTest();
+			check("the colors are still on the fireworks", Effects.fireworkColors(id, 0).equals(List.of("red", "yellow", "blue", "green", "pink")) && Effects.fireworkColors(id, 1).equals(List.of("red")));
+			check("so are the shape, the trail and the twinkle", Effects.fireworkShape(id, 1).equals("star") && Effects.fireworkTwinkle(id, 0) && !Effects.fireworkTrail(id, 2));
+			check("the particles and their copies", Effects.particleSlot(id, false, 0).equals("flame") && Effects.particleCount(id, "flame") == 6);
+			check("the explosion and the option to hide others", Effects.explosionSlot(id).equals("orbital_strike") && Effects.ownsExplosion(id, "orbital_strike") && Effects.hideOthers(id));
+			check("what a new player gets is saved too", Effects.ownedItemCount(UUID.nameUUIDFromBytes("reward-player".getBytes())) == 23);
+		});
+
+		// ---------------------------------------------------------------- daily missions
+		step("missions: the six missions of a day", () -> {
+			Effects.resetForTest();
+			Missions.setDayForTest(day1);
+			List<Missions.Def> today = Missions.today(missionId);
+			check("5 fixed missions and 1 bonus", today.size() == 6 && Missions.fixed().size() == 5);
+			check("the five of every day, in order", Missions.fixed().get(0).id().equals("heal100") && Missions.fixed().get(1).id().equals("combo15") && Missions.fixed().get(2).id().equals("eat40")
+				&& Missions.fixed().get(3).id().equals("potions10") && Missions.fixed().get(4).id().equals("streak3"));
+			check("with the goals you asked for (100 hearts, combo 15, 40 foods, 10 potions, 3 wins)", Missions.fixed().get(0).goalInt() == 100 && Missions.fixed().get(1).goalInt() == 15
+				&& Missions.fixed().get(2).goalInt() == 40 && Missions.fixed().get(3).goalInt() == 10 && Missions.fixed().get(4).goalInt() == 3);
+			check("the sixth is the bonus of the date", today.get(5).id().equals(Missions.bonusOf(day1).id()) && today.get(5).id().equals("team1"));
+			java.util.Set<String> week = new java.util.HashSet<>();
+			for (int i = 0; i < 7; i++) week.add(Missions.bonusOf(day1.plusDays(i)).id());
+			check("the bonus changes every day and a week shows all " + Missions.bonusPool().size() + " of them", week.size() == Missions.bonusPool().size()
+				&& !Missions.bonusOf(day1).id().equals(Missions.bonusOf(day1.plusDays(1)).id()), week.toString());
+			check("the same date always has the same bonus", Missions.bonusOf(day1).id().equals(Missions.bonusOf(day1).id()));
+		});
+		step("missions: progress, rewards and no double payment", () -> {
+			Effects.fireworkChance = 1;
+			Effects.particleChance = 0;
+			Effects.explosionChance = 0;
+			Missions.setDayForTest(day1);
+			Missions.Def heal = Missions.fixed().get(0);
+			Missions.Def combo = Missions.fixed().get(1);
+			Missions.Def eat = Missions.fixed().get(2);
+			Missions.Def potions = Missions.fixed().get(3);
+			Missions.Def streak = Missions.fixed().get(4);
+			Missions.Facts f1 = new Missions.Facts();
+			f1.won = true;
+			f1.kit = "k1";
+			f1.combo = 9;
+			f1.hearts = 60;
+			f1.foods = 25;
+			f1.potions = 4;
+			f1.hits = 30;
+			f1.roundsWon = 2;
+			List<Missions.Completion> c1 = Missions.record(missionId, "Mia", f1);
+			check("nothing is complete after the first duel", c1.isEmpty() && Missions.doneCount(missionId) == 0);
+			check("the progress adds up (hearts, foods, potions), keeps the best (combo) and counts the win run",
+				Missions.progress(missionId, heal) == 60 && Missions.progress(missionId, combo) == 9 && Missions.progress(missionId, eat) == 25
+					&& Missions.progress(missionId, potions) == 4 && Missions.progress(missionId, streak) == 1);
+			Missions.Facts f2 = new Missions.Facts();
+			f2.won = true;
+			f2.kit = "k2";
+			f2.combo = 15;
+			f2.hearts = 45;
+			f2.foods = 20;
+			f2.potions = 7;
+			f2.hits = 20;
+			f2.roundsWon = 1;
+			List<Missions.Completion> c2 = Missions.record(missionId, "Mia", f2);
+			java.util.Set<String> ids = new java.util.TreeSet<>();
+			boolean paid = true;
+			for (Missions.Completion c : c2) {
+				ids.add(c.mission().id());
+				if (c.rewards().isEmpty() || !c.rewards().get(0).kind().equals("firework")) paid = false;
+			}
+			check("the second duel completes four missions", c2.size() == 4 && ids.equals(new java.util.TreeSet<>(List.of("heal100", "combo15", "eat40", "potions10"))), ids.toString());
+			check("each one paid a reward", paid);
+			check("so the player owns 4 new firework things", Effects.ownedItemCount(missionId) == 2 + 4, "" + Effects.ownedItemCount(missionId));
+			check("four are done today and the win run is 2", Missions.doneCount(missionId) == 4 && Missions.isDone(missionId, heal) && !Missions.isDone(missionId, streak) && Missions.progress(missionId, streak) == 2);
+			Missions.Facts f3 = new Missions.Facts();
+			f3.lost = true;
+			f3.hearts = 500;
+			f3.foods = 500;
+			List<Missions.Completion> c3 = Missions.record(missionId, "Mia", f3);
+			check("a loss ends the win run", c3.isEmpty() && Missions.progress(missionId, streak) == 0);
+			check("and a mission that is done never pays twice", Effects.ownedItemCount(missionId) == 6 && Missions.doneCount(missionId) == 4);
+			Missions.Facts win = new Missions.Facts();
+			win.won = true;
+			Missions.record(missionId, "Mia", win);
+			Missions.record(missionId, "Mia", win);
+			check("two wins: 2 of 3", Missions.progress(missionId, streak) == 2 && !Missions.isDone(missionId, streak));
+			Missions.record(missionId, "Mia", new Missions.Facts());
+			check("a draw does not break the run", Missions.progress(missionId, streak) == 2);
+			List<Missions.Completion> c4 = Missions.record(missionId, "Mia", win);
+			check("the third win in a row completes it", c4.size() == 1 && c4.get(0).mission().id().equals("streak3") && Missions.isDone(missionId, streak) && Missions.doneCount(missionId) == 5);
+			check("and gives its reward", c4.get(0).rewards().size() == 1 && Effects.ownedItemCount(missionId) == 7);
+			check("five rewards wait to be told", Missions.pendingCount(missionId) == 5, "" + Missions.pendingCount(missionId));
+		});
+		step("missions: a new day starts from zero", () -> {
+			Missions.setDayForTest(day1.plusDays(1));
+			Missions.Def heal = Missions.fixed().get(0);
+			Missions.Def streak = Missions.fixed().get(4);
+			check("nothing is done and there is no progress", Missions.doneCount(missionId) == 0 && Missions.progress(missionId, heal) == 0 && !Missions.isDone(missionId, streak));
+			check("what was won stays", Effects.ownedItemCount(missionId) == 7);
+			Missions.Facts win = new Missions.Facts();
+			win.won = true;
+			Missions.record(missionId, "Mia", win);
+			check("the win run starts again", Missions.progress(missionId, streak) == 1);
+			check("the bonus of the new day is another one", !Missions.today(missionId).get(5).id().equals(Missions.bonusOf(day1).id()));
+			Missions.setDayForTest(day1);
+		});
+		step("missions: every bonus mission can be completed", () -> {
+			for (Missions.Def bonus : Missions.bonusPool()) {
+				java.time.LocalDate d = day1;
+				while (!Missions.bonusOf(d).id().equals(bonus.id())) d = d.plusDays(1);
+				Missions.setDayForTest(d);
+				UUID id = UUID.nameUUIDFromBytes(("bonus-" + bonus.id()).getBytes());
+				List<Missions.Facts> before = new ArrayList<>();
+				Missions.Facts last = new Missions.Facts();
+				switch (bonus.id()) {
+					case "duels5" -> {
+						for (int i = 0; i < 4; i++) before.add(new Missions.Facts());
+					}
+					case "hits100" -> {
+						Missions.Facts f = new Missions.Facts();
+						f.hits = 99;
+						before.add(f);
+						last.hits = 1;
+					}
+					case "pearls5" -> {
+						Missions.Facts f = new Missions.Facts();
+						f.pearls = 4;
+						before.add(f);
+						last.pearls = 1;
+					}
+					case "apples5" -> {
+						Missions.Facts f = new Missions.Facts();
+						f.apples = 4;
+						before.add(f);
+						last.apples = 1;
+					}
+					case "rounds10" -> {
+						Missions.Facts f = new Missions.Facts();
+						f.roundsWon = 9;
+						before.add(f);
+						last.roundsWon = 1;
+					}
+					case "kits2" -> {
+						for (int i = 0; i < 2; i++) {
+							Missions.Facts f = new Missions.Facts();
+							f.won = true;
+							f.kit = "x";
+							before.add(f);
+						}
+						last.won = true;
+						last.kit = "y";
+					}
+					case "team1" -> {
+						Missions.Facts f = new Missions.Facts();
+						f.won = true;
+						before.add(f);
+						last.won = true;
+						last.team = true;
+					}
+					default -> {
+					}
+				}
+				for (Missions.Facts f : before) Missions.record(id, "Bonus", f);
+				boolean early = Missions.isDone(id, bonus);
+				List<Missions.Completion> end = Missions.record(id, "Bonus", last);
+				boolean mine = false;
+				for (Missions.Completion c : end) if (c.mission().id().equals(bonus.id())) mine = true;
+				check("bonus '" + bonus.text() + "': not done before the last duel, done after it", !early && mine && Missions.isDone(id, bonus));
+			}
+			Missions.setDayForTest(day1);
+		});
+		step("missions: the player is told a few seconds later", () -> {
+			Effects.resetForTest();
+			Effects.fireworkChance = 1;
+			Effects.particleChance = 0;
+			Effects.explosionChance = 0;
+			Missions.setDayForTest(day1);
+			carl.inbox.clear();
+			Missions.Facts f = new Missions.Facts();
+			f.won = true;
+			f.combo = 15;
+			List<Missions.Completion> c = Missions.record(carl.getUUID(), "Carl", f);
+			check("Carl completed the combo mission", c.size() == 1 && c.get(0).mission().id().equals("combo15"));
+			check("he has a reward to be told about, but not yet", Missions.pendingCount(carl.getUUID()) == 1 && !carl.heard("Mission complete:"));
+		}, () -> carl.heard("Mission complete: Land a 15-hit combo in one duel"), 400);
+		step("missions: what the message says", () -> {
+			check("it names the reward and offers [EFFECTS]", carl.heard("Reward: ") && carl.heard("Firework") && carl.heard("[EFFECTS]"));
+			check("nothing is left to tell", Missions.pendingCount(carl.getUUID()) == 0);
+		});
+
+		// ---------------------------------------------------------------- a real win
+		step("victory: Alice gets her effects ready and plays for the third win in a row", () -> {
+			Effects.resetForTest();
+			Effects.fireworkChance = 1;
+			Effects.particleChance = 0;
+			Effects.explosionChance = 0;
+			Missions.setDayForTest(day1);
+			Victory.resetForTest();
+			a.inbox.clear();
+			b.inbox.clear();
+			UUID id = a.getUUID();
+			for (String c : new String[] {"red", "blue", "yellow", "lime", "cyan", "pink", "purple", "orange"}) Effects.grantItem(id, "color:" + c);
+			Effects.grantItem(id, "shape:star");
+			Effects.grantItem(id, "trail");
+			String problems = join(Effects.toggleColor(id, 0, "red"), Effects.toggleColor(id, 0, "blue"),
+				Effects.toggleColor(id, 1, "yellow"), Effects.toggleColor(id, 1, "lime"), Effects.toggleColor(id, 1, "cyan"), Effects.toggleColor(id, 1, "pink"), Effects.toggleColor(id, 1, "purple"),
+				Effects.toggleColor(id, 2, "orange"), Effects.setShape(id, 1, "star"), Effects.toggleTrail(id, 1));
+			for (String p : new String[] {"flame", "flame", "heart", "end_rod", "happy_villager", "dust_red"}) Effects.grantParticle(id, p);
+			problems += join(Effects.setParticle(id, false, 0, "flame"), Effects.setParticle(id, false, 1, "heart"), Effects.setParticle(id, true, 0, "end_rod"),
+				Effects.setParticle(id, true, 1, "happy_villager"), Effects.setParticle(id, true, 2, "dust_red"), Effects.setParticle(id, true, 3, "flame"));
+			Effects.grantExplosion(id, "orbital_strike");
+			problems += join(Effects.setExplosion(id, "orbital_strike"));
+			check("Alice equipped everything without errors", problems.isEmpty(), problems);
+			check("three fireworks with 3, 5 and 1 colors, a star with trail in the middle", Effects.fireworkColors(id, 0).size() == 3 && Effects.fireworkColors(id, 1).size() == 5
+				&& Effects.fireworkColors(id, 2).size() == 1 && Effects.fireworkShape(id, 1).equals("star") && Effects.fireworkTrail(id, 1));
+			fx[0] = Effects.ownedItemCount(id);
+			Missions.Facts won = new Missions.Facts();
+			won.won = true;
+			Missions.record(id, "Alice", won);
+			Missions.record(id, "Alice", won);
+			check("she has won twice in a row today", Missions.progress(id, Missions.fixed().get(4)) == 2 && Missions.pendingCount(id) == 0);
+			check("Bob has nothing but the first things", Effects.ownedItemCount(b.getUUID()) == 2);
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+		step("victory: Alice wins the duel", () -> {
+			hit(a, b);
+		}, () -> Victory.showsStarted() >= 1, 600);
+		step("victory: the fireworks went up", () -> {
+			check("Alice's three fireworks went up and Bob's did not", Victory.fireworkLaunches() == 3 && Victory.showsStarted() == 1, Victory.fireworkLaunches() + " / " + Victory.showsStarted());
+			int rockets = 0;
+			for (net.minecraft.world.entity.Entity e : ((ServerLevel) a.level()).getAllEntities()) if (e instanceof net.minecraft.world.entity.projectile.FireworkRocketEntity) rockets++;
+			check("the rockets are flying in the arena", rockets >= 1, "" + rockets);
+			check("the particles and the explosion are playing", Victory.activeShows() == 1);
+			fx[1] = particlePackets(a);
+			fx[2] = particlePackets(b);
+		}, () -> particlePackets(a) > fx[1] + 3 && particlePackets(b) > fx[2] + 3, 200);
+		step("victory: both of them saw the particles", () -> {
+			check("Alice saw them", particlePackets(a) > fx[1] + 3, particlePackets(a) + " vs " + fx[1]);
+			check("Bob, in the same arena, saw them too", particlePackets(b) > fx[2] + 3, particlePackets(b) + " vs " + fx[2]);
+		}, () -> Victory.activeShows() == 0, 600);
+		step("victory: the show ends by itself", () -> {
+			check("no show is left", Victory.activeShows() == 0);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("victory: the third win completed a mission", () -> {
+			UUID id = a.getUUID();
+			check("'Win 3 duels in a row' is done", Missions.isDone(id, Missions.fixed().get(4)) && Missions.doneCount(id) == 1, Missions.doneCount(id) + " done");
+			check("its reward was one new firework thing", Effects.ownedItemCount(id) == fx[0] + 1, fx[0] + " -> " + Effects.ownedItemCount(id));
+			check("Bob lost: his run is 0 and he got nothing", Missions.progress(b.getUUID(), Missions.fixed().get(4)) == 0 && Effects.ownedItemCount(b.getUUID()) == 2 && Missions.pendingCount(b.getUUID()) == 0);
+			check("only Alice's fireworks went up", Victory.fireworkLaunches() == 3);
+		}, () -> a.heard("Mission complete: Win 3 duels in a row"), 400);
+		step("victory: the reward message", () -> {
+			check("it has the reward and the button", a.heard("Reward: Firework") && a.heard("[EFFECTS]"));
+			check("nothing is left to tell", Missions.pendingCount(a.getUUID()) == 0);
+			check("Bob heard nothing about missions", !b.heard("Mission complete"));
+		});
+
+		// ---------------------------------------------------------------- preview and hiding
+		step("effects: /effects preview, and who sees it", () -> {
+			ServerLevel lvl = (ServerLevel) a.level();
+			b.teleportTo(lvl, a.getX() + 3, a.getY(), a.getZ(), java.util.Set.of(), 0f, 0f, true);
+			carl.teleportTo(lvl, a.getX(), a.getY(), a.getZ() + 3, java.util.Set.of(), 0f, 0f, true);
+			check("Alice, Bob and Carl are in the same world", a.level() == b.level() && a.level() == carl.level(), where(a) + " / " + where(b) + " / " + where(carl));
+			Effects.setHideOthers(b.getUUID(), true);
+			Victory.resetForTest();
+			fx[1] = particlePackets(a);
+			fx[2] = particlePackets(b);
+			fx[3] = particlePackets(carl);
+			run(a, "effects preview");
+			check("the preview started her three fireworks and her show", Victory.fireworkLaunches() == 3 && Victory.showsStarted() == 1 && Victory.activeShows() == 1,
+				Victory.fireworkLaunches() + " / " + Victory.showsStarted() + " / " + Victory.activeShows());
+		}, () -> particlePackets(a) > fx[1] + 5 && particlePackets(carl) > fx[3], 200);
+		step("effects: Bob hides other players' effects", () -> {
+			check("Alice saw her own particles", particlePackets(a) > fx[1]);
+			check("Carl, next to her, saw them", particlePackets(carl) > fx[3]);
+			check("Bob hid other players' effects: he saw none", particlePackets(b) == fx[2], particlePackets(b) + " vs " + fx[2]);
+			Effects.setHideOthers(b.getUUID(), false);
+		}, () -> Victory.activeShows() == 0, 400);
+
+		// ---------------------------------------------------------------- the menus
+		step("menus: Alice's fireworks (some are locked)", () -> {
+			run(a, "effects");
+			check("the main menu has its options", menuHas(a, "Fireworks") && menuHas(a, "Particles") && menuHas(a, "Explosions") && menuHas(a, "Daily missions") && menuHas(a, "Preview")
+				&& menuHas(a, "Other players' effects: shown"));
+			menuStep(a, "Fireworks");
+			check("the three fireworks", menuHas(a, "Behind you") && menuHas(a, "Left") && menuHas(a, "Right") && menuHas(a, "Back"));
+			menuStep(a, "Left");
+			check("10 of the 23 things are still locked", menuCount(a, "Locked: ") == 10, "" + menuCount(a, "Locked: "));
+			check("the unlocked colors and shapes are there", menuHas(a, "Orange") && menuHas(a, "Yellow") && menuHas(a, "Star") && menuHas(a, "Trail: on") && menuHas(a, "Small ball"), "");
+		});
+		step("menus: a sixth color does not fit", () -> {
+			menuStep(a, "Orange");
+			check("she was told why", a.heard("A firework has up to 5 colors"));
+			check("and the firework did not change", Effects.fireworkColors(a.getUUID(), 1).size() == 5 && !Effects.fireworkColors(a.getUUID(), 1).contains("orange"));
+			menuStep(a, "Yellow");
+			check("taking a color off", !Effects.fireworkColors(a.getUUID(), 1).contains("yellow") && Effects.fireworkColors(a.getUUID(), 1).size() == 4);
+			menuStep(a, "Orange");
+			check("then the new one fits", Effects.fireworkColors(a.getUUID(), 1).contains("orange") && Effects.fireworkColors(a.getUUID(), 1).size() == 5);
+			menuStep(a, "Trail: on");
+			check("the trail switches off from the menu", !Effects.fireworkTrail(a.getUUID(), 1) && menuHas(a, "Trail: off"));
+			menuStep(a, "Back");
+			check("Back goes to the three fireworks", menuHas(a, "Behind you") && menuHas(a, "Right"));
+			menuStep(a, "Back");
+			check("and Back again to the main menu", menuHas(a, "Fireworks") && menuHas(a, "Preview"));
+		});
+		step("menus: Alice's explosions and missions", () -> {
+			menuStep(a, "Explosions");
+			check("she owns the Orbital Strike Cannon, two are still unknown", menuHas(a, "Orbital Strike Cannon") && menuCount(a, "Locked: ???") == 2, "" + menuCount(a, "Locked: ???"));
+			menuStep(a, "Orbital Strike Cannon");
+			check("clicking an equipped explosion takes it off", Effects.explosionSlot(a.getUUID()).isEmpty());
+			menuStep(a, "Orbital Strike Cannon");
+			check("and again puts it on", Effects.explosionSlot(a.getUUID()).equals("orbital_strike"));
+			run(a, "missions");
+			check("the six missions of the day", menuHas(a, "Regenerate 100 hearts in duels") && menuHas(a, "Land a 15-hit combo in one duel") && menuHas(a, "Eat 40 foods in duels")
+				&& menuHas(a, "Drink or throw 10 potions in duels") && menuHas(a, "Win 3 duels in a row") && menuHas(a, Missions.bonusOf(day1).text()) && menuHas(a, "How it works"));
+			check("the one she completed is an emerald, the others are not", menuItem(a, "Win 3 duels in a row").is(Items.EMERALD) && !menuItem(a, "Eat 40 foods in duels").is(Items.EMERALD));
+			a.closeContainer();
+		});
+		step("menus: an admin unlocks everything for Bob", () -> {
+			run(a, "effects unlockall Bob");
+			UUID id = b.getUUID();
+			check("Bob has all 23 firework things", Effects.ownedItemCount(id) == 23);
+			check("every particle with 3 copies", Effects.ownedParticles(id).size() == Particles.all().size() && Effects.particleCount(id, "flame") == 3);
+			check("and the three explosions", Effects.ownedExplosions(id).size() == 3);
+			check("Bob was told", b.heard("You got all the victory effects"));
+			run(b, "effects");
+			menuStep(b, "Fireworks");
+			menuStep(b, "Right");
+			check("nothing is locked for him", menuCount(b, "Locked: ") == 0 && menuHas(b, "Light Blue") && menuHas(b, "Twinkle: off"));
+			menuStep(b, "Light Blue");
+			menuStep(b, "Creeper");
+			menuStep(b, "Twinkle: off");
+			check("Right firework: light blue, creeper, twinkle", Effects.fireworkColors(id, 2).equals(List.of("light_blue")) && Effects.fireworkShape(id, 2).equals("creeper") && Effects.fireworkTwinkle(id, 2));
+			menuStep(b, "Back");
+			menuStep(b, "Back");
+		});
+		step("menus: Bob's particles", () -> {
+			UUID id = b.getUUID();
+			List<Particles.Def> sorted = new ArrayList<>(Particles.all());
+			sorted.sort((x, y) -> x.name().compareToIgnoreCase(y.name()));
+			menuStep(b, "Particles");
+			check("six empty slots", menuHas(b, "Floor 1: empty") && menuHas(b, "Floor 2: empty") && menuHas(b, "Arena 1: empty") && menuHas(b, "Arena 4: empty"));
+			menuStep(b, "Floor 1: empty");
+			check("the picker has the first page in alphabetical order and a way to the next", menuHas(b, sorted.get(0).name()) && menuHas(b, sorted.get(44).name()) && !menuHas(b, sorted.get(45).name())
+				&& menuHas(b, "Next page") && !menuHas(b, "Previous page"));
+			menuStep(b, "Next page");
+			check("page 2 starts where page 1 stopped", menuHas(b, sorted.get(45).name()) && menuHas(b, "Previous page"));
+			menuStep(b, "Previous page");
+			menuStep(b, sorted.get(0).name());
+			check("picking a particle puts it in the slot and goes back", Effects.particleSlot(id, false, 0).equals(sorted.get(0).id()) && menuHas(b, "Floor 1: " + sorted.get(0).name()));
+			menuStep(b, "Arena 2: empty");
+			menuStep(b, sorted.get(0).name());
+			check("the same particle in a second slot (he has 3 copies)", Effects.particleSlot(id, true, 1).equals(sorted.get(0).id()) && Effects.equippedCount(id, sorted.get(0).id()) == 2);
+			menuStep(b, "Floor 1: " + sorted.get(0).name());
+			menuStep(b, "Empty this slot");
+			check("a slot can be emptied", Effects.particleSlot(id, false, 0).isEmpty() && menuHas(b, "Floor 1: empty") && menuHas(b, "Arena 2: " + sorted.get(0).name()));
+			menuStep(b, "Back");
+		});
+		step("menus: Bob's explosions, the switch for other players, the missions and the preview", () -> {
+			UUID id = b.getUUID();
+			menuStep(b, "Explosions");
+			check("nothing is unknown to Bob", menuCount(b, "Locked: ???") == 0 && menuHas(b, "Orbital Wither Cannon") && menuHas(b, "Domain Expansion"));
+			menuStep(b, "Orbital Wither Cannon");
+			check("Orbital Wither Cannon is equipped", Effects.explosionSlot(id).equals("orbital_wither"));
+			menuStep(b, "Back");
+			menuStep(b, "Other players' effects: shown");
+			check("the switch hides other players' effects", Effects.hideOthers(id) && menuHas(b, "Other players' effects: hidden"));
+			menuStep(b, "Other players' effects: hidden");
+			check("and shows them again", !Effects.hideOthers(id) && menuHas(b, "Other players' effects: shown"));
+			menuStep(b, "Daily missions");
+			check("the missions show Bob's progress", menuHas(b, "Win 3 duels in a row") && menuItem(b, "Win 3 duels in a row").is(net.minecraft.world.item.Items.BLAZE_POWDER));
+			menuStep(b, "Back");
+			Victory.resetForTest();
+			menuStep(b, "Preview");
+			check("Preview closes the menu and plays his effects", Victory.showsStarted() == 1 && Victory.fireworkLaunches() == 2 && Victory.activeShows() == 1, Victory.fireworkLaunches() + " / " + Victory.showsStarted());
+			check("the menu is closed", !(b.containerMenu instanceof ChestMenu));
+		}, () -> Victory.activeShows() == 0, 400);
+		step("effects: clean up", () -> {
+			for (Dummy p : new Dummy[] {a, b, carl, dora}) p.closeContainer();
+			Effects.resetForTest();
+			Missions.resetForTest();
+			Victory.resetForTest();
+			check("everything is reset", Effects.ownedItemCount(a.getUUID()) == 2 && Missions.doneCount(a.getUUID()) == 0 && Victory.activeShows() == 0);
+			Effects.resetForTest();
 		});
 
 		step("sanity: commands from outside a duel", () -> {
