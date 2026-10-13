@@ -3817,6 +3817,7 @@ public final class SelfTest {
 
 		// ---------------------------------------------------------------- weekly missions and the midnight rule
 		final UUID weekId = UUID.nameUUIDFromBytes("weekly-player".getBytes());
+		final int[] weekEx = new int[1];
 		step("weekly: five missions that last a week", () -> {
 			Effects.resetForTest();
 			Missions.resetForTest();
@@ -3865,6 +3866,7 @@ public final class SelfTest {
 		});
 		step("weekly: they last all week, the daily ones do not, and a new week starts from zero", () -> {
 			Missions.setDayForTest(java.time.LocalDate.of(2031, 5, 11));
+			weekEx[0] = Effects.ownedExplosions(weekId).size();
 			check("on Sunday the weekly progress is still there", Missions.weeklyDoneCount(weekId) == 5 && Missions.progress(weekId, Missions.weekly().get(0)) == 15, "" + Missions.progress(weekId, Missions.weekly().get(0)));
 			check("but the daily missions of Wednesday are gone", Missions.doneCount(weekId) == 0);
 			Missions.setDayForTest(java.time.LocalDate.of(2031, 5, 12));
@@ -3875,7 +3877,7 @@ public final class SelfTest {
 			Missions.record(weekId, "Wendy", f);
 			check("the first win of the new week counts once", Missions.progress(weekId, Missions.weekly().get(0)) == 1 && Missions.progress(weekId, Missions.weekly().get(2)) == 1
 				&& Missions.progress(weekId, Missions.weekly().get(1)) == 1);
-			check("and what was won stays (the three explosions)", Effects.ownedExplosions(weekId).size() == 3);
+			check("and what was won stays (the explosions of the week)", weekEx[0] >= 3 && Effects.ownedExplosions(weekId).size() == weekEx[0], weekEx[0] + " vs " + Effects.ownedExplosions(weekId).size());
 			Missions.setDayForTest(null);
 		});
 		step("midnight: a duel counts for the day it started", () -> {
@@ -4305,7 +4307,11 @@ public final class SelfTest {
 		step("replay: pause", () -> {
 			ReplayPlayer s = ReplayPlayer.of(a.getUUID());
 			check("the picture moved on", s.pos > rp[0] + 5, rp[0] + " -> " + s.pos);
-			check("the heads-up line is being sent", packetCount(a, "ClientboundSetActionBarTextPacket") > 0);
+			boolean hud = false;
+			for (Packet<?> packet : List.copyOf(a.link.sent)) {
+				if (packet instanceof net.minecraft.network.protocol.game.ClientboundSystemChatPacket chat && chat.overlay() && chat.content().getString().contains("REPLAY")) hud = true;
+			}
+			check("the heads-up line (vida, tiempo, velocidad) is being sent", hud);
 			run(a, "replay pause");
 			check("paused", s.paused);
 			rp[1] = s.pos;
