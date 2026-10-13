@@ -341,6 +341,8 @@ public final class Victory {
 			case "gungnir" -> StrikeArt.gungnir(s.level, viewers, s.props, s.target, t, false);
 			case "railgun" -> BeamArt.railgun(s.level, viewers, s.props, s.target, t, false);
 			case "tesseract" -> GridArt.tesseract(s.level, viewers, s.props, s.target, t, false);
+			case "eclipse" -> SkyArt.eclipse(s.level, viewers, s.props, s.target, t, false);
+			case "moonfall" -> SkyArt.moonfall(s.level, viewers, s.props, s.target, t, false);
 			case "seven_stars" -> {
 				// the figure lies across the arena (its x axis is the side of the line from the winner to the target)
 				Vec3 way = Shapes.flatDirection(from(s, winner), s.target);
