@@ -3331,8 +3331,16 @@ public final class SelfTest {
 			check("no two particles share an id or a name", all.stream().map(Particles.Def::id).distinct().count() == all.size() && all.stream().map(Particles.Def::name).distinct().count() == all.size());
 			check("23 firework things: 16 colors, 5 shapes, the trail and the twinkle", Effects.allFireworkItems().size() == 23 && Effects.COLORS.length == 16 && Effects.COLOR_RGB.length == 16
 				&& Effects.SHAPES.length == 5);
-			check("6 explosions with a name each", Effects.EXPLOSIONS.length == 6 && Effects.EXPLOSION_NAMES.length == 6 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
-				&& Effects.EXPLOSION_NAMES[3].equals("Shooting Star") && Effects.EXPLOSION_NAMES[4].equals("Black Hole") && Effects.EXPLOSION_NAMES[5].equals("Meteor Shower"));
+			check("10 explosions with a name each", Effects.EXPLOSIONS.length == 10 && Effects.EXPLOSION_NAMES.length == 10 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
+				&& Effects.EXPLOSION_NAMES[2].equals("Shooting Star") && Effects.EXPLOSION_NAMES[3].equals("Black Hole") && Effects.EXPLOSION_NAMES[4].equals("Meteor Shower")
+				&& Effects.EXPLOSION_NAMES[5].equals("Gungnir") && Effects.EXPLOSION_NAMES[6].equals("Seven Stars") && Effects.EXPLOSION_NAMES[7].equals("Domain: Crimson Shrine")
+				&& Effects.EXPLOSION_NAMES[8].equals("Domain: Infinite Void") && Effects.EXPLOSION_NAMES[9].equals("Domain: Field of Swords"));
+			check("every explosion has a unique id, and the three domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 10
+				&& com.pvpduels.effects.DomeArt.Variant.of("domain_expansion") != null && com.pvpduels.effects.DomeArt.Variant.of("domain_void") != null
+				&& com.pvpduels.effects.DomeArt.Variant.of("domain_swords") != null && com.pvpduels.effects.DomeArt.Variant.of("gungnir") == null
+				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("domain_void") != null && Films.of("orbital_strike") == null);
+			check("the menus have a place for each, inside the six rows", EffectsMenus.explosionSlot(0) == 10 && EffectsMenus.explosionSlot(6) == 16
+				&& EffectsMenus.explosionSlot(7) == 19 && EffectsMenus.explosionSlot(Effects.EXPLOSIONS.length - 1) < 45);
 			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
 			check("the chances are the ones asked for", Effects.fireworkChance == 0.70 && Effects.particleChance == 0.40 && Effects.explosionChance == 0.008 && Effects.weeklyExplosionChance == 0.015 && Effects.explosionPity == 100);
 		});
@@ -3390,7 +3398,7 @@ public final class SelfTest {
 				if (g.size() != 1 || !g.get(0).kind().equals("explosion") || blasts.contains(g.get(0).id())) allExplosions = false;
 				else blasts.add(g.get(0).id());
 			}
-			check("six lucky missions give the six different explosions", allExplosions && Effects.ownedExplosions(boom).size() == Effects.EXPLOSIONS.length, blasts.toString());
+			check("lucky missions give every different explosion", allExplosions && Effects.ownedExplosions(boom).size() == Effects.EXPLOSIONS.length, blasts.toString());
 			List<Effects.Gained> afterBlasts = Effects.roll(boom, "Boom");
 			check("with all of them owned a lucky roll gives a particle instead", afterBlasts.size() == 1 && afterBlasts.get(0).kind().equals("particle"), afterBlasts.toString());
 
@@ -3800,7 +3808,7 @@ public final class SelfTest {
 		});
 		step("menus: Alice's explosions and missions", () -> {
 			menuStep(a, "Explosions");
-			check("she owns the Orbital Strike Cannon, the other five are still unknown", menuHas(a, "Orbital Strike Cannon") && menuCount(a, "Locked: ???") == Effects.EXPLOSIONS.length - 1, "" + menuCount(a, "Locked: ???"));
+			check("she owns the Orbital Strike Cannon, the others are still unknown", menuHas(a, "Orbital Strike Cannon") && menuCount(a, "Locked: ???") == Effects.EXPLOSIONS.length - 1, "" + menuCount(a, "Locked: ???"));
 			menuStep(a, "Orbital Strike Cannon");
 			check("clicking an explosion equips it and takes her fireworks and particles off", Effects.explosionSlot(a.getUUID()).equals("orbital_strike") && !Effects.hasEffects(a.getUUID()));
 			check("and she was told why", a.heard("Your fireworks and particles were taken off"));
@@ -3821,7 +3829,7 @@ public final class SelfTest {
 			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "effects unlockall Bob");
 			check("the console (an admin) can", Effects.ownedItemCount(id) == 23);
 			check("every particle with 3 copies", Effects.ownedParticles(id).size() == Particles.all().size() && Effects.particleCount(id, "flame") == 3);
-			check("and the six explosions", Effects.ownedExplosions(id).size() == Effects.EXPLOSIONS.length);
+			check("and every explosion", Effects.ownedExplosions(id).size() == Effects.EXPLOSIONS.length);
 			check("Bob was told", b.heard("You got all the victory effects"));
 			run(b, "effects");
 			menuStep(b, "Fireworks");
@@ -4000,7 +4008,7 @@ public final class SelfTest {
 		step("finale: it is a Domain Expansion, with a camera and a double of each player", () -> {
 			Duel d = duel(a);
 			Cinema.Scene scene = Cinema.sceneOf(d);
-			check("a finale of the Domain Expansion kind for Alice", scene != null && scene.kind == Cinema.Kind.DOMAIN && scene.win == 0);
+			check("a finale of the Domain Expansion kind for Alice (the Crimson Shrine)", scene != null && scene.kind == Cinema.Kind.DOMAIN && scene.win == 0 && scene.film != null && scene.film.id().equals("domain_expansion"));
 			if (scene == null) return;
 			check("a camera exists", scene.camera != null && scene.camera.isAlive() && scene.camera instanceof net.minecraft.world.entity.Display);
 			check("each player has a double (a mannequin) where they started", scene.doubles[0] instanceof net.minecraft.world.entity.decoration.Mannequin && scene.doubles[1] instanceof net.minecraft.world.entity.decoration.Mannequin
@@ -4026,13 +4034,15 @@ public final class SelfTest {
 			check("the viewers' bodies are where the camera is", a.position().distanceTo(scene.cameraAt) < 2.5 && b.position().distanceTo(scene.cameraAt) < 2.5, a.position() + " " + scene.cameraAt);
 			check("Alice's fireworks do not go up: she has an explosion, not effects", Victory.fireworkLaunches() == 0);
 			cam[0] = scene.cameraAt.y;
-		}, () -> titleHeard(a, "Domain Expansion: I win!") && titleHeard(b, "Domain Expansion: I win!"), 200);
+		}, () -> titleHeard(a, "Domain Expansion: Crimson Shrine") && titleHeard(b, "Domain Expansion: Crimson Shrine"), 200);
 		step("finale: the title reached everybody and the hands come apart", () -> {
 			Cinema.Scene scene = Cinema.sceneOf(duel(a));
-			check("the title 'Domain Expansion: I win!' reached Alice, Bob and Carl", titleHeard(a, "Domain Expansion: I win!") && titleHeard(b, "Domain Expansion: I win!") && titleHeard(carl, "Domain Expansion: I win!"));
+			check("the title 'Domain Expansion: Crimson Shrine' reached Alice, Bob and Carl", titleHeard(a, "Domain Expansion: Crimson Shrine") && titleHeard(b, "Domain Expansion: Crimson Shrine") && titleHeard(carl, "Domain Expansion: Crimson Shrine"));
 			check("1.5 seconds passed with the hands joined", scene.doubles[0].getPose() != net.minecraft.world.entity.Pose.CROUCHING || scene.doubles[0].getPose() == net.minecraft.world.entity.Pose.STANDING);
 			check("the camera has risen a little by now", scene.cameraAt.y > cam[0] + 0.5, scene.cameraAt.y + " vs " + cam[0]);
-			check("the dome is being drawn (many particles reach the players)", particlePackets(a) > 150 && particlePackets(b) > 150, particlePackets(a) + " / " + particlePackets(b));
+			check("the dome is being drawn (many particles reach the players)", particlePackets(a) > 100 && particlePackets(b) > 100, particlePackets(a) + " / " + particlePackets(b));
+			check("and it is made of display entities: the dome (4 turned cubes) and the floor (8 slabs) are in the world", com.pvpduels.effects.Props.live() >= 12 && com.pvpduels.effects.Props.tagged(server) >= 12,
+				com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
 		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).cameraAt.y > Cinema.sceneOf(duel(a)).center.y + 6.9, 400);
 		step("finale: the camera ends 7 blocks up, to the side and toward the winner's end", () -> {
 			Cinema.Scene scene = Cinema.sceneOf(duel(a));
@@ -4052,8 +4062,9 @@ public final class SelfTest {
 			check("nobody is looking through the camera any more", a.getCamera() == a && b.getCamera() == b && carl.getCamera() == carl);
 			check("nobody is left in spectator mode (Carl stopped watching too)", a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR
 				&& carl.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && !Spectators.isIn(carl.getUUID()));
-			check("the camera and the doubles are gone", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0,
-				Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera"));
+			check("the camera, the doubles and the whole domain are gone", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0
+				&& com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0,
+				Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera") + " / " + com.pvpduels.effects.Props.live());
 			check("she won, so her streak went up", StatsStore.get(a.getUUID()).streak == cine[3] + 1, StatsStore.get(a.getUUID()).streak + " vs " + cine[3]);
 		});
 
@@ -4194,14 +4205,14 @@ public final class SelfTest {
 		}, () -> Cinema.scenesStarted() > cine[4] && a.getCamera() != a, 200);
 		step("finale star: a low shot from the side, with the winner looking up", () -> {
 			Cinema.Scene scene = Cinema.sceneOf(duel(a));
-			check("a finale of the Shooting Star kind for Alice", scene != null && scene.kind == Cinema.Kind.STAR && scene.win == 0);
+			check("a finale of the Shooting Star film for Alice", scene != null && scene.kind == Cinema.Kind.FILM && scene.win == 0 && scene.film != null && scene.film.id().equals("shooting_star"));
 			if (scene == null) return;
 			check("Alice and Bob ride the camera", a.getCamera() == scene.camera && b.getCamera() == scene.camera);
 			check("the camera is low and to the side of the arena", scene.cameraAt.y < scene.center.y + 3.5 && Math.abs(scene.cameraAt.z - scene.center.z) > scene.half,
 				scene.cameraAt + " center " + scene.center + " half " + scene.half);
 			check("Alice's double looks up to make a wish", scene.doubles[0].getXRot() < -20f, String.valueOf(scene.doubles[0].getXRot()));
 			check("Alice's fireworks do not go up: she has an explosion", Victory.fireworkLaunches() == 0);
-		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Cinema.WISH + 60, 600);
+		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Films.STAR_WISH + 60, 600);
 		step("finale star: the star is crossing the sky and the camera follows it", () -> {
 			Cinema.Scene scene = Cinema.sceneOf(duel(a));
 			check("display entities were made (the star, its halo and its tail)", com.pvpduels.effects.Props.createdCount() >= cine[6] + 5, (com.pvpduels.effects.Props.createdCount() - cine[6]) + " made");
@@ -4210,7 +4221,7 @@ public final class SelfTest {
 			check("the camera has moved toward the loser's end", scene.cameraAt.x > scene.center.x - scene.half * 0.5, scene.cameraAt + " center " + scene.center);
 			check("the camera sent many position packets", Cinema.cameraMoves() > cine[5] + 60, (Cinema.cameraMoves() - cine[5]) + " moves");
 			check("the title 'Make a wish' reached Alice", titleHeard(a, "Make a wish"));
-		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Cinema.IMPACT + 30, 600);
+		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Films.STAR_IMPACT + 30, 600);
 		step("finale star: it landed, with a flash and a title", () -> {
 			Cinema.Scene scene = Cinema.sceneOf(duel(a));
 			check("the title SHOOTING STAR reached Alice and Bob", titleHeard(a, "SHOOTING STAR") && titleHeard(b, "SHOOTING STAR"));
@@ -4228,6 +4239,82 @@ public final class SelfTest {
 				Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera") + " / " + com.pvpduels.effects.Props.live());
 			Effects.setExplosion(a.getUUID(), "");
 		});
+		// ---------------------------------------------------------------- the other films of 0.12
+		// id, title, kind, how far into the film we look at its world, how many display entities it has by then
+		final String[][] films = {{"domain_void", "Domain Expansion: Infinite Void", "DOMAIN", String.valueOf(Films.HANDS + 70), "15"},
+			{"domain_swords", "Domain Expansion: Field of Swords", "DOMAIN", String.valueOf(Films.HANDS + 70), "15"},
+			{"gungnir", "GUNGNIR", "FILM", String.valueOf(Films.GUNGNIR_WAIT + 40), "4"},
+			{"seven_stars", "SEVEN STARS", "FILM", String.valueOf(Films.SEVEN_LEAD + 90), "4"}};
+		for (String[] f : films) {
+			final boolean skipTest = f[0].equals("seven_stars");
+			step("finale " + f[0] + ": Alice has it", () -> {
+				Victory.resetForTest();
+				Effects.grantExplosion(a.getUUID(), f[0]);
+				check("Alice equips it", Effects.setExplosion(a.getUUID(), f[0]) == null && Victory.explosionMode(a.getUUID()));
+				Effects.setExplosion(b.getUUID(), "");
+				for (Dummy p : new Dummy[] {a, b}) p.inbox.clear();
+				cine[4] = Cinema.scenesStarted();
+				cine[5] = Cinema.cameraMoves();
+				invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 1));
+			}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
+			step("finale " + f[0] + ": Alice wins", () -> {
+				cine[0] = ticks;
+				cine[6] = com.pvpduels.effects.Props.createdCount();
+				a.link.sent.clear();
+				b.link.sent.clear();
+				hit(a, b);
+			}, () -> Cinema.scenesStarted() > cine[4] && a.getCamera() != a, 200);
+			step("finale " + f[0] + ": the film starts with a camera and two doubles", () -> {
+				Cinema.Scene scene = Cinema.sceneOf(duel(a));
+				check("a finale of the right film for Alice", scene != null && scene.film != null && scene.film.id().equals(f[0]) && scene.kind == Cinema.Kind.valueOf(f[2]) && scene.win == 0);
+				if (scene == null) return;
+				check("Alice and Bob ride the camera, in spectator mode", a.getCamera() == scene.camera && b.getCamera() == scene.camera
+					&& a.gameMode() == net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() == net.minecraft.world.level.GameType.SPECTATOR);
+				check("each player has a double", scene.doubles[0].isAlive() && scene.doubles[1].isAlive());
+				check("the film is long (more than 7 seconds of camera)", scene.total > Cinema.PRE + 140, "" + scene.total);
+			}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).age >= Cinema.PRE + Integer.parseInt(f[3]), 700);
+			step("finale " + f[0] + ": its world stands in the middle of the film", () -> {
+				Cinema.Scene scene = Cinema.sceneOf(duel(a));
+				int min = Integer.parseInt(f[4]);
+				int made = com.pvpduels.effects.Props.createdCount() - cine[6];
+				check("display entities were made", made >= min, made + " made");
+				check("and they are in the world", com.pvpduels.effects.Props.live() >= min && com.pvpduels.effects.Props.tagged(server) >= min,
+					com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
+				check("the camera has been moving all the time", Cinema.cameraMoves() > cine[5] + Integer.parseInt(f[3]) - 20, (Cinema.cameraMoves() - cine[5]) + " moves");
+				check("the camera stays near the arena", scene != null && scene.cameraAt.distanceTo(scene.center) < 60 && scene.cameraAt.y > scene.center.y - 1,
+					scene == null ? "no scene" : scene.cameraAt + " center " + scene.center);
+				check("lots of particles reached Alice", particlePackets(a) > 15, String.valueOf(particlePackets(a)));
+				if (skipTest) {
+					b.setShiftKeyDown(false);
+					cine[7] = ticks;
+				}
+			}, () -> !skipTest || ticks >= cine[7] + 4, 60);
+			if (skipTest) {
+				step("finale " + f[0] + ": Bob presses sneak and skips the film", () -> {
+					check("Bob still rides the camera before he sneaks", b.getCamera() != b);
+					b.setShiftKeyDown(true);
+				}, () -> b.getCamera() == b, 60);
+				step("finale " + f[0] + ": Bob has his body back and Alice still sees the film", () -> {
+					Cinema.Scene scene = Cinema.sceneOf(duel(a));
+					b.setShiftKeyDown(false);
+					check("Bob looks through his own eyes again, no longer a spectator", b.getCamera() == b && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+					check("Alice is still in the camera and the film goes on", scene != null && a.getCamera() == scene.camera && a.gameMode() == net.minecraft.world.level.GameType.SPECTATOR);
+					check("the world of the film still stands", com.pvpduels.effects.Props.live() > 0);
+				});
+			}
+			step("finale " + f[0] + ": the film ends", () -> { }, () -> noDuel(a) && noDuel(b), 900);
+			step("finale " + f[0] + ": everything is put back and nothing is left", () -> {
+				check("the title " + f[1] + " reached Alice", titleHeard(a, f[1]));
+				if (!skipTest) check("and Bob", titleHeard(b, f[1]));
+				check("the film lasted more than seven seconds from the win", ticks - cine[0] > 140, (ticks - cine[0]) + " ticks");
+				check("nobody is looking through the camera and nobody is a spectator", a.getCamera() == a && b.getCamera() == b
+					&& a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+				check("no camera, no double and no display entity is left", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0
+					&& com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0,
+					Cinema.activeScenes() + " / " + taggedCount("pvpduels_double") + " / " + taggedCount("pvpduels_camera") + " / " + com.pvpduels.effects.Props.live());
+				Effects.setExplosion(a.getUUID(), "");
+			});
+		}
 		step("finale: clean up", () -> {
 			Cinema.resetForTest();
 			Cinema.enabled = false;
@@ -4245,7 +4332,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.11.0", version.equals("0.11.0"), version);
+			check("the mod says 0.12.0", version.equals("0.12.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
@@ -4390,21 +4477,60 @@ public final class SelfTest {
 			check("no display entity is left", com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0);
 			dora.closeContainer();
 			EffectsMenus.openTryOut(dora, dora.position().add(4, 0, 0));
-			check("the dummy's menu shows her explosions", menuHas(dora, "Shooting Star") && menuHas(dora, "Domain Expansion") && menuHas(dora, "Meteor Shower"));
+			check("the dummy's menu shows her explosions", menuHas(dora, "Shooting Star") && menuHas(dora, "Domain: Crimson Shrine") && menuHas(dora, "Meteor Shower") && menuHas(dora, "Gungnir") && menuHas(dora, "Seven Stars")
+				&& menuHas(dora, "Domain: Infinite Void") && menuHas(dora, "Domain: Field of Swords"));
 			dora.link.sent.clear();
 			d8[4] = Victory.showsStarted();
-			menuStep(dora, "Domain Expansion");
+			xfx[1] = com.pvpduels.effects.Props.createdCount();
+			xfx[0] = ticks;
+			menuStep(dora, "Domain: Crimson Shrine");
 			check("a click starts it and closes the menu", Victory.showsStarted() == d8[4] + 1 && Victory.activeShows() == 1 && !(dora.containerMenu instanceof ChoiceMenu));
 		});
-		step("dummy: the Domain Expansion plays around the dummy", () -> { }, () -> Victory.activeShows() == 0, 800);
-		step("dummy: the dome reached Dora", () -> {
+		step("dummy: the Crimson Shrine is on the way", () -> {
+			xfx[0] = ticks;
+		}, () -> ticks >= xfx[0] + 50, 300);
+		step("dummy: the dome stands, made of display entities", () -> {
+			int made = com.pvpduels.effects.Props.createdCount() - xfx[1];
+			check("the shrine made many display entities (the dome, the floor, the circle, the pagoda)", made >= 30, made + " made");
+			check("and they are in the world", com.pvpduels.effects.Props.live() >= 12 && com.pvpduels.effects.Props.tagged(server) >= 12,
+				com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
+		}, () -> Victory.activeShows() == 0, 800);
+		step("dummy: the dome reached Dora and is gone", () -> {
 			int sum = 0;
 			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
 				if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) sum += pk.getCount();
 			}
-			check("the dome sent a lot of particles", sum > 500, String.valueOf(sum));
-			check("the show ended by itself", Victory.activeShows() == 0);
+			check("the shrine sent a lot of particles", sum > 300, String.valueOf(sum));
+			check("the show ended by itself and nothing is left", Victory.activeShows() == 0 && com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0);
 		});
+
+		// ---------------------------------------------------------------- the new explosions of 0.12 on the dummy (their quick versions)
+		final String[][] quick = {{"gungnir", "Gungnir", "25"}, {"seven_stars", "Seven Stars", "25"}, {"domain_void", "Domain: Infinite Void", "25"},
+			{"domain_swords", "Domain: Field of Swords", "50"}};
+		for (String[] q : quick) {
+			step("quick " + q[1] + ": Dora tries it on the dummy", () -> {
+				dora.closeContainer();
+				xfx[1] = com.pvpduels.effects.Props.createdCount();
+				dora.link.sent.clear();
+				check("it starts", Victory.tryOn(dora, q[0], dora.position().add(4, 0, 0)) == null && Victory.activeShows() == 1);
+				xfx[0] = ticks;
+			}, () -> ticks >= xfx[0] + 50, 300);
+			step("quick " + q[1] + ": its solid parts stand in the world", () -> {
+				int made = com.pvpduels.effects.Props.createdCount() - xfx[1];
+				check(q[1] + " made display entities", made >= Integer.parseInt(q[2]), made + " made");
+				check("and they are in the world", com.pvpduels.effects.Props.live() > 5 && com.pvpduels.effects.Props.tagged(server) > 5,
+					com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
+			}, () -> Victory.activeShows() == 0, 800);
+			step("quick " + q[1] + ": it ended and nothing is left", () -> {
+				int sum = 0;
+				for (Packet<?> packet : List.copyOf(dora.link.sent)) {
+					if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) sum += pk.getCount();
+				}
+				check("lots of particles reached Dora", sum > 150, String.valueOf(sum));
+				check("no display entity is left", com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0,
+					com.pvpduels.effects.Props.live() + " / " + com.pvpduels.effects.Props.tagged(server));
+			});
+		}
 
 		// the test bot
 		step("test bot: the command is for admins and the bot has a level", () -> {

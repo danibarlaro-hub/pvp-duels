@@ -39,8 +39,14 @@ public final class Effects {
 		11250603, 2651799, 8073150, 2437522, 5320730, 3887386, 11743532, 1973019};
 	public static final String[] SHAPES = {"small_ball", "large_ball", "star", "creeper", "burst"};
 	public static final String[] SHAPE_NAMES = {"Small ball", "Large ball", "Star", "Creeper", "Burst"};
-	public static final String[] EXPLOSIONS = {"orbital_strike", "orbital_wither", "domain_expansion", "shooting_star", "black_hole", "meteor_shower"};
-	public static final String[] EXPLOSION_NAMES = {"Orbital Strike Cannon", "Orbital Wither Cannon", "Domain Expansion", "Shooting Star", "Black Hole", "Meteor Shower"};
+	/**
+	 * Every explosion, in the order of the menus. The ids are what is saved for each player, so they never change; the three Domain
+	 * Expansions are the last ones: {@code domain_expansion} is the first one the mod had and is now the Crimson Shrine.
+	 */
+	public static final String[] EXPLOSIONS = {"orbital_strike", "orbital_wither", "shooting_star", "black_hole", "meteor_shower", "gungnir", "seven_stars",
+		"domain_expansion", "domain_void", "domain_swords"};
+	public static final String[] EXPLOSION_NAMES = {"Orbital Strike Cannon", "Orbital Wither Cannon", "Shooting Star", "Black Hole", "Meteor Shower", "Gungnir", "Seven Stars",
+		"Domain: Crimson Shrine", "Domain: Infinite Void", "Domain: Field of Swords"};
 
 	/** The chances of the rewards of a mission (each mission rolls them). Easy to change here. */
 	public static double fireworkChance = 0.70;

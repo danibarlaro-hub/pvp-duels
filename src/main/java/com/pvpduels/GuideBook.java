@@ -103,12 +103,12 @@ public final class GuideBook {
 		}),
 		new Topic("Effects", new String[][] {
 			{"Victory effects", "When you win, 3 fireworks go up in a row behind you, and your particles play for 5 seconds.\n\n/effects opens the menu to choose them. /effects preview shows them now."},
-			{"The finale", "After a win the camera zooms out from the middle of the arena and rises 7 blocks. Everybody sees it, spectators too. Sneak to skip it.\n\nWith a Domain Expansion you also get a dark dome and the title Domain Expansion: I win!"},
+			{"The finale", "After a win the camera zooms out from the middle of the arena and rises 7 blocks. Everybody sees it, spectators too. Sneak to skip it.\n\nWith a Domain you get a real dome over the arena. Gungnir, Seven Stars and Shooting Star have their own films."},
 			{"Ties", "A tie breaks your win streak.\n\nTwo normal players, or one Domain Expansion against a normal player: the duel just ends.\n\nTwo Domain Expansions clash and push each other until they tire: I guess it's a tie."},
 			{"Missions", "/missions shows 6 daily missions and 5 weekly ones (they reset on Monday). They count in duels against players.\n\nA duel counts for the day it started, even if it ends after midnight."},
 			{"Rewards", "Each mission gives a firework color or shape, or a particle. A repeated particle is one more copy to use in another slot.\n\nExplosions are very rare: 0.8% daily, 1.5% weekly."},
 			{"Your slots", "Particles: 2 on the floor and 4 around the arena.\n\nFireworks: up to 5 colors each.\n\nYou can have effects OR an explosion, not both. The menu can hide the effects of other players."},
-			{"Explosions", "Very rare: Orbital Strike Cannon, Orbital Wither Cannon, Domain Expansion, Shooting Star, Black Hole and Meteor Shower.\n\nGiant beams, spheres, fireballs and real fireworks. Missions unlock them.\n\nThe Shooting Star has a film-style finale."},
+			{"Explosions", "Very rare, 10 of them: Orbital Strike and Wither Cannons, Shooting Star, Black Hole, Meteor Shower, Gungnir, Seven Stars and 3 Domains (Crimson Shrine, Infinite Void, Field of Swords).\n\nMissions unlock them."},
 			{"Effect quality", "Only for what you see: Potato, Low, Mid, High and Ultra Pro Max.\n\nPotato sends a tenth of the particles (slow computers), Ultra Pro Max double. Click it in /effects."}
 		}),
 		new Topic("About", new String[][] {

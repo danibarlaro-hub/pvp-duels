@@ -2,8 +2,8 @@ package com.pvpduels.duel;
 
 import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.effects.DomainArt;
+import com.pvpduels.effects.DomeArt;
 import com.pvpduels.effects.Effects;
-import com.pvpduels.effects.ExplosionArt;
 import com.pvpduels.effects.Props;
 import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.Victory;
@@ -51,7 +51,8 @@ import java.util.UUID;
  * (if the finale ended normally) their start place back, and the camera and the doubles disappear.
  */
 public final class Cinema {
-	public enum Kind { NORMAL, DOMAIN, CLASH, STAR }
+	/** NORMAL: the camera rises and the usual effects play. DOMAIN and FILM: a film of the winner's explosion ({@link Films}). CLASH: two domains push each other. */
+	public enum Kind { NORMAL, DOMAIN, CLASH, FILM }
 
 	/** The self-test turns the finale off for its older tests and on for its own. */
 	public static boolean enabled = true;
@@ -62,9 +63,6 @@ public final class Cinema {
 	static final int PRE = 3;
 	/** 1.5 seconds with the hands joined. */
 	static final int HANDS = 30;
-	static final int EXPAND = 40;
-	static final int HOLD = 60;
-	static final int COLLAPSE = 20;
 	static final int CLASH_EXPAND = 30;
 	static final int PUSH = 100;
 	static final int EXHALE = 18;
@@ -72,10 +70,6 @@ public final class Cinema {
 	static final int NORMAL_TICKS = 100;
 	/** After the camera stops it stays a little while, so the last fireworks can be seen. */
 	static final int TAIL = 25;
-	/** The cinematic Shooting Star: a calm wish first (the camera looks up), then the flight of the star, then the aftermath. */
-	static final int WISH = 40;
-	static final int IMPACT = WISH + ExplosionArt.CINEMATIC_FLIGHT;
-	static final int STAR_TICKS = IMPACT + ExplosionArt.CINEMATIC_AFTER;
 
 	private static final String DOUBLE_TAG = "pvpduels_double";
 	private static final String CAMERA_TAG = "pvpduels_camera";
@@ -125,11 +119,7 @@ public final class Cinema {
 	// ------------------------------------------------------------------ starting and stopping
 
 	private static boolean hasDomain(UUID id) {
-		return Effects.explosionSlot(id).equals("domain_expansion");
-	}
-
-	private static boolean hasStar(UUID id) {
-		return Effects.explosionSlot(id).equals("shooting_star");
+		return DomeArt.Variant.of(Effects.explosionSlot(id)) != null;
 	}
 
 	/**
@@ -143,8 +133,10 @@ public final class Cinema {
 			if (duel.player(i) == null || duel.isRestored(i)) return 0;
 		}
 		Kind kind;
+		Films.Film film = null;
 		if (winnerIdx >= 0) {
-			kind = hasDomain(duel.ids[winnerIdx]) ? Kind.DOMAIN : (hasStar(duel.ids[winnerIdx]) ? Kind.STAR : Kind.NORMAL);
+			film = Films.of(Effects.explosionSlot(duel.ids[winnerIdx]));
+			kind = film == null ? Kind.NORMAL : (film.domain() ? Kind.DOMAIN : Kind.FILM);
 		} else {
 			// A tie: nothing happens unless both players have a Domain Expansion.
 			if (!(hasDomain(duel.ids[0]) && hasDomain(duel.ids[1]))) return 0;
@@ -152,7 +144,7 @@ public final class Cinema {
 		}
 		ServerLevel level = duel.space.level(server);
 		if (level == null) return 0;
-		Scene scene = new Scene(duel, server, level, kind, winnerIdx);
+		Scene scene = new Scene(duel, server, level, kind, winnerIdx, film);
 		if (!scene.spawn()) return 0;
 		SCENES.add(scene);
 		started++;
@@ -213,6 +205,8 @@ public final class Cinema {
 		final int index;
 		GameType previous = GameType.SURVIVAL;
 		boolean riding;
+		/** True once the viewer has been seen NOT sneaking, so a key that was already down when the camera began does not skip the finale. */
+		boolean sneakReady;
 
 		Rider(UUID id, int index) {
 			this.id = id;
@@ -226,6 +220,8 @@ public final class Cinema {
 		final MinecraftServer server;
 		final ServerLevel level;
 		final Kind kind;
+		/** The film of the winner's explosion (a Domain Expansion, the Shooting Star...), or null for the other finales. */
+		final Films.Film film;
 		/** The winner, or -1 for the clash. */
 		final int win;
 		final String id = UUID.randomUUID().toString().substring(0, 8);
@@ -247,21 +243,20 @@ public final class Cinema {
 		int age;
 		boolean ended;
 		private Vec3 smooth;
-		/** The solid parts of the cinematic star (null for the other finales). */
+		/** The solid parts of a film (null until the film needs them). */
 		Props props;
-		/** The tick of the camera that is being filmed, for the look of the star's camera. */
-		private int filming;
 		private float lastYaw = Float.NaN;
 		/** The last position and look of the camera. */
 		Vec3 cameraAt;
 		float cameraYaw;
 		float cameraPitch;
 
-		Scene(Duel duel, MinecraftServer server, ServerLevel level, Kind kind, int win) {
+		Scene(Duel duel, MinecraftServer server, ServerLevel level, Kind kind, int win, Films.Film film) {
 			this.duel = duel;
 			this.server = server;
 			this.level = level;
 			this.kind = kind;
+			this.film = film;
 			this.win = win;
 			for (int i = 0; i < 2; i++) {
 				double[] s = duel.space.spawn(i);
@@ -278,16 +273,14 @@ public final class Cinema {
 			side = new Vec3(-toWinner.z, 0, toWinner.x);
 			int cam = switch (kind) {
 				case NORMAL -> NORMAL_TICKS;
-				case DOMAIN -> HANDS + EXPAND + HOLD;
 				case CLASH -> HANDS + CLASH_EXPAND + PUSH;
-				case STAR -> STAR_TICKS;
+				case DOMAIN, FILM -> film.camTicks();
 			};
 			camTicks = cam;
 			int length2 = switch (kind) {
 				case NORMAL -> NORMAL_TICKS + TAIL;
-				case DOMAIN -> HANDS + EXPAND + HOLD + COLLAPSE + 20;
 				case CLASH -> HANDS + CLASH_EXPAND + PUSH + EXHALE + TIE_TITLE;
-				case STAR -> STAR_TICKS + TAIL;
+				case DOMAIN, FILM -> film.camTicks() + film.tail();
 			};
 			total = PRE + length2;
 		}
@@ -349,20 +342,23 @@ public final class Cinema {
 
 		/** Where the camera is {@code a} ticks after the viewers got it. */
 		Vec3 cameraPosition(int a) {
-			if (kind == Kind.STAR) return starCamera(a);
-			double p = Math.min(1.0, a / (double) Math.max(1, camTicks));
+			if (film != null) return film.camera(this, a);
+			return rise(a, camTicks);
+		}
+
+		/** The usual rise: from the floor in the middle of the arena, sideways first, then bending toward the winner's end, 7 blocks up. */
+		Vec3 rise(int a, int ticks) {
+			double p = Math.min(1.0, a / (double) Math.max(1, ticks));
 			double e = ease(p);
 			double theta = e * Math.PI / 2;
-			// sideways first, then bending toward the winner's end
 			double out = half * Math.sin(theta);
 			double toward = half * 0.45 * (1 - Math.cos(theta));
 			Vec3 flat = center.add(side.scale(out)).add(toWinner.scale(toward));
 			return new Vec3(flat.x, center.y + 0.3 + RISE * e, flat.z);
 		}
 
-		/** The way the camera looks: at the loser, turned toward the winner as much as needed to keep both in the picture. */
-		private Vec3 look(Vec3 cam) {
-			if (kind == Kind.STAR) return starLook(cam, filming);
+		/** The way the camera looks in the usual finale: at the loser, turned toward the winner as much as needed to keep both in the picture. */
+		Vec3 standardLook(Vec3 cam) {
 			if (kind == Kind.CLASH) return center.add(0, 1.5, 0).subtract(cam).normalize();
 			int l = 1 - win;
 			Vec3 dl = stage[l].add(0, 1.0, 0).subtract(cam).normalize();
@@ -373,10 +369,13 @@ public final class Cinema {
 			return dir.lengthSqr() < 1e-6 ? dl : dir.normalize();
 		}
 
+		private Vec3 look(Vec3 cam, int a) {
+			return film != null ? film.look(this, cam, a) : standardLook(cam);
+		}
+
 		private void moveCamera(int a) {
-			filming = a;
 			Vec3 pos = cameraPosition(a);
-			Vec3 dir = look(pos);
+			Vec3 dir = look(pos, a);
 			smooth = smooth == null ? dir : smooth.scale(0.65).add(dir.scale(0.35));
 			Vec3 d = smooth.lengthSqr() < 1e-6 ? dir : smooth.normalize();
 			float yawNow = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90.0);
@@ -397,6 +396,13 @@ public final class Cinema {
 				p.connection.send(packet);
 				cameraMoves++;
 			}
+		}
+
+		/** The position moved a little at random (the ground shakes). */
+		static Vec3 shake(Vec3 pos, double amplitude) {
+			if (amplitude <= 0.001) return pos;
+			java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
+			return pos.add((rnd.nextDouble() - 0.5) * amplitude, (rnd.nextDouble() - 0.5) * amplitude * 0.7, (rnd.nextDouble() - 0.5) * amplitude);
 		}
 
 		// -------------------------------------------------------------- viewers
@@ -425,6 +431,21 @@ public final class Cinema {
 			camera.snapTo(pos.x, pos.y, pos.z, 0f, 0f);
 		}
 
+		/** A viewer who sneaks (or gets out of the camera in any other way) skips the rest of the finale: they get their body back. */
+		private void skippers() {
+			for (Rider r : new ArrayList<>(riders)) {
+				if (!r.riding) continue;
+				ServerPlayer p = server.getPlayerList().getPlayer(r.id);
+				if (p == null) continue;
+				if (p.getCamera() != camera) {
+					releaseOne(r.id, true);
+					continue;
+				}
+				if (!p.isShiftKeyDown()) r.sneakReady = true;
+				else if (r.sneakReady) releaseOne(r.id, true);
+			}
+		}
+
 		/** A viewer gets their own eyes back. {@code toStage}: the duelists also go back to where they started. */
 		void releaseOne(UUID id, boolean toStage) {
 			for (Rider r : riders) {
@@ -450,7 +471,7 @@ public final class Cinema {
 			discardEntities();
 		}
 
-		private List<ServerPlayer> audience() {
+		List<ServerPlayer> audience() {
 			List<ServerPlayer> out = new ArrayList<>();
 			for (ServerPlayer p : level.players()) {
 				boolean owner = p.getUUID().equals(duel.ids[0]) || p.getUUID().equals(duel.ids[1]);
@@ -460,7 +481,13 @@ public final class Cinema {
 			return out;
 		}
 
-		private void title(Component title, Component subtitle, int in, int stay, int out) {
+		/** The solid parts of the film, made the first time they are needed. */
+		Props props() {
+			if (props == null) props = Victory.propsFor(level, winnerPlayer());
+			return props;
+		}
+
+		void title(Component title, Component subtitle, int in, int stay, int out) {
 			for (ServerPlayer p : level.players()) {
 				p.connection.send(new ClientboundSetTitlesAnimationPacket(in, stay, out));
 				p.connection.send(new ClientboundSetSubtitleTextPacket(subtitle));
@@ -468,16 +495,31 @@ public final class Cinema {
 			}
 		}
 
-		private void sound(Vec3 at, net.minecraft.sounds.SoundEvent event, float volume, float pitch) {
+		void sound(Vec3 at, net.minecraft.sounds.SoundEvent event, float volume, float pitch) {
 			level.playSound(null, at.x, at.y, at.z, event, SoundSource.MASTER, volume, pitch);
 		}
 
-		private void sound(Vec3 at, net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> event, float volume, float pitch) {
+		void sound(Vec3 at, net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> event, float volume, float pitch) {
 			level.playSound(null, at.x, at.y, at.z, event, SoundSource.MASTER, volume, pitch);
 		}
 
-		private void pose(int i, Pose pose) {
+		void pose(int i, Pose pose) {
 			if (doubles[i] != null && doubles[i].isAlive()) doubles[i].setPose(pose);
+		}
+
+		/** The viewers are blinded for a moment by a burst of light where the camera is. */
+		void flash() {
+			for (Rider r : riders) {
+				ServerPlayer p = r.riding ? server.getPlayerList().getPlayer(r.id) : null;
+				if (p == null) continue;
+				Quality.send(level, p, ParticleTypes.END_ROD, cameraAt.x, cameraAt.y, cameraAt.z, 260, 2.5, 2.5, 2.5, 0.5);
+				Quality.send(level, p, ParticleTypes.FIREWORK, cameraAt.x, cameraAt.y, cameraAt.z, 120, 3.0, 3.0, 3.0, 0.4);
+			}
+		}
+
+		/** From the winner's end to the loser's end, flat. */
+		Vec3 forward() {
+			return toWinner.scale(-1);
 		}
 
 		// -------------------------------------------------------------- every tick
@@ -501,17 +543,17 @@ public final class Cinema {
 				}
 			}
 			int a = age - PRE;
+			skippers();
 			moveCamera(a);
 			switch (kind) {
 				case NORMAL -> normal(a);
-				case DOMAIN -> domain(a);
 				case CLASH -> clash(a);
-				case STAR -> star(a);
+				case DOMAIN, FILM -> film.play(this, a);
 			}
 			return age < total;
 		}
 
-		private ServerPlayer winnerPlayer() {
+		ServerPlayer winnerPlayer() {
 			return win < 0 ? null : server.getPlayerList().getPlayer(duel.ids[win]);
 		}
 
@@ -522,143 +564,10 @@ public final class Cinema {
 			}
 		}
 
-		// -------------------------------------------------------------- the Domain Expansion
-
-		private Vec3 hands(int i) {
+		/** Where the hands of a duelist join. */
+		Vec3 hands(int i) {
 			double r = Math.toRadians(yaw[i]);
 			return stage[i].add(-Math.sin(r) * 0.4, 0.95, Math.cos(r) * 0.4);
-		}
-
-		private void domain(int a) {
-			List<ServerPlayer> viewers = audience();
-			int owner = win;
-			if (a < HANDS) {
-				if (a == 0) {
-					pose(owner, Pose.CROUCHING);
-					sound(stage[owner], SoundEvents.BEACON_ACTIVATE, 2.0f, 0.6f);
-				}
-				DomainArt.swirl(level, viewers, hands(owner), ParticleTypes.ENCHANT, a);
-				DomainArt.swirl(level, viewers, hands(owner), ParticleTypes.SOUL_FIRE_FLAME, a + 7);
-				return;
-			}
-			if (a == HANDS) {
-				pose(owner, Pose.STANDING);
-				sound(center, SoundEvents.ENDER_DRAGON_GROWL, 4.0f, 0.6f);
-				title(Component.literal("Domain Expansion: ").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD)
-						.append(Component.literal("I win!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)),
-					Component.literal(duel.names[owner]).withStyle(ChatFormatting.GRAY), 5, 60, 15);
-			}
-			int t = a - HANDS;
-			double big = half + 8;
-			double radius;
-			if (t < EXPAND) radius = big * ease(t / (double) EXPAND);
-			else if (t < EXPAND + HOLD) radius = big;
-			else radius = big * (1 - ease((t - EXPAND - HOLD) / (double) COLLAPSE));
-			if (t >= EXPAND + HOLD + COLLAPSE) return;
-			DomainArt.dome(level, viewers, center, radius, 70, DomainArt.voidLook());
-			DomainArt.ring(level, viewers, center, radius, 72, 0.15, DomainArt.LINE, a * 0.05);
-			DomainArt.ring(level, viewers, center, radius, 72, 1.0, DomainArt.LINE, -a * 0.05);
-			DomainArt.haze(level, viewers, center, radius, 6);
-			if (t == EXPAND + HOLD) sound(center, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.5f);
-		}
-
-		// -------------------------------------------------------------- the cinematic Shooting Star
-
-		/** From the winner's end to the loser's end, flat. */
-		private Vec3 forward() {
-			return toWinner.scale(-1);
-		}
-
-		/** The camera of the star: a low wide shot from the side that follows the star across the sky, then circles the landing. */
-		private Vec3 starCamera(int a) {
-			Vec3 fwd = forward();
-			Vec3 loser = stage[1 - win];
-			double e = ease(Math.min(1.0, a / (double) IMPACT));
-			double lateral = half + 9 - 6 * e;
-			double along = -half * 0.9 + half * 1.15 * e;
-			double height = 2.2 + 3.8 * e;
-			Vec3 at = new Vec3(center.x + side.x * lateral + fwd.x * along, center.y + height, center.z + side.z * lateral + fwd.z * along);
-			if (a <= IMPACT) return at;
-			// after the landing it circles the pentagram and rises
-			double p = ease(Math.min(1.0, (a - IMPACT) / (double) ExplosionArt.CINEMATIC_AFTER));
-			Vec3 rel = new Vec3(at.x - loser.x, 0, at.z - loser.z);
-			double turn = Math.toRadians(70) * p;
-			double cos = Math.cos(turn);
-			double sin = Math.sin(turn);
-			double grow = 1.0 + 0.35 * p;
-			Vec3 rotated = new Vec3((rel.x * cos - rel.z * sin) * grow, 0, (rel.x * sin + rel.z * cos) * grow);
-			Vec3 pos = new Vec3(loser.x + rotated.x, at.y + 9.0 * p, loser.z + rotated.z);
-			int since = a - IMPACT;
-			if (since < 16) {
-				// the ground shakes when the star lands
-				double amp = 0.8 * (1.0 - since / 16.0);
-				java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
-				pos = pos.add((rnd.nextDouble() - 0.5) * amp, (rnd.nextDouble() - 0.5) * amp * 0.7, (rnd.nextDouble() - 0.5) * amp);
-			}
-			return pos;
-		}
-
-		/** The direction the star's camera looks in: at the winner, up to the birth of the star, along the star, and at the landing. */
-		private Vec3 starLook(Vec3 cam, int a) {
-			Vec3 winner = stage[win];
-			Vec3 loser = stage[1 - win];
-			Vec3 target;
-			if (a < WISH) {
-				Vec3 born = ExplosionArt.cinematicStarStart(level, winner, loser);
-				double k = ease(a / (double) WISH) * 0.7;
-				Vec3 low = winner.add(0, 1.3, 0);
-				target = low.add(born.subtract(low).scale(k));
-			} else if (a <= IMPACT) {
-				Vec3 head = ExplosionArt.cinematicStarHead(level, winner, loser, a - WISH);
-				// in the last moments the camera lowers its eyes to the landing
-				double b = Math.max(0, Math.min(1, (a - (IMPACT - 16)) / 16.0));
-				Vec3 land = loser.add(0, 2.0, 0);
-				target = head.add(land.subtract(head).scale(ease(b)));
-			} else {
-				double p = ease(Math.min(1.0, (a - IMPACT) / (double) ExplosionArt.CINEMATIC_AFTER));
-				target = loser.add(0, 3.0 + 4.0 * p, 0);
-			}
-			Vec3 dir = target.subtract(cam);
-			return dir.lengthSqr() < 1e-6 ? new Vec3(0, 0, 1) : dir.normalize();
-		}
-
-		private void star(int a) {
-			List<ServerPlayer> viewers = audience();
-			Vec3 winner = stage[win];
-			Vec3 loser = stage[1 - win];
-			if (a == 0) {
-				// the winner looks up and makes a wish
-				if (doubles[win] != null) doubles[win].setXRot(-40f);
-				title(Component.literal("Make a wish").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
-					Component.literal(duel.names[win]).withStyle(ChatFormatting.DARK_GRAY), 10, 30, 10);
-			}
-			if (a < WISH) {
-				if (a == 6 || a == 18 || a == 30) sound(winner.add(0, 2, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.7f + a * 0.02f);
-				java.util.concurrent.ThreadLocalRandom rnd = java.util.concurrent.ThreadLocalRandom.current();
-				for (ServerPlayer v : viewers) {
-					Quality.send(level, v, ParticleTypes.END_ROD, winner.x + (rnd.nextDouble() - 0.5) * 2.4, winner.y + 0.2, winner.z + (rnd.nextDouble() - 0.5) * 2.4, 2, 0.25, 0.9, 0.25, 0.04);
-				}
-				return;
-			}
-			int t = a - WISH;
-			if (props == null) {
-				props = Victory.propsFor(level, winnerPlayer());
-				if (doubles[win] != null) doubles[win].setXRot(-70f);
-			}
-			ExplosionArt.cinematicStar(level, viewers, props, winner, loser, t);
-			for (Vec3 at : props.tick(t)) ExplosionArt.landing(level, viewers, at);
-			if (t == ExplosionArt.CINEMATIC_FLIGHT) {
-				if (doubles[win] != null) doubles[win].setXRot(0f);
-				// the flash: the camera is swallowed by white sparks for a moment
-				for (Rider r : riders) {
-					ServerPlayer p = r.riding ? server.getPlayerList().getPlayer(r.id) : null;
-					if (p == null) continue;
-					Quality.send(level, p, ParticleTypes.END_ROD, cameraAt.x, cameraAt.y, cameraAt.z, 260, 2.5, 2.5, 2.5, 0.5);
-					Quality.send(level, p, ParticleTypes.FIREWORK, cameraAt.x, cameraAt.y, cameraAt.z, 120, 3.0, 3.0, 3.0, 0.4);
-				}
-				title(Component.literal("SHOOTING STAR").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(duel.names[win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
-			}
 		}
 
 		// -------------------------------------------------------------- the clash

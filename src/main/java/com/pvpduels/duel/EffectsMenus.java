@@ -229,43 +229,50 @@ public final class EffectsMenus {
 
 	// ------------------------------------------------------------------ explosions
 
-	/** Where the explosions sit in their menus, and their icons (same order as {@link Effects#EXPLOSIONS}). */
-	private static final int[] EXPLOSION_PLACES = {10, 12, 14, 16, 20, 24};
-	private static final Item[] EXPLOSION_ICONS = {Items.TNT, Items.WITHER_SKELETON_SKULL, Items.CRYING_OBSIDIAN, Items.NETHER_STAR, Items.END_PORTAL_FRAME, Items.FIRE_CHARGE};
+	/** The icons of the explosions (same order as {@link Effects#EXPLOSIONS}). */
+	private static final Item[] EXPLOSION_ICONS = {Items.TNT, Items.WITHER_SKELETON_SKULL, Items.NETHER_STAR, Items.END_PORTAL_FRAME, Items.FIRE_CHARGE,
+		Items.TRIDENT, Items.AMETHYST_SHARD, Items.BONE_BLOCK, Items.ENDER_EYE, Items.IRON_SWORD};
+
+	/** Where explosion number {@code i} sits in the menus: rows of seven, with a margin of one slot on each side. */
+	static int explosionSlot(int i) {
+		return 10 + (i / 7) * 9 + (i % 7);
+	}
+
+	private static Item explosionIcon(int i) {
+		return i < EXPLOSION_ICONS.length ? EXPLOSION_ICONS[i] : Items.TNT;
+	}
 
 	/** The menu of the Explosion Dummy in the lobby: pick one of YOUR explosions and watch it land on the dummy. */
 	public static void openTryOut(ServerPlayer p, Vec3 target) {
 		UUID me = p.getUUID();
-		ChoiceMenu.Builder b = new ChoiceMenu.Builder(4);
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(6);
 		for (int i = 0; i < Effects.EXPLOSIONS.length; i++) {
 			String id = Effects.EXPLOSIONS[i];
 			if (Effects.ownsExplosion(me, id)) {
-				b.set(EXPLOSION_PLACES[i], DuelMenus.icon(EXPLOSION_ICONS[i], Effects.EXPLOSION_NAMES[i], ChatFormatting.GOLD, "Click to watch it land on the dummy.",
+				b.set(explosionSlot(i), DuelMenus.icon(explosionIcon(i), Effects.EXPLOSION_NAMES[i], ChatFormatting.GOLD, "Click to watch it land on the dummy.",
 					"Everybody nearby can see it."), who -> {
 					who.closeContainer();
 					report(who, Victory.tryOn(who, id, target));
 				});
 			} else {
-				b.set(EXPLOSION_PLACES[i], DuelMenus.icon(Items.COAL, "Locked: ???", ChatFormatting.DARK_GRAY, "A very rare reward of the missions."));
+				b.set(explosionSlot(i), DuelMenus.icon(Items.COAL, "Locked: ???", ChatFormatting.DARK_GRAY, "A very rare reward of the missions."));
 			}
 		}
-		b.set(31, DuelMenus.icon(Items.BOOK, "Explosion Dummy", ChatFormatting.YELLOW, "Try the explosions you own, as many times as you want.",
+		b.set(49, DuelMenus.icon(Items.BOOK, "Explosion Dummy", ChatFormatting.YELLOW, "Try the explosions you own, as many times as you want.",
 			"They never hurt or break anything."));
-		ChoiceMenu.open(p, Component.literal("Try your explosions"), 4, b);
+		ChoiceMenu.open(p, Component.literal("Try your explosions"), 6, b);
 	}
 
 	public static void openExplosions(ServerPlayer p) {
 		UUID me = p.getUUID();
 		String equipped = Effects.explosionSlot(me);
-		ChoiceMenu.Builder b = new ChoiceMenu.Builder(4);
-		int[] places = EXPLOSION_PLACES;
-		net.minecraft.world.item.Item[] icons = EXPLOSION_ICONS;
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(6);
 		for (int i = 0; i < Effects.EXPLOSIONS.length; i++) {
 			String id = Effects.EXPLOSIONS[i];
-			int position = places[i];
+			int position = explosionSlot(i);
 			if (Effects.ownsExplosion(me, id)) {
 				boolean on = id.equals(equipped);
-				b.set(position, DuelMenus.icon(icons[i], Effects.EXPLOSION_NAMES[i], on ? ChatFormatting.GREEN : ChatFormatting.GOLD,
+				b.set(position, DuelMenus.icon(explosionIcon(i), Effects.EXPLOSION_NAMES[i], on ? ChatFormatting.GREEN : ChatFormatting.GOLD,
 					on ? "Equipped. Click to take it off." : "Click to equip it."), who -> {
 					equip(who, () -> Effects.setExplosion(who.getUUID(), on ? "" : id));
 					openExplosions(who);
@@ -274,8 +281,8 @@ public final class EffectsMenus {
 				b.set(position, DuelMenus.icon(Items.COAL, "Locked: ???", ChatFormatting.DARK_GRAY, "A very rare reward of the missions."));
 			}
 		}
-		b.set(27, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
-		ChoiceMenu.open(p, Component.literal("Explosions"), 4, b);
+		b.set(45, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
+		ChoiceMenu.open(p, Component.literal("Explosions"), 6, b);
 	}
 
 	// ------------------------------------------------------------------ missions

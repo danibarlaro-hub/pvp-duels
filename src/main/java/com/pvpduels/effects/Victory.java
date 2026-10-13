@@ -8,8 +8,6 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -334,12 +332,20 @@ public final class Victory {
 		switch (s.explosion) {
 			case "orbital_strike" -> ExplosionArt.orbital(s.level, viewers, s.props, s.target, t, false);
 			case "orbital_wither" -> ExplosionArt.orbital(s.level, viewers, s.props, s.target, t, true);
-			case "domain_expansion" -> {
+			case "domain_expansion", "domain_void", "domain_swords" -> {
 				if (!s.skipDomain) domain(s, winner, viewers, t);
 			}
 			case "shooting_star" -> ExplosionArt.shootingStar(s.level, viewers, s.props, from(s, winner), s.target, t);
 			case "black_hole" -> ExplosionArt.blackHole(s.level, viewers, s.props, s.target, t);
 			case "meteor_shower" -> ExplosionArt.meteorShower(s.level, viewers, s.props, from(s, winner), s.target, t, s.meteors);
+			case "gungnir" -> StrikeArt.gungnir(s.level, viewers, s.props, s.target, t, false);
+			case "seven_stars" -> {
+				// the figure lies across the arena (its x axis is the side of the line from the winner to the target)
+				Vec3 way = Shapes.flatDirection(from(s, winner), s.target);
+				Vec3 side = new Vec3(-way.z, 0, way.x);
+				Vec3 bowl = new Vec3(s.target.x, s.target.y, s.target.z);
+				StrikeArt.sevenStars(s.level, viewers, s.props, bowl, side, t, false);
+			}
 			default -> { }
 		}
 	}
@@ -350,13 +356,19 @@ public final class Victory {
 		return s.from;
 	}
 
-	/** A dome of dark particles grows around the winner, with its edge drawn as a line, and stays for a while (the lone Domain Expansion). */
+	/**
+	 * A Domain Expansion that is not the finale of a 1v1 (a try-out on the dummy, a team duel, the preview): a dome grows around the
+	 * middle between the winner and the target, with the world of the domain inside.
+	 */
 	private static void domain(Show s, ServerPlayer winner, List<ServerPlayer> viewers, int t) {
-		Vec3 o = s.tryOut ? s.target : s.origin(winner);
-		if (t == 0) s.level.playSound(null, o.x, o.y, o.z, SoundEvents.ENDER_DRAGON_GROWL, SoundSource.MASTER, 4.0f, 0.7f);
-		if (t > 100) return;
-		double radius = Math.min(14.0, 1 + t * 0.4);
-		DomainArt.dome(s.level, viewers, o, radius, 80, DomainArt.voidLook());
-		DomainArt.ring(s.level, viewers, o, radius, 44, 0.15, DomainArt.LINE, t * 0.05);
+		DomeArt.Variant variant = DomeArt.Variant.of(s.explosion);
+		if (variant == null) return;
+		Vec3 from = from(s, winner);
+		Vec3 to = s.target;
+		double ground = Math.min(from.y, to.y);
+		Vec3 center = new Vec3((from.x + to.x) / 2, ground, (from.z + to.z) / 2);
+		double half = Math.max(5.0, Math.hypot(from.x - to.x, from.z - to.z) / 2);
+		DomeArt.Spec spec = new DomeArt.Spec(center, half, new Vec3(from.x, ground, from.z), new Vec3(to.x, ground, to.z), false);
+		DomeArt.play(s.level, viewers, s.props, variant, spec, t);
 	}
 }

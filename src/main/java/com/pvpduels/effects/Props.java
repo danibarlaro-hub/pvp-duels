@@ -268,6 +268,18 @@ public final class Props {
 		return spawn("minecraft:block_display", center, nbt);
 	}
 
+	/**
+	 * A block that starts flat along one of its own axes (0 = x, 1 = y, 2 = z) and becomes {@code full} when it is reshaped to that size with
+	 * {@link #reshape}: it grows from the end of that axis that points the wrong way (a column from its foot, a line from its start). Do the
+	 * reshape in a later tick than the one that made it, or the client never sees the growth.
+	 */
+	public Prop growing(String state, Vec3 center, Vec3 full, Q rot, boolean bright, int axis) {
+		Vec3 flat = new Vec3(axis == 0 ? 0.02 : full.x, axis == 1 ? 0.02 : full.y, axis == 2 ? 0.02 : full.z);
+		String nbt = ",block_state:{Name:\"" + state + "\"},transformation:" + transform(flat, rot, centering(full, rot))
+			+ ",view_range:4f,shadow_radius:0f" + (bright ? ",brightness:{sky:15,block:15}" : "");
+		return spawn("minecraft:block_display", center, nbt);
+	}
+
 	/** An item drawn as a flat picture that always faces the viewer ({@code size} blocks wide), full-bright. */
 	public Prop item(String item, Vec3 center, double size) {
 		String nbt = ",item:{id:\"" + item + "\",count:1},item_display:\"fixed\",billboard:\"center\",transformation:"

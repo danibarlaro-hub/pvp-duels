@@ -63,14 +63,14 @@ public final class ExplosionArt {
 	public static final int SHOWER_END = 56;
 	public static final int SHOWER_BIG = 58;
 
-	private static final ParticleOptions GOLD = new DustParticleOptions(0xFFD54A, 1.6f);
-	private static final ParticleOptions ICE = new DustParticleOptions(0x8FD3FF, 1.5f);
-	private static final ParticleOptions VIOLET = new DustParticleOptions(0xB06CFF, 1.5f);
-	private static final ParticleOptions VOID = new DustParticleOptions(0x050505, 3.0f);
+	static final ParticleOptions GOLD = new DustParticleOptions(0xFFD54A, 1.6f);
+	static final ParticleOptions ICE = new DustParticleOptions(0x8FD3FF, 1.5f);
+	static final ParticleOptions VIOLET = new DustParticleOptions(0xB06CFF, 1.5f);
+	static final ParticleOptions VOID = new DustParticleOptions(0x050505, 3.0f);
 	private static final ParticleOptions DISK_A = new DustParticleOptions(0xFFB347, 1.6f);
 	private static final ParticleOptions DISK_B = new DustParticleOptions(0xFF5A1F, 1.7f);
 	private static final ParticleOptions ARM = new DustParticleOptions(0x5A2A8C, 1.5f);
-	private static final ParticleOptions SIGHT_RED = new DustParticleOptions(0xFF2A2A, 1.8f);
+	static final ParticleOptions SIGHT_RED = new DustParticleOptions(0xFF2A2A, 1.8f);
 	private static final ParticleOptions SIGHT_PURPLE = new DustParticleOptions(0xB04CFF, 1.8f);
 
 	private static final String[] GROUND_PIECES = {"minecraft:grass_block", "minecraft:dirt", "minecraft:stone", "minecraft:cobblestone", "minecraft:coarse_dirt"};
@@ -79,30 +79,30 @@ public final class ExplosionArt {
 
 	// ------------------------------------------------------------------ small helpers
 
-	private static void emit(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, double x, double y, double z, int count,
+	static void emit(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, double x, double y, double z, int count,
 		double dx, double dy, double dz, double speed) {
 		for (ServerPlayer v : viewers) Quality.send(level, v, options, x, y, z, count, dx, dy, dz, speed);
 	}
 
-	private static void emit(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 at, int count, double spread, double speed) {
+	static void emit(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 at, int count, double spread, double speed) {
 		emit(level, viewers, options, at.x, at.y, at.z, count, spread, spread, spread, speed);
 	}
 
 	/** One particle that the client moves by itself from {@code at} along {@code dir}. */
-	private static void fly(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 at, Vec3 dir, double speed) {
+	static void fly(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 at, Vec3 dir, double speed) {
 		for (ServerPlayer v : viewers) Quality.sendFlying(level, v, options, at.x, at.y, at.z, dir.x, dir.y, dir.z, speed);
 	}
 
-	private static void sound(ServerLevel level, Vec3 at, SoundEvent event, float volume, float pitch) {
+	static void sound(ServerLevel level, Vec3 at, SoundEvent event, float volume, float pitch) {
 		level.playSound(null, at.x, at.y, at.z, event, SoundSource.MASTER, volume, pitch);
 	}
 
-	private static void sound(ServerLevel level, Vec3 at, Holder<SoundEvent> event, float volume, float pitch) {
+	static void sound(ServerLevel level, Vec3 at, Holder<SoundEvent> event, float volume, float pitch) {
 		level.playSound(null, at.x, at.y, at.z, event, SoundSource.MASTER, volume, pitch);
 	}
 
 	/** A circle (tilted around the x axis by {@code tilt} radians) around {@code center}. */
-	private static void ring(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 center, double radius, int points, double turn, double tilt) {
+	static void ring(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 center, double radius, int points, double turn, double tilt) {
 		double cos = Math.cos(tilt);
 		double sin = Math.sin(tilt);
 		for (int k = 0; k < points; k++) {
@@ -114,7 +114,7 @@ public final class ExplosionArt {
 	}
 
 	/** A ring on the ground that spreads: every particle flies outward by itself. */
-	private static void shockwave(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 center, int points, double speed, double lift) {
+	static void shockwave(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 center, int points, double speed, double lift) {
 		for (int k = 0; k < points; k++) {
 			double a = k * Math.PI * 2 / points;
 			fly(level, viewers, options, center, new Vec3(Math.cos(a), lift, Math.sin(a)), speed);
@@ -122,7 +122,7 @@ public final class ExplosionArt {
 	}
 
 	/** An even spread of directions over a sphere (or only its upper half). */
-	private static Vec3 sphereDir(int i, int n, boolean upward) {
+	static Vec3 sphereDir(int i, int n, boolean upward) {
 		double y = upward ? (i + 0.5) / n : 1 - 2 * (i + 0.5) / n;
 		double r = Math.sqrt(Math.max(0, 1 - y * y));
 		double a = i * 2.399963229728653;
@@ -130,24 +130,24 @@ public final class ExplosionArt {
 	}
 
 	/** A ball of particles that fly out in every direction, each at a slightly different speed. */
-	private static void blast(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 center, int points, double speed, boolean upward) {
+	static void blast(ServerLevel level, List<ServerPlayer> viewers, ParticleOptions options, Vec3 center, int points, double speed, boolean upward) {
 		ThreadLocalRandom rnd = ThreadLocalRandom.current();
 		for (int i = 0; i < points; i++) {
 			fly(level, viewers, options, center, sphereDir(i, points, upward), speed * (0.55 + 0.45 * rnd.nextDouble()));
 		}
 	}
 
-	private static Vec3 cube(double size) {
+	static Vec3 cube(double size) {
 		return new Vec3(size, size, size);
 	}
 
-	private static Q randomRotation() {
+	static Q randomRotation() {
 		ThreadLocalRandom rnd = ThreadLocalRandom.current();
 		return Q.yaw(rnd.nextDouble() * 360).mul(Q.pitch(rnd.nextDouble() * 360));
 	}
 
 	/** Pieces of the ground or of the blast thrown up and out; they fall and disappear when they land (or after {@code ttl} ticks). */
-	private static void debris(Props props, Vec3 at, double floorY, String[] blocks, int count, double speed, double lift, int t, int ttl) {
+	static void debris(Props props, Vec3 at, double floorY, String[] blocks, int count, double speed, double lift, int t, int ttl) {
 		ThreadLocalRandom rnd = ThreadLocalRandom.current();
 		for (int i = 0; i < count; i++) {
 			double size = 0.45 + rnd.nextDouble() * 0.75;
@@ -159,7 +159,7 @@ public final class ExplosionArt {
 		}
 	}
 
-	private static void firework(ServerLevel level, Vec3 at, FireworkExplosion.Shape shape, int[] colors, int[] fades) {
+	static void firework(ServerLevel level, Vec3 at, FireworkExplosion.Shape shape, int[] colors, int[] fades) {
 		Props.burst(level, at, shape, colors, fades, true, true);
 	}
 
