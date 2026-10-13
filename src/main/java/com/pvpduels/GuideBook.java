@@ -34,7 +34,7 @@ public final class GuideBook {
 			{"The lobby hotbar", "Slot 1: Send Duel\nSlot 2: Leave\nSlot 8: Create+\nSlot 9: this book\n\nThey stay in place while you are in the lobby."},
 			{"Send Duel", "Right-click: pick a player to challenge.\n\nRight-click or hit a player with it: challenge them straight away."},
 			{"Leave and Create+", "Leave: leaves the queue, cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only: your own arenas) and the building contest."},
-			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\n\nAdmins: /npc add bot|kit|arena, /npc remove, /npc list."},
+			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\nExplosion Dummy: try your explosions on it\n\nAdmins: they appear by themselves. /npc setup, /npc add bot|kit|arena|preview, /npc remove, /npc list."},
 			{"Lobby commands", "/lobby: go there\n/lobby return on|off: after a duel go to the lobby or back where you were\n\nAdmins: /setlobby, /lobby protect <radius|off>, /lobby clear"}
 		}),
 		new Topic("Duels", new String[][] {
@@ -47,7 +47,7 @@ public final class GuideBook {
 			{"Fair play", "5 minutes without a hit: one random player is teleported next to the other.\n\n/kit load and the Quick kit keys are blocked in a duel."},
 			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."},
 			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."},
-			{"Totems and health", "A totem of undying in either hand saves you in a duel, like in vanilla: you stay in the round with 1 heart.\n\nYou lose a round only when you really die: health plus absorption, so a golden apple counts."},
+			{"Totems and health", "A totem of undying in either hand saves you in a duel, like in vanilla: you stay in the round with 1 heart.\n\nYou lose a round only when you really die: health plus absorption, so a golden apple counts.\n\nA death in a duel tells you the last blow."},
 			{"Draw", "/draw offers a tie during a round (1v1 or 2v2). The rival clicks [ACCEPT] or uses /draw accept; /draw deny says no. It lasts 60 s.\n\nA tie ends the duel and breaks win streaks."},
 			{"Replays", "Every 1v1 duel against a player is recorded. /replay lists yours.\n\nAn admin has to send you one: [ASK ADMIN] or /replay ask <id>. You get a message when they answer."},
 			{"Watching replays", "/replay watch <id> plays it with a camera. Buttons: [PAUSE], [0.5x] [1x] [2x], [VIEW] (4 angles), [RESTART], [STOP].\n\nBlocks and pearls are not replayed."}

@@ -8,7 +8,7 @@ import net.minecraft.commands.Commands;
 public final class GuideCommand {
 	private static final String[] LINES = {
 		"LOBBY HOTBAR: while you stand in the lobby, slot 1 is Send Duel (sword: right-click to pick a player, or right-click / hit a player), slot 2 is Leave (barrier: cancels your duel requests and takes you to the lobby spawn), slot 8 is Create+ (grass block: Create Kit or Create Arena) and slot 9 is the guide book. They can't be moved; the things you had in those slots come back when you leave the lobby",
-		"NPCS in the lobby: click the Practice Bot (practice menu), the Kit Workshop (make kits) or the Arena Builder (arenas). Admins: /npc add bot|kit|arena puts one where you stand, /npc remove deletes the closest, /npc list",
+		"NPCS in the lobby: click the Practice Bot (practice menu), the Kit Workshop (make kits), the Arena Builder (arenas) or the Explosion Dummy (watch your explosions land on it, as many times as you want). They appear by themselves in front of the lobby spawn when an admin is there. Admins: /npc setup puts the missing ones in front of you, /npc add bot|kit|arena|preview puts one where you stand, /npc remove deletes the closest, /npc list",
 		"/duels  - the duels running right now, each with a [WATCH] button",
 		"DUELS: /duel <player>  - choose kit, arena, version and how the duel is decided, then send the challenge",
 		"/accept [player] or /duel accept [player]  - accept a challenge (you can also click [ACCEPT] in the chat); /deny [player]  - deny it. Requests expire after 60 seconds",
