@@ -1,6 +1,5 @@
 package com.pvpduels.duel;
 
-import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.DamageTypeTags;
@@ -14,7 +13,7 @@ import net.minecraft.world.item.Items;
 /**
  * Totems of undying inside a duel. Fabric asks "may this player die?" before the game looks for a totem, and a duelist's
  * answer is always "no, end the round instead": so without this, a totem was never used. Here the totem gets its chance
- * first, exactly like in vanilla (hands in order, not against void/kill damage, same effects, same statistics and advancement).
+ * first, exactly like in vanilla (hands in order, not against void/kill damage, same effects and the same statistics).
  */
 final class Totems {
 	private Totems() {}
@@ -25,10 +24,8 @@ final class Totems {
 		for (InteractionHand hand : InteractionHand.values()) {
 			ItemStack stack = p.getItemInHand(hand);
 			if (!stack.is(Items.TOTEM_OF_UNDYING)) continue;
-			ItemStack used = stack.copy();
 			stack.shrink(1);
 			p.awardStat(Stats.ITEM_USED.get(Items.TOTEM_OF_UNDYING));
-			CriteriaTriggers.USED_TOTEM.trigger(p, used);
 			p.setHealth(1.0f);
 			p.removeAllEffects();
 			p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 900, 1));
