@@ -3130,6 +3130,24 @@ public final class SelfTest {
 			run(carl, "leave");
 			check("Carl can leave too", !DuelManager.isInDuel(carl.getUUID()));
 		}, () -> !DuelManager.isInDuel(a.getUUID()) && !DuelManager.isInDuel(b.getUUID()), 800);
+		step("2v2: a draw offer", () -> {
+			for (Dummy p : new Dummy[] {a, b, carl, dora}) p.inbox.clear();
+			invite(a, carl, new DuelConfig("qkit", false, WinMode.FIRST_TO, 3));
+			check("a new 2v2 started", DuelManager.teamDuelOf(a.getUUID()) != null);
+		}, () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			return t != null && t.phase == Duel.Phase.FIGHTING;
+		}, 600);
+		step("2v2: Carl's team accepts Alice's team's draw", () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			run(a, "draw");
+			check("both of the other team got the offer", carl.heard("Alice's team offers a draw.") && dora.heard("Alice's team offers a draw.") && Draws.hasOffer(t));
+			check("Alice's own partner did not get it", !b.heard("offers a draw"));
+			run(b, "draw accept");
+			check("her partner can't accept it for the rival", b.heard("There is no draw offer to accept") && t.phase == Duel.Phase.FIGHTING);
+			run(dora, "draw accept");
+			check("Dora accepts: the 2v2 ends in a tie", t.winner == -1 && t.phase == Duel.Phase.ENDED && a.heard("Draw agreed") && carl.heard("Draw agreed"), t.winner + " " + t.phase);
+		}, () -> !DuelManager.isInDuel(a.getUUID()) && !DuelManager.isInDuel(b.getUUID()) && !DuelManager.isInDuel(dora.getUUID()) && !DuelManager.isInDuel(carl.getUUID()), 800);
 		step("2v2: the parties can be ended", () -> {
 			check("the arena is free", DuelManager.activeDuels() == 0);
 			run(a, "party leave");
@@ -3297,12 +3315,12 @@ public final class SelfTest {
 			Effects.explosionChance = 1;
 			boolean allExplosions = true;
 			List<String> blasts = new ArrayList<>();
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < Effects.EXPLOSIONS.length; i++) {
 				List<Effects.Gained> g = Effects.roll(boom, "Boom");
 				if (g.size() != 1 || !g.get(0).kind().equals("explosion") || blasts.contains(g.get(0).id())) allExplosions = false;
 				else blasts.add(g.get(0).id());
 			}
-			check("three lucky missions give the three different explosions", allExplosions && Effects.ownedExplosions(boom).size() == 3, blasts.toString());
+			check("six lucky missions give the six different explosions", allExplosions && Effects.ownedExplosions(boom).size() == Effects.EXPLOSIONS.length, blasts.toString());
 			List<Effects.Gained> afterBlasts = Effects.roll(boom, "Boom");
 			check("with all of them owned a lucky roll gives a particle instead", afterBlasts.size() == 1 && afterBlasts.get(0).kind().equals("particle"), afterBlasts.toString());
 
@@ -3330,7 +3348,7 @@ public final class SelfTest {
 			for (int n : Effects.ownedParticles(copies).values()) after += n;
 			check("a repeated particle is a new copy, and the message says so", dupes.size() == 1 && dupes.get(0).duplicate() && dupes.get(0).label().contains("(now x4)") && after == before + 1,
 				dupes + " " + before + "->" + after);
-			check("/effects unlockall style: 3 copies of every particle", before == 3 * Particles.all().size() && Effects.ownedItemCount(copies) == 23 && Effects.ownedExplosions(copies).size() == 3);
+			check("/effects unlockall style: 3 copies of every particle", before == 3 * Particles.all().size() && Effects.ownedItemCount(copies) == 23 && Effects.ownedExplosions(copies).size() == Effects.EXPLOSIONS.length);
 		});
 		step("effects: what can be equipped", () -> {
 			UUID id = loadoutId;
@@ -3712,7 +3730,7 @@ public final class SelfTest {
 		});
 		step("menus: Alice's explosions and missions", () -> {
 			menuStep(a, "Explosions");
-			check("she owns the Orbital Strike Cannon, two are still unknown", menuHas(a, "Orbital Strike Cannon") && menuCount(a, "Locked: ???") == 2, "" + menuCount(a, "Locked: ???"));
+			check("she owns the Orbital Strike Cannon, the other five are still unknown", menuHas(a, "Orbital Strike Cannon") && menuCount(a, "Locked: ???") == Effects.EXPLOSIONS.length - 1, "" + menuCount(a, "Locked: ???"));
 			menuStep(a, "Orbital Strike Cannon");
 			check("clicking an explosion equips it and takes her fireworks and particles off", Effects.explosionSlot(a.getUUID()).equals("orbital_strike") && !Effects.hasEffects(a.getUUID()));
 			check("and she was told why", a.heard("Your fireworks and particles were taken off"));
@@ -3733,7 +3751,7 @@ public final class SelfTest {
 			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "effects unlockall Bob");
 			check("the console (an admin) can", Effects.ownedItemCount(id) == 23);
 			check("every particle with 3 copies", Effects.ownedParticles(id).size() == Particles.all().size() && Effects.particleCount(id, "flame") == 3);
-			check("and the three explosions", Effects.ownedExplosions(id).size() == 3);
+			check("and the six explosions", Effects.ownedExplosions(id).size() == Effects.EXPLOSIONS.length);
 			check("Bob was told", b.heard("You got all the victory effects"));
 			run(b, "effects");
 			menuStep(b, "Fireworks");
@@ -3857,7 +3875,7 @@ public final class SelfTest {
 			Missions.record(weekId, "Wendy", f);
 			check("the first win of the new week counts once", Missions.progress(weekId, Missions.weekly().get(0)) == 1 && Missions.progress(weekId, Missions.weekly().get(2)) == 1
 				&& Missions.progress(weekId, Missions.weekly().get(1)) == 1);
-			check("and what was won stays (the three explosions)", Effects.ownedExplosions(weekId).size() == 3);
+			check("and what was won stays (the six explosions)", Effects.ownedExplosions(weekId).size() == Effects.EXPLOSIONS.length);
 			Missions.setDayForTest(null);
 		});
 		step("midnight: a duel counts for the day it started", () -> {
@@ -4092,6 +4110,329 @@ public final class SelfTest {
 			Missions.resetForTest();
 			Victory.resetForTest();
 			check("everything is reset and the older tests see the plain end of a duel again", Cinema.activeScenes() == 0 && !Cinema.enabled);
+		});
+
+		// ---------------------------------------------------------------- delivery 8: unlock_all, quality, explosions, test bot, replays, draws
+		final String[] rid = new String[1];
+		final java.nio.file.Path[] rdir = new java.nio.file.Path[1];
+		final int[] d8 = new int[10];
+		final double[] rp = new double[4];
+		final int[] sums = new int[5];
+		step("delivery 8: the mod is not on its first version any more", () -> {
+			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
+			check("the mod says 0.8.0", version.equals("0.8.0"), version);
+		});
+		step("/unlock_all: only admins with the right code", () -> {
+			UUID id = dora.getUUID();
+			dora.inbox.clear();
+			check("Dora starts with nothing", Effects.ownedExplosions(id).isEmpty() && Effects.ownedParticles(id).isEmpty());
+			run(dora, "unlock_all gustavo_matalo!");
+			check("a normal player can't use /unlock_all, not even with the right code", Effects.ownedExplosions(id).isEmpty() && Effects.ownedParticles(id).isEmpty());
+			try {
+				com.pvpduels.effects.EffectCommands.unlockWithCode(dora.createCommandSourceStack(), "wrong_code");
+				check("a wrong code unlocks nothing and says so", dora.heard("Wrong code") && Effects.ownedExplosions(id).isEmpty() && Effects.ownedParticles(id).isEmpty());
+				com.pvpduels.effects.EffectCommands.unlockWithCode(dora.createCommandSourceStack(), "gustavo_matalo");
+				check("the code without the ! is wrong too", Effects.ownedExplosions(id).isEmpty());
+				com.pvpduels.effects.EffectCommands.unlockWithCode(dora.createCommandSourceStack(), "gustavo_matalo!");
+			} catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+				throw new RuntimeException(e);
+			}
+			check("the right code unlocks every cosmetic", Effects.ownedExplosions(id).size() == Effects.EXPLOSIONS.length && Effects.ownedParticles(id).size() == Particles.all().size()
+				&& Effects.ownedItemCount(id) == 23, Effects.ownedExplosions(id).size() + " / " + Effects.ownedItemCount(id));
+			check("and she is told", dora.heard("Everything is unlocked"));
+		});
+		step("quality: five levels and a click to change", () -> {
+			com.pvpduels.effects.Quality[] all = com.pvpduels.effects.Quality.values();
+			check("Potato, Low, Mid, High and Ultra Pro Max", all.length == 5 && all[0].label.equals("Potato") && all[1].label.equals("Low") && all[2].label.equals("Mid")
+				&& all[3].label.equals("High") && all[4].label.equals("Ultra Pro Max"));
+			check("a new player is on High", Effects.quality(a.getUUID()) == com.pvpduels.effects.Quality.HIGH);
+			run(a, "effects");
+			check("the main menu shows the level", menuHas(a, "Effect quality: High"));
+			menuStep(a, "Effect quality: High");
+			check("one click goes up to Ultra Pro Max", Effects.quality(a.getUUID()) == com.pvpduels.effects.Quality.ULTRA && menuHas(a, "Effect quality: Ultra Pro Max"));
+			menuStep(a, "Effect quality: Ultra Pro Max");
+			check("then it starts again at Potato", Effects.quality(a.getUUID()) == com.pvpduels.effects.Quality.POTATO && menuHas(a, "Effect quality: Potato"));
+			menuStep(a, "Effect quality: Potato");
+			menuStep(a, "Effect quality: Low");
+			menuStep(a, "Effect quality: Mid");
+			check("Low, Mid and High again", Effects.quality(a.getUUID()) == com.pvpduels.effects.Quality.HIGH);
+			a.closeContainer();
+		});
+		step("quality: the number of particles a player receives", () -> {
+			net.minecraft.server.level.ServerLevel level = (net.minecraft.server.level.ServerLevel) b.level();
+			for (com.pvpduels.effects.Quality q : com.pvpduels.effects.Quality.values()) {
+				Effects.setQuality(b.getUUID(), q);
+				b.link.sent.clear();
+				for (int i = 0; i < 20; i++) com.pvpduels.effects.Quality.send(level, b, net.minecraft.core.particles.ParticleTypes.FLAME, b.getX(), b.getY() + 1, b.getZ(), 100, 0, 0, 0, 0);
+				int sum = 0;
+				for (Packet<?> packet : List.copyOf(b.link.sent)) if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) sum += pk.getCount();
+				sums[q.ordinal()] = sum;
+			}
+			Effects.setQuality(b.getUUID(), com.pvpduels.effects.Quality.HIGH);
+			check("High sends all of them", sums[3] == 2000, "" + sums[3]);
+			check("Ultra Pro Max sends twice as many", sums[4] == 4000, "" + sums[4]);
+			check("Potato about a tenth", sums[0] >= 180 && sums[0] <= 220, "" + sums[0]);
+			check("Low about a third", sums[1] >= 650 && sums[1] <= 750, "" + sums[1]);
+			check("Mid about two thirds", sums[2] >= 1250 && sums[2] <= 1350, "" + sums[2]);
+		});
+		for (String ex : new String[] {"shooting_star", "black_hole", "meteor_shower"}) {
+			step("explosions: " + ex + " plays", () -> {
+				Effects.grantExplosion(a.getUUID(), ex);
+				check("Alice equips it", Effects.setExplosion(a.getUUID(), ex) == null && Effects.explosionSlot(a.getUUID()).equals(ex) && Victory.explosionMode(a.getUUID()));
+				a.link.sent.clear();
+				d8[4] = Victory.showsStarted();
+				Victory.preview(a);
+				check("a show started", Victory.showsStarted() == d8[4] + 1 && Victory.activeShows() >= 1);
+			}, () -> Victory.activeShows() == 0, 800);
+			step("explosions: " + ex + " reached Alice", () -> {
+				int sum = 0;
+				for (Packet<?> packet : List.copyOf(a.link.sent)) if (packet instanceof net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket pk) sum += pk.getCount();
+				check("a lot of particles reached her (" + ex + ")", sum > 150, "" + sum);
+				check("and the show ended by itself", Victory.activeShows() == 0);
+			});
+		}
+		step("explosions: back to normal", () -> {
+			Effects.setExplosion(a.getUUID(), "");
+			check("Alice has no explosion equipped", Effects.explosionSlot(a.getUUID()).isEmpty());
+		});
+
+		// the test bot
+		step("test bot: the command is for admins and the bot has a level", () -> {
+			try {
+				rdir[0] = Files.createTempDirectory("pvpduels-replays");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			ReplayStore.reloadForTest(rdir[0]);
+			run(a, "testbot");
+			check("a normal player can't use /testbot", server.getPlayerList().getPlayerByName("TestBot") == null);
+			check("the first free name is TestBot", TestDummy.freeName(server).equals("TestBot"));
+			String problem = TestDummy.spawn(a, TestDummy.freeName(server), BotLevel.STATIC);
+			Dummy bot = (Dummy) server.getPlayerList().getPlayerByName("TestBot");
+			check("the bot was created next to Alice", problem == null && bot != null && a.distanceTo(bot) < 5, String.valueOf(problem));
+			check("it remembers its level and accepts duels", bot != null && TestDummy.levelOf(bot.getUUID()) == BotLevel.STATIC && TestDummy.accepts(bot.getUUID()));
+			check("the next free name is TestBot2", TestDummy.freeName(server).equals("TestBot2"));
+			check("a second bot with another level", TestDummy.spawn(a, "Easy1", BotLevel.EASY) == null);
+			Dummy easy = (Dummy) server.getPlayerList().getPlayerByName("Easy1");
+			check("it has the level Easy", easy != null && TestDummy.levelOf(easy.getUUID()) == BotLevel.EASY);
+			check("/testbot remove takes it away", TestDummy.remove(server, "Easy1") == 1 && server.getPlayerList().getPlayerByName("Easy1") == null && TestDummy.levelOf(easy.getUUID()) == null);
+		});
+		step("test bot: Alice challenges it", () -> {
+			Dummy bot = (Dummy) server.getPlayerList().getPlayerByName("TestBot");
+			DuelManager.sendInvite(a, bot, a.getUUID(), new DuelConfig("qkit", false, WinMode.FIRST_TO, 1), false);
+			check("the bot accepted by itself", duel(a) != null && duel(bot) == duel(a));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("test bot: the fight goes on for a while (it is being recorded)", () -> {
+			d8[0] = ticks;
+		}, () -> ticks >= d8[0] + 70, 300);
+		step("test bot: Alice kills it", () -> {
+			Dummy bot = (Dummy) server.getPlayerList().getPlayerByName("TestBot");
+			hit(a, bot);
+			check("first to 1: Alice wins", duel(a).winner == 0 && duel(a).points[0] == 1);
+		}, () -> noDuel(a), 600);
+		step("replay: the duel was recorded and kept", () -> {
+			check("one replay is in the store", ReplayStore.count() == 1, "" + ReplayStore.count());
+			ReplayStore.Entry e = ReplayStore.recent(null, 1).get(0);
+			rid[0] = e.id;
+			check("with the players, the score and the winner", e.names[0].equals("Alice") && e.names[1].equals("TestBot") && e.winner == 0 && e.points[0] == 1 && e.points[1] == 0,
+				e.names[0] + " " + e.names[1] + " " + e.winner);
+			check("it lasted a few seconds and the file is on disk", e.seconds >= 3 && e.bytes > 0 && Files.exists(ReplayStore.fileOf(e.id)), e.seconds + " s " + e.bytes + " bytes");
+			try {
+				ReplayData data = ReplayStore.load(e.id);
+				check("the file reads back with a picture of every tick", data.frames >= 70 && data.frames == data.x[0].length || data.frames >= 70, "" + data.frames);
+				check("with the kit and the rounds", data.config.kit().equals("qkit") && !data.events.isEmpty() && data.events.get(0).type() == ReplayData.EV_ROUND_START);
+				check("the two players start on different sides", Math.abs(data.x[0][0] - data.x[1][0]) > 3, data.x[0][0] + " / " + data.x[1][0]);
+				boolean moved = false;
+				for (int f = 1; f < data.frames; f++) if (Math.abs(data.x[0][f] - data.x[0][0]) > 0.05 || Math.abs(data.z[0][f] - data.z[0][0]) > 0.05) moved = true;
+				check("the recording is not just one picture repeated (Alice moved or turned)", moved || data.frames > 100);
+			} catch (IOException ex) {
+				check("the file can be read", false, ex.toString());
+			}
+		});
+		step("replay: the list, asking an admin and the answers", () -> {
+			for (Dummy p : new Dummy[] {a, b}) p.inbox.clear();
+			run(a, "replay");
+			check("Alice sees her replay with a button to ask an admin", a.heard("Your replays") && a.heard("#" + rid[0]) && a.heard("[ASK ADMIN]"));
+			run(b, "replay");
+			check("Bob took no part: his list is empty", b.heard("Nothing recorded yet") && !b.heard("#" + rid[0]));
+			run(a, "replay watch " + rid[0]);
+			check("without permission she can't watch it", a.heard("An admin has to send you that replay first") && !ReplayPlayer.isIn(a.getUUID()));
+			run(b, "replay ask " + rid[0]);
+			check("Bob can't ask for a duel he did not play", b.heard("didn't take part") && ReplayStore.pending().isEmpty());
+			run(a, "replay ask");
+			check("Alice asks for her latest replay", a.heard("Request sent for #" + rid[0]) && ReplayStore.pending().size() == 1);
+			run(a, "replay ask");
+			check("asking twice does not make a second request", a.heard("already waiting") && ReplayStore.pending().size() == 1);
+			ReplayStore.reloadForTest(rdir[0]);
+			check("the request is in a file: it survives a restart", ReplayStore.count() == 1 && ReplayStore.pending().size() == 1 && ReplayStore.pending().get(0).name.equals("Alice")
+				&& ReplayStore.pending().get(0).replay.equals(rid[0]));
+			a.inbox.clear();
+			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "replay deny " + rid[0] + " Alice");
+			check("an admin says no: Alice is told and nothing is waiting", a.heard("said no to the replay") && ReplayStore.pending().isEmpty()
+				&& !ReplayStore.mayWatch(ReplayStore.get(rid[0]), a.getUUID(), false));
+			run(a, "replay ask " + rid[0]);
+			check("after a no she can ask again", ReplayStore.pending().size() == 1);
+			ReplayStore.answer(ReplayStore.pending().get(0), "denied");
+			check("an answer given while she is away waits for her", ReplayStore.untold(a.getUUID()).size() == 1);
+			a.inbox.clear();
+			ReplayCommands.tellNow(a);
+			check("she hears it when she is back, only once", a.heard("said no to the replay") && ReplayStore.untold(a.getUUID()).isEmpty());
+			run(a, "replay ask " + rid[0]);
+			a.inbox.clear();
+			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "replay send " + rid[0] + " Alice");
+			check("an admin sends it: Alice is told with a button and can watch", a.heard("An admin sent you the replay") && a.heard("[WATCH]") && ReplayStore.pending().isEmpty()
+				&& ReplayStore.mayWatch(ReplayStore.get(rid[0]), a.getUUID(), false));
+			check("Bob still can't", !ReplayStore.mayWatch(ReplayStore.get(rid[0]), b.getUUID(), false));
+		});
+		step("replay: Alice watches it", () -> {
+			a.inbox.clear();
+			a.link.sent.clear();
+			d8[5] = ReplayPlayer.startedCount();
+			run(a, "replay watch " + rid[0]);
+			check("the replay started", ReplayPlayer.isIn(a.getUUID()) && ReplayPlayer.startedCount() == d8[5] + 1 && ReplayPlayer.sessions() == 1);
+			check("she is a spectator and her inventory is saved", a.gameMode() == GameType.SPECTATOR && PlayerBackup.exists(a.getUUID()));
+			check("it takes an arena, like a duel", DuelManager.activeDuels() == 1 && DuelManager.isBusy(a.getUUID()));
+			check("she was told the controls", a.heard("Replay: Alice vs TestBot") && a.heard("[PAUSE]") && a.heard("[RESTART]") && a.heard("[STOP]"));
+			check("a double of each player and a camera exist", taggedCount("pvpduels_replay_dbl") == 2 && taggedCount("pvpduels_replay_cam") == 1, taggedCount("pvpduels_replay_dbl") + " / " + taggedCount("pvpduels_replay_cam"));
+		}, () -> ReplayPlayer.of(a.getUUID()) != null && a.getCamera() != a, 100);
+		step("replay: it plays", () -> {
+			ReplayPlayer s = ReplayPlayer.of(a.getUUID());
+			check("she looks through the camera", a.getCamera() != a);
+			check("normal speed, not paused", s.speed == 1.0 && !s.paused);
+			rp[0] = s.pos;
+			d8[0] = ticks;
+		}, () -> ticks >= d8[0] + 12, 100);
+		step("replay: pause", () -> {
+			ReplayPlayer s = ReplayPlayer.of(a.getUUID());
+			check("the picture moved on", s.pos > rp[0] + 5, rp[0] + " -> " + s.pos);
+			check("the heads-up line is being sent", packetCount(a, "ClientboundSetActionBarTextPacket") > 0);
+			run(a, "replay pause");
+			check("paused", s.paused);
+			rp[1] = s.pos;
+			d8[0] = ticks;
+		}, () -> ticks >= d8[0] + 10, 100);
+		step("replay: speed, view and restart", () -> {
+			ReplayPlayer s = ReplayPlayer.of(a.getUUID());
+			check("while paused the picture stays", s.pos == rp[1], rp[1] + " -> " + s.pos);
+			run(a, "replay speed 2");
+			check("a speed makes it play again", s.speed == 2.0 && !s.paused);
+			run(a, "replay view");
+			check("the view changes", s.view == 1);
+			run(a, "replay restart");
+			check("restart goes back to the start", s.pos < 1.0, "" + s.pos);
+			d8[0] = ticks;
+		}, () -> ticks >= d8[0] + 10, 100);
+		step("replay: twice as fast", () -> {
+			ReplayPlayer s = ReplayPlayer.of(a.getUUID());
+			check("about 20 pictures in 10 ticks", s.pos > 14 && s.pos < 26, "" + s.pos);
+			run(b, "replay pause");
+			check("somebody who is not watching gets an error", b.heard("You are not watching a replay"));
+			run(a, "leave");
+			check("/leave stops the replay", !ReplayPlayer.isIn(a.getUUID()));
+			check("Alice has her own eyes and mode back", a.getCamera() == a && a.gameMode() != GameType.SPECTATOR);
+			check("her inventory was given back, the camera and the doubles are gone, the arena is free", !PlayerBackup.exists(a.getUUID()) && taggedCount("pvpduels_replay") == 0 && DuelManager.activeDuels() == 0);
+		});
+		step("replay: to the end at 8x", () -> {
+			a.link.sent.clear();
+			run(a, "replay watch " + rid[0]);
+			run(a, "replay speed 8");
+			check("watching again works", ReplayPlayer.isIn(a.getUUID()));
+		}, () -> !ReplayPlayer.isIn(a.getUUID()), 700);
+		step("replay: it ended by itself and put everything back", () -> {
+			check("the title named the winner", titleHeard(a, "Alice WINS"));
+			check("Alice is back to normal", a.getCamera() == a && a.gameMode() != GameType.SPECTATOR && !PlayerBackup.exists(a.getUUID()));
+			check("nothing is left", taggedCount("pvpduels_replay") == 0 && DuelManager.activeDuels() == 0 && ReplayPlayer.sessions() == 0);
+		});
+		step("replay: an admin watches without asking", () -> {
+			ReplayCommands.watch(b, rid[0], false);
+			check("a player with no permission can't", !ReplayPlayer.isIn(b.getUUID()));
+			ReplayCommands.watch(carl, rid[0], true);
+			check("an admin can", ReplayPlayer.isIn(carl.getUUID()));
+			ReplayCommands.watch(dora, rid[0], true);
+			check("two people can watch at the same time", ReplayPlayer.sessions() == 2 && DuelManager.activeDuels() == 2, ReplayPlayer.sessions() + " / " + DuelManager.activeDuels());
+			run(carl, "leave");
+			run(dora, "leave");
+			check("both leave with /leave", ReplayPlayer.sessions() == 0 && DuelManager.activeDuels() == 0 && taggedCount("pvpduels_replay") == 0);
+		}, () -> true, 1);
+		step("replay: delete", () -> {
+			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "replay delete " + rid[0]);
+			check("it is gone from the store and from the disk", ReplayStore.count() == 0 && !Files.exists(ReplayStore.fileOf(rid[0])));
+			a.inbox.clear();
+			run(a, "replay watch " + rid[0]);
+			check("and it can't be watched", a.heard("There is no replay") && !ReplayPlayer.isIn(a.getUUID()));
+		});
+
+		// /draw
+		step("draw: the test bot accepts a draw right away", () -> {
+			Dummy bot = (Dummy) server.getPlayerList().getPlayerByName("TestBot");
+			d8[2] = StatsStore.get(a.getUUID()).draws;
+			DuelManager.sendInvite(a, bot, a.getUUID(), new DuelConfig("qkit", false, WinMode.FIRST_TO, 3), false);
+			check("a duel with the bot", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("draw: Alice offers", () -> {
+			a.inbox.clear();
+			run(a, "draw");
+			check("the bot agreed and the duel is a tie", a.heard("Draw agreed") && duel(a) != null && duel(a).winner == -1 && duel(a).phase == Duel.Phase.ENDED,
+				duel(a) == null ? "no duel" : duel(a).phase + " " + duel(a).winner);
+		}, () -> noDuel(a), 600);
+		step("draw: the replay of a tie says so, and bot duels don't change the stats", () -> {
+			check("one replay, a draw", ReplayStore.count() == 1 && ReplayStore.recent(null, 1).get(0).winner == -1);
+			check("no draw in the statistics (it was a bot)", StatsStore.get(a.getUUID()).draws == d8[2], StatsStore.get(a.getUUID()).draws + " vs " + d8[2]);
+			check("TestBot is removed with /testbot remove", TestDummy.remove(server, null) == 1 && server.getPlayerList().getPlayerByName("TestBot") == null);
+			ReplayStore.delete(ReplayStore.recent(null, 1).get(0).id);
+		});
+		step("draw: Alice and Bob, the countdown first", () -> {
+			for (Dummy p : new Dummy[] {a, b}) p.inbox.clear();
+			d8[2] = StatsStore.get(a.getUUID()).draws;
+			d8[3] = StatsStore.get(b.getUUID()).draws;
+			invite(a, b, new DuelConfig("qkit", false, WinMode.FIRST_TO, 3));
+			check("a duel started", duel(a) != null);
+			if (phaseIs(a, Duel.Phase.STARTING)) {
+				run(a, "draw");
+				check("during the countdown a draw can't be offered", a.heard("while a round is being fought") && !Draws.hasOffer(duel(a)));
+			}
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("draw: an offer, a no, and a second offer", () -> {
+			run(b, "draw accept");
+			check("nothing to accept yet", b.heard("There is no draw offer to accept"));
+			run(a, "draw");
+			check("Bob got the offer with the buttons", b.heard("Alice offers a draw") && b.heard("[ACCEPT]") && b.heard("[DENY]") && Draws.hasOffer(duel(a)));
+			check("Alice was told it was sent", a.heard("Draw offer sent"));
+			a.inbox.clear();
+			run(a, "draw");
+			check("offering twice only reminds her", a.heard("already offered") && duel(a).phase == Duel.Phase.FIGHTING);
+			run(a, "draw accept");
+			check("you can't accept your own offer", a.heard("There is no draw offer to accept") && duel(a).phase == Duel.Phase.FIGHTING);
+			run(b, "draw deny");
+			check("Bob says no: Alice is told and the fight goes on", a.heard("Bob denied the draw") && !Draws.hasOffer(duel(a)) && duel(a).phase == Duel.Phase.FIGHTING);
+			run(b, "draw deny");
+			check("nobody offered now", b.heard("Nobody offered you a draw"));
+			Draws.expires = 5;
+			run(a, "draw");
+			check("a new offer", Draws.hasOffer(duel(a)));
+			d8[0] = ticks;
+		}, () -> ticks >= d8[0] + 15, 100);
+		step("draw: an offer that was not answered runs out", () -> {
+			b.inbox.clear();
+			run(b, "draw accept");
+			Draws.expires = 20 * 60;
+			check("too late: it expired", b.heard("There is no draw offer to accept") && duel(a).phase == Duel.Phase.FIGHTING);
+			run(a, "draw");
+			a.inbox.clear();
+			run(b, "draw accept");
+			check("accepted: the duel ends in a tie", a.heard("Draw agreed") && b.heard("Draw agreed") && duel(a).winner == -1 && duel(a).phase == Duel.Phase.ENDED);
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("draw: the stats", () -> {
+			check("it counts as a draw for both", StatsStore.get(a.getUUID()).draws == d8[2] + 1 && StatsStore.get(b.getUUID()).draws == d8[3] + 1,
+				StatsStore.get(a.getUUID()).draws + " / " + StatsStore.get(b.getUUID()).draws);
+			check("and breaks the win streak", StatsStore.get(a.getUUID()).streak == 0 && StatsStore.get(b.getUUID()).streak == 0);
+			check("the replay of that duel is a tie", ReplayStore.count() == 1 && ReplayStore.recent(null, 1).get(0).winner == -1);
+			check("no offer is left behind", true);
+			ReplayStore.delete(ReplayStore.recent(null, 1).get(0).id);
+			Effects.resetForTest();
+			Victory.resetForTest();
+			Missions.resetForTest();
+			ReplayCommands.resetForTest();
 		});
 
 		step("sanity: commands from outside a duel", () -> {

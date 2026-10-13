@@ -60,7 +60,7 @@ public final class EffectCommands {
 	}
 
 	/** /unlock_all <code>: every cosmetic for the admin who types it, if the code is right. */
-	static int unlockWithCode(CommandSourceStack source, String code) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+	public static int unlockWithCode(CommandSourceStack source, String code) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer player = source.getPlayerOrException();
 		if (!UNLOCK_CODE.equals(code.trim())) {
 			source.sendFailure(Msg.err("Wrong code."));

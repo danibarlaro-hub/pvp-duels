@@ -20,8 +20,8 @@ final class Draws {
 
 	/** The offer of each duel (the duel object is the key). */
 	private static final Map<Object, Offer> OFFERS = new HashMap<>();
-	/** An offer lasts one minute. */
-	static final int EXPIRES = 20 * 60;
+	/** An offer lasts one minute (the self-test makes it shorter). */
+	static int expires = 20 * 60;
 
 	private Draws() {}
 
@@ -78,7 +78,7 @@ final class Draws {
 			p.sendSystemMessage(Msg.info("You already offered a draw. Wait for the answer."));
 			return;
 		}
-		OFFERS.put(duel, new Offer(side, server.getTickCount() + EXPIRES));
+		OFFERS.put(duel, new Offer(side, server.getTickCount() + expires));
 		String name = p.getName().getString();
 		tell(duel, team, 1 - side, Component.literal(name).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
 			.append(Component.literal(team ? "'s team offers a draw.  " : " offers a draw.  ").withStyle(ChatFormatting.YELLOW))
