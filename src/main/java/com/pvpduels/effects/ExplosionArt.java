@@ -298,21 +298,30 @@ public final class ExplosionArt {
 	private record StarLook(int flight, double distance, double height, double scale, double tail, boolean cinema) {}
 
 	private static final StarLook QUICK_STAR = new StarLook(STAR_FLIGHT, 80, 62, 1.0, 0.6, false);
-	private static final StarLook CINEMATIC_STAR = new StarLook(CINEMATIC_FLIGHT, 130, 85, 1.8, 1.5, true);
+	/**
+	 * The long star starts as far away as the server sends things to the players (the view distance of the server, less a margin for the
+	 * distance between the camera and the landing), never farther than 130 blocks. A star born in a chunk that nobody has loaded could
+	 * not be made at all.
+	 */
+	private static StarLook cinematicLook(ServerLevel level) {
+		int view = level.getServer().getPlayerList().getViewDistance();
+		double distance = Math.max(40, Math.min(130, view * 16 - 24));
+		return new StarLook(CINEMATIC_FLIGHT, distance, distance * 0.65, 1.8, 1.5, true);
+	}
 
 	private static Vec3 starStart(StarLook look, Vec3 from, Vec3 target) {
 		return target.add(flatDirection(from, target).scale(-look.distance)).add(0, look.height, 0);
 	}
 
 	/** Where the long star of the cinematic finale is born (high in the sky behind the winner). */
-	public static Vec3 cinematicStarStart(Vec3 from, Vec3 target) {
-		return starStart(CINEMATIC_STAR, from, target);
+	public static Vec3 cinematicStarStart(ServerLevel level, Vec3 from, Vec3 target) {
+		return starStart(cinematicLook(level), from, target);
 	}
 
 	/** Where the head of the long star is {@code t} ticks after it was born (the camera of the finale follows it). */
-	public static Vec3 cinematicStarHead(Vec3 from, Vec3 target, int t) {
+	public static Vec3 cinematicStarHead(ServerLevel level, Vec3 from, Vec3 target, int t) {
 		double u = Math.max(0, Math.min(1, t / (double) CINEMATIC_FLIGHT));
-		return starAt(starStart(CINEMATIC_STAR, from, target), target, u);
+		return starAt(starStart(cinematicLook(level), from, target), target, u);
 	}
 
 	/**
@@ -330,7 +339,7 @@ public final class ExplosionArt {
 	 * it lands. The camera of the finale follows it.
 	 */
 	public static void cinematicStar(ServerLevel level, List<ServerPlayer> viewers, Props props, Vec3 from, Vec3 target, int t) {
-		star(level, viewers, props, from, target, t, CINEMATIC_STAR);
+		star(level, viewers, props, from, target, t, cinematicLook(level));
 	}
 
 	private static void star(ServerLevel level, List<ServerPlayer> viewers, Props props, Vec3 from, Vec3 target, int t, StarLook look) {

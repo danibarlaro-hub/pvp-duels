@@ -604,12 +604,12 @@ public final class Cinema {
 			Vec3 loser = stage[1 - win];
 			Vec3 target;
 			if (a < WISH) {
-				Vec3 born = ExplosionArt.cinematicStarStart(winner, loser);
+				Vec3 born = ExplosionArt.cinematicStarStart(level, winner, loser);
 				double k = ease(a / (double) WISH) * 0.7;
 				Vec3 low = winner.add(0, 1.3, 0);
 				target = low.add(born.subtract(low).scale(k));
 			} else if (a <= IMPACT) {
-				Vec3 head = ExplosionArt.cinematicStarHead(winner, loser, a - WISH);
+				Vec3 head = ExplosionArt.cinematicStarHead(level, winner, loser, a - WISH);
 				// in the last moments the camera lowers its eyes to the landing
 				double b = Math.max(0, Math.min(1, (a - (IMPACT - 16)) / 16.0));
 				Vec3 land = loser.add(0, 2.0, 0);

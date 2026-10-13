@@ -4177,6 +4177,7 @@ public final class SelfTest {
 		});
 		// ---------------------------------------------------------------- the cinematic Shooting Star
 		step("finale star: Alice has the Shooting Star", () -> {
+			Victory.resetForTest();
 			Effects.grantExplosion(a.getUUID(), "shooting_star");
 			check("Alice equips the Shooting Star", Effects.setExplosion(a.getUUID(), "shooting_star") == null && Victory.explosionMode(a.getUUID()));
 			Effects.setExplosion(b.getUUID(), "");
