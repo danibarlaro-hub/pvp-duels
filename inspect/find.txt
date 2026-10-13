@@ -1,0 +1,3 @@
+Mannequin|Avatar
+ClientboundSet.*Title|ClientboundSetCamera|ClientboundClearTitles
+world\.entity\.Display
