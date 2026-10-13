@@ -41,12 +41,13 @@ public final class GuideBook {
 			{"Challenge", "/duel <player> opens menus: kit, arena, version and how it is decided.\n\nThe other player gets [ACCEPT] / [DENY] (or /accept, /deny). It expires in 60 s."},
 			{"During a duel", "Both use the challenger's kit; your own inventory comes back after.\n\n/leave quits\n/again asks for a rematch\n/duels lists the duels now, with [WATCH]"},
 			{"How it is decided", "Rounds (max 100)\nFirst to N points\nTimed (max 30 min, a tie plays an extra round)\n\nUnlimited: it ends with /leave and the most points wins."},
-			{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat terrain in invisible barriers. Build freely, it resets every round."},
+			{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat grassy terrain in invisible barriers. Build freely, it resets every round."},
 			{"Unlimited arena", "Flat terrain, no border.\n\nMore than 100 blocks from your rival for 5 seconds: you lose half your health and are teleported next to them."},
 			{"Rules", "In the menu you can switch off for that duel: natural regeneration, fall damage, hunger and building.\n\nFalling into the void loses the round."},
 			{"Fair play", "5 minutes without a hit: one random player is teleported next to the other.\n\n/kit load and the Quick kit keys are blocked in a duel."},
 			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."},
 			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."},
+			{"Totems and health", "A totem of undying in either hand saves you in a duel, like in vanilla: you stay in the round with 1 heart.\n\nYou lose a round only when you really die: health plus absorption, so a golden apple counts."},
 			{"Draw", "/draw offers a tie during a round (1v1 or 2v2). The rival clicks [ACCEPT] or uses /draw accept; /draw deny says no. It lasts 60 s.\n\nA tie ends the duel and breaks win streaks."},
 			{"Replays", "Every 1v1 duel against a player is recorded. /replay lists yours.\n\nAn admin has to send you one: [ASK ADMIN] or /replay ask <id>. You get a message when they answer."},
 			{"Watching replays", "/replay watch <id> plays it with a camera. Buttons: [PAUSE], [0.5x] [1x] [2x], [VIEW] (4 angles), [RESTART], [STOP].\n\nBlocks and pearls are not replayed."}
@@ -107,7 +108,7 @@ public final class GuideBook {
 			{"Missions", "/missions shows 6 daily missions and 5 weekly ones (they reset on Monday). They count in duels against players.\n\nA duel counts for the day it started, even if it ends after midnight."},
 			{"Rewards", "Each mission gives a firework color or shape, or a particle. A repeated particle is one more copy to use in another slot.\n\nExplosions are very rare: 0.8% daily, 1.5% weekly."},
 			{"Your slots", "Particles: 2 on the floor and 4 around the arena.\n\nFireworks: up to 5 colors each.\n\nYou can have effects OR an explosion, not both. The menu can hide the effects of other players."},
-			{"Explosions", "Very rare: Orbital Strike Cannon, Orbital Wither Cannon, Domain Expansion, Shooting Star, Black Hole and Meteor Shower.\n\nMissions can unlock them."},
+			{"Explosions", "Very rare: Orbital Strike Cannon, Orbital Wither Cannon, Domain Expansion, Shooting Star, Black Hole and Meteor Shower.\n\nThey are built with giant beams, spheres, fireballs and real fireworks. Missions can unlock them."},
 			{"Effect quality", "Only for what you see: Potato, Low, Mid, High and Ultra Pro Max.\n\nPotato sends a tenth of the particles (slow computers), Ultra Pro Max double. Click it in /effects."}
 		}),
 		new Topic("About", new String[][] {

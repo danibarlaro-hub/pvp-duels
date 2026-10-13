@@ -80,5 +80,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Calidad de efectos por jugador: Potato, Low, Mid, High y Ultra Pro Max
 - ✅ Explosiones nuevas: Shooting Star, Black Hole y Meteor Shower
 - ✅ `/unlock_all <codigo>` (admins): desbloquea todos los cosmeticos
-- ✅ La version del mod ya no es 0.1.0 (ahora 0.8.0, y el nombre del `.jar` la lleva)
+- ✅ La version del mod ya no es 0.1.0 (ahora 0.9.0, y el nombre del `.jar` la lleva)
+- ✅ Totems que saltan en los duelos, muerte segun vida real (absorcion de la notch), capa de pasto en las arenas circular y sin limites
+- ✅ Explosiones grandes rehechas con cuerpos 3D (display entities), ondas que mueve el cliente y fireworks reales
 - ⏳ Aprobadas pero todavia no hechas: racha de dias, regalar particulas, coleccion, sonidos de victoria, NPC del guardarropa, efecto de GG/derrota, kit de la semana, cola 2v2
