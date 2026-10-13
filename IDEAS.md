@@ -73,4 +73,6 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ⏳ Zona de practica (por ahora lo cubre el NPC Practice Bot)
 - ✅ Logros y titulos: 40 logros, `/achievements`, `/titles` (titulo delante del nombre), `/profile`
 - ✅ 2v2 / equipos: `/party` (parejas de dos) y duelos de cuatro con sus rondas, sin fuego amigo, con logros (Better Together, Clutch...)
-- ✅ Efectos de victoria: 3 fireworks (atras, izquierda, derecha), particulas en el piso y en toda la arena, explosiones raras, menu `/effects`, misiones diarias `/missions` que desbloquean todo (las 3 explosiones son provisionales hasta que cuentes como las queres)
+- ✅ Efectos de victoria: 3 fireworks en fila atras del ganador, particulas en el piso y en toda la arena, explosiones raras (efectos O explosion, no las dos), menu `/effects`, misiones diarias y semanales `/missions` que desbloquean todo
+- ✅ Final de un duelo: la camara se aleja desde el centro de la arena y sube 7 bloques, Domain Expansion con el titulo para todos, empates (rompen la racha; dos Domain Expansion chocan y terminan en "I guess it's a tie")
+- ⏳ Aprobadas pero todavia no hechas: racha de dias, regalar particulas, coleccion, sonidos de victoria, NPC del guardarropa, efecto de GG/derrota, kit de la semana, cola 2v2

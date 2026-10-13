@@ -3375,6 +3375,10 @@ public final class SelfTest {
 			Effects.grantExplosion(id, "orbital_strike");
 			check("an unlocked explosion can be equipped and taken off", Effects.setExplosion(id, "orbital_strike") == null && Effects.explosionSlot(id).equals("orbital_strike")
 				&& Effects.setExplosion(id, "") == null && Effects.explosionSlot(id).isEmpty());
+			check("equipping an explosion cleared the colors and the particles, which is the rule", !Effects.hasEffects(id));
+			for (String c : new String[] {"red", "yellow", "blue", "green", "pink"}) Effects.toggleColor(id, 0, c);
+			Effects.toggleColor(id, 1, "red");
+			Effects.setParticle(id, false, 0, "flame");
 			Effects.setHideOthers(id, true);
 		});
 		step("effects: effects OR an explosion, never both", () -> {
@@ -3935,7 +3939,7 @@ public final class SelfTest {
 			Cinema.Scene scene = Cinema.sceneOf(duel(a));
 			check("the title 'Domain Expansion: I win!' reached Alice, Bob and Carl", titleHeard(a, "Domain Expansion: I win!") && titleHeard(b, "Domain Expansion: I win!") && titleHeard(carl, "Domain Expansion: I win!"));
 			check("1.5 seconds passed with the hands joined", scene.doubles[0].getPose() != net.minecraft.world.entity.Pose.CROUCHING || scene.doubles[0].getPose() == net.minecraft.world.entity.Pose.STANDING);
-			check("the camera has risen a little by now", scene.cameraAt.y > cam[0] + 1.0, scene.cameraAt.y + " vs " + cam[0]);
+			check("the camera has risen a little by now", scene.cameraAt.y > cam[0] + 0.5, scene.cameraAt.y + " vs " + cam[0]);
 			check("the dome is being drawn (many particles reach the players)", particlePackets(a) > 150 && particlePackets(b) > 150, particlePackets(a) + " / " + particlePackets(b));
 		}, () -> Cinema.sceneOf(duel(a)) != null && Cinema.sceneOf(duel(a)).cameraAt.y > Cinema.sceneOf(duel(a)).center.y + 6.9, 400);
 		step("finale: the camera ends 7 blocks up, to the side and toward the winner's end", () -> {

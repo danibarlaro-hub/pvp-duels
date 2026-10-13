@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.function.Predicate;
 
-/** /effects (your victory effects), /missions (the daily missions). */
+/** /effects (your victory effects), /missions (the daily and weekly missions). */
 public final class EffectCommands {
 	private static final Predicate<CommandSourceStack> IS_ADMIN = Commands.hasPermission(Commands.LEVEL_GAMEMASTERS);
 

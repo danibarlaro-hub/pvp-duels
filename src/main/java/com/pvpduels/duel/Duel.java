@@ -292,7 +292,7 @@ public final class Duel {
 			}
 			case ENDED -> {
 				phaseTicks++;
-				if (phaseTicks >= END_TICKS) close();
+				if (phaseTicks >= endTicks) close();
 			}
 		}
 	}

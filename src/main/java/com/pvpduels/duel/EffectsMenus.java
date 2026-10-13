@@ -62,8 +62,9 @@ public final class EffectsMenus {
 			"Unlocked: " + Effects.ownedParticles(me).size() + "/" + Particles.all().size()), EffectsMenus::openParticles);
 		b.set(14, DuelMenus.icon(Items.TNT, "Explosions", ChatFormatting.RED, "Very rare rewards.", "Unlocked: " + Effects.ownedExplosions(me).size() + "/" + Effects.EXPLOSIONS.length),
 			EffectsMenus::openExplosions);
-		b.set(16, DuelMenus.icon(Items.CLOCK, "Daily missions", ChatFormatting.GREEN, "Complete them to unlock new effects.",
-			Missions.doneCount(me) + "/" + Missions.today(me).size() + " done today"), EffectsMenus::openMissions);
+		b.set(16, DuelMenus.icon(Items.CLOCK, "Missions", ChatFormatting.GREEN, "Complete them to unlock new effects.",
+			"Daily: " + Missions.doneCount(me) + "/" + Missions.today(me).size() + " done today",
+			"Weekly: " + Missions.weeklyDoneCount(me) + "/" + Missions.weekly().size() + " done this week"), EffectsMenus::openMissions);
 		boolean hide = Effects.hideOthers(me);
 		b.set(22, DuelMenus.icon(Items.FIREWORK_STAR, "Preview", ChatFormatting.YELLOW, "See your effects right now."), who -> {
 			who.closeContainer();
@@ -111,7 +112,7 @@ public final class EffectsMenus {
 					openFireworkSlot(who, slot);
 				});
 			} else {
-				b.set(position, DuelMenus.icon(Items.COAL, "Locked: " + Effects.pretty(color), ChatFormatting.DARK_GRAY, "Daily missions can unlock it."));
+				b.set(position, DuelMenus.icon(Items.COAL, "Locked: " + Effects.pretty(color), ChatFormatting.DARK_GRAY, "Missions can unlock it."));
 			}
 		}
 		String shape = Effects.fireworkShape(me, slot);
@@ -125,7 +126,7 @@ public final class EffectsMenus {
 					openFireworkSlot(who, slot);
 				});
 			} else {
-				b.set(position, DuelMenus.icon(Items.COAL, "Locked: " + Effects.SHAPE_NAMES[i], ChatFormatting.DARK_GRAY, "Daily missions can unlock it."));
+				b.set(position, DuelMenus.icon(Items.COAL, "Locked: " + Effects.SHAPE_NAMES[i], ChatFormatting.DARK_GRAY, "Missions can unlock it."));
 			}
 		}
 		boolean trail = Effects.fireworkTrail(me, slot);
@@ -135,7 +136,7 @@ public final class EffectsMenus {
 				openFireworkSlot(who, slot);
 			});
 		} else {
-			b.set(34, DuelMenus.icon(Items.COAL, "Locked: Trail", ChatFormatting.DARK_GRAY, "Daily missions can unlock it."));
+			b.set(34, DuelMenus.icon(Items.COAL, "Locked: Trail", ChatFormatting.DARK_GRAY, "Missions can unlock it."));
 		}
 		boolean twinkle = Effects.fireworkTwinkle(me, slot);
 		if (Effects.ownsItem(me, "twinkle")) {
@@ -144,7 +145,7 @@ public final class EffectsMenus {
 				openFireworkSlot(who, slot);
 			});
 		} else {
-			b.set(35, DuelMenus.icon(Items.COAL, "Locked: Twinkle", ChatFormatting.DARK_GRAY, "Daily missions can unlock it."));
+			b.set(35, DuelMenus.icon(Items.COAL, "Locked: Twinkle", ChatFormatting.DARK_GRAY, "Missions can unlock it."));
 		}
 		b.set(45, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openFireworks);
 		ChoiceMenu.open(p, Component.literal("Firework: " + Effects.SLOT_NAMES[slot]), 6, b);
