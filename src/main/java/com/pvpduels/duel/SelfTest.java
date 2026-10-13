@@ -3331,14 +3331,15 @@ public final class SelfTest {
 			check("no two particles share an id or a name", all.stream().map(Particles.Def::id).distinct().count() == all.size() && all.stream().map(Particles.Def::name).distinct().count() == all.size());
 			check("23 firework things: 16 colors, 5 shapes, the trail and the twinkle", Effects.allFireworkItems().size() == 23 && Effects.COLORS.length == 16 && Effects.COLOR_RGB.length == 16
 				&& Effects.SHAPES.length == 5);
-			check("10 explosions with a name each", Effects.EXPLOSIONS.length == 10 && Effects.EXPLOSION_NAMES.length == 10 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
+			check("12 explosions with a name each", Effects.EXPLOSIONS.length == 12 && Effects.EXPLOSION_NAMES.length == 12 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
 				&& Effects.EXPLOSION_NAMES[2].equals("Shooting Star") && Effects.EXPLOSION_NAMES[3].equals("Black Hole") && Effects.EXPLOSION_NAMES[4].equals("Meteor Shower")
-				&& Effects.EXPLOSION_NAMES[5].equals("Gungnir") && Effects.EXPLOSION_NAMES[6].equals("Seven Stars") && Effects.EXPLOSION_NAMES[7].equals("Domain: Crimson Shrine")
-				&& Effects.EXPLOSION_NAMES[8].equals("Domain: Infinite Void") && Effects.EXPLOSION_NAMES[9].equals("Domain: Field of Swords"));
-			check("every explosion has a unique id, and the three domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 10
+				&& Effects.EXPLOSION_NAMES[5].equals("Gungnir") && Effects.EXPLOSION_NAMES[6].equals("Seven Stars") && Effects.EXPLOSION_NAMES[7].equals("Railgun")
+				&& Effects.EXPLOSION_NAMES[8].equals("Tesseract") && Effects.EXPLOSION_NAMES[9].equals("Domain: Crimson Shrine")
+				&& Effects.EXPLOSION_NAMES[10].equals("Domain: Infinite Void") && Effects.EXPLOSION_NAMES[11].equals("Domain: Field of Swords"));
+			check("every explosion has a unique id, and the three domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 12
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_expansion") != null && com.pvpduels.effects.DomeArt.Variant.of("domain_void") != null
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_swords") != null && com.pvpduels.effects.DomeArt.Variant.of("gungnir") == null
-				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("domain_void") != null && Films.of("orbital_strike") == null);
+				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("railgun") != null && Films.of("tesseract") != null && Films.of("domain_void") != null && Films.of("orbital_strike") == null);
 			check("the menus have a place for each, inside the six rows", EffectsMenus.explosionSlot(0) == 10 && EffectsMenus.explosionSlot(6) == 16
 				&& EffectsMenus.explosionSlot(7) == 19 && EffectsMenus.explosionSlot(Effects.EXPLOSIONS.length - 1) < 45);
 			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
@@ -4244,6 +4245,8 @@ public final class SelfTest {
 		final String[][] films = {{"domain_void", "Domain Expansion: Infinite Void", "DOMAIN", String.valueOf(Films.HANDS + 70), "15"},
 			{"domain_swords", "Domain Expansion: Field of Swords", "DOMAIN", String.valueOf(Films.HANDS + 70), "15"},
 			{"gungnir", "GUNGNIR", "FILM", String.valueOf(Films.GUNGNIR_WAIT + 40), "4"},
+			{"railgun", "RAILGUN", "FILM", String.valueOf(com.pvpduels.effects.BeamArt.railImpact(true) + 10), "15"},
+			{"tesseract", "TESSERACT", "FILM", String.valueOf(com.pvpduels.effects.GridArt.climax(true) + 6), "15"},
 			{"seven_stars", "SEVEN STARS", "FILM", String.valueOf(Films.SEVEN_LEAD + 90), "4"}};
 		// the fake connection only keeps the last 4000 packets, so the title is noted as soon as it arrives
 		final boolean[] heard = new boolean[2];
@@ -4341,7 +4344,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.12.0", version.equals("0.12.0"), version);
+			check("the mod says 0.13.0", version.equals("0.13.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
@@ -4486,7 +4489,7 @@ public final class SelfTest {
 			check("no display entity is left", com.pvpduels.effects.Props.live() == 0 && com.pvpduels.effects.Props.tagged(server) == 0);
 			dora.closeContainer();
 			EffectsMenus.openTryOut(dora, dora.position().add(4, 0, 0));
-			check("the dummy's menu shows her explosions", menuHas(dora, "Shooting Star") && menuHas(dora, "Domain: Crimson Shrine") && menuHas(dora, "Meteor Shower") && menuHas(dora, "Gungnir") && menuHas(dora, "Seven Stars")
+			check("the dummy's menu shows her explosions", menuHas(dora, "Shooting Star") && menuHas(dora, "Domain: Crimson Shrine") && menuHas(dora, "Meteor Shower") && menuHas(dora, "Gungnir") && menuHas(dora, "Seven Stars") && menuHas(dora, "Railgun") && menuHas(dora, "Tesseract")
 				&& menuHas(dora, "Domain: Infinite Void") && menuHas(dora, "Domain: Field of Swords"));
 			dora.link.sent.clear();
 			d8[4] = Victory.showsStarted();
@@ -4514,7 +4517,7 @@ public final class SelfTest {
 		});
 
 		// ---------------------------------------------------------------- the new explosions of 0.12 on the dummy (their quick versions)
-		final String[][] quick = {{"gungnir", "Gungnir", "25"}, {"seven_stars", "Seven Stars", "25"}, {"domain_void", "Domain: Infinite Void", "25"},
+		final String[][] quick = {{"gungnir", "Gungnir", "25"}, {"seven_stars", "Seven Stars", "25"}, {"railgun", "Railgun", "25"}, {"tesseract", "Tesseract", "25"}, {"domain_void", "Domain: Infinite Void", "25"},
 			{"domain_swords", "Domain: Field of Swords", "50"}};
 		for (String[] q : quick) {
 			step("quick " + q[1] + ": Dora tries it on the dummy", () -> {
@@ -4523,7 +4526,7 @@ public final class SelfTest {
 				dora.link.sent.clear();
 				check("it starts", Victory.tryOn(dora, q[0], dora.position().add(4, 0, 0)) == null && Victory.activeShows() == 1);
 				xfx[0] = ticks;
-			}, () -> ticks >= xfx[0] + 50, 300);
+			}, () -> ticks >= xfx[0] + (q[0].equals("railgun") ? 80 : 50), 300);
 			step("quick " + q[1] + ": its solid parts stand in the world", () -> {
 				int made = com.pvpduels.effects.Props.createdCount() - xfx[1];
 				check(q[1] + " made display entities", made >= Integer.parseInt(q[2]), made + " made");

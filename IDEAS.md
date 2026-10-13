@@ -83,6 +83,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ Explosiones nuevas: Shooting Star, Black Hole y Meteor Shower
 - ✅ Shooting Star cinematografica en el final de un 1v1 (camara lateral que sigue a la estrella, deseo, destello, temblor y giro alrededor del pentagrama)
 - ✅ 0.12.0: Domain Expansion rehecha como domo fisico con piso nuevo y camara propia; 3 dominios (Crimson Shrine, Infinite Void, Field of Swords); Gungnir y Seven Stars; todas con final cinematografico y se saltan con sneak
+- ✅ 0.13.0: Railgun (camara sobre las nubes, laser rojo, rayo que cae) y Tesseract (cubo 4D, baldosas flotando, grilla arcoiris)
 - ⏳ **Plan de las 20 horas (el usuario dijo "continua" automaticamente al terminar cada version)**: 0.13 = Railgun (la camara sube sobre las nubes, laser rojo, baja montada en el rayo) + Tesseract (cubo 4D de lineas que gira, el piso se corta en celdas que flotan con una grilla arcoiris); 0.14 = Eclipse (disco negro gigante con corona dorada) + Moonfall (luna enorme que baja y crece, onda de impacto); 0.15 = Cronos Clock (anillos con numeros romanos, agujas que aceleran, onda de tiempo detenido) + Zeus Storm (nubes, 20-30 rayos solo visuales en anillos, rayo final gigante) + pulido
 - ⏳ Preguntas y cosas para consultarle al final de cada entrega: orden de las entregas, version del mod (el usuario piensa en 0.50), mas temas de dominio, ajustes de velocidad/angulo de las camaras
 - ⏳ Que el Explosion Dummy y `/effects preview` tambien puedan mostrar la version cinematografica

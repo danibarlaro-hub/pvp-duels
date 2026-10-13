@@ -1,8 +1,10 @@
 package com.pvpduels.duel;
 
+import com.pvpduels.effects.BeamArt;
 import com.pvpduels.effects.DomainArt;
 import com.pvpduels.effects.DomeArt;
 import com.pvpduels.effects.ExplosionArt;
+import com.pvpduels.effects.GridArt;
 import com.pvpduels.effects.Props;
 import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.StrikeArt;
@@ -61,6 +63,8 @@ final class Films {
 	static final Film STAR = new StarFilm();
 	static final Film GUNGNIR = new GungnirFilm();
 	static final Film SEVEN = new SevenFilm();
+	static final Film RAIL = new RailFilm();
+	static final Film TESSERACT = new TesseractFilm();
 	static final Film SHRINE = new DomainFilm(DomeArt.Variant.SHRINE);
 	static final Film VOID = new DomainFilm(DomeArt.Variant.VOID);
 	static final Film SWORDS = new DomainFilm(DomeArt.Variant.SWORDS);
@@ -73,6 +77,8 @@ final class Films {
 			case "shooting_star" -> STAR;
 			case "gungnir" -> GUNGNIR;
 			case "seven_stars" -> SEVEN;
+			case "railgun" -> RAIL;
+			case "tesseract" -> TESSERACT;
 			case "domain_expansion" -> SHRINE;
 			case "domain_void" -> VOID;
 			case "domain_swords" -> SWORDS;
@@ -455,6 +461,144 @@ final class Films {
 				s.flash();
 				s.title(Component.literal("SEVEN STARS").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
 					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 60, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Railgun
+
+	private static final class RailFilm implements Film {
+		/** The camera climbs this long, from the floor to above the clouds. */
+		private static final int CLIMB = 70;
+		/** The height of the camera above the clouds. */
+		private static final double TOP = 78;
+
+		@Override public String id() { return "railgun"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return BeamArt.railTicks(true); }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** Climbs from beside the winner to above the clouds, rides the head of the beam down, and pulls back from the crater. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 winner = s.stage[s.win];
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			int sight = BeamArt.railSight(true);
+			int impact = BeamArt.railImpact(true);
+			double floor = s.center.y;
+			Vec3 high = new Vec3(loser.x + s.side.x * 10 - fwd.x * 4, 0, loser.z + s.side.z * 10 - fwd.z * 4);
+			Vec3 start = new Vec3(winner.x + s.side.x * 4, 0, winner.z + s.side.z * 4);
+			if (a < sight) {
+				double u = Cinema.ease(Math.min(1.0, a / (double) CLIMB));
+				double y = floor + 1.8 + (TOP - 1.8) * u;
+				Vec3 flat = lerp(start, high, Cinema.ease(clamp01(a / (double) sight)));
+				return new Vec3(flat.x, y, flat.z);
+			}
+			Vec3 near = new Vec3(loser.x + s.side.x * 7, 0, loser.z + s.side.z * 7);
+			if (a < impact) {
+				// the camera falls with the head of the beam, a few blocks above it and off to the side
+				double u = clamp01((a - sight) / (double) BeamArt.railFall(true));
+				Vec3 head = BeamArt.railHead(loser, a, true);
+				Vec3 flat = lerp(high, near, Cinema.ease(u));
+				double y = Math.max(floor + 3.0, head.y + 6.0 - 3.0 * u);
+				return new Vec3(flat.x, y, flat.z);
+			}
+			int b = a - impact;
+			double e = Cinema.ease(Math.min(1.0, b / (double) BeamArt.railAfter(true)));
+			Vec3 pos = new Vec3(loser.x + s.side.x * (7 + 15 * e) - fwd.x * 6 * e, floor + 3.0 + 7.0 * e, loser.z + s.side.z * (7 + 15 * e) - fwd.z * 6 * e);
+			if (b < 16) pos = Cinema.Scene.shake(pos, 1.0 * (1 - b / 16.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			int sight = BeamArt.railSight(true);
+			int impact = BeamArt.railImpact(true);
+			Vec3 target;
+			if (a < sight) {
+				// first the camera looks up at the clouds it is about to break through, then down at the arena
+				Vec3 sky = cam.add(0, 30, 0);
+				target = lerp(sky, loser.add(0, 1.0, 0), Cinema.ease(clamp01((a - 24) / 46.0)));
+			} else if (a < impact) {
+				Vec3 head = BeamArt.railHead(loser, a, true);
+				double b = clamp01((a - (impact - 8)) / 8.0);
+				target = lerp(head, loser.add(0, 1.5, 0), Cinema.ease(b));
+			} else {
+				double e = Cinema.ease(Math.min(1.0, (a - impact) / (double) BeamArt.railAfter(true)));
+				target = loser.add(0, 2.5 + 3.0 * e, 0);
+			}
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			if (a == 0 && s.doubles[s.win] != null) s.doubles[s.win].setXRot(-30f);
+			Props props = s.props();
+			BeamArt.railgun(s.level, viewers, props, loser, a, true);
+			for (Vec3 at : props.tick(a)) ExplosionArt.landing(s.level, viewers, at);
+			if (a == BeamArt.railSight(true) && s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
+			if (a == BeamArt.railImpact(true)) {
+				s.flash();
+				s.title(Component.literal("RAILGUN").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the Tesseract
+
+	private static final class TesseractFilm implements Film {
+		@Override public String id() { return "tesseract"; }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return GridArt.tesseractTicks(true); }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** A slow turn around the cube that starts low and wide, closes in and rises until the flash, and then pulls back. */
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			int c = GridArt.climax(true);
+			int total = camTicks();
+			double phi = Math.atan2(s.side.z, s.side.x) + 0.012 * Math.min(a, total);
+			double k = Cinema.ease(Math.min(1.0, a / (double) c));
+			double rho = 24 - 9 * k;
+			double y = 2.5 + 6.5 * k;
+			if (a > c) {
+				double p = Cinema.ease(Math.min(1.0, (a - c) / (double) (total - c)));
+				rho = 15 + 11 * p;
+				y = 9 + 5 * p;
+			}
+			Vec3 pos = around(loser, rho, phi, s.center.y + y);
+			int since = a - c;
+			if (since >= 0 && since < 14) pos = Cinema.Scene.shake(pos, 0.8 * (1 - since / 14.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 cube = GridArt.center(loser, true);
+			int folded = GridArt.climax(true) + GridArt.collapse(true);
+			double k = Cinema.ease(clamp01((a - folded) / 10.0));
+			Vec3 target = lerp(cube, loser.add(0, 3.0, 0), k);
+			return safe(target.subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			Props props = s.props();
+			GridArt.tesseract(s.level, viewers, props, loser, a, true);
+			for (Vec3 at : props.tick(a)) ExplosionArt.landing(s.level, viewers, at);
+			if (a == GridArt.climax(true)) {
+				s.flash();
+				s.title(Component.literal("TESSERACT").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
