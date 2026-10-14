@@ -43,9 +43,9 @@ final class Films {
 		/** How long it stays after that, so the last light can be seen. */
 		int tail();
 
-		/** The tick of the film when the victory tune starts: the last second or so of the camera, after the blast. */
-		default int victoryAt() {
-			return Math.max(0, camTicks() - 55);
+		/** The tick of the film when the victory tune starts: the last seconds of the camera, after the blast. */
+		default int victoryAt(Cinema.Scene s) {
+			return Math.max(0, camTicks() - 65);
 		}
 
 		Vec3 camera(Cinema.Scene s, int a);
@@ -210,7 +210,7 @@ final class Films {
 				// the winner looks up and makes a wish
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(-40f);
 				s.title(Component.literal("Make a wish").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
-					Component.literal(s.duel.names[s.win]).withStyle(ChatFormatting.DARK_GRAY), 10, 30, 10);
+					Component.literal(s.names[s.win]).withStyle(ChatFormatting.DARK_GRAY), 10, 30, 10);
 			}
 			if (a < STAR_WISH) {
 				if (a == 6 || a == 18 || a == 30) s.sound(winner.add(0, 2, 0), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.7f + a * 0.02f);
@@ -231,7 +231,7 @@ final class Films {
 				// the flash: the camera is swallowed by white sparks for a moment
 				s.flash();
 				s.title(Component.literal("SHOOTING STAR").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -322,6 +322,12 @@ final class Films {
 			return new DomeArt.Spec(s.center, s.half, s.stage[s.win], s.stage[1 - s.win], true);
 		}
 
+		/** The tune starts just after the great moment of the domain. */
+		@Override
+		public int victoryAt(Cinema.Scene s) {
+			return Math.max(0, HANDS + DomeArt.climax(variant, specOf(s)) + 8);
+		}
+
 		/**
 		 * Circles the arena (turning {@code dir} at {@code speed} radians a tick, rising {@code gain} blocks), drops to the side of the loser
 		 * {@code dropBefore} ticks before the end of the hold, shakes at the great moment and goes wide when the dome falls.
@@ -390,7 +396,7 @@ final class Films {
 				s.pose(owner, Pose.STANDING);
 				s.title(Component.literal("Domain Expansion: ").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD)
 						.append(Component.literal(variant.title).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)),
-					Component.literal(s.duel.names[owner]).withStyle(ChatFormatting.GRAY), 5, 70, 15);
+					Component.literal(s.names[owner]).withStyle(ChatFormatting.GRAY), 5, 70, 15);
 			}
 			int t = a - HANDS;
 			Props props = s.props();
@@ -481,7 +487,7 @@ final class Films {
 			if (t == fall + StrikeArt.gungnirDelay(true)) {
 				// the thunder arrives, and the title with it
 				s.title(Component.literal("GUNGNIR").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -536,7 +542,7 @@ final class Films {
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
 				s.flash();
 				s.title(Component.literal("SEVEN STARS").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 60, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 60, 20);
 			}
 		}
 	}
@@ -620,7 +626,7 @@ final class Films {
 			if (a == BeamArt.railImpact(true)) {
 				s.flash();
 				s.title(Component.literal("RAILGUN").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -674,7 +680,7 @@ final class Films {
 			if (a == GridArt.climax(true)) {
 				s.flash();
 				s.title(Component.literal("TESSERACT").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -744,7 +750,7 @@ final class Films {
 			if (a == SkyArt.eclipseImpact(true)) {
 				s.flash();
 				s.title(Component.literal("ECLIPSE").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -807,7 +813,7 @@ final class Films {
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
 				s.flash();
 				s.title(Component.literal("MOONFALL").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -877,7 +883,7 @@ final class Films {
 			if (a == ClockArt.stop(true)) {
 				s.flash();
 				s.title(Component.literal("CRONOS CLOCK").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " stops time").withStyle(ChatFormatting.WHITE), 0, 60, 20);
+					Component.literal(s.names[s.win] + " stops time").withStyle(ChatFormatting.WHITE), 0, 60, 20);
 			}
 		}
 	}
@@ -945,7 +951,7 @@ final class Films {
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
 				s.flash();
 				s.title(Component.literal("ZEUS STORM").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -1020,7 +1026,7 @@ final class Films {
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
 				s.flash();
 				s.title(Component.literal(wither ? "WITHER CANNON" : "ORBITAL STRIKE").withStyle(wither ? ChatFormatting.DARK_PURPLE : ChatFormatting.RED, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -1097,7 +1103,7 @@ final class Films {
 			if (t == ExplosionArt.HOLE_BURST) {
 				s.flash();
 				s.title(Component.literal("BLACK HOLE").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}
@@ -1175,7 +1181,7 @@ final class Films {
 			if (t == ExplosionArt.SHOWER_BIG + ExplosionArt.SHOWER_BIG_FLIGHT) {
 				s.flash();
 				s.title(Component.literal("METEOR SHOWER").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(s.duel.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}
 	}

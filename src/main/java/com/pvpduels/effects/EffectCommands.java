@@ -29,7 +29,7 @@ public final class EffectCommands {
 			})
 			.then(Commands.literal("preview")
 				.executes(ctx -> {
-					Victory.preview(ctx.getSource().getPlayerOrException());
+					com.pvpduels.duel.Cinema.previewOwn(ctx.getSource().getPlayerOrException());
 					return 1;
 				}))
 			.then(Commands.literal("unlockall")

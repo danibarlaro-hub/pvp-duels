@@ -140,17 +140,17 @@ public final class Jingles {
 		Holder<SoundEvent> hat = SoundEvents.NOTE_BLOCK_HAT;
 
 		// the old "wah wah wah waaah": three falling notes and a long slide
-		sad("sad_trombone").layer(didgeridoo, 1.3f, 8, 0, "10 9 8").layer(didgeridoo, 1.3f, 2, 24, "7 6 5 4 3 2 1 0 0");
+		sad("sad_trombone").layer(didgeridoo, 1.3f, 6, 0, "10 9 8").layer(didgeridoo, 1.3f, 2, 16, "6 4 2 0");
 		// two deflated notes
-		sad("womp_womp").layer(bass, 1.2f, 9, 0, "8 5").layer(didgeridoo, 1.0f, 9, 0, "8 5").layer(bass, 1.2f, 3, 18, "2 1 0 0");
+		sad("womp_womp").layer(bass, 1.2f, 7, 0, "8 5").layer(didgeridoo, 1.0f, 7, 0, "8 5").layer(bass, 1.2f, 2, 14, "2 1 0 0");
 		// a whistle that falls off a cliff and a thud
-		sad("falling").layer(bit, 0.9f, 1, 0, "24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0").layer(drum, 1.2f, 1, 26, "2");
+		sad("falling").layer(bit, 0.9f, 1, 0, "24 22 20 18 16 14 12 10 8 6 4 2 0").layer(drum, 1.2f, 1, 14, "2");
 		// flat and unimpressed
 		sad("bruh").layer(drum, 1.2f, 1, 0, "6").layer(bass, 1.2f, 7, 0, "5 3").layer(hat, 0.7f, 1, 16, "12");
 		// a comedy horn
 		sad("fail_horn").layer(cowBell, 1.0f, 4, 0, "6 6 6 .").layer(didgeridoo, 1.1f, 6, 12, "3 0 0");
 		// a music box that runs down
-		sad("music_box").layer(harp, 0.9f, 4, 0, "18 15 13 10 6 3").layer(chime, 0.5f, 4, 2, "24 20 17 14 10 6").layer(pling, 0.6f, 6, 24, "1");
+		sad("music_box").layer(harp, 0.9f, 4, 0, "18 15 13 10 6 3").layer(chime, 0.5f, 4, 2, "24 20 17 14 10 6").layer(pling, 0.6f, 6, 22, "1");
 	}
 
 	/** A sad tune picked at random. */

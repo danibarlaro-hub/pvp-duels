@@ -77,7 +77,7 @@ public final class DuelManager {
 
 	/** True while the player can't take a new duel: they are in one that has not finished yet. */
 	public static boolean isBusy(UUID id) {
-		if (Workshop.isIn(id) || Spectators.isIn(id) || com.pvpduels.arena.ArenaStudio.isIn(id) || ReplayPlayer.isIn(id)) return true;
+		if (Workshop.isIn(id) || Spectators.isIn(id) || com.pvpduels.arena.ArenaStudio.isIn(id) || ReplayPlayer.isIn(id) || Cinema.isTryingOut(id)) return true;
 		Duel d = BY_PLAYER.get(id);
 		if (d != null && d.phase != Duel.Phase.ENDED) return true;
 		TeamDuel t = TEAM_BY_PLAYER.get(id);

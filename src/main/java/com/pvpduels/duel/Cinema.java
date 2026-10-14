@@ -8,6 +8,7 @@ import com.pvpduels.effects.Jingles;
 import com.pvpduels.effects.Props;
 import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.Victory;
+import com.pvpduels.util.Msg;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.ChatFormatting;
@@ -154,6 +155,72 @@ public final class Cinema {
 		return scene.total + 20;
 	}
 
+	// ------------------------------------------------------------------ try-outs (the Explosion Dummy and /effects preview)
+
+	/** At most this many try-out films at the same time. */
+	static final int MAX_TRY_OUTS = 3;
+	/** How far from the dummy the winner's side of the stage is (the same as the distance between the two starts of a duel arena). */
+	static final double TRY_OUT_GAP = 26.0;
+
+	/** True while this player is watching a try-out film (through its camera, or about to). */
+	public static boolean isTryingOut(UUID id) {
+		return tryOutOf(id) != null;
+	}
+
+	/** The try-out film this player is watching, or null. */
+	static Scene tryOutOf(UUID id) {
+		for (Scene s : SCENES) if (s.duel == null && !s.ended && id.equals(s.ids[0]) && s.watching(id)) return s;
+		return null;
+	}
+
+	/** True when the film of this explosion can be played for this player now. Otherwise the plain effects are shown. */
+	public static boolean canTryOut(ServerPlayer p, String explosion) {
+		return enabled && Films.of(explosion) != null && (isTryingOut(p.getUUID()) || !DuelManager.isBusy(p.getUUID()));
+	}
+
+	/**
+	 * The player watches the film of one of THEIR explosions land on {@code target} (the Explosion Dummy), with the camera of a finale: the
+	 * winner is a double of the player on this side of the dummy. Returns null when it started, or what is wrong in plain words.
+	 */
+	public static String tryOut(ServerPlayer p, String explosion, Vec3 target) {
+		UUID me = p.getUUID();
+		if (!Effects.ownsExplosion(me, explosion)) return "You do not own that explosion.";
+		Films.Film film = Films.of(explosion);
+		if (film == null || !enabled) return "That explosion has no film.";
+		if (isTryingOut(me)) return "Wait a moment: your film is still playing.";
+		int playing = 0;
+		for (Scene s : SCENES) if (s.duel == null) playing++;
+		if (playing >= MAX_TRY_OUTS) return "Too many films are playing right now. Try again in a few seconds.";
+		double dx = p.getX() - target.x;
+		double dz = p.getZ() - target.z;
+		double length = Math.hypot(dx, dz);
+		if (length < 0.5) {
+			double yaw = Math.toRadians(p.getYRot());
+			dx = Math.sin(yaw);
+			dz = -Math.cos(yaw);
+			length = 1;
+		}
+		Vec3 winnerAt = new Vec3(target.x + dx / length * TRY_OUT_GAP, target.y, target.z + dz / length * TRY_OUT_GAP);
+		Scene scene = Scene.tryOut(p, film, winnerAt, target);
+		if (!scene.spawn()) return "The film could not start. Try again.";
+		SCENES.add(scene);
+		started++;
+		return null;
+	}
+
+	/** /effects preview and the Preview button: the film of the equipped explosion if there is one, else the plain preview. */
+	public static void previewOwn(ServerPlayer p) {
+		String explosion = Effects.explosionSlot(p.getUUID());
+		if (explosion.isEmpty() || !canTryOut(p, explosion)) {
+			Victory.preview(p);
+			return;
+		}
+		double yaw = Math.toRadians(p.getYRot());
+		Vec3 target = new Vec3(p.getX() - Math.sin(yaw) * TRY_OUT_GAP, p.getY(), p.getZ() + Math.cos(yaw) * TRY_OUT_GAP);
+		String problem = tryOut(p, explosion, target);
+		if (problem != null) p.sendSystemMessage(Msg.err(problem));
+	}
+
 	/** The duel is closing (or the server stops): the finale ends right now and everybody gets their body back. */
 	static void stop(Duel duel) {
 		for (Scene s : new ArrayList<>(SCENES)) if (s.duel == duel) s.stop(false);
@@ -181,7 +248,7 @@ public final class Cinema {
 			try {
 				if (!s.tick()) done.add(s);
 			} catch (RuntimeException e) {
-				PvpDuelsMod.LOGGER.warn("The finale of {} vs {} failed: {}", s.duel.names[0], s.duel.names[1], e.toString());
+				PvpDuelsMod.LOGGER.warn("The finale of {} vs {} failed: {}", s.names[0], s.names[1], e.toString());
 				done.add(s);
 			}
 		}
@@ -219,7 +286,11 @@ public final class Cinema {
 
 	/** What a finale looks like from outside (the self-test reads it). */
 	static final class Scene {
+		/** The duel this finale belongs to, or null for a try-out in the lobby (the Explosion Dummy and /effects preview). */
 		final Duel duel;
+		/** The two people of the film: the winner and the loser (null for the dummy of a try-out). */
+		final UUID[] ids = new UUID[2];
+		final String[] names = new String[2];
 		final MinecraftServer server;
 		final ServerLevel level;
 		final Kind kind;
@@ -259,6 +330,22 @@ public final class Cinema {
 		float cameraPitch;
 
 		Scene(Duel duel, MinecraftServer server, ServerLevel level, Kind kind, int win, Films.Film film) {
+			this(duel, server, level, kind, win, film, stageOf(duel, 0), stageOf(duel, 1), duel.ids, duel.names);
+		}
+
+		private static Vec3 stageOf(Duel duel, int i) {
+			double[] s = duel.space.spawn(i);
+			return new Vec3(s[0], s[1], s[2]);
+		}
+
+		/** A try-out: the film of {@code viewer}'s explosion with the winner at {@code winnerAt} and the target (the dummy) at {@code loserAt}. */
+		static Scene tryOut(ServerPlayer viewer, Films.Film film, Vec3 winnerAt, Vec3 loserAt) {
+			Kind k = film.domain() ? Kind.DOMAIN : Kind.FILM;
+			return new Scene(null, viewer.level().getServer(), (ServerLevel) viewer.level(), k, 0, film, winnerAt, loserAt,
+				new UUID[] {viewer.getUUID(), null}, new String[] {viewer.getName().getString(), "the dummy"});
+		}
+
+		private Scene(Duel duel, MinecraftServer server, ServerLevel level, Kind kind, int win, Films.Film film, Vec3 stage0, Vec3 stage1, UUID[] who, String[] called) {
 			this.duel = duel;
 			this.server = server;
 			this.level = level;
@@ -266,9 +353,11 @@ public final class Cinema {
 			this.film = film;
 			this.win = win;
 			for (int i = 0; i < 2; i++) {
-				double[] s = duel.space.spawn(i);
-				stage[i] = new Vec3(s[0], s[1], s[2]);
+				ids[i] = who[i];
+				names[i] = called[i];
 			}
+			stage[0] = stage0;
+			stage[1] = stage1;
 			center = new Vec3((stage[0].x + stage[1].x) / 2, Math.min(stage[0].y, stage[1].y), (stage[0].z + stage[1].z) / 2);
 			Vec3 flat = new Vec3(stage[1].x - stage[0].x, 0, stage[1].z - stage[0].z);
 			double length = flat.length();
@@ -300,7 +389,12 @@ public final class Cinema {
 			if (camera == null) return false;
 			if (camera instanceof Display display) display.setPosRotInterpolationDuration(2);
 			for (int i = 0; i < 2; i++) {
-				ServerPlayer p = duel.player(i);
+				if (duel == null && i == 1) continue; // the dummy of a try-out is the real NPC
+				ServerPlayer p = duelist(i);
+				if (p == null) {
+					discardEntities();
+					return false;
+				}
 				doubles[i] = summon("minecraft:mannequin", DOUBLE_TAG + "_" + id + "_" + i, stage[i], yaw[i], doubleNbt(p));
 				if (doubles[i] == null) {
 					discardEntities();
@@ -416,10 +510,10 @@ public final class Cinema {
 
 		private void startRiding() {
 			for (int i = 0; i < 2; i++) {
-				ServerPlayer p = duel.player(i);
-				if (p != null && !duel.isRestored(i)) riders.add(new Rider(p.getUUID(), i));
+				ServerPlayer p = duelist(i);
+				if (p != null && (duel == null || !duel.isRestored(i))) riders.add(new Rider(p.getUUID(), i));
 			}
-			for (ServerPlayer p : Spectators.watchers(duel)) riders.add(new Rider(p.getUUID(), -1));
+			if (duel != null) for (ServerPlayer p : Spectators.watchers(duel)) riders.add(new Rider(p.getUUID(), -1));
 			moveCameraEntityOnly();
 			for (Rider r : riders) {
 				ServerPlayer p = server.getPlayerList().getPlayer(r.id);
@@ -462,7 +556,7 @@ public final class Cinema {
 				if (p == null) continue;
 				if (p.getCamera() != p) p.setCamera(null);
 				p.setGameMode(r.previous);
-				if (toStage) {
+				if (toStage && duel != null) {
 					Vec3 at = r.index >= 0 ? stage[r.index] : center.add(0, 6, 0);
 					p.teleportTo(level, at.x, at.y, at.z, Set.of(), r.index >= 0 ? yaw[r.index] : p.getYRot(), 0f, true);
 					p.setDeltaMovement(0, 0, 0);
@@ -481,7 +575,7 @@ public final class Cinema {
 		List<ServerPlayer> audience() {
 			List<ServerPlayer> out = new ArrayList<>();
 			for (ServerPlayer p : level.players()) {
-				boolean owner = p.getUUID().equals(duel.ids[0]) || p.getUUID().equals(duel.ids[1]);
+				boolean owner = p.getUUID().equals(ids[0]) || p.getUUID().equals(ids[1]);
 				if (!owner && Effects.hideOthers(p.getUUID())) continue;
 				out.add(p);
 			}
@@ -534,7 +628,8 @@ public final class Cinema {
 		/** Returns false when the finale is over. */
 		boolean tick() {
 			if (ended) return false;
-			if (duel.closed) return false;
+			if (duel != null && duel.closed) return false;
+			if (duel == null && duelist(0) == null) return false;
 			if (camera == null || !camera.isAlive()) return false;
 			age++;
 			if (age < PRE) return true;
@@ -564,15 +659,31 @@ public final class Cinema {
 		}
 
 		ServerPlayer winnerPlayer() {
-			return win < 0 ? null : server.getPlayerList().getPlayer(duel.ids[win]);
+			return win < 0 ? null : server.getPlayerList().getPlayer(ids[win]);
+		}
+
+		/** True while this player has the camera of the film (or is about to get it). */
+		boolean watching(UUID who) {
+			if (age < PRE) return true;
+			for (Rider r : riders) if (r.riding && r.id.equals(who)) return true;
+			return false;
+		}
+
+		/** The player behind the winner (0) or the loser (1), or null when they are gone (or it is the dummy of a try-out). */
+		ServerPlayer duelist(int i) {
+			if (duel != null) return duel.player(i);
+			return ids[i] == null ? null : server.getPlayerList().getPlayer(ids[i]);
 		}
 
 		/** The victory tune of the film, and right after it the sad one of the loser. */
 		private void sounds(int a) {
 			Jingles.Tune happy = Jingles.of(film.id());
-			int t = a - film.victoryAt();
+			int from = film.victoryAt(this);
+			int t = a - from;
 			if (t >= 0 && t < happy.length()) Jingles.tick(level, audience(), cameraAt, happy, t);
-			int s = t - happy.length() - DEFEAT_GAP;
+			// the sad tune follows the happy one, and is pushed back so that it ends with the film
+			int sadFrom = Math.max(from + happy.length() + DEFEAT_GAP, camTicks + film.tail() - sad.length() - 1);
+			int s = a - sadFrom;
 			if (s >= 0 && s < sad.length()) Jingles.tick(level, audience(), cameraAt, sad, s);
 		}
 
@@ -610,7 +721,7 @@ public final class Cinema {
 				pose(1, Pose.STANDING);
 				sound(center, SoundEvents.ENDER_DRAGON_GROWL, 4.0f, 0.6f);
 				title(Component.literal("Domain Expansion!").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD),
-					Component.literal(duel.names[0] + " vs " + duel.names[1]).withStyle(ChatFormatting.GRAY), 5, 50, 10);
+					Component.literal(names[0] + " vs " + names[1]).withStyle(ChatFormatting.GRAY), 5, 50, 10);
 			}
 			int t = a - HANDS;
 			double rho0 = half * 0.85;
@@ -648,7 +759,7 @@ public final class Cinema {
 				pose(0, Pose.STANDING);
 				pose(1, Pose.STANDING);
 				title(Component.literal("I guess it's a tie").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
-					Component.literal(duel.names[0] + " and " + duel.names[1] + " are too tired to go on").withStyle(ChatFormatting.DARK_GRAY), 5, 45, 15);
+					Component.literal(names[0] + " and " + names[1] + " are too tired to go on").withStyle(ChatFormatting.DARK_GRAY), 5, 45, 15);
 			}
 		}
 	}

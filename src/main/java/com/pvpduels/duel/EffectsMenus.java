@@ -70,7 +70,7 @@ public final class EffectsMenus {
 		boolean hide = Effects.hideOthers(me);
 		b.set(22, DuelMenus.icon(Items.FIREWORK_STAR, "Preview", ChatFormatting.YELLOW, "See your effects right now."), who -> {
 			who.closeContainer();
-			Victory.preview(who);
+			Cinema.previewOwn(who);
 		});
 		Quality quality = Effects.quality(me);
 		b.set(18, DuelMenus.icon(quality.icon, "Effect quality: " + quality.label, ChatFormatting.LIGHT_PURPLE, quality.description,
@@ -256,10 +256,11 @@ public final class EffectsMenus {
 		for (int i = 0; i < Effects.EXPLOSIONS.length; i++) {
 			String id = Effects.EXPLOSIONS[i];
 			if (Effects.ownsExplosion(me, id)) {
-				b.set(explosionSlot(i), DuelMenus.icon(explosionIcon(i), Effects.EXPLOSION_NAMES[i], ChatFormatting.GOLD, "Click to watch it land on the dummy.",
-					"Everybody nearby can see it."), who -> {
+				b.set(explosionSlot(i), DuelMenus.icon(explosionIcon(i), Effects.EXPLOSION_NAMES[i], ChatFormatting.GOLD, "Click to watch its film land on the dummy.",
+					"You get the camera (sneak to skip).", "Everybody nearby can see it."), who -> {
 					who.closeContainer();
-					report(who, Victory.tryOn(who, id, target));
+					if (Cinema.canTryOut(who, id)) report(who, Cinema.tryOut(who, id, target));
+					else report(who, Victory.tryOn(who, id, target));
 				});
 			} else {
 				b.set(explosionSlot(i), DuelMenus.icon(Items.COAL, "Locked: ???", ChatFormatting.DARK_GRAY, "A very rare reward of the missions."));

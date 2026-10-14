@@ -89,11 +89,13 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ 0.16.0: finales cinematograficos para Orbital Strike, Orbital Wither, Black Hole y Meteor Shower (ahora todas las explosiones tienen su pelicula)
 - ✅ **Plan de las 20 horas, terminado (el usuario dijo "continua" automaticamente al terminar cada version)**: 0.13 = Railgun (la camara sube sobre las nubes, laser rojo, baja montada en el rayo) + Tesseract (cubo 4D de lineas que gira, el piso se corta en celdas que flotan con una grilla arcoiris); 0.14 = Eclipse (disco negro gigante con corona dorada) + Moonfall (luna enorme que baja y crece, onda de impacto); 0.15 = Cronos Clock (anillos con numeros romanos, agujas que aceleran, onda de tiempo detenido) + Zeus Storm (nubes, 20-30 rayos solo visuales en anillos, rayo final gigante) + pulido
 - ✅ 0.17.0: cuatro Domain Expansions nuevas (Frozen Abyss, Infernal Throne, Cherry Garden, Abyssal Sea)
-- ⏳ Ideas ofrecidas el 14/10 (esperando que elija): cinematico en el Explosion Dummy y `/effects preview`, sonidos de victoria, efecto de derrota / GG, racha de dias, kit de la semana, cola 2v2
+- ✅ 0.18.0 (eligio el 14/10): cola 2v2 (parties en `/queue`), sonidos de victoria por explosion + tonadas tristes para el que pierde (con interruptor en `/effects`), cinematica en el Explosion Dummy y en `/effects preview`
+- ⏳ Pedido del 14/10: 10 a 15 explosiones nuevas, que se vean cool (estilo Minecraft Dungeons: columnas de fuego, tornado, cristal gigante...) -> 0.19
+- ⏳ Pedido del 14/10: sonidos propios tipo MyInstants para perder (el usuario puede pasar sus .ogg/.mp3 y se meten en el jar; ojo con los derechos si vende el mod)
+- ⏳ Ofrecidas y no elegidas: efecto de GG, racha de dias (no la entendio), kit de la semana (dijo que no)
 - ⏳ Preguntas y cosas para consultarle al final de cada entrega: orden de las entregas, version del mod (el usuario piensa en 0.50), mas temas de dominio, ajustes de velocidad/angulo de las camaras
-- ⏳ Que el Explosion Dummy y `/effects preview` tambien puedan mostrar la version cinematografica
 - ✅ `/unlock_all <codigo>` (admins): desbloquea todos los cosmeticos
 - ✅ La version del mod ya no es 0.1.0 (ahora 0.9.0, y el nombre del `.jar` la lleva)
 - ✅ Totems que saltan en los duelos, muerte segun vida real (absorcion de la notch), capa de pasto en las arenas circular y sin limites
 - ✅ Explosiones grandes rehechas con cuerpos 3D (display entities), ondas que mueve el cliente y fireworks reales
-- ⏳ Aprobadas pero todavia no hechas: racha de dias, regalar particulas, coleccion, sonidos de victoria, NPC del guardarropa, efecto de GG/derrota, kit de la semana, cola 2v2
+- ⏳ Aprobadas pero todavia no hechas: racha de dias, regalar particulas, coleccion, NPC del guardarropa, efecto de GG

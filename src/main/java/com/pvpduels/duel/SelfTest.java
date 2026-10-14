@@ -4335,6 +4335,7 @@ public final class SelfTest {
 		// the fake connection only keeps the last 4000 packets, so the title is noted as soon as it arrives
 		final boolean[] heard = new boolean[2];
 		final int[] drain = new int[1];
+		final int[] jb = new int[1];
 		for (String[] f : films) {
 			final boolean skipTest = f[0].equals("seven_stars");
 			final java.util.function.BooleanSupplier note = () -> {
@@ -4356,6 +4357,7 @@ public final class SelfTest {
 			}, () -> phaseIs(a, Duel.Phase.FIGHTING), 800);
 			step("finale " + f[0] + ": Alice wins", () -> {
 				cine[0] = ticks;
+				jb[0] = com.pvpduels.effects.Jingles.notesPlayed();
 				cine[6] = com.pvpduels.effects.Props.createdCount();
 				a.link.sent.clear();
 				b.link.sent.clear();
@@ -4406,6 +4408,10 @@ public final class SelfTest {
 				check("the title " + f[1] + " reached Alice", heard[0]);
 				if (!skipTest) check("and Bob", heard[1]);
 				check("the film lasted more than seven seconds from the win", ticks - cine[0] > 140, (ticks - cine[0]) + " ticks");
+				int played = com.pvpduels.effects.Jingles.notesPlayed() - jb[0];
+				check("the explosion has its own melody and all of it was played", com.pvpduels.effects.Jingles.hasOwn(f[0]) && played >= com.pvpduels.effects.Jingles.of(f[0]).size(),
+					played + " notes of " + com.pvpduels.effects.Jingles.of(f[0]).size() + " (last tune " + com.pvpduels.effects.Jingles.lastTune() + ")");
+				check("a sad tune followed it", com.pvpduels.effects.Jingles.defeats().stream().anyMatch(t -> t.id.equals(com.pvpduels.effects.Jingles.lastTune())), com.pvpduels.effects.Jingles.lastTune());
 				check("nobody is looking through the camera and nobody is a spectator", a.getCamera() == a && b.getCamera() == b
 					&& a.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && b.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
 				check("no camera, no double and no display entity is left", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0
@@ -4415,6 +4421,111 @@ public final class SelfTest {
 				Effects.setExplosion(a.getUUID(), "");
 			});
 		}
+		// ---------------------------------------------------------------- victory and defeat sounds, and the films on the dummy (0.18)
+		step("sounds: every explosion has its own tune and the toggle works", () -> {
+			boolean all = true;
+			for (String id : Effects.EXPLOSIONS) all &= com.pvpduels.effects.Jingles.hasOwn(id) && com.pvpduels.effects.Jingles.of(id).size() >= 6;
+			check("all the explosions have their own melody", all);
+			check("fireworks and particles share the common one", com.pvpduels.effects.Jingles.of("nope") == com.pvpduels.effects.Jingles.common() && com.pvpduels.effects.Jingles.common().size() >= 5);
+			check("six sad tunes, none longer than 26 ticks", com.pvpduels.effects.Jingles.defeats().size() == 6
+				&& com.pvpduels.effects.Jingles.defeats().stream().allMatch(t -> t.length() <= 26 && t.size() >= 4));
+			a.link.sent.clear();
+			com.pvpduels.effects.Jingles.tick((ServerLevel) a.level(), List.of(a), null, com.pvpduels.effects.Jingles.common(), 0);
+			check("a listener gets the sound of the first note", packetCount(a, "ClientboundSoundPacket") >= 1);
+			run(a, "effects");
+			check("the effects menu has the sounds button, on", menuHas(a, "Win and lose sounds: on"));
+			menuStep(a, "Win and lose sounds: on");
+			check("it turns them off for her", !Effects.jingles(a.getUUID()) && menuHas(a, "Win and lose sounds: off"));
+			a.link.sent.clear();
+			com.pvpduels.effects.Jingles.tick((ServerLevel) a.level(), List.of(a), null, com.pvpduels.effects.Jingles.common(), 0);
+			check("and she hears nothing", packetCount(a, "ClientboundSoundPacket") == 0);
+			menuStep(a, "Win and lose sounds: off");
+			check("another click turns them on again", Effects.jingles(a.getUUID()));
+			a.closeContainer();
+		});
+		final int[] tryo = new int[3];
+		final Vec3[] tryAt = new Vec3[1];
+		step("try-out: Dora watches the film of her Shooting Star on the dummy", () -> {
+			Victory.resetForTest();
+			com.pvpduels.effects.Jingles.resetForTest();
+			dora.closeContainer();
+			Effects.grantExplosion(dora.getUUID(), "shooting_star");
+			Effects.grantExplosion(dora.getUUID(), "domain_frost");
+			Effects.grantExplosion(dora.getUUID(), "meteor_shower");
+			check("the film is possible for her", Cinema.canTryOut(dora, "shooting_star") && !Cinema.canTryOut(dora, "nope"));
+			Vec3 dummy = dora.position().add(5, 0, 0);
+			tryAt[0] = dora.position();
+			tryo[0] = Cinema.scenesStarted();
+			tryo[1] = Cinema.cameraMoves();
+			tryo[2] = com.pvpduels.effects.Props.createdCount();
+			dora.link.sent.clear();
+			check("an explosion she does not own is refused", Cinema.tryOut(dora, "nope", dummy) != null);
+			check("it starts", Cinema.tryOut(dora, "shooting_star", dummy) == null && Cinema.scenesStarted() == tryo[0] + 1);
+			check("a second one has to wait", Cinema.tryOut(dora, "shooting_star", dummy) != null && Cinema.activeScenes() == 1);
+			check("she is busy while it plays", DuelManager.isBusy(dora.getUUID()) && Cinema.isTryingOut(dora.getUUID()));
+		}, () -> Cinema.tryOutOf(dora.getUUID()) != null && dora.getCamera() != dora, 100);
+		step("try-out: she rides the camera and her double stands on the far side", () -> {
+			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
+			check("a film of the Shooting Star with Dora as the winner, and no duel", scene != null && scene.duel == null && scene.film != null && scene.film.id().equals("shooting_star")
+				&& scene.win == 0 && scene.kind == Cinema.Kind.FILM);
+			if (scene == null) return;
+			check("Dora rides the camera, in spectator mode", dora.getCamera() == scene.camera && dora.gameMode() == net.minecraft.world.level.GameType.SPECTATOR);
+			check("she has a double and the dummy has none (it is the real NPC)", scene.doubles[0] != null && scene.doubles[0].isAlive() && scene.doubles[1] == null);
+			check("the winner's side is as far from the dummy as in an arena", scene.stage[0].distanceTo(scene.stage[1]) > 24 && scene.half >= 12, "" + scene.half);
+		}, () -> {
+			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
+			return scene != null && scene.age >= Cinema.PRE + Films.STAR_IMPACT + 10;
+		}, 700);
+		step("try-out: the star landed with a title and a flash", () -> {
+			check("the title SHOOTING STAR reached her", titleHeard(dora, "SHOOTING STAR"));
+			check("display entities were made", com.pvpduels.effects.Props.createdCount() >= tryo[2] + 5, (com.pvpduels.effects.Props.createdCount() - tryo[2]) + " made");
+			check("the camera has been moving", Cinema.cameraMoves() > tryo[1] + 100, (Cinema.cameraMoves() - tryo[1]) + " moves");
+			check("lots of particles reached her", particlePackets(dora) > 300, String.valueOf(particlePackets(dora)));
+		}, () -> Cinema.activeScenes() == 0, 900);
+		step("try-out: the film ended and she is back in her body", () -> {
+			check("her own eyes and game mode are back", dora.getCamera() == dora && dora.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+			check("she did not move", dora.position().distanceTo(tryAt[0]) < 0.5, dora.position() + " vs " + tryAt[0]);
+			check("she is free again", !DuelManager.isBusy(dora.getUUID()) && !Cinema.isTryingOut(dora.getUUID()));
+			int played = com.pvpduels.effects.Jingles.notesPlayed();
+			check("the melody of the Shooting Star played, and a sad tune after it", played >= com.pvpduels.effects.Jingles.of("shooting_star").size() + 4
+				&& com.pvpduels.effects.Jingles.defeats().stream().anyMatch(t -> t.id.equals(com.pvpduels.effects.Jingles.lastTune())), played + " " + com.pvpduels.effects.Jingles.lastTune());
+			drain[0] = 0;
+		});
+		step("try-out: the last props leave the world", () -> drain[0] = 0, () -> com.pvpduels.effects.Props.tagged(server) == 0 || ++drain[0] > 100, 200);
+		step("try-out: the menu of the dummy starts a film, and sneaking skips it", () -> {
+			check("nothing is left from the first film", Cinema.activeScenes() == 0 && taggedCount("pvpduels_double") == 0 && taggedCount("pvpduels_camera") == 0
+				&& com.pvpduels.effects.Props.live() == 0, leftovers());
+			dora.closeContainer();
+			EffectsMenus.openTryOut(dora, dora.position().add(5, 0, 0));
+			check("the menu offers the Frozen Abyss", menuHas(dora, "Domain: Frozen Abyss"));
+			menuStep(dora, "Domain: Frozen Abyss");
+			check("a film started and the menu closed", Cinema.tryOutOf(dora.getUUID()) != null && !(dora.containerMenu instanceof ChoiceMenu));
+			dora.setShiftKeyDown(false);
+			cine[7] = ticks;
+		}, () -> Cinema.tryOutOf(dora.getUUID()) != null && dora.getCamera() != dora && ticks >= cine[7] + 8, 100);
+		step("try-out: Dora presses sneak", () -> {
+			check("she rides the camera before she sneaks", dora.getCamera() != dora);
+			dora.setShiftKeyDown(true);
+		}, () -> dora.getCamera() == dora, 60);
+		step("try-out: she has her body back, the film goes on without her", () -> {
+			dora.setShiftKeyDown(false);
+			check("her own eyes and game mode are back", dora.getCamera() == dora && dora.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+			check("she did not move", dora.position().distanceTo(tryAt[0]) < 0.5, dora.position() + " vs " + tryAt[0]);
+			check("she is free, but the film still plays", !DuelManager.isBusy(dora.getUUID()) && Cinema.activeScenes() == 1);
+		}, () -> Cinema.activeScenes() == 0, 900);
+		step("try-out: the last props of the Frozen Abyss leave the world", () -> {
+			drain[0] = 0;
+		}, () -> com.pvpduels.effects.Props.tagged(server) == 0 || ++drain[0] > 100, 200);
+		step("try-out: the preview command starts it, and the film can be stopped", () -> {
+			check("she equips the Meteor Shower", Effects.setExplosion(dora.getUUID(), "meteor_shower") == null);
+			run(dora, "effects preview");
+			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
+			check("a film of the Meteor Shower started for her", scene != null && scene.film != null && scene.film.id().equals("meteor_shower"));
+			check("the winner's double stands where she stands", scene != null && scene.stage[0].distanceTo(dora.position()) < 0.6, scene == null ? "no scene" : scene.stage[0] + " vs " + dora.position());
+			Cinema.resetForTest();
+			Effects.setExplosion(dora.getUUID(), "");
+			check("stopping it gives her back her eyes", dora.getCamera() == dora && dora.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && Cinema.activeScenes() == 0);
+		});
 		step("finale: clean up", () -> {
 			Cinema.resetForTest();
 			Cinema.enabled = false;
@@ -4432,7 +4543,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.17.0", version.equals("0.17.0"), version);
+			check("the mod says 0.18.0", version.equals("0.18.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();

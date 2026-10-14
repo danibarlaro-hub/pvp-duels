@@ -34,7 +34,7 @@ public final class GuideBook {
 			{"The lobby hotbar", "Slot 1: Send Duel\nSlot 2: Leave\nSlot 8: Create+\nSlot 9: this book\n\nThey stay in place while you are in the lobby."},
 			{"Send Duel", "Right-click: pick a player to challenge.\n\nRight-click or hit a player with it: challenge them straight away."},
 			{"Leave and Create+", "Leave: leaves the queue, cancels your duel requests and takes you to the lobby spawn.\n\nCreate+: Create Kit (the kit workshop) and Create Arena (Builders only: your own arenas) and the building contest."},
-			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\nExplosion Dummy: try your explosions on it\n\nAdmins: they appear by themselves. /npc setup, /npc add bot|kit|arena|preview, /npc remove, /npc list."},
+			{"NPCs", "Click them in the lobby:\nPractice Bot\nKit Workshop\nArena Builder\nExplosion Dummy: watch the film of your explosions on it\n\nAdmins: they appear by themselves. /npc setup, /npc add bot|kit|arena|preview, /npc remove, /npc list."},
 			{"Lobby commands", "/lobby: go there\n/lobby return on|off: after a duel go to the lobby or back where you were\n\nAdmins: /setlobby, /lobby protect <radius|off>, /lobby clear"}
 		}),
 		new Topic("Duels", new String[][] {
@@ -102,13 +102,14 @@ public final class GuideBook {
 			{"Good to know", "/leave makes your team forfeit.\n\n2v2 does not change the Elo and can't be watched yet.\n\nA party can use /queue: both wait together and meet another party."}
 		}),
 		new Topic("Effects", new String[][] {
-			{"Victory effects", "When you win, 3 fireworks go up in a row behind you, and your particles play for 5 seconds.\n\n/effects opens the menu to choose them. /effects preview shows them now."},
+			{"Victory effects", "When you win, 3 fireworks go up in a row behind you, and your particles play for 5 seconds.\n\n/effects opens the menu to choose them. /effects preview shows them now (with an explosion equipped you get its film)."},
 			{"The finale", "After a win the camera zooms out from the middle of the arena and rises 7 blocks. Everybody sees it, spectators too. Sneak to skip it.\n\nWith a Domain you get a real dome over the arena. Every big one has its own film."},
 			{"Ties", "A tie breaks your win streak.\n\nTwo normal players, or one Domain Expansion against a normal player: the duel just ends.\n\nTwo Domain Expansions clash and push each other until they tire: I guess it's a tie."},
 			{"Missions", "/missions shows 6 daily missions and 5 weekly ones (they reset on Monday). They count in duels against players.\n\nA duel counts for the day it started, even if it ends after midnight."},
 			{"Rewards", "Each mission gives a firework color or shape, or a particle. A repeated particle is one more copy to use in another slot.\n\nExplosions are very rare: 0.8% daily, 1.5% weekly."},
 			{"Your slots", "Particles: 2 on the floor and 4 around the arena.\n\nFireworks: up to 5 colors each.\n\nYou can have effects OR an explosion, not both. The menu can hide the effects of other players."},
 			{"Explosions", "Very rare, 20: Orbital Strike and Wither Cannons, Shooting Star, Black Hole, Meteor Shower, Gungnir, Seven Stars, Railgun, Tesseract, Eclipse, Moonfall, Cronos Clock, Zeus Storm and 7 Domains.\n\nMissions unlock them."},
+			{"Win and lose sounds", "A short tune plays when somebody wins: fireworks and particles share one, every explosion has its own.\n\nThe loser gets a sad one (trombone, womp womp...).\n\nTurn them off in /effects. Only for you."},
 			{"Effect quality", "Only for what you see: Potato, Low, Mid, High and Ultra Pro Max.\n\nPotato sends a tenth of the particles (slow computers), Ultra Pro Max double. Click it in /effects."}
 		}),
 		new Topic("About", new String[][] {
