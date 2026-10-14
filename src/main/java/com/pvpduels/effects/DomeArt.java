@@ -14,7 +14,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * The three Domain Expansions, made of display entities: a real dome (four huge turned cubes drawn from the inside, so together they
+ * The Domain Expansions (the first three here, the newer four in {@link DomeWorlds}), made of display entities: a real dome (four huge turned cubes drawn from the inside, so together they
  * make a faceted ball around the arena), a floor that covers the arena, and one world inside:
  * <ul>
  * <li>the Crimson Shrine: a black sky, a red ritual circle on the floor, a dark pagoda of bones and skulls behind the winner, and white cuts
@@ -30,7 +30,11 @@ public final class DomeArt {
 	public enum Variant {
 		SHRINE("domain_expansion", "Crimson Shrine"),
 		VOID("domain_void", "Infinite Void"),
-		SWORDS("domain_swords", "Field of Swords");
+		SWORDS("domain_swords", "Field of Swords"),
+		FROST("domain_frost", "Frozen Abyss"),
+		INFERNO("domain_inferno", "Infernal Throne"),
+		GARDEN("domain_garden", "Cherry Garden"),
+		OCEAN("domain_ocean", "Abyssal Sea");
 
 		public final String id;
 		public final String title;
@@ -85,7 +89,14 @@ public final class DomeArt {
 	}
 
 	private static String sky(Variant v) {
-		return v == Variant.SWORDS ? "minecraft:orange_terracotta" : "minecraft:black_concrete";
+		return switch (v) {
+			case SHRINE, VOID -> "minecraft:black_concrete";
+			case SWORDS -> "minecraft:orange_terracotta";
+			case FROST -> "minecraft:cyan_concrete";
+			case INFERNO -> "minecraft:red_concrete";
+			case GARDEN -> "minecraft:pink_terracotta";
+			case OCEAN -> "minecraft:blue_concrete";
+		};
 	}
 
 	private static String floor(Variant v) {
@@ -93,6 +104,25 @@ public final class DomeArt {
 			case SHRINE -> "minecraft:black_concrete";
 			case VOID -> "minecraft:black_concrete";
 			case SWORDS -> "minecraft:brown_concrete";
+			case FROST -> "minecraft:white_concrete";
+			case INFERNO -> "minecraft:black_concrete";
+			case GARDEN -> "minecraft:white_concrete";
+			case OCEAN -> "minecraft:cyan_concrete";
+		};
+	}
+
+	/** The tick (since the domain started to grow) of the great moment of each domain: the film blinds the camera there. */
+	public static int climax(Variant v, Spec s) {
+		int e = expand(s.cinema());
+		int h = hold(s.cinema());
+		return switch (v) {
+			case SHRINE -> e + h - 24;
+			case VOID -> e + h - 14;
+			case SWORDS -> e + h - 26;
+			case FROST -> e + h - 6;
+			case INFERNO -> e + h - 26;
+			case GARDEN -> e + h - 10;
+			case OCEAN -> DomeWorlds.waveHit(s, e, h);
 		};
 	}
 
@@ -151,6 +181,10 @@ public final class DomeArt {
 			case SHRINE -> shrine(level, viewers, props, s, t, e, h, end);
 			case VOID -> voidWorld(level, viewers, props, s, t, e, h, end);
 			case SWORDS -> swords(level, viewers, props, s, t, e, h, end);
+			case FROST -> DomeWorlds.frost(level, viewers, props, s, t, e, h, end);
+			case INFERNO -> DomeWorlds.inferno(level, viewers, props, s, t, e, h, end);
+			case GARDEN -> DomeWorlds.garden(level, viewers, props, s, t, e, h, end);
+			case OCEAN -> DomeWorlds.ocean(level, viewers, props, s, t, e, h, end);
 		}
 	}
 

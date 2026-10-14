@@ -40,13 +40,13 @@ public final class Effects {
 	public static final String[] SHAPES = {"small_ball", "large_ball", "star", "creeper", "burst"};
 	public static final String[] SHAPE_NAMES = {"Small ball", "Large ball", "Star", "Creeper", "Burst"};
 	/**
-	 * Every explosion, in the order of the menus. The ids are what is saved for each player, so they never change; the three Domain
+	 * Every explosion, in the order of the menus. The ids are what is saved for each player, so they never change; the seven Domain
 	 * Expansions are the last ones: {@code domain_expansion} is the first one the mod had and is now the Crimson Shrine.
 	 */
 	public static final String[] EXPLOSIONS = {"orbital_strike", "orbital_wither", "shooting_star", "black_hole", "meteor_shower", "gungnir", "seven_stars",
-		"railgun", "tesseract", "eclipse", "moonfall", "cronos", "zeus", "domain_expansion", "domain_void", "domain_swords"};
+		"railgun", "tesseract", "eclipse", "moonfall", "cronos", "zeus", "domain_expansion", "domain_void", "domain_swords", "domain_frost", "domain_inferno", "domain_garden", "domain_ocean"};
 	public static final String[] EXPLOSION_NAMES = {"Orbital Strike Cannon", "Orbital Wither Cannon", "Shooting Star", "Black Hole", "Meteor Shower", "Gungnir", "Seven Stars",
-		"Railgun", "Tesseract", "Eclipse", "Moonfall", "Cronos Clock", "Zeus Storm", "Domain: Crimson Shrine", "Domain: Infinite Void", "Domain: Field of Swords"};
+		"Railgun", "Tesseract", "Eclipse", "Moonfall", "Cronos Clock", "Zeus Storm", "Domain: Crimson Shrine", "Domain: Infinite Void", "Domain: Field of Swords", "Domain: Frozen Abyss", "Domain: Infernal Throne", "Domain: Cherry Garden", "Domain: Abyssal Sea"};
 
 	/** The chances of the rewards of a mission (each mission rolls them). Easy to change here. */
 	public static double fireworkChance = 0.70;
