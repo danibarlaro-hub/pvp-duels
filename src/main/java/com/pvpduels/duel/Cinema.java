@@ -208,6 +208,9 @@ public final class Cinema {
 		return null;
 	}
 
+	/** What the last refused spawn of a film looked like (for the self-test and the log). */
+	public static String lastSpawnFailure = "";
+
 	/** /effects preview and the Preview button: the film of the equipped explosion if there is one, else the plain preview. */
 	public static void previewOwn(ServerPlayer p) {
 		String explosion = Effects.explosionSlot(p.getUUID());
@@ -435,10 +438,23 @@ public final class Cinema {
 		/** Summons an entity with the command (the same way the NPCs are made) and finds it again by its tag. */
 		private Entity summon(String type, String tag, Vec3 at, float yawDegrees, String extra) {
 			String command = String.format(Locale.ROOT, "summon %s %.3f %.3f %.3f {Tags:[\"%s\"],Rotation:[%.2ff,0f]%s}", type, at.x, at.y, at.z, tag, yawDegrees, extra);
+			net.minecraft.core.BlockPos block = net.minecraft.core.BlockPos.containing(at);
+			boolean wasLoaded = level.hasChunkAt(block);
+			if (!wasLoaded) level.getChunkAt(block); // a position outside the loaded chunks would refuse the entity
 			server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withLevel(level).withSuppressedOutput(), command);
 			AABB box = new AABB(at.x - 3, at.y - 3, at.z - 3, at.x + 3, at.y + 4, at.z + 3);
 			List<Entity> found = level.getEntities((Entity) null, box, e -> e.entityTags().contains(tag));
-			return found.isEmpty() ? null : found.get(0);
+			if (!found.isEmpty()) return found.get(0);
+			// it did not appear: say why (the log gets the refusal of the command) and where it went, if anywhere
+			server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withLevel(level), command);
+			found = level.getEntities((Entity) null, box, e -> e.entityTags().contains(tag));
+			int elsewhere = 0;
+			for (Entity e : level.getAllEntities()) if (e.entityTags().contains(tag)) elsewhere++;
+			lastSpawnFailure = type + " at " + String.format(Locale.ROOT, "(%.1f, %.1f, %.1f)", at.x, at.y, at.z) + " chunkWasLoaded=" + wasLoaded
+				+ " foundOnRetry=" + found.size() + " taggedAnywhere=" + elsewhere;
+			PvpDuelsMod.LOGGER.warn("Finale spawn failed: {}", lastSpawnFailure);
+			if (!found.isEmpty()) return found.get(0);
+			return null;
 		}
 
 		private void discardEntities() {

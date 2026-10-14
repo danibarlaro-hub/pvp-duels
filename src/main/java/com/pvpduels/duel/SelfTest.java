@@ -4539,7 +4539,7 @@ public final class SelfTest {
 			boolean can = Cinema.canTryOut(dora, "meteor_shower");
 			run(dora, "effects preview");
 			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
-			StringBuilder why = new StringBuilder("can=" + can + " busy=" + DuelManager.isBusy(dora.getUUID()) + " scenes=" + Cinema.activeScenes() + " shows=" + Victory.activeShows() + " at " + dora.position());
+			StringBuilder why = new StringBuilder("can=" + can + " busy=" + DuelManager.isBusy(dora.getUUID()) + " scenes=" + Cinema.activeScenes() + " shows=" + Victory.activeShows() + " at " + dora.position() + " spawn[" + Cinema.lastSpawnFailure + "]");
 			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
 				if (packet instanceof net.minecraft.network.protocol.game.ClientboundSystemChatPacket chat) why.append(" | ").append(chat.content().getString());
 			}
