@@ -4535,9 +4535,15 @@ public final class SelfTest {
 		}, () -> com.pvpduels.effects.Props.tagged(server) == 0 || ++drain[0] > 100, 200);
 		step("try-out: the preview command starts it, and the film can be stopped", () -> {
 			check("she equips the Meteor Shower", Effects.setExplosion(dora.getUUID(), "meteor_shower") == null);
+			dora.link.sent.clear();
+			boolean can = Cinema.canTryOut(dora, "meteor_shower");
 			run(dora, "effects preview");
 			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
-			check("a film of the Meteor Shower started for her", scene != null && scene.film != null && scene.film.id().equals("meteor_shower"));
+			StringBuilder why = new StringBuilder("can=" + can + " busy=" + DuelManager.isBusy(dora.getUUID()) + " scenes=" + Cinema.activeScenes() + " shows=" + Victory.activeShows() + " at " + dora.position());
+			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
+				if (packet instanceof net.minecraft.network.protocol.game.ClientboundSystemChatPacket chat) why.append(" | ").append(chat.content().getString());
+			}
+			check("a film of the Meteor Shower started for her", scene != null && scene.film != null && scene.film.id().equals("meteor_shower"), why.toString());
 			check("the winner's double stands where she stands", scene != null && scene.stage[0].distanceTo(dora.position()) < 0.6, scene == null ? "no scene" : scene.stage[0] + " vs " + dora.position());
 			Cinema.resetForTest();
 			Effects.setExplosion(dora.getUUID(), "");
