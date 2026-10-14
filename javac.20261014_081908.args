@@ -1,0 +1,8 @@
+-proc:none
+-d
+/tmp/claude-0/-home-claude-pvp-duels/5106de10-7b7a-5df6-abbd-2dd5532608fa/scratchpad/jc
+src/main/java/com/pvpduels/effects/DomeWorlds.java
+src/main/java/com/pvpduels/effects/DomeArt.java
+src/main/java/com/pvpduels/duel/Films.java
+src/main/java/com/pvpduels/duel/SelfTest.java
+src/main/java/com/pvpduels/duel/EffectsMenus.java

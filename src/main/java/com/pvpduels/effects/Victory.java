@@ -332,7 +332,7 @@ public final class Victory {
 		switch (s.explosion) {
 			case "orbital_strike" -> ExplosionArt.orbital(s.level, viewers, s.props, s.target, t, false);
 			case "orbital_wither" -> ExplosionArt.orbital(s.level, viewers, s.props, s.target, t, true);
-			case "domain_expansion", "domain_void", "domain_swords" -> {
+			case "domain_expansion", "domain_void", "domain_swords", "domain_frost", "domain_inferno", "domain_garden", "domain_ocean" -> {
 				if (!s.skipDomain) domain(s, winner, viewers, t);
 			}
 			case "shooting_star" -> ExplosionArt.shootingStar(s.level, viewers, s.props, from(s, winner), s.target, t);

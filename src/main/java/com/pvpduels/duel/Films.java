@@ -79,6 +79,10 @@ final class Films {
 	static final Film SHRINE = new DomainFilm(DomeArt.Variant.SHRINE);
 	static final Film VOID = new DomainFilm(DomeArt.Variant.VOID);
 	static final Film SWORDS = new DomainFilm(DomeArt.Variant.SWORDS);
+	static final Film FROST = new DomainFilm(DomeArt.Variant.FROST);
+	static final Film INFERNO = new DomainFilm(DomeArt.Variant.INFERNO);
+	static final Film GARDEN = new DomainFilm(DomeArt.Variant.GARDEN);
+	static final Film OCEAN = new DomainFilm(DomeArt.Variant.OCEAN);
 
 	private Films() {}
 
@@ -101,6 +105,10 @@ final class Films {
 			case "domain_expansion" -> SHRINE;
 			case "domain_void" -> VOID;
 			case "domain_swords" -> SWORDS;
+			case "domain_frost" -> FROST;
+			case "domain_inferno" -> INFERNO;
+			case "domain_garden" -> GARDEN;
+			case "domain_ocean" -> OCEAN;
 			default -> null;
 		};
 	}
@@ -297,7 +305,41 @@ final class Films {
 					if (b >= wave && b < wave + 14) pos = Cinema.Scene.shake(pos, 0.6 * (1 - (b - wave) / 14.0));
 					yield pos;
 				}
+				// the newer domains: a tour around the arena, a drop to the loser for the finale and a pull back
+				case FROST -> tour(s, base, b, h, 1, 0.011, 2.5, 56, 11.0, 4.0, 0.9);
+				case INFERNO -> tour(s, base, b, h, -1, 0.010, -3.5, 44, 10.0, 2.6, 1.1);
+				case GARDEN -> tour(s, base, b, h, 1, 0.008, 3.0, 44, 8.5, 3.4, 0.6);
+				case OCEAN -> tour(s, base, b, h, -1, 0.009, 2.0, 50, 11.0, 3.6, 0.9);
 			};
+		}
+
+		private DomeArt.Spec specOf(Cinema.Scene s) {
+			return new DomeArt.Spec(s.center, s.half, s.stage[s.win], s.stage[1 - s.win], true);
+		}
+
+		/**
+		 * Circles the arena (turning {@code dir} at {@code speed} radians a tick, rising {@code gain} blocks), drops to the side of the loser
+		 * {@code dropBefore} ticks before the end of the hold, shakes at the great moment and goes wide when the dome falls.
+		 */
+		private Vec3 tour(Cinema.Scene s, Vec3 base, int b, int h, int dir, double speed, double gain, int dropBefore, double nearSide, double nearHeight, double shake) {
+			Vec3 loser = s.stage[1 - s.win];
+			Vec3 fwd = s.forward();
+			double floor = s.center.y;
+			double rho = Math.hypot(base.x - s.center.x, base.z - s.center.z);
+			double phi0 = Math.atan2(base.z - s.center.z, base.x - s.center.x);
+			int bar = h - dropBefore;
+			int bb = Math.min(b, bar);
+			Vec3 field = around(s.center, rho, phi0 + dir * speed * bb, base.y + gain * Cinema.ease(bb / 70.0));
+			Vec3 near = new Vec3(loser.x + s.side.x * nearSide - fwd.x * 2, floor + nearHeight, loser.z + s.side.z * nearSide - fwd.z * 2);
+			Vec3 pos = field;
+			if (b >= bar) pos = lerp(field, near, Cinema.ease((b - bar) / 30.0));
+			if (b >= h - 6) {
+				Vec3 wide = new Vec3(s.center.x + s.side.x * (s.half + 6), floor + 14, s.center.z + s.side.z * (s.half + 6));
+				pos = lerp(near, wide, Cinema.ease((b - h + 6) / 26.0));
+			}
+			int great = DomeArt.climax(variant, specOf(s)) - expand();
+			if (b >= great && b < great + 14) pos = Cinema.Scene.shake(pos, shake * (1 - (b - great) / 14.0));
+			return pos;
 		}
 
 		@Override
@@ -308,9 +350,17 @@ final class Films {
 			int b = Math.min(a, camTicks()) - rise;
 			Vec3 loser = s.stage[1 - s.win];
 			Vec3 target = loser.add(0, 1.3, 0);
-			if (variant == DomeArt.Variant.SWORDS) {
+			double fieldHeight = switch (variant) {
+				case SWORDS -> 2.5;
+				case FROST -> 4.0;
+				case INFERNO -> 5.0;
+				case GARDEN -> 7.0;
+				case OCEAN -> 8.0;
+				default -> -1.0;
+			};
+			if (fieldHeight >= 0) {
 				// first the field, then the loser
-				Vec3 field = s.center.add(0, 2.5, 0);
+				Vec3 field = s.center.add(0, fieldHeight, 0);
 				target = lerp(field, loser.add(0, 1.3, 0), Cinema.ease((b - (hold() - 60)) / 40.0));
 			}
 			Vec3 toward = safe(target.subtract(cam));
@@ -345,12 +395,7 @@ final class Films {
 			int e = expand();
 			int h = hold();
 			// the great moment of each domain blinds the camera for a moment
-			int climax = switch (variant) {
-				case SHRINE -> e + h - 24;
-				case VOID -> e + h - 14;
-				case SWORDS -> e + h - 26;
-			};
-			if (t == climax) s.flash();
+			if (t == DomeArt.climax(variant, spec)) s.flash();
 		}
 	}
 
