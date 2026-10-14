@@ -1,0 +1,51 @@
+--- a fake player
+--- her spot
+Alice stands at (0.0, -60.0, 0.0) on ground: true
+--- wind bare (beside): ready
+--- wind bare (beside): the charge goes off
+--- wind bare (beside): how hard she was launched
+wind bare (beside): 1 velocity packets, launch up 0.847 (total 0.913), server-side 0.769; knockback resistance 0.00, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind bare (beside))   (0.8471692860941975)
+--- wind one netherite chestplate (beside): ready
+--- wind one netherite chestplate (beside): the charge goes off
+--- wind one netherite chestplate (beside): how hard she was launched
+wind one netherite chestplate (beside): 1 velocity packets, launch up 0.847 (total 0.913), server-side 0.769; knockback resistance 0.10, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind one netherite chestplate (beside))   (0.8471692860941975)
+--- wind full netherite (beside): ready
+--- wind full netherite (beside): the charge goes off
+--- wind full netherite (beside): how hard she was launched
+wind full netherite (beside): 1 velocity packets, launch up 0.847 (total 0.913), server-side 0.769; knockback resistance 0.40, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind full netherite (beside))   (0.8471692860941975)
+--- wind one diamond chestplate (beside): ready
+--- wind one diamond chestplate (beside): the charge goes off
+--- wind one diamond chestplate (beside): how hard she was launched
+wind one diamond chestplate (beside): 1 velocity packets, launch up 0.847 (total 0.913), server-side 0.769; knockback resistance 0.00, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind one diamond chestplate (beside))   (0.8471692860941975)
+--- wind bare (thrown): ready
+--- wind bare (thrown): the charge goes off
+--- wind bare (thrown): how hard she was launched
+wind bare (thrown): 1 velocity packets, launch up 1.093 (total 1.093), server-side 1.014; knockback resistance 0.00, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind bare (thrown))   (1.0926086660679513)
+--- wind one netherite chestplate (thrown): ready
+--- wind one netherite chestplate (thrown): the charge goes off
+--- wind one netherite chestplate (thrown): how hard she was launched
+wind one netherite chestplate (thrown): 1 velocity packets, launch up 1.093 (total 1.093), server-side 1.014; knockback resistance 0.10, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind one netherite chestplate (thrown))   (1.0927759384656548)
+--- wind full netherite (thrown): ready
+--- wind full netherite (thrown): the charge goes off
+--- wind full netherite (thrown): how hard she was launched
+wind full netherite (thrown): 1 velocity packets, launch up 1.093 (total 1.093), server-side 1.014; knockback resistance 0.40, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind full netherite (thrown))   (1.0927750446549864)
+--- wind one diamond chestplate (thrown): ready
+--- wind one diamond chestplate (thrown): the charge goes off
+--- wind one diamond chestplate (thrown): how hard she was launched
+wind one diamond chestplate (thrown): 1 velocity packets, launch up 1.092 (total 1.092), server-side 1.014; knockback resistance 0.00, explosion knockback resistance 0.00
+PASS  a wind charge launched her (wind one diamond chestplate (thrown))   (1.09214550392701)
+--- wind: netherite does not weaken the launch
+PASS  one netherite piece launches as high as no armor, beside her feet (within 10%)   (0.8471692860941975 vs 0.8471692860941975)
+PASS  a full netherite set launches as high as no armor, beside her feet (within 10%)   (0.8471692860941975 vs 0.8471692860941975)
+PASS  the diamond chestplate (control) launches as high as no armor, beside her feet (within 10%)   (0.8471692860941975 vs 0.8471692860941975)
+PASS  one netherite piece launches as high as no armor, thrown at her feet (within 10%)   (1.0927759384656548 vs 1.0926086660679513)
+PASS  a full netherite set launches as high as no armor, thrown at her feet (within 10%)   (1.0927750446549864 vs 1.0926086660679513)
+PASS  the diamond chestplate (control) launches as high as no armor, thrown at her feet (within 10%)   (1.09214550392701 vs 1.0926086660679513)
+RESULT: PASS

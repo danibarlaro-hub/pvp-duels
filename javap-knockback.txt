@@ -1,0 +1,686 @@
+jars with the server explosion: /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-extracted_server.jar
+/home/runner/.gradle/caches/fabric-loom/26.2/minecraft-common.jar
+/home/runner/.gradle/caches/fabric-loom/26.2/minecraft-client.jar
+/home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-common-deobf/26.2/minecraft-common-deobf-26.2.jar
+jars with the client packet listener: /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-client-only.jar
+/home/runner/.gradle/caches/fabric-loom/26.2/minecraft-client.jar
+/home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-clientonly-deobf/26.2/minecraft-clientonly-deobf-26.2.jar
+===== /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-client-only.jar
+--- handleExplosion in the client
+  public void handleExplosion(net.minecraft.network.protocol.game.ClientboundExplodePacket);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: aload_0
+         3: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+         6: invokevirtual #384                // Method net/minecraft/client/Minecraft.packetProcessor:()Lnet/minecraft/network/PacketProcessor;
+         9: invokestatic  #388                // Method net/minecraft/network/protocol/PacketUtils.ensureRunningOnSameThread:(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V
+        12: aload_1
+        13: invokevirtual #2142               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.center:()Lnet/minecraft/world/phys/Vec3;
+        16: astore_2
+        17: aload_0
+        18: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        21: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        24: aload_2
+        25: invokevirtual #2147               // Method net/minecraft/world/phys/Vec3.x:()D
+        28: aload_2
+        29: invokevirtual #2149               // Method net/minecraft/world/phys/Vec3.y:()D
+        32: aload_2
+        33: invokevirtual #2152               // Method net/minecraft/world/phys/Vec3.z:()D
+        36: aload_1
+        37: invokevirtual #2154               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.explosionSound:()Lnet/minecraft/core/Holder;
+        40: invokeinterface #2157,  1         // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        45: checkcast     #2162               // class net/minecraft/sounds/SoundEvent
+        48: getstatic     #2164               // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+        51: ldc_w         #2167               // float 4.0f
+        54: fconst_1
+        55: aload_0
+        56: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        59: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        62: invokevirtual #2168               // Method net/minecraft/client/multiplayer/ClientLevel.getRandom:()Lnet/minecraft/util/RandomSource;
+        65: invokeinterface #1501,  1         // InterfaceMethod net/minecraft/util/RandomSource.nextFloat:()F
+        70: aload_0
+        71: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        74: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        77: invokevirtual #2168               // Method net/minecraft/client/multiplayer/ClientLevel.getRandom:()Lnet/minecraft/util/RandomSource;
+        80: invokeinterface #1501,  1         // InterfaceMethod net/minecraft/util/RandomSource.nextFloat:()F
+        85: fsub
+        86: ldc_w         #1513               // float 0.2f
+        89: fmul
+        90: fadd
+        91: ldc_w         #2171               // float 0.7f
+        94: fmul
+        95: iconst_0
+        96: invokevirtual #1506               // Method net/minecraft/client/multiplayer/ClientLevel.playLocalSound:(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+        99: aload_0
+       100: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       103: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+       106: aload_1
+       107: invokevirtual #2172               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.explosionParticle:()Lnet/minecraft/core/particles/ParticleOptions;
+       110: aload_2
+       111: invokevirtual #2147               // Method net/minecraft/world/phys/Vec3.x:()D
+       114: aload_2
+       115: invokevirtual #2149               // Method net/minecraft/world/phys/Vec3.y:()D
+       118: aload_2
+       119: invokevirtual #2152               // Method net/minecraft/world/phys/Vec3.z:()D
+       122: dconst_1
+       123: dconst_0
+       124: dconst_0
+       125: invokevirtual #2176               // Method net/minecraft/client/multiplayer/ClientLevel.addParticle:(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+       128: aload_0
+       129: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       132: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+       135: aload_2
+       136: aload_1
+       137: invokevirtual #2180               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.radius:()F
+       140: aload_1
+       141: invokevirtual #2183               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.blockCount:()I
+       144: aload_1
+       145: invokevirtual #2186               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.blockParticles:()Lnet/minecraft/util/random/WeightedList;
+       148: invokevirtual #2190               // Method net/minecraft/client/multiplayer/ClientLevel.trackExplosionEffects:(Lnet/minecraft/world/phys/Vec3;FILnet/minecraft/util/random/WeightedList;)V
+       151: aload_1
+       152: invokevirtual #2194               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.playerKnockback:()Ljava/util/Optional;
+       155: aload_0
+       156: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       159: getfield      #494                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+       162: dup
+       163: invokestatic  #2197               // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+       166: pop
+       167: invokedynamic #2202,  0           // InvokeDynamic #6:accept:(Lnet/minecraft/client/player/LocalPlayer;)Ljava/util/function/Consumer;
+       172: invokevirtual #2205               // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+       175: return
+
+--- LocalPlayer / Entity push and addDeltaMovement
+===== /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-client.jar
+--- class net.minecraft.world.entity.animal.golem.IronGolem
+   in   public boolean doHurtTarget(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.Entity);  ->          85: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.animal.nautilus.AbstractNautilus
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          28: getstatic     #126                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.LivingEntity
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->           9: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->          93: getstatic     #330                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->           3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.SulfurCubeArchetypes
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           0: getstatic     #245                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           9: getstatic     #253                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.behavior.warden.SonicBoom
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         145: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         160: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.attributes.Attributes
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> EXPLOSION_KNOCKBACK_RESISTANCE;
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         339: putstatic     #172                // Field EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         561: putstatic     #247                // Field KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.projectile.arrow.AbstractArrow
+   in   protected void doKnockback(net.minecraft.world.entity.LivingEntity, net.minecraft.world.damagesource.DamageSource);  ->          55: getstatic     #813                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.warden.Warden
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #243                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Zoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #292                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.cubemob.SulfurCube
+   in   private void playerPush(net.minecraft.world.entity.player.Player);  ->          98: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->         284: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Ravager
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #174                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.HoglinBase
+   in   public static void throwTarget(net.minecraft.world.entity.LivingEntity, net.minecraft.world.entity.LivingEntity);  ->           9: getstatic     #58                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.Hoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #49                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.zombie.Zombie
+   in   protected void handleAttributes(float, net.minecraft.world.entity.EntitySpawnReason);  ->           5: getstatic     #846                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.equipment.ArmorMaterial
+   in   public net.minecraft.world.item.component.ItemAttributeModifiers createAttributes(net.minecraft.world.item.equipment.ArmorType);  ->         109: getstatic     #112                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.MaceItem
+   in   private static double getKnockbackPower(net.minecraft.world.entity.Entity, net.minecraft.world.entity.LivingEntity, net.minecraft.world.phys.Vec3);  ->          32: getstatic     #274                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.component.ItemAttributeModifiers$Display$Default
+   in   public void apply(java.util.function.Consumer<net.minecraft.network.chat.Component>, net.minecraft.world.entity.player.Player, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier);  ->         103: getstatic     #62                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.enchantment.Enchantments
+   in   public static void bootstrap(net.minecraft.data.worldgen.BootstrapContext<net.minecraft.world.item.enchantment.Enchantment>);  ->         486: getstatic     #198                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.level.ServerExplosion
+   in   private void hurtEntities();  ->         359: getstatic     #313                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- handleExplosion in the client
+  public void handleExplosion(net.minecraft.network.protocol.game.ClientboundExplodePacket);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: aload_0
+         3: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+         6: invokevirtual #384                // Method net/minecraft/client/Minecraft.packetProcessor:()Lnet/minecraft/network/PacketProcessor;
+         9: invokestatic  #388                // Method net/minecraft/network/protocol/PacketUtils.ensureRunningOnSameThread:(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V
+        12: aload_1
+        13: invokevirtual #2142               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.center:()Lnet/minecraft/world/phys/Vec3;
+        16: astore_2
+        17: aload_0
+        18: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        21: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        24: aload_2
+        25: invokevirtual #2147               // Method net/minecraft/world/phys/Vec3.x:()D
+        28: aload_2
+        29: invokevirtual #2149               // Method net/minecraft/world/phys/Vec3.y:()D
+        32: aload_2
+        33: invokevirtual #2152               // Method net/minecraft/world/phys/Vec3.z:()D
+        36: aload_1
+        37: invokevirtual #2154               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.explosionSound:()Lnet/minecraft/core/Holder;
+        40: invokeinterface #2157,  1         // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        45: checkcast     #2162               // class net/minecraft/sounds/SoundEvent
+        48: getstatic     #2164               // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+        51: ldc_w         #2167               // float 4.0f
+        54: fconst_1
+        55: aload_0
+        56: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        59: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        62: invokevirtual #2168               // Method net/minecraft/client/multiplayer/ClientLevel.getRandom:()Lnet/minecraft/util/RandomSource;
+        65: invokeinterface #1501,  1         // InterfaceMethod net/minecraft/util/RandomSource.nextFloat:()F
+        70: aload_0
+        71: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        74: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        77: invokevirtual #2168               // Method net/minecraft/client/multiplayer/ClientLevel.getRandom:()Lnet/minecraft/util/RandomSource;
+        80: invokeinterface #1501,  1         // InterfaceMethod net/minecraft/util/RandomSource.nextFloat:()F
+        85: fsub
+        86: ldc_w         #1513               // float 0.2f
+        89: fmul
+        90: fadd
+        91: ldc_w         #2171               // float 0.7f
+        94: fmul
+        95: iconst_0
+        96: invokevirtual #1506               // Method net/minecraft/client/multiplayer/ClientLevel.playLocalSound:(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+        99: aload_0
+       100: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       103: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+       106: aload_1
+       107: invokevirtual #2172               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.explosionParticle:()Lnet/minecraft/core/particles/ParticleOptions;
+       110: aload_2
+       111: invokevirtual #2147               // Method net/minecraft/world/phys/Vec3.x:()D
+       114: aload_2
+       115: invokevirtual #2149               // Method net/minecraft/world/phys/Vec3.y:()D
+       118: aload_2
+       119: invokevirtual #2152               // Method net/minecraft/world/phys/Vec3.z:()D
+       122: dconst_1
+       123: dconst_0
+       124: dconst_0
+       125: invokevirtual #2176               // Method net/minecraft/client/multiplayer/ClientLevel.addParticle:(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+       128: aload_0
+       129: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       132: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+       135: aload_2
+       136: aload_1
+       137: invokevirtual #2180               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.radius:()F
+       140: aload_1
+       141: invokevirtual #2183               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.blockCount:()I
+       144: aload_1
+       145: invokevirtual #2186               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.blockParticles:()Lnet/minecraft/util/random/WeightedList;
+       148: invokevirtual #2190               // Method net/minecraft/client/multiplayer/ClientLevel.trackExplosionEffects:(Lnet/minecraft/world/phys/Vec3;FILnet/minecraft/util/random/WeightedList;)V
+       151: aload_1
+       152: invokevirtual #2194               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.playerKnockback:()Ljava/util/Optional;
+       155: aload_0
+       156: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       159: getfield      #494                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+       162: dup
+       163: invokestatic  #2197               // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+       166: pop
+       167: invokedynamic #2202,  0           // InvokeDynamic #6:accept:(Lnet/minecraft/client/player/LocalPlayer;)Ljava/util/function/Consumer;
+       172: invokevirtual #2205               // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+       175: return
+
+--- LocalPlayer / Entity push and addDeltaMovement
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.entity.Entity);
+         2: invokevirtual #1979               // Method isPassengerOfSameVehicle:(Lnet/minecraft/world/entity/Entity;)Z
+        25: invokevirtual #483                // Method getX:()D
+        29: invokevirtual #483                // Method getX:()D
+        35: invokevirtual #490                // Method getZ:()D
+        39: invokevirtual #490                // Method getZ:()D
+        48: invokestatic  #1983               // Method net/minecraft/util/Mth.absMax:(DD)D
+        64: invokestatic  #1611               // Method java/lang/Math.sqrt:(D)D
+       124: invokevirtual #393                // Method isVehicle:()Z
+       131: invokevirtual #1990               // Method isPushable:()Z
+       144: invokevirtual #1993               // Method push:(DDD)V
+       148: invokevirtual #393                // Method isVehicle:()Z
+       155: invokevirtual #1990               // Method isPushable:()Z
+       166: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+        20: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(double, double, double);
+         1: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+         8: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        16: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        24: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        31: invokevirtual #1689               // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+        34: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+## net.minecraft.world.entity.Entity:   public void addDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+         9: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        13: invokevirtual #873                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        16: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(double, double, double);
+         9: invokespecial #405                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+        12: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);
+         3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+         6: invokevirtual #747                // Method getAttributeValue:(Lnet/minecraft/core/Holder;)D
+        25: invokevirtual #484                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        50: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        59: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        74: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        83: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+       106: invokespecial #1838               // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       109: invokevirtual #1841               // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+       113: invokevirtual #2290               // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+       135: invokevirtual #2296               // Method onGround:()Z
+       155: invokestatic  #438                // Method java/lang/Math.min:(DD)D
+       181: invokevirtual #2301               // Method setDeltaMovement:(DDD)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float);
+        10: invokevirtual #2304               // Method knockback:(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V
+## net.minecraft.world.entity.LivingEntity:   public void push(net.minecraft.world.entity.Entity);
+         1: invokevirtual #1610               // Method isSleeping:()Z
+         9: invokespecial #2823               // Method net/minecraft/world/entity/Entity.push:(Lnet/minecraft/world/entity/Entity;)V
+===== /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-common.jar
+--- class net.minecraft.world.entity.animal.golem.IronGolem
+   in   public boolean doHurtTarget(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.Entity);  ->          85: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.animal.nautilus.AbstractNautilus
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          28: getstatic     #126                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.LivingEntity
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->           9: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->          93: getstatic     #330                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->           3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.SulfurCubeArchetypes
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           0: getstatic     #245                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           9: getstatic     #253                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.behavior.warden.SonicBoom
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         145: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         160: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.attributes.Attributes
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> EXPLOSION_KNOCKBACK_RESISTANCE;
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         339: putstatic     #172                // Field EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         561: putstatic     #247                // Field KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.projectile.arrow.AbstractArrow
+   in   protected void doKnockback(net.minecraft.world.entity.LivingEntity, net.minecraft.world.damagesource.DamageSource);  ->          55: getstatic     #813                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.warden.Warden
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #243                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Zoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #292                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.cubemob.SulfurCube
+   in   private void playerPush(net.minecraft.world.entity.player.Player);  ->          98: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->         284: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Ravager
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #174                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.HoglinBase
+   in   public static void throwTarget(net.minecraft.world.entity.LivingEntity, net.minecraft.world.entity.LivingEntity);  ->           9: getstatic     #58                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.Hoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #49                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.zombie.Zombie
+   in   protected void handleAttributes(float, net.minecraft.world.entity.EntitySpawnReason);  ->           5: getstatic     #846                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.equipment.ArmorMaterial
+   in   public net.minecraft.world.item.component.ItemAttributeModifiers createAttributes(net.minecraft.world.item.equipment.ArmorType);  ->         109: getstatic     #112                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.MaceItem
+   in   private static double getKnockbackPower(net.minecraft.world.entity.Entity, net.minecraft.world.entity.LivingEntity, net.minecraft.world.phys.Vec3);  ->          32: getstatic     #274                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.component.ItemAttributeModifiers$Display$Default
+   in   public void apply(java.util.function.Consumer<net.minecraft.network.chat.Component>, net.minecraft.world.entity.player.Player, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier);  ->         103: getstatic     #62                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.enchantment.Enchantments
+   in   public static void bootstrap(net.minecraft.data.worldgen.BootstrapContext<net.minecraft.world.item.enchantment.Enchantment>);  ->         486: getstatic     #198                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.level.ServerExplosion
+   in   private void hurtEntities();  ->         359: getstatic     #313                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- handleExplosion in the client
+--- LocalPlayer / Entity push and addDeltaMovement
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.entity.Entity);
+         2: invokevirtual #1979               // Method isPassengerOfSameVehicle:(Lnet/minecraft/world/entity/Entity;)Z
+        25: invokevirtual #483                // Method getX:()D
+        29: invokevirtual #483                // Method getX:()D
+        35: invokevirtual #490                // Method getZ:()D
+        39: invokevirtual #490                // Method getZ:()D
+        48: invokestatic  #1983               // Method net/minecraft/util/Mth.absMax:(DD)D
+        64: invokestatic  #1611               // Method java/lang/Math.sqrt:(D)D
+       124: invokevirtual #393                // Method isVehicle:()Z
+       131: invokevirtual #1990               // Method isPushable:()Z
+       144: invokevirtual #1993               // Method push:(DDD)V
+       148: invokevirtual #393                // Method isVehicle:()Z
+       155: invokevirtual #1990               // Method isPushable:()Z
+       166: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+        20: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(double, double, double);
+         1: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+         8: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        16: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        24: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        31: invokevirtual #1689               // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+        34: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+## net.minecraft.world.entity.Entity:   public void addDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+         9: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        13: invokevirtual #873                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        16: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(double, double, double);
+         9: invokespecial #405                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+        12: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);
+         3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+         6: invokevirtual #747                // Method getAttributeValue:(Lnet/minecraft/core/Holder;)D
+        25: invokevirtual #484                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        50: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        59: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        74: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        83: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+       106: invokespecial #1838               // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       109: invokevirtual #1841               // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+       113: invokevirtual #2290               // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+       135: invokevirtual #2296               // Method onGround:()Z
+       155: invokestatic  #438                // Method java/lang/Math.min:(DD)D
+       181: invokevirtual #2301               // Method setDeltaMovement:(DDD)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float);
+        10: invokevirtual #2304               // Method knockback:(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V
+## net.minecraft.world.entity.LivingEntity:   public void push(net.minecraft.world.entity.Entity);
+         1: invokevirtual #1610               // Method isSleeping:()Z
+         9: invokespecial #2823               // Method net/minecraft/world/entity/Entity.push:(Lnet/minecraft/world/entity/Entity;)V
+===== /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-extracted_server.jar
+--- class net.minecraft.world.entity.animal.golem.IronGolem
+   in   public boolean doHurtTarget(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.Entity);  ->          85: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.animal.nautilus.AbstractNautilus
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          28: getstatic     #126                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.LivingEntity
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->           9: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->          93: getstatic     #330                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->           3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.SulfurCubeArchetypes
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           0: getstatic     #245                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           9: getstatic     #253                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.behavior.warden.SonicBoom
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         145: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         160: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.attributes.Attributes
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> EXPLOSION_KNOCKBACK_RESISTANCE;
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         339: putstatic     #172                // Field EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         561: putstatic     #247                // Field KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.projectile.arrow.AbstractArrow
+   in   protected void doKnockback(net.minecraft.world.entity.LivingEntity, net.minecraft.world.damagesource.DamageSource);  ->          55: getstatic     #813                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.warden.Warden
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #243                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Zoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #292                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.cubemob.SulfurCube
+   in   private void playerPush(net.minecraft.world.entity.player.Player);  ->          98: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->         284: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Ravager
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #174                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.HoglinBase
+   in   public static void throwTarget(net.minecraft.world.entity.LivingEntity, net.minecraft.world.entity.LivingEntity);  ->           9: getstatic     #58                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.Hoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #49                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.zombie.Zombie
+   in   protected void handleAttributes(float, net.minecraft.world.entity.EntitySpawnReason);  ->           5: getstatic     #846                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.equipment.ArmorMaterial
+   in   public net.minecraft.world.item.component.ItemAttributeModifiers createAttributes(net.minecraft.world.item.equipment.ArmorType);  ->         109: getstatic     #112                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.MaceItem
+   in   private static double getKnockbackPower(net.minecraft.world.entity.Entity, net.minecraft.world.entity.LivingEntity, net.minecraft.world.phys.Vec3);  ->          32: getstatic     #274                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.component.ItemAttributeModifiers$Display$Default
+   in   public void apply(java.util.function.Consumer<net.minecraft.network.chat.Component>, net.minecraft.world.entity.player.Player, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier);  ->         103: getstatic     #62                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.enchantment.Enchantments
+   in   public static void bootstrap(net.minecraft.data.worldgen.BootstrapContext<net.minecraft.world.item.enchantment.Enchantment>);  ->         486: getstatic     #198                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.level.ServerExplosion
+   in   private void hurtEntities();  ->         359: getstatic     #313                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- handleExplosion in the client
+--- LocalPlayer / Entity push and addDeltaMovement
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.entity.Entity);
+         2: invokevirtual #1979               // Method isPassengerOfSameVehicle:(Lnet/minecraft/world/entity/Entity;)Z
+        25: invokevirtual #483                // Method getX:()D
+        29: invokevirtual #483                // Method getX:()D
+        35: invokevirtual #490                // Method getZ:()D
+        39: invokevirtual #490                // Method getZ:()D
+        48: invokestatic  #1983               // Method net/minecraft/util/Mth.absMax:(DD)D
+        64: invokestatic  #1611               // Method java/lang/Math.sqrt:(D)D
+       124: invokevirtual #393                // Method isVehicle:()Z
+       131: invokevirtual #1990               // Method isPushable:()Z
+       144: invokevirtual #1993               // Method push:(DDD)V
+       148: invokevirtual #393                // Method isVehicle:()Z
+       155: invokevirtual #1990               // Method isPushable:()Z
+       166: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+        20: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(double, double, double);
+         1: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+         8: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        16: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        24: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        31: invokevirtual #1689               // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+        34: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+## net.minecraft.world.entity.Entity:   public void addDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+         9: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        13: invokevirtual #873                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        16: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(double, double, double);
+         9: invokespecial #405                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+        12: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);
+         3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+         6: invokevirtual #747                // Method getAttributeValue:(Lnet/minecraft/core/Holder;)D
+        25: invokevirtual #484                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        50: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        59: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        74: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        83: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+       106: invokespecial #1838               // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       109: invokevirtual #1841               // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+       113: invokevirtual #2290               // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+       135: invokevirtual #2296               // Method onGround:()Z
+       155: invokestatic  #438                // Method java/lang/Math.min:(DD)D
+       181: invokevirtual #2301               // Method setDeltaMovement:(DDD)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float);
+        10: invokevirtual #2304               // Method knockback:(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V
+## net.minecraft.world.entity.LivingEntity:   public void push(net.minecraft.world.entity.Entity);
+         1: invokevirtual #1610               // Method isSleeping:()Z
+         9: invokespecial #2823               // Method net/minecraft/world/entity/Entity.push:(Lnet/minecraft/world/entity/Entity;)V
+===== /home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-clientonly-deobf/26.2/minecraft-clientonly-deobf-26.2.jar
+--- handleExplosion in the client
+  public void handleExplosion(net.minecraft.network.protocol.game.ClientboundExplodePacket);
+    Code:
+         0: aload_1
+         1: aload_0
+         2: aload_0
+         3: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+         6: invokevirtual #384                // Method net/minecraft/client/Minecraft.packetProcessor:()Lnet/minecraft/network/PacketProcessor;
+         9: invokestatic  #388                // Method net/minecraft/network/protocol/PacketUtils.ensureRunningOnSameThread:(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V
+        12: aload_1
+        13: invokevirtual #2142               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.center:()Lnet/minecraft/world/phys/Vec3;
+        16: astore_2
+        17: aload_0
+        18: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        21: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        24: aload_2
+        25: invokevirtual #2147               // Method net/minecraft/world/phys/Vec3.x:()D
+        28: aload_2
+        29: invokevirtual #2149               // Method net/minecraft/world/phys/Vec3.y:()D
+        32: aload_2
+        33: invokevirtual #2152               // Method net/minecraft/world/phys/Vec3.z:()D
+        36: aload_1
+        37: invokevirtual #2154               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.explosionSound:()Lnet/minecraft/core/Holder;
+        40: invokeinterface #2157,  1         // InterfaceMethod net/minecraft/core/Holder.value:()Ljava/lang/Object;
+        45: checkcast     #2162               // class net/minecraft/sounds/SoundEvent
+        48: getstatic     #2164               // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+        51: ldc_w         #2167               // float 4.0f
+        54: fconst_1
+        55: aload_0
+        56: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        59: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        62: invokevirtual #2168               // Method net/minecraft/client/multiplayer/ClientLevel.getRandom:()Lnet/minecraft/util/RandomSource;
+        65: invokeinterface #1501,  1         // InterfaceMethod net/minecraft/util/RandomSource.nextFloat:()F
+        70: aload_0
+        71: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+        74: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+        77: invokevirtual #2168               // Method net/minecraft/client/multiplayer/ClientLevel.getRandom:()Lnet/minecraft/util/RandomSource;
+        80: invokeinterface #1501,  1         // InterfaceMethod net/minecraft/util/RandomSource.nextFloat:()F
+        85: fsub
+        86: ldc_w         #1513               // float 0.2f
+        89: fmul
+        90: fadd
+        91: ldc_w         #2171               // float 0.7f
+        94: fmul
+        95: iconst_0
+        96: invokevirtual #1506               // Method net/minecraft/client/multiplayer/ClientLevel.playLocalSound:(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+        99: aload_0
+       100: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       103: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+       106: aload_1
+       107: invokevirtual #2172               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.explosionParticle:()Lnet/minecraft/core/particles/ParticleOptions;
+       110: aload_2
+       111: invokevirtual #2147               // Method net/minecraft/world/phys/Vec3.x:()D
+       114: aload_2
+       115: invokevirtual #2149               // Method net/minecraft/world/phys/Vec3.y:()D
+       118: aload_2
+       119: invokevirtual #2152               // Method net/minecraft/world/phys/Vec3.z:()D
+       122: dconst_1
+       123: dconst_0
+       124: dconst_0
+       125: invokevirtual #2176               // Method net/minecraft/client/multiplayer/ClientLevel.addParticle:(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+       128: aload_0
+       129: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       132: getfield      #1010               // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+       135: aload_2
+       136: aload_1
+       137: invokevirtual #2180               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.radius:()F
+       140: aload_1
+       141: invokevirtual #2183               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.blockCount:()I
+       144: aload_1
+       145: invokevirtual #2186               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.blockParticles:()Lnet/minecraft/util/random/WeightedList;
+       148: invokevirtual #2190               // Method net/minecraft/client/multiplayer/ClientLevel.trackExplosionEffects:(Lnet/minecraft/world/phys/Vec3;FILnet/minecraft/util/random/WeightedList;)V
+       151: aload_1
+       152: invokevirtual #2194               // Method net/minecraft/network/protocol/game/ClientboundExplodePacket.playerKnockback:()Ljava/util/Optional;
+       155: aload_0
+       156: getfield      #380                // Field minecraft:Lnet/minecraft/client/Minecraft;
+       159: getfield      #494                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+       162: dup
+       163: invokestatic  #2197               // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+       166: pop
+       167: invokedynamic #2202,  0           // InvokeDynamic #6:accept:(Lnet/minecraft/client/player/LocalPlayer;)Ljava/util/function/Consumer;
+       172: invokevirtual #2205               // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+       175: return
+
+--- LocalPlayer / Entity push and addDeltaMovement
+===== /home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-common-deobf/26.2/minecraft-common-deobf-26.2.jar
+--- class net.minecraft.world.entity.animal.golem.IronGolem
+   in   public boolean doHurtTarget(net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.Entity);  ->          85: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #135                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.animal.nautilus.AbstractNautilus
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          28: getstatic     #126                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.LivingEntity
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->           9: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createLivingAttributes();  ->          93: getstatic     #330                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->           3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.SulfurCubeArchetypes
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           0: getstatic     #245                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static java.util.List<java.util.function.Function<net.minecraft.resources.ResourceKey<net.minecraft.world.entity.SulfurCubeArchetype>, net.minecraft.world.entity.SulfurCubeArchetype$AttributeEntry>> archetype(float, float, float, float);  ->           9: getstatic     #253                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.behavior.warden.SonicBoom
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         145: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   private static void lambda$tick$2(net.minecraft.world.entity.monster.warden.Warden, net.minecraft.server.level.ServerLevel, net.minecraft.world.entity.LivingEntity);  ->         160: getstatic     #264                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.ai.attributes.Attributes
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> EXPLOSION_KNOCKBACK_RESISTANCE;
+   in   ->    public static final net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         339: putstatic     #172                // Field EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public static net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> bootstrap(net.minecraft.core.Registry<net.minecraft.world.entity.ai.attributes.Attribute>);  ->         561: putstatic     #247                // Field KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.projectile.arrow.AbstractArrow
+   in   protected void doKnockback(net.minecraft.world.entity.LivingEntity, net.minecraft.world.damagesource.DamageSource);  ->          55: getstatic     #813                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.warden.Warden
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #243                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Zoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #292                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.cubemob.SulfurCube
+   in   private void playerPush(net.minecraft.world.entity.player.Player);  ->          98: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+   in   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);  ->         284: getstatic     #1140               // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.Ravager
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #174                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.HoglinBase
+   in   public static void throwTarget(net.minecraft.world.entity.LivingEntity, net.minecraft.world.entity.LivingEntity);  ->           9: getstatic     #58                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.hoglin.Hoglin
+   in   ->    private static final float KNOCKBACK_RESISTANCE;
+   in   public static net.minecraft.world.entity.ai.attributes.AttributeSupplier$Builder createAttributes();  ->          21: getstatic     #49                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.entity.monster.zombie.Zombie
+   in   protected void handleAttributes(float, net.minecraft.world.entity.EntitySpawnReason);  ->           5: getstatic     #846                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.equipment.ArmorMaterial
+   in   public net.minecraft.world.item.component.ItemAttributeModifiers createAttributes(net.minecraft.world.item.equipment.ArmorType);  ->         109: getstatic     #112                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.MaceItem
+   in   private static double getKnockbackPower(net.minecraft.world.entity.Entity, net.minecraft.world.entity.LivingEntity, net.minecraft.world.phys.Vec3);  ->          32: getstatic     #274                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.component.ItemAttributeModifiers$Display$Default
+   in   public void apply(java.util.function.Consumer<net.minecraft.network.chat.Component>, net.minecraft.world.entity.player.Player, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute>, net.minecraft.world.entity.ai.attributes.AttributeModifier);  ->         103: getstatic     #62                 // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.item.enchantment.Enchantments
+   in   public static void bootstrap(net.minecraft.data.worldgen.BootstrapContext<net.minecraft.world.item.enchantment.Enchantment>);  ->         486: getstatic     #198                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- class net.minecraft.world.level.ServerExplosion
+   in   private void hurtEntities();  ->         359: getstatic     #313                // Field net/minecraft/world/entity/ai/attributes/Attributes.EXPLOSION_KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+--- handleExplosion in the client
+--- LocalPlayer / Entity push and addDeltaMovement
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.entity.Entity);
+         2: invokevirtual #1979               // Method isPassengerOfSameVehicle:(Lnet/minecraft/world/entity/Entity;)Z
+        25: invokevirtual #483                // Method getX:()D
+        29: invokevirtual #483                // Method getX:()D
+        35: invokevirtual #490                // Method getZ:()D
+        39: invokevirtual #490                // Method getZ:()D
+        48: invokestatic  #1983               // Method net/minecraft/util/Mth.absMax:(DD)D
+        64: invokestatic  #1611               // Method java/lang/Math.sqrt:(D)D
+       124: invokevirtual #393                // Method isVehicle:()Z
+       131: invokevirtual #1990               // Method isPushable:()Z
+       144: invokevirtual #1993               // Method push:(DDD)V
+       148: invokevirtual #393                // Method isVehicle:()Z
+       155: invokevirtual #1990               // Method isPushable:()Z
+       166: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+        20: invokevirtual #1993               // Method push:(DDD)V
+## net.minecraft.world.entity.Entity:   public void push(double, double, double);
+         1: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+         8: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        16: invokestatic  #1998               // Method java/lang/Double.isFinite:(D)Z
+        24: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        31: invokevirtual #1689               // Method net/minecraft/world/phys/Vec3.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+        34: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+## net.minecraft.world.entity.Entity:   public void addDeltaMovement(net.minecraft.world.phys.Vec3);
+         1: invokevirtual #1995               // Method net/minecraft/world/phys/Vec3.isFinite:()Z
+         9: invokevirtual #974                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        13: invokevirtual #873                // Method net/minecraft/world/phys/Vec3.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+        16: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.Entity:   public void setDeltaMovement(double, double, double);
+         9: invokespecial #405                // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+        12: invokevirtual #849                // Method setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float, boolean);
+         3: getstatic     #288                // Field net/minecraft/world/entity/ai/attributes/Attributes.KNOCKBACK_RESISTANCE:Lnet/minecraft/core/Holder;
+         6: invokevirtual #747                // Method getAttributeValue:(Lnet/minecraft/core/Holder;)D
+        25: invokevirtual #484                // Method getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+        50: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        59: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        74: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+        83: invokeinterface #857,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextDouble:()D
+       106: invokespecial #1838               // Method net/minecraft/world/phys/Vec3."<init>":(DDD)V
+       109: invokevirtual #1841               // Method net/minecraft/world/phys/Vec3.normalize:()Lnet/minecraft/world/phys/Vec3;
+       113: invokevirtual #2290               // Method net/minecraft/world/phys/Vec3.scale:(D)Lnet/minecraft/world/phys/Vec3;
+       135: invokevirtual #2296               // Method onGround:()Z
+       155: invokestatic  #438                // Method java/lang/Math.min:(DD)D
+       181: invokevirtual #2301               // Method setDeltaMovement:(DDD)V
+## net.minecraft.world.entity.LivingEntity:   public void knockback(double, double, double, net.minecraft.world.damagesource.DamageSource, float);
+        10: invokevirtual #2304               // Method knockback:(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V
+## net.minecraft.world.entity.LivingEntity:   public void push(net.minecraft.world.entity.Entity);
+         1: invokevirtual #1610               // Method isSleeping:()Z
+         9: invokespecial #2823               // Method net/minecraft/world/entity/Entity.push:(Lnet/minecraft/world/entity/Entity;)V
