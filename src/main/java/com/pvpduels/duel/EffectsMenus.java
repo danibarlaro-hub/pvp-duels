@@ -1,6 +1,7 @@
 package com.pvpduels.duel;
 
 import com.pvpduels.effects.Effects;
+import com.pvpduels.effects.MemeSounds;
 import com.pvpduels.effects.Missions;
 import com.pvpduels.effects.Particles;
 import com.pvpduels.effects.Quality;
@@ -88,6 +89,14 @@ public final class EffectsMenus {
 		b.set(24, DuelMenus.icon(sounds ? Items.NOTE_BLOCK : Items.BARRIER, "Win and lose sounds: " + (sounds ? "on" : "off"), sounds ? ChatFormatting.GREEN : ChatFormatting.RED,
 			"A short tune plays when somebody wins", "(every explosion has its own) and a sad one", "for the loser.", "Click to turn them " + (sounds ? "off" : "on") + ". Only for you."), who -> {
 			Effects.setJingles(who.getUUID(), !sounds);
+			openMain(who);
+		});
+		boolean memes = Effects.memes(me);
+		b.set(20, DuelMenus.icon(memes ? Items.GOAT_HORN : Items.BARRIER, "Silly losing sounds: " + (memes ? "on" : "off"), memes ? ChatFormatting.GREEN : ChatFormatting.RED,
+			"When somebody loses you hear a silly sound", "(20 of them: Fahhh, Bonk, Air horn...)", "instead of the sad tune.", "Click to turn them " + (memes ? "off" : "on") + ". Only for you."), who -> {
+			boolean now = !Effects.memes(who.getUUID());
+			Effects.setMemes(who.getUUID(), now);
+			if (now) MemeSounds.play(List.of(who), MemeSounds.random());
 			openMain(who);
 		});
 		ChoiceMenu.open(p, Component.literal("Victory effects"), 3, b);

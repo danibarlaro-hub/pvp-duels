@@ -8,5 +8,7 @@
   "key.pvpduels.quick_kit_b": "Quick kit B",
   "key.pvpduels.quick_kit_c": "Quick kit C",
   "key.pvpduels.layout_prev": "Previous layout",
-  "key.pvpduels.layout_next": "Next layout"
+  "key.pvpduels.layout_next": "Next layout",
+  "key.pvpduels.skip_scene": "Skip the film",
+  "key.pvpduels.free_cam": "Free camera in a film"
 }

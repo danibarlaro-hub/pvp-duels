@@ -1,0 +1,182 @@
+{
+  "loss.fahhh": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/fahhh",
+        "stream": false
+      }
+    ]
+  },
+  "loss.sad_trombone": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/sad_trombone",
+        "stream": false
+      }
+    ]
+  },
+  "loss.record_scratch": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/record_scratch",
+        "stream": false
+      }
+    ]
+  },
+  "loss.error_buzz": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/error_buzz",
+        "stream": false
+      }
+    ]
+  },
+  "loss.squelch": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/squelch",
+        "stream": false
+      }
+    ]
+  },
+  "loss.bonk": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/bonk",
+        "stream": false
+      }
+    ]
+  },
+  "loss.boing": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/boing",
+        "stream": false
+      }
+    ]
+  },
+  "loss.slide_whistle": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/slide_whistle",
+        "stream": false
+      }
+    ]
+  },
+  "loss.boom": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/boom",
+        "stream": false
+      }
+    ]
+  },
+  "loss.dial_up": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/dial_up",
+        "stream": false
+      }
+    ]
+  },
+  "loss.airhorn": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/airhorn",
+        "stream": false
+      }
+    ]
+  },
+  "loss.duck_quack": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/duck_quack",
+        "stream": false
+      }
+    ]
+  },
+  "loss.sad_violin": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/sad_violin",
+        "stream": false
+      }
+    ]
+  },
+  "loss.ugh": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/ugh",
+        "stream": false
+      }
+    ]
+  },
+  "loss.bike_horn": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/bike_horn",
+        "stream": false
+      }
+    ]
+  },
+  "loss.glass_womp": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/glass_womp",
+        "stream": false
+      }
+    ]
+  },
+  "loss.tire_screech": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/tire_screech",
+        "stream": false
+      }
+    ]
+  },
+  "loss.rimshot": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/rimshot",
+        "stream": false
+      }
+    ]
+  },
+  "loss.crowd_aww": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/crowd_aww",
+        "stream": false
+      }
+    ]
+  },
+  "loss.game_over": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "pvpduels:loss/game_over",
+        "stream": false
+      }
+    ]
+  }
+}

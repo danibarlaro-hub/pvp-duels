@@ -97,6 +97,8 @@ public final class Effects {
 		boolean hideOthers;
 		/** The player turned the victory sounds (the short tunes) off. */
 		boolean mutedJingles;
+		/** The player turned the silly losing sounds off (they are on by default). */
+		boolean mutedMemes;
 		/** How many particles this player gets from the heavy effects: the number of a {@link Quality} (3 = High). */
 		int quality = Quality.HIGH.ordinal();
 	}
@@ -476,6 +478,16 @@ public final class Effects {
 
 	public static synchronized void setJingles(UUID id, boolean on) {
 		data(id, null).mutedJingles = !on;
+		save();
+	}
+
+	/** True when this player wants the silly sounds when they lose (the default; they also need the win and lose sounds on). */
+	public static synchronized boolean memes(UUID id) {
+		return !data(id, null).mutedMemes;
+	}
+
+	public static synchronized void setMemes(UUID id, boolean on) {
+		data(id, null).mutedMemes = !on;
 		save();
 	}
 

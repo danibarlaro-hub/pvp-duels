@@ -400,6 +400,15 @@ public final class SelfTest {
 		return n;
 	}
 
+	/** How many sound packets of this mod (the silly sounds) the player got. */
+	private static int memePackets(Dummy who) {
+		int n = 0;
+		for (Packet<?> packet : List.copyOf(who.link.sent)) {
+			if (packet instanceof net.minecraft.network.protocol.game.ClientboundSoundPacket s && s.getSound().value().location().getNamespace().equals("pvpduels")) n++;
+		}
+		return n;
+	}
+
 	/** How many items of the open menu have a name that starts like this. */
 	private static int menuCount(Dummy who, String prefix) {
 		AbstractContainerMenu menu = who.containerMenu;
@@ -4460,11 +4469,57 @@ public final class SelfTest {
 			check("another click turns them on again", Effects.jingles(a.getUUID()));
 			a.closeContainer();
 		});
+		step("silly sounds: twenty real sound files, a toggle, and the sound goes to the ones who want it", () -> {
+			var memes = com.pvpduels.effects.MemeSounds.all();
+			check("there are twenty silly sounds with different names", memes.size() == 20 && memes.stream().map(m -> m.id()).distinct().count() == 20
+				&& memes.stream().map(m -> m.name()).distinct().count() == 20);
+			StringBuilder missing = new StringBuilder();
+			String json = "";
+			try (java.io.InputStream in = PvpDuelsMod.class.getResourceAsStream("/assets/pvpduels/sounds.json")) {
+				json = in == null ? "" : new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+			} catch (java.io.IOException e) {
+				missing.append(" sounds.json: ").append(e);
+			}
+			for (var m : memes) {
+				try (java.io.InputStream in = PvpDuelsMod.class.getResourceAsStream("/assets/pvpduels/sounds/loss/" + m.id() + ".ogg")) {
+					byte[] head = in == null ? new byte[0] : in.readNBytes(4);
+					if (head.length < 4 || head[0] != 'O' || head[1] != 'g' || head[2] != 'g' || head[3] != 'S') missing.append(' ').append(m.id()).append(".ogg");
+				} catch (java.io.IOException e) {
+					missing.append(' ').append(m.id()).append(' ').append(e);
+				}
+				if (!json.contains("\"loss." + m.id() + "\"") || !json.contains("pvpduels:loss/" + m.id() + "\"")) missing.append(" json:").append(m.id());
+			}
+			check("every one is an ogg file in the jar and is listed in sounds.json", missing.length() == 0, missing.toString());
+			check("they are on by default", Effects.memes(a.getUUID()) && com.pvpduels.effects.MemeSounds.wants(a));
+			a.link.sent.clear();
+			com.pvpduels.effects.MemeSounds.resetForTest();
+			var fahhh = com.pvpduels.effects.MemeSounds.of("fahhh");
+			com.pvpduels.effects.MemeSounds.play(com.pvpduels.effects.MemeSounds.loud(List.of(a)), fahhh);
+			boolean named = false;
+			for (Packet<?> packet : List.copyOf(a.link.sent)) {
+				if (packet instanceof net.minecraft.network.protocol.game.ClientboundSoundPacket s && s.getSound().value().location().toString().equals("pvpduels:loss.fahhh")) named = true;
+			}
+			check("she gets the Fahhh sound by its name", named && com.pvpduels.effects.MemeSounds.played() == 1 && com.pvpduels.effects.MemeSounds.last().equals("fahhh"));
+			run(a, "effects");
+			check("the effects menu has the silly sounds button, on", menuHas(a, "Silly losing sounds: on"));
+			a.link.sent.clear();
+			menuStep(a, "Silly losing sounds: on");
+			check("it turns them off for her", !Effects.memes(a.getUUID()) && menuHas(a, "Silly losing sounds: off") && memePackets(a) == 0);
+			check("with them off she is in the group of the sad tune", com.pvpduels.effects.MemeSounds.loud(List.of(a)).isEmpty() && com.pvpduels.effects.MemeSounds.quiet(List.of(a)).size() == 1);
+			a.link.sent.clear();
+			menuStep(a, "Silly losing sounds: off");
+			check("another click turns them on and plays one for her to hear", Effects.memes(a.getUUID()) && memePackets(a) == 1);
+			Effects.setJingles(a.getUUID(), false);
+			check("turning every win and lose sound off turns the silly ones off too", !com.pvpduels.effects.MemeSounds.wants(a));
+			Effects.setJingles(a.getUUID(), true);
+			a.closeContainer();
+		});
 		final int[] tryo = new int[3];
 		final Vec3[] tryAt = new Vec3[1];
 		step("try-out: Dora watches the film of her Shooting Star on the dummy", () -> {
 			Victory.resetForTest();
 			com.pvpduels.effects.Jingles.resetForTest();
+			com.pvpduels.effects.MemeSounds.resetForTest();
 			dora.closeContainer();
 			Effects.grantExplosion(dora.getUUID(), "shooting_star");
 			Effects.grantExplosion(dora.getUUID(), "domain_frost");
@@ -4506,6 +4561,7 @@ public final class SelfTest {
 			int played = com.pvpduels.effects.Jingles.notesPlayed();
 			check("the melody of the Shooting Star played, and a sad tune after it", played >= com.pvpduels.effects.Jingles.of("shooting_star").size() + 4
 				&& com.pvpduels.effects.Jingles.defeats().stream().anyMatch(t -> t.id.equals(com.pvpduels.effects.Jingles.lastTune())), played + " " + com.pvpduels.effects.Jingles.lastTune());
+			check("the silly sound of the loser played, by its name, for her (they are on by default)", com.pvpduels.effects.MemeSounds.played() == 1 && !com.pvpduels.effects.MemeSounds.last().isEmpty());
 			drain[0] = 0;
 		});
 		step("try-out: the last props leave the world", () -> drain[0] = 0, () -> com.pvpduels.effects.Props.tagged(server) == 0 || ++drain[0] > 100, 200);
@@ -4556,25 +4612,18 @@ public final class SelfTest {
 			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
 			return scene == null || (dora.getCamera() == scene.camera && scene.age > Cinema.PRE + 6);
 		}, 200);
-		final net.minecraft.world.entity.player.Input noKeys = new net.minecraft.world.entity.player.Input(false, false, false, false, false, false, false);
-		final net.minecraft.world.entity.player.Input jumpKey = new net.minecraft.world.entity.player.Input(false, false, false, false, true, false, false);
-		step("free camera: she rides the camera and lets go of every key", () -> {
+		step("free camera: she rides the camera and presses the free camera key", () -> {
 			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
 			check("she rides the camera of the film", scene != null && dora.getCamera() == scene.camera && !Cinema.isFree(dora.getUUID()));
-			dora.setLastClientInput(noKeys);
+			Cinema.filmKey(dora, com.pvpduels.net.FilmKeyPayload.FREE_CAM);
 			fcTick[0] = ticks;
 		}, () -> ticks >= fcTick[0] + 3, 30);
-		step("free camera: she jumps", () -> {
-			dora.setLastClientInput(jumpKey);
-			fcTick[0] = ticks;
-		}, () -> Cinema.isFree(dora.getUUID()) || ticks >= fcTick[0] + 10, 30);
 		step("free camera: she flies by herself and the film goes on", () -> {
 			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
-			check("the jump gave her a free camera", Cinema.isFree(dora.getUUID()));
+			check("the key gave her a free camera", Cinema.isFree(dora.getUUID()));
 			check("her own eyes are back and she flies as a spectator", dora.getCamera() == dora && dora.gameMode() == net.minecraft.world.level.GameType.SPECTATOR);
 			check("she started where the camera was", scene != null && dora.position().distanceTo(scene.cameraAt) < 15, scene == null ? "no scene" : dora.position() + " vs " + scene.cameraAt);
 			check("the film goes on without her", scene != null && !scene.ended && Cinema.activeScenes() == 1);
-			dora.setLastClientInput(noKeys);
 			if (scene == null) return;
 			dora.teleportTo((ServerLevel) dora.level(), scene.center.x + 110, scene.center.y + 5, scene.center.z, java.util.Set.of(), 0f, 0f, true);
 			fcTick[0] = ticks;
@@ -4587,6 +4636,60 @@ public final class SelfTest {
 			check("the command gave her the camera of the film again", scene != null && dora.getCamera() == scene.camera && !Cinema.isFree(dora.getUUID()));
 			run(dora, "freecam");
 			check("and the command frees it again", Cinema.isFree(dora.getUUID()) && dora.getCamera() == dora);
+			Cinema.filmKey(dora, com.pvpduels.net.FilmKeyPayload.FREE_CAM);
+			check("the key gives her the camera back too", scene != null && dora.getCamera() == scene.camera && !Cinema.isFree(dora.getUUID()));
+			Cinema.filmKey(dora, com.pvpduels.net.FilmKeyPayload.FREE_CAM);
+			check("and frees it again", Cinema.isFree(dora.getUUID()));
+		});
+		step("free camera: the skip key from the free camera puts her back, and the film goes on", () -> {
+			Cinema.filmKey(dora, com.pvpduels.net.FilmKeyPayload.SKIP);
+			check("she is in her own body again, in her old place", dora.getCamera() == dora && dora.gameMode() != net.minecraft.world.level.GameType.SPECTATOR
+				&& fcHome[0] != null && dora.position().distanceTo(fcHome[0]) < 0.6, dora.position() + " vs " + fcHome[0]);
+			check("she is not free any more, and the film still plays", !Cinema.isFree(dora.getUUID()) && Cinema.activeScenes() == 1);
+			Cinema.filmKey(dora, com.pvpduels.net.FilmKeyPayload.FREE_CAM);
+			Cinema.filmKey(dora, com.pvpduels.net.FilmKeyPayload.SKIP);
+			check("the keys do nothing once she is out of the film", dora.getCamera() == dora && !Cinema.isFree(dora.getUUID()) && dora.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
+		});
+		step("bug report: /bugreport saves what the player wrote in a file", () -> {
+			com.pvpduels.util.BugReports.resetForTest();
+			java.nio.file.Path file = com.pvpduels.util.BugReports.file();
+			int before = com.pvpduels.util.BugReports.saved();
+			String old = "";
+			try {
+				old = java.nio.file.Files.exists(file) ? java.nio.file.Files.readString(file) : "";
+			} catch (java.io.IOException e) {
+				check("the old reports can be read", false, e.toString());
+			}
+			dora.link.sent.clear();
+			run(dora, "bugreport The kit menu showed my old kit after I changed it");
+			String text = "";
+			try {
+				text = java.nio.file.Files.exists(file) ? java.nio.file.Files.readString(file) : "";
+			} catch (java.io.IOException e) {
+				check("the reports can be read", false, e.toString());
+			}
+			String added = text.length() >= old.length() ? text.substring(old.length()) : text;
+			check("the report was saved", com.pvpduels.util.BugReports.saved() == before + 1);
+			check("the file says who, when, where and the bug", added.contains("=== Bug #") && added.contains("Who: Dora") && added.contains("When: 20") && added.contains("Mod: PvP Duels 0.21.0")
+				&& added.contains("Where: minecraft:") && added.contains("Bug: The kit menu showed my old kit after I changed it"), added);
+			boolean thanked = false;
+			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
+				if (packet instanceof net.minecraft.network.protocol.game.ClientboundSystemChatPacket chat && chat.content().getString().contains("saved. Thank you")) thanked = true;
+			}
+			check("she is told it was saved", thanked);
+			run(dora, "bugreport A second one right away");
+			check("a second report right away waits", com.pvpduels.util.BugReports.saved() == before + 1);
+			com.pvpduels.util.BugReports.resetForTest();
+			run(dora, "bugreport no");
+			check("a report with almost no words is refused", com.pvpduels.util.BugReports.saved() == before + 1);
+			run(dora, "bugreport " + "x".repeat(900));
+			String longText = "";
+			try {
+				longText = java.nio.file.Files.readString(file);
+			} catch (java.io.IOException e) {
+				check("the reports can be read", false, e.toString());
+			}
+			check("a very long report is cut", com.pvpduels.util.BugReports.saved() == before + 2 && !longText.contains("x".repeat(700)) && longText.contains("x".repeat(500) + "..."));
 		});
 		step("free camera: stopping the film puts her back where she stood", () -> {
 			Cinema.resetForTest();
@@ -4614,7 +4717,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.20.0", version.equals("0.20.0"), version);
+			check("the mod says 0.21.0", version.equals("0.21.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();

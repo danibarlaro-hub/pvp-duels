@@ -29,6 +29,7 @@ import com.pvpduels.worldgen.IslandBuilder;
 import com.pvpduels.layout.LayoutCommands;
 import com.pvpduels.stats.TopCommand;
 import com.pvpduels.net.CycleLayoutPayload;
+import com.pvpduels.net.FilmKeyPayload;
 import com.pvpduels.net.QuickKitPayload;
 import com.pvpduels.net.QuickLayoutPayload;
 import com.pvpduels.net.SortRequestPayload;
@@ -55,6 +56,7 @@ public class PvpDuelsMod implements ModInitializer {
 		PayloadTypeRegistry.serverboundPlay().register(CycleLayoutPayload.TYPE, CycleLayoutPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(QuickLayoutPayload.TYPE, QuickLayoutPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(QuickKitPayload.TYPE, QuickKitPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(FilmKeyPayload.TYPE, FilmKeyPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(SortRequestPayload.TYPE, (payload, context) ->
 			context.server().execute(() -> InventorySorter.sortAndReport(context.player())));
@@ -63,6 +65,9 @@ public class PvpDuelsMod implements ModInitializer {
 
 		ServerPlayNetworking.registerGlobalReceiver(QuickLayoutPayload.TYPE, (payload, context) ->
 			context.server().execute(() -> LayoutCommands.quick(context.player(), payload.index())));
+
+		ServerPlayNetworking.registerGlobalReceiver(FilmKeyPayload.TYPE, (payload, context) ->
+			context.server().execute(() -> com.pvpduels.duel.Cinema.filmKey(context.player(), payload.action())));
 
 		ServerPlayNetworking.registerGlobalReceiver(QuickKitPayload.TYPE, (payload, context) ->
 			context.server().execute(() -> KitCommands.quick(context.server(), context.player(), payload.index())));
@@ -90,6 +95,7 @@ public class PvpDuelsMod implements ModInitializer {
 			BotDuel.registerCommands(dispatcher);
 			ReplayCommands.register(dispatcher);
 			TopCommand.register(dispatcher);
+			com.pvpduels.util.BugReports.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
 		});
 

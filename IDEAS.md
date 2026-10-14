@@ -92,6 +92,7 @@ Leyenda: ✅ hecho y probado por la prueba automatica · 🟡 hecho a medias · 
 - ✅ 0.18.0 (eligio el 14/10): cola 2v2 (parties en `/queue`), sonidos de victoria por explosion + tonadas tristes para el que pierde (con interruptor en `/effects`), cinematica en el Explosion Dummy y en `/effects preview`
 - ✅ 0.19.0 (pedido del 14/10): 12 explosiones nuevas con pelicula, estilo Minecraft Dungeons (columnas de fuego, tornado, cristal gigante, grieta, dragon, puño, guadaña, sol, supernova, prismas, hongos, sculk)
 - ✅ 0.20.0 (pedido del 14/10): camara libre en las peliculas (saltar = volar como espectador, /freecam vuelve a la camara; agacharse sigue saltando la pelicula)
+- ✅ 0.21.0 (pedido del 14/10): teclas rebindeables para las peliculas (Shift derecho = saltar, Ctrl izquierdo = camara libre), /bugreport (guarda en pvpduels-owner/Bugs/bug-reports.txt), 20 sonidos de perdida sinteticos con boton para apagarlos
 - ⏳ Pedido del 14/10: sonidos propios tipo MyInstants para perder (el usuario puede pasar sus .ogg/.mp3 y se meten en el jar; ojo con los derechos si vende el mod)
 - ⏳ Ofrecidas y no elegidas: efecto de GG, racha de dias (no la entendio), kit de la semana (dijo que no)
 - ⏳ Preguntas y cosas para consultarle al final de cada entrega: orden de las entregas, version del mod (el usuario piensa en 0.50), mas temas de dominio, ajustes de velocidad/angulo de las camaras

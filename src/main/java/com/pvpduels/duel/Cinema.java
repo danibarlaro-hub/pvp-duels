@@ -256,6 +256,14 @@ public final class Cinema {
 		return false;
 	}
 
+	/** A key of the films was pressed (the client sends it): 0 skips the film, 1 switches the free camera. Nothing happens outside of a film. */
+	public static void filmKey(ServerPlayer p, int action) {
+		for (Scene s : SCENES) {
+			if (action == com.pvpduels.net.FilmKeyPayload.SKIP && s.skipFor(p)) return;
+			if (action == com.pvpduels.net.FilmKeyPayload.FREE_CAM && s.toggleFree(p)) return;
+		}
+	}
+
 	/** True while this player flies around by themselves in a film (the self-test reads it). */
 	public static boolean isFree(UUID id) {
 		for (Scene s : SCENES) for (Rider r : s.riders) if (r.riding && r.free && r.id.equals(id)) return true;
@@ -323,8 +331,6 @@ public final class Cinema {
 		float homePitch;
 		/** True once the viewer has been seen NOT sneaking, so a key that was already down when the camera began does not skip the finale. */
 		boolean sneakReady;
-		/** True once the viewer has been seen NOT pressing jump, so a jump already in the air when the camera began does not free the camera. */
-		boolean jumpReady;
 		/** True while the viewer flies around by themselves (free camera) instead of riding the camera of the film. */
 		boolean free;
 
@@ -373,6 +379,8 @@ public final class Cinema {
 		final List<com.pvpduels.effects.ExplosionArt.Meteor> meteors = new ArrayList<>();
 		/** The tune of the loser (chosen when the finale starts). */
 		final Jingles.Tune sad = Jingles.randomDefeat();
+		/** The silly sound of the loser, for the viewers who turned them on (the others get the sad tune). */
+		final com.pvpduels.effects.MemeSounds.Meme meme = com.pvpduels.effects.MemeSounds.random();
 		private float lastYaw = Float.NaN;
 		/** The last position and look of the camera. */
 		Vec3 cameraAt;
@@ -596,8 +604,8 @@ public final class Cinema {
 		}
 
 		/**
-		 * A viewer who sneaks (or gets out of the camera in any other way) skips the rest of the finale: they get their body back. A viewer
-		 * who jumps gets a free camera instead (see {@link #goFree}); a free viewer is only kept near the scene.
+		 * A viewer who sneaks (or gets out of the camera in any other way) skips the rest of the finale: they get their body back. The keys of
+		 * the films do the same (skip) or free the camera (see {@link #goFree}); a free viewer is only kept near the scene.
 		 */
 		private void skippers() {
 			for (Rider r : new ArrayList<>(riders)) {
@@ -617,9 +625,17 @@ public final class Cinema {
 					releaseOne(r.id, true);
 					continue;
 				}
-				if (!p.getLastClientInput().jump()) r.jumpReady = true;
-				else if (r.jumpReady) goFree(r, p);
 			}
+		}
+
+		/** The skip key: the viewer gets their body back (false when this player is not part of this film). */
+		boolean skipFor(ServerPlayer p) {
+			for (Rider r : riders) {
+				if (!r.riding || !r.id.equals(p.getUUID())) continue;
+				releaseOne(r.id, true);
+				return true;
+			}
+			return false;
 		}
 
 		/** /freecam: false when this player is not part of this film. */
@@ -636,21 +652,20 @@ public final class Cinema {
 		/** The viewer leaves the camera of the film and flies from where it was, like a spectator (the film goes on without them). */
 		private void goFree(Rider r, ServerPlayer p) {
 			r.free = true;
-			r.jumpReady = false;
 			p.setCamera(null);
 			Vec3 at = cameraAt != null ? cameraAt : p.position();
 			p.teleportTo(level, at.x, at.y, at.z, Set.of(), cameraYaw, cameraPitch, true);
 			p.setDeltaMovement(Vec3.ZERO);
-			p.sendSystemMessage(Component.literal("Free camera: fly around. /freecam goes back to the camera of the film.").withStyle(ChatFormatting.AQUA), true);
+			p.sendSystemMessage(Component.literal("Free camera: fly around. ").append(Component.keybind("key.pvpduels.free_cam")).append(" (or /freecam) goes back to the camera of the film.")
+				.withStyle(ChatFormatting.AQUA), true);
 		}
 
 		/** The viewer gets the camera of the film again (sneak skips the film from there, as always). */
 		private void backToCamera(Rider r, ServerPlayer p) {
 			r.free = false;
 			r.sneakReady = false;
-			r.jumpReady = false;
 			p.setCamera(camera);
-			p.sendSystemMessage(Component.literal("Camera of the film. Jump: free camera. Sneak: skip the film.").withStyle(ChatFormatting.GRAY), true);
+			p.sendSystemMessage(hintLine(), true);
 		}
 
 		/** A free viewer cannot fly off into the dark: too far from the middle (or too high or too low) and they are put back at the edge. */
@@ -671,8 +686,14 @@ public final class Cinema {
 			for (Rider r : riders) {
 				if (!r.riding || r.free) continue;
 				ServerPlayer p = server.getPlayerList().getPlayer(r.id);
-				if (p != null) p.sendSystemMessage(Component.literal("Jump: free camera   |   Sneak: skip").withStyle(ChatFormatting.GRAY), true);
+				if (p != null) p.sendSystemMessage(hintLine(), true);
 			}
+		}
+
+		/** The keys of the films, with the name of the key each player really has for them. */
+		private static Component hintLine() {
+			return Component.empty().append(Component.keybind("key.pvpduels.skip_scene")).append(": skip the film   |   ")
+				.append(Component.keybind("key.pvpduels.free_cam")).append(": free camera").withStyle(ChatFormatting.GRAY);
 		}
 
 		/** A viewer gets their own eyes back. {@code toStage}: the duelists also go back to where they started. */
@@ -817,7 +838,11 @@ public final class Cinema {
 			// the sad tune ends with the film (after the happy one when there is room for both)
 			int sadFrom = Math.max(0, camTicks + film.tail() - sad.length() - 1);
 			int s = a - sadFrom;
-			if (s >= 0 && s < sad.length()) Jingles.tick(level, audience(), cameraAt, sad, s);
+			if (s >= 0 && s < sad.length()) {
+				List<ServerPlayer> all = audience();
+				Jingles.tick(level, com.pvpduels.effects.MemeSounds.quiet(all), cameraAt, sad, s);
+				if (s == 0) com.pvpduels.effects.MemeSounds.play(com.pvpduels.effects.MemeSounds.loud(all), meme);
+			}
 		}
 
 		private void normal(int a) {
@@ -827,7 +852,11 @@ public final class Cinema {
 			}
 			// the sad tune of the loser comes after the cheerful one of the fireworks
 			int s = a - (6 + Jingles.common().length() + DEFEAT_GAP);
-			if (s >= 0 && s < sad.length()) Jingles.tick(level, audience(), cameraAt, sad, s);
+			if (s >= 0 && s < sad.length()) {
+				List<ServerPlayer> all = audience();
+				Jingles.tick(level, com.pvpduels.effects.MemeSounds.quiet(all), cameraAt, sad, s);
+				if (s == 0) com.pvpduels.effects.MemeSounds.play(com.pvpduels.effects.MemeSounds.loud(all), meme);
+			}
 		}
 
 		/** Where the hands of a duelist join. */
