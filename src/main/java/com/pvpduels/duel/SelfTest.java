@@ -519,24 +519,39 @@ public final class SelfTest {
 
 	private static final double[] WIND_SERVER = new double[8];
 
-	/** Dresses Alice, throws a wind charge at the floor next to her feet and reads how hard she is launched. */
-	private static void windCase(int slot, String label, Runnable dress) {
+	private static Vec3 windHome;
+
+	/** Dresses Alice, puts her back on her spot, sets off a wind charge and reads how hard she is launched. thrown: she throws it herself straight down at her feet (like in the game); otherwise it falls beside her feet. */
+	private static void windCase(int slot, String label, boolean thrown, Runnable dress) {
 		final int[] start = new int[1];
-		step("wind " + label + ": the charge lands beside her feet", () -> {
+		final String name = "wind " + label + (thrown ? " (thrown)" : " (beside)");
+		step(name + ": ready", () -> {
 			a.getInventory().clearContent();
 			dress.run();
+			a.teleportTo((ServerLevel) a.level(), windHome.x, windHome.y, windHome.z, java.util.Set.of(), 0f, 0f, true);
 			a.setDeltaMovement(Vec3.ZERO);
+			start[0] = ticks;
+		}, () -> ticks >= start[0] + 25, 100);
+		step(name + ": the charge goes off", () -> {
 			a.link.sent.clear();
 			WIND_SERVER[slot] = 0;
-			Vec3 at = a.position().add(0.55, 1.2, 0);
-			String command = String.format(java.util.Locale.ROOT, "summon minecraft:wind_charge %.3f %.3f %.3f {Motion:[0.0,-1.0,0.0]}", at.x, at.y, at.z);
-			server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withLevel((ServerLevel) a.level()).withSuppressedOutput(), command);
+			if (thrown) {
+				ItemStack charge = new ItemStack(Items.WIND_CHARGE, 4);
+				a.setItemSlot(EquipmentSlot.MAINHAND, charge);
+				a.setXRot(90f);
+				a.gameMode.useItem(a, (ServerLevel) a.level(), charge, InteractionHand.MAIN_HAND);
+			} else {
+				Vec3 at = a.position().add(0.55, 1.2, 0);
+				String command = String.format(java.util.Locale.ROOT, "summon minecraft:wind_charge %.3f %.3f %.3f {Motion:[0.0,-1.0,0.0]}", at.x, at.y, at.z);
+				server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withLevel((ServerLevel) a.level()).withSuppressedOutput(), command);
+			}
 			start[0] = ticks;
 		}, () -> {
 			WIND_SERVER[slot] = Math.max(WIND_SERVER[slot], a.getDeltaMovement().y);
-			return ticks >= start[0] + 10;
+			return ticks >= start[0] + 12;
 		}, 60);
-		step("wind " + label + ": how hard she was launched", () -> {
+		step(name + ": how hard she was launched", () -> {
+			a.setXRot(0f);
 			double best = 0;
 			double bestLen = 0;
 			int n = 0;
@@ -547,20 +562,14 @@ public final class SelfTest {
 				if (v.y > best) best = v.y;
 				bestLen = Math.max(bestLen, v.length());
 			}
-			StringBuilder names = new StringBuilder();
-			for (Packet<?> packet : List.copyOf(a.link.sent)) {
-				String pn = packet.getClass().getSimpleName();
-				if (!names.toString().contains(pn) && !pn.contains("Particles") && !pn.contains("Sound")) names.append(pn).append(' ');
-			}
 			// the server's own idea of how fast she went up is the fallback when no packet carries the number
 			if (best <= 0) best = WIND_SERVER[slot];
 			WIND_Y[slot] = best;
 			WIND_LEN[slot] = bestLen;
-			log("wind " + label + ": packets seen: " + names + "| server-side max upward speed " + WIND_SERVER[slot]);
-			log(String.format(java.util.Locale.ROOT, "wind %s: %d velocity packets, launch up %.3f (total %.3f); knockback resistance %.2f, explosion knockback resistance %.2f",
-				label, n, best, bestLen, a.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE),
+			log(String.format(java.util.Locale.ROOT, "%s: %d velocity packets, launch up %.3f (total %.3f), server-side %.3f; knockback resistance %.2f, explosion knockback resistance %.2f",
+				name, n, best, bestLen, WIND_SERVER[slot], a.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE),
 				a.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.EXPLOSION_KNOCKBACK_RESISTANCE)));
-			check("a wind charge launched her (" + label + ")", best > 0.2, String.valueOf(best));
+			check("a wind charge launched her (" + name + ")", best > 0.2, String.valueOf(best));
 		});
 	}
 
@@ -570,20 +579,31 @@ public final class SelfTest {
 		step("a fake player", () -> {
 			a = spawn("Alice");
 		}, () -> ticks > 60, 300);
-		windCase(0, "bare", () -> {});
-		windCase(1, "netherite chestplate", () -> a.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.NETHERITE_CHESTPLATE)));
-		windCase(2, "full netherite", () -> {
-			a.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
-			a.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.NETHERITE_CHESTPLATE));
-			a.setItemSlot(EquipmentSlot.LEGS, new ItemStack(Items.NETHERITE_LEGGINGS));
-			a.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.NETHERITE_BOOTS));
+		step("her spot", () -> {
+			windHome = a.position();
+			log("Alice stands at " + windHome + " on ground: " + a.onGround());
 		});
-		windCase(3, "diamond chestplate", () -> a.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.DIAMOND_CHESTPLATE)));
-		windCase(4, "bare again", () -> {});
+		for (int mode = 0; mode < 2; mode++) {
+			boolean thrown = mode == 1;
+			int o = mode * 4;
+			windCase(o, "bare", thrown, () -> {});
+			windCase(o + 1, "one netherite chestplate", thrown, () -> a.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.NETHERITE_CHESTPLATE)));
+			windCase(o + 2, "full netherite", thrown, () -> {
+				a.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.NETHERITE_HELMET));
+				a.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.NETHERITE_CHESTPLATE));
+				a.setItemSlot(EquipmentSlot.LEGS, new ItemStack(Items.NETHERITE_LEGGINGS));
+				a.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.NETHERITE_BOOTS));
+			});
+			windCase(o + 3, "one diamond chestplate", thrown, () -> a.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.DIAMOND_CHESTPLATE)));
+		}
 		step("wind: netherite does not weaken the launch", () -> {
-			check("one netherite piece launches as high as no armor (within 10%)", WIND_Y[1] >= WIND_Y[0] * 0.9 && WIND_Y[4] > 0, WIND_Y[1] + " vs " + WIND_Y[0] + " (bare again " + WIND_Y[4] + ")");
-			check("a full netherite set launches as high as no armor (within 10%)", WIND_Y[2] >= WIND_Y[0] * 0.9, WIND_Y[2] + " vs " + WIND_Y[0]);
-			check("the diamond chestplate is the control: as high as no armor", WIND_Y[3] >= WIND_Y[0] * 0.9, WIND_Y[3] + " vs " + WIND_Y[0]);
+			for (int mode = 0; mode < 2; mode++) {
+				int o = mode * 4;
+				String how = mode == 1 ? "thrown at her feet" : "beside her feet";
+				check("one netherite piece launches as high as no armor, " + how + " (within 10%)", WIND_Y[o] > 0 && WIND_Y[o + 1] >= WIND_Y[o] * 0.9, WIND_Y[o + 1] + " vs " + WIND_Y[o]);
+				check("a full netherite set launches as high as no armor, " + how + " (within 10%)", WIND_Y[o + 2] >= WIND_Y[o] * 0.9, WIND_Y[o + 2] + " vs " + WIND_Y[o]);
+				check("the diamond chestplate (control) launches as high as no armor, " + how + " (within 10%)", WIND_Y[o + 3] >= WIND_Y[o] * 0.9, WIND_Y[o + 3] + " vs " + WIND_Y[o]);
+			}
 			finish();
 		});
 	}
