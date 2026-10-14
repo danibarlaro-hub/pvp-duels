@@ -1,0 +1,3 @@
+--- boot only
+Server booted; stopping.
+RESULT: PASS
