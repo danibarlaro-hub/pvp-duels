@@ -34,7 +34,7 @@ jobs:
           ls run run/world 2>/dev/null | head -30
       - name: Second start - the same world, now with the mod's dimension, plays the test
         run: |
-          PVPDUELS_SELFTEST=run timeout 2400 gradle runServer --no-daemon --console=plain > second.log 2>&1 || true
+          PVPDUELS_SELFTEST=run timeout 3000 gradle runServer --no-daemon --console=plain > second.log 2>&1 || true
       - name: Publish the results to the selftest-out branch
         if: always()
         env:

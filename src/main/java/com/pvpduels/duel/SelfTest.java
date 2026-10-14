@@ -151,7 +151,7 @@ public final class SelfTest {
 	private static void tick() {
 		ticks++;
 		if (ticks % 10 == 0) clearMonsters();
-		if (ticks > 20 * 1500) {
+		if (ticks > 20 * 2000) {
 			check("whole test finishes in time", false);
 			finish();
 			return;
@@ -3397,23 +3397,28 @@ public final class SelfTest {
 			check("no two particles share an id or a name", all.stream().map(Particles.Def::id).distinct().count() == all.size() && all.stream().map(Particles.Def::name).distinct().count() == all.size());
 			check("23 firework things: 16 colors, 5 shapes, the trail and the twinkle", Effects.allFireworkItems().size() == 23 && Effects.COLORS.length == 16 && Effects.COLOR_RGB.length == 16
 				&& Effects.SHAPES.length == 5);
-			check("20 explosions with a name each", Effects.EXPLOSIONS.length == 20 && Effects.EXPLOSION_NAMES.length == 20 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
+			check("32 explosions with a name each", Effects.EXPLOSIONS.length == 32 && Effects.EXPLOSION_NAMES.length == 32 && Effects.EXPLOSION_NAMES[0].equals("Orbital Strike Cannon")
 				&& Effects.EXPLOSION_NAMES[2].equals("Shooting Star") && Effects.EXPLOSION_NAMES[3].equals("Black Hole") && Effects.EXPLOSION_NAMES[4].equals("Meteor Shower")
 				&& Effects.EXPLOSION_NAMES[5].equals("Gungnir") && Effects.EXPLOSION_NAMES[6].equals("Seven Stars") && Effects.EXPLOSION_NAMES[7].equals("Railgun")
 				&& Effects.EXPLOSION_NAMES[8].equals("Tesseract") && Effects.EXPLOSION_NAMES[9].equals("Eclipse") && Effects.EXPLOSION_NAMES[10].equals("Moonfall")
 				&& Effects.EXPLOSION_NAMES[11].equals("Cronos Clock") && Effects.EXPLOSION_NAMES[12].equals("Zeus Storm")
 				&& Effects.EXPLOSION_NAMES[13].equals("Domain: Crimson Shrine") && Effects.EXPLOSION_NAMES[14].equals("Domain: Infinite Void") && Effects.EXPLOSION_NAMES[15].equals("Domain: Field of Swords")
 				&& Effects.EXPLOSION_NAMES[16].equals("Domain: Frozen Abyss") && Effects.EXPLOSION_NAMES[17].equals("Domain: Infernal Throne") && Effects.EXPLOSION_NAMES[18].equals("Domain: Cherry Garden")
-				&& Effects.EXPLOSION_NAMES[19].equals("Domain: Abyssal Sea"));
-			check("every explosion has a unique id, and the seven domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 20
+				&& Effects.EXPLOSION_NAMES[19].equals("Domain: Abyssal Sea")
+				&& Effects.EXPLOSION_NAMES[20].equals("Pillars of Fire") && Effects.EXPLOSION_NAMES[21].equals("Tornado") && Effects.EXPLOSION_NAMES[22].equals("Crystal Burst")
+				&& Effects.EXPLOSION_NAMES[23].equals("Rift Storm") && Effects.EXPLOSION_NAMES[24].equals("Dragon Strike") && Effects.EXPLOSION_NAMES[25].equals("Titan Fist")
+				&& Effects.EXPLOSION_NAMES[26].equals("Soul Reaper") && Effects.EXPLOSION_NAMES[27].equals("Solar Flare") && Effects.EXPLOSION_NAMES[28].equals("Supernova")
+				&& Effects.EXPLOSION_NAMES[29].equals("Prism Beams") && Effects.EXPLOSION_NAMES[30].equals("Spore Bloom") && Effects.EXPLOSION_NAMES[31].equals("Sculk Awakening"));
+			check("every explosion has a unique id, and the seven domains and the films are known", java.util.Arrays.stream(Effects.EXPLOSIONS).distinct().count() == 32
+				&& com.pvpduels.effects.Wonders.all().size() == 12 && com.pvpduels.effects.Wonders.all().stream().allMatch(w -> Films.of(w.id()) != null && w.ticks(false) <= Victory.EXPLOSION_SHOW_TICKS && w.ticks(true) > 140)
 				&& com.pvpduels.effects.DomeArt.Variant.values().length == 7 && Films.of("domain_frost") != null && Films.of("domain_inferno") != null && Films.of("domain_garden") != null && Films.of("domain_ocean") != null
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_frost") != null && com.pvpduels.effects.DomeArt.Variant.of("domain_inferno") != null
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_garden") != null && com.pvpduels.effects.DomeArt.Variant.of("domain_ocean") != null
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_expansion") != null && com.pvpduels.effects.DomeArt.Variant.of("domain_void") != null
 				&& com.pvpduels.effects.DomeArt.Variant.of("domain_swords") != null && com.pvpduels.effects.DomeArt.Variant.of("gungnir") == null
 				&& Films.of("shooting_star") != null && Films.of("gungnir") != null && Films.of("seven_stars") != null && Films.of("railgun") != null && Films.of("tesseract") != null && Films.of("eclipse") != null && Films.of("moonfall") != null && Films.of("cronos") != null && Films.of("zeus") != null && Films.of("domain_void") != null && Films.of("orbital_strike") != null && Films.of("orbital_wither") != null && Films.of("black_hole") != null && Films.of("meteor_shower") != null && Films.of("nope") == null);
-			check("the menus have a place for each, inside the six rows", EffectsMenus.explosionSlot(0) == 10 && EffectsMenus.explosionSlot(6) == 16
-				&& EffectsMenus.explosionSlot(7) == 19 && EffectsMenus.explosionSlot(Effects.EXPLOSIONS.length - 1) < 45);
+			check("the menus have a place for each, inside the six rows", EffectsMenus.explosionSlot(0) == 9 && EffectsMenus.explosionSlot(8) == 17
+				&& EffectsMenus.explosionSlot(9) == 18 && EffectsMenus.explosionSlot(Effects.EXPLOSIONS.length - 1) < 45);
 			check("3 fireworks, 2 floor slots, 4 arena slots, 5 colors", Effects.FIREWORK_SLOTS == 3 && Effects.FLOOR_SLOTS == 2 && Effects.AREA_SLOTS == 4 && Effects.MAX_COLORS == 5);
 			check("the chances are the ones asked for", Effects.fireworkChance == 0.70 && Effects.particleChance == 0.40 && Effects.explosionChance == 0.008 && Effects.weeklyExplosionChance == 0.015 && Effects.explosionPity == 100);
 		});
@@ -4331,7 +4336,19 @@ public final class SelfTest {
 			{"orbital_wither", "WITHER CANNON", "FILM", "56", "10"},
 			{"black_hole", "BLACK HOLE", "FILM", String.valueOf(26 + com.pvpduels.effects.ExplosionArt.HOLE_COLLAPSE - 6), "15"},
 			{"meteor_shower", "METEOR SHOWER", "FILM", String.valueOf(24 + com.pvpduels.effects.ExplosionArt.SHOWER_BIG + 10), "12"},
-			{"seven_stars", "SEVEN STARS", "FILM", String.valueOf(Films.SEVEN_LEAD + 90), "4"}};
+			{"seven_stars", "SEVEN STARS", "FILM", String.valueOf(Films.SEVEN_LEAD + 90), "4"},
+			{"fire_pillars", "PILLARS OF FIRE", "FILM", String.valueOf(100 + 6), "20"},
+			{"tornado", "TORNADO", "FILM", String.valueOf(108 + 6), "30"},
+			{"crystal_burst", "CRYSTAL BURST", "FILM", String.valueOf(76 + 6), "40"},
+			{"rift_storm", "RIFT STORM", "FILM", String.valueOf(96 + 6), "35"},
+			{"dragon_strike", "DRAGON STRIKE", "FILM", String.valueOf(110 + 6), "22"},
+			{"titan_fist", "TITAN FIST", "FILM", String.valueOf(80 + 6), "35"},
+			{"soul_reaper", "SOUL REAPER", "FILM", String.valueOf(100 + 6), "12"},
+			{"solar_flare", "SOLAR FLARE", "FILM", String.valueOf(110 + 6), "50"},
+			{"supernova", "SUPERNOVA", "FILM", String.valueOf(108 + 6), "28"},
+			{"prism_beams", "PRISM BEAMS", "FILM", String.valueOf(108 + 6), "35"},
+			{"spore_bloom", "SPORE BLOOM", "FILM", String.valueOf(108 + 6), "55"},
+			{"sculk_awakening", "SCULK AWAKENING", "FILM", String.valueOf(108 + 6), "20"}};
 		// the fake connection only keeps the last 4000 packets, so the title is noted as soon as it arrives
 		final boolean[] heard = new boolean[2];
 		final int[] drain = new int[1];
@@ -4543,7 +4560,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.18.0", version.equals("0.18.0"), version);
+			check("the mod says 0.19.0", version.equals("0.19.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
@@ -4719,7 +4736,10 @@ public final class SelfTest {
 		// ---------------------------------------------------------------- the new explosions of 0.12 on the dummy (their quick versions)
 		final String[][] quick = {{"gungnir", "Gungnir", "25"}, {"seven_stars", "Seven Stars", "25"}, {"railgun", "Railgun", "25"}, {"tesseract", "Tesseract", "25"}, {"eclipse", "Eclipse", "25"}, {"moonfall", "Moonfall", "25"}, {"cronos", "Cronos Clock", "25"}, {"zeus", "Zeus Storm", "25"}, {"domain_void", "Domain: Infinite Void", "25"},
 			{"domain_swords", "Domain: Field of Swords", "50"}, {"domain_frost", "Domain: Frozen Abyss", "25"}, {"domain_inferno", "Domain: Infernal Throne", "25"},
-			{"domain_garden", "Domain: Cherry Garden", "25"}, {"domain_ocean", "Domain: Abyssal Sea", "25"}};
+			{"domain_garden", "Domain: Cherry Garden", "25"}, {"domain_ocean", "Domain: Abyssal Sea", "25"},
+			{"fire_pillars", "Pillars of Fire", "20", "58"}, {"tornado", "Tornado", "28", "62"}, {"crystal_burst", "Crystal Burst", "28", "46"}, {"rift_storm", "Rift Storm", "22", "56"},
+			{"dragon_strike", "Dragon Strike", "22", "64"}, {"titan_fist", "Titan Fist", "28", "46"}, {"soul_reaper", "Soul Reaper", "12", "58"}, {"solar_flare", "Solar Flare", "40", "62"},
+			{"supernova", "Supernova", "22", "62"}, {"prism_beams", "Prism Beams", "32", "62"}, {"spore_bloom", "Spore Bloom", "50", "62"}, {"sculk_awakening", "Sculk Awakening", "14", "62"}};
 		for (String[] q : quick) {
 			step("quick " + q[1] + ": Dora tries it on the dummy", () -> {
 				dora.closeContainer();
@@ -4727,7 +4747,7 @@ public final class SelfTest {
 				dora.link.sent.clear();
 				check("it starts", Victory.tryOn(dora, q[0], dora.position().add(4, 0, 0)) == null && Victory.activeShows() == 1);
 				xfx[0] = ticks;
-			}, () -> ticks >= xfx[0] + (q[0].equals("railgun") ? 80 : 50), 300);
+			}, () -> ticks >= xfx[0] + (q[0].equals("railgun") ? 80 : q.length > 3 ? Integer.parseInt(q[3]) : 50), 300);
 			step("quick " + q[1] + ": its solid parts stand in the world", () -> {
 				int made = com.pvpduels.effects.Props.createdCount() - xfx[1];
 				check(q[1] + " made display entities", made >= Integer.parseInt(q[2]), made + " made");

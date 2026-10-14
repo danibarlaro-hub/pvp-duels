@@ -11,6 +11,7 @@ import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.SkyArt;
 import com.pvpduels.effects.StormArt;
 import com.pvpduels.effects.StrikeArt;
+import com.pvpduels.effects.Wonders;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -88,6 +89,12 @@ final class Films {
 	static final Film INFERNO = new DomainFilm(DomeArt.Variant.INFERNO);
 	static final Film GARDEN = new DomainFilm(DomeArt.Variant.GARDEN);
 	static final Film OCEAN = new DomainFilm(DomeArt.Variant.OCEAN);
+	/** The twelve newest explosions share one film that follows the numbers of {@link Wonders}. */
+	private static final java.util.Map<String, Film> WONDER_FILMS = new java.util.HashMap<>();
+
+	static {
+		for (Wonders.Wonder w : Wonders.all()) WONDER_FILMS.put(w.id(), new WonderFilm(w));
+	}
 
 	private Films() {}
 
@@ -114,7 +121,7 @@ final class Films {
 			case "domain_inferno" -> INFERNO;
 			case "domain_garden" -> GARDEN;
 			case "domain_ocean" -> OCEAN;
-			default -> null;
+			default -> WONDER_FILMS.get(explosion);
 		};
 	}
 
@@ -951,6 +958,77 @@ final class Films {
 				if (s.doubles[s.win] != null) s.doubles[s.win].setXRot(0f);
 				s.flash();
 				s.title(Component.literal("ZEUS STORM").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ the twelve newest explosions
+
+	private static final class WonderFilm implements Film {
+		private final Wonders.Wonder w;
+
+		WonderFilm(Wonders.Wonder w) {
+			this.w = w;
+		}
+
+		@Override public String id() { return w.id(); }
+		@Override public boolean domain() { return false; }
+		@Override public int camTicks() { return w.ticks(true); }
+		@Override public int tail() { return Cinema.TAIL; }
+
+		/** How far, how high and how fast the camera moves before the blast (rho and height at the start and at the blast). */
+		private double[] plan() {
+			return switch (w.cam()) {
+				case ORBIT -> new double[] {22, 15, 4.0, 3.5};
+				case LOW -> new double[] {24, 18, 1.6, 2.6};
+				case WIDE -> new double[] {34, 30, 9.0, 12.0};
+				case CRANE -> new double[] {26, 22, 3.0, 14.0};
+			};
+		}
+
+		@Override
+		public Vec3 camera(Cinema.Scene s, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			double floor = s.center.y;
+			int impact = w.impact(true);
+			int end = w.ticks(true);
+			double[] p = plan();
+			double k = Cinema.ease(clamp01(a / (double) impact));
+			double rho = p[0] + (p[1] - p[0]) * k;
+			double y = p[2] + (p[3] - p[2]) * k;
+			double phi = Math.atan2(s.side.z, s.side.x) + 0.005 * Math.min(a, impact);
+			if (a > impact) {
+				double q = Cinema.ease(clamp01((a - impact) / (double) Math.max(1, end - impact)));
+				rho += 8 * q;
+				y += 5 * q;
+				phi += 0.004 * (a - impact);
+			}
+			Vec3 pos = around(loser, rho, phi, floor + y);
+			int since = a - impact;
+			if (since >= 0 && since < 16) pos = Cinema.Scene.shake(pos, 1.1 * (1 - since / 16.0));
+			return pos;
+		}
+
+		@Override
+		public Vec3 look(Cinema.Scene s, Vec3 cam, int a) {
+			Vec3 loser = s.stage[1 - s.win];
+			int impact = w.impact(true);
+			double k = Cinema.ease(clamp01((a - impact + 4) / 22.0));
+			double focus = w.focusPre() + (w.focusPost() - w.focusPre()) * k;
+			return safe(loser.add(0, focus, 0).subtract(cam));
+		}
+
+		@Override
+		public void play(Cinema.Scene s, int a) {
+			List<ServerPlayer> viewers = s.audience();
+			Vec3 loser = s.stage[1 - s.win];
+			Props props = s.props();
+			w.play(s.level, viewers, props, loser, a, true);
+			for (Vec3 at : props.tick(a)) ExplosionArt.landing(s.level, viewers, at);
+			if (a == w.impact(true)) {
+				s.flash();
+				s.title(Component.literal(w.title()).withStyle(w.color(), ChatFormatting.BOLD),
 					Component.literal(s.names[s.win] + " wins").withStyle(ChatFormatting.WHITE), 0, 50, 20);
 			}
 		}

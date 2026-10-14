@@ -368,7 +368,10 @@ public final class Victory {
 				Vec3 bowl = new Vec3(s.target.x, s.target.y, s.target.z);
 				StrikeArt.sevenStars(s.level, viewers, s.props, bowl, side, t, false);
 			}
-			default -> { }
+			default -> {
+				Wonders.Wonder wonder = Wonders.of(s.explosion);
+				if (wonder != null) wonder.play(s.level, viewers, s.props, s.target, t, false);
+			}
 		}
 	}
 

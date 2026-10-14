@@ -115,6 +115,18 @@ public final class Jingles {
 		tune("domain_inferno").layer(guitar, 1.1f, 3, 0, "0 3 5 0 3 6 5 3").layer(drum, 1.0f, 6, 0, "2 . 2 . 2 2").layer(bit, 0.6f, 3, 24, "12 15 18");
 		tune("domain_garden").layer(flute, 0.9f, 4, 0, "13 15 17 20 17 15 13").layer(harp, 0.7f, 4, 2, "6+10 . 8+13 . 6+10").layer(chime, 0.6f, 4, 28, "22+24");
 		tune("domain_ocean").layer(harp, 0.9f, 3, 0, "6 10 13 10 6 10 13 17").layer(bass, 0.9f, 6, 0, "6 . 3 . 5 .").layer(chime, 0.5f, 5, 6, "22 . 24 . 20");
+		tune("fire_pillars").layer(drum, 1.2f, 4, 0, "3 . 3 . 3 3 6").layer(guitar, 1.0f, 3, 2, "0 3 5 0 3 6 5 8").layer(bit, 0.6f, 3, 26, "12 15 18 22");
+		tune("tornado").layer(didgeridoo, 1.1f, 5, 0, "0 . 3 . 5 . 8").layer(flute, 0.8f, 2, 4, "12 14 16 18 20 22 24").layer(snare, 0.6f, 2, 18, "8 8 8 8");
+		tune("crystal_burst").layer(chime, 0.9f, 2, 0, "17 20 22 24 22 24").layer(bell, 0.7f, 3, 8, "13+17 . 20+24").layer(iron, 0.6f, 2, 20, "24 22 24");
+		tune("rift_storm").layer(bit, 0.9f, 2, 0, "12 11 12 10 12 8 12 6").layer(didgeridoo, 1.1f, 7, 0, "0 . 1 . 0").layer(pling, 0.6f, 4, 18, "24 . 23");
+		tune("dragon_strike").layer(didgeridoo, 1.2f, 6, 0, "0 . 3 . 0 . 5").layer(guitar, 0.9f, 3, 3, "6 6 9 6 11 9 6").layer(drum, 1.1f, 6, 0, "2 . 2 2");
+		tune("titan_fist").layer(drum, 1.3f, 5, 0, "2 . 2 . . 0").layer(bass, 1.2f, 5, 0, "6 . 6 . . 1").layer(iron, 0.7f, 3, 27, "13 18 22");
+		tune("soul_reaper").layer(flute, 0.9f, 5, 0, "10 8 5 3 1 0").layer(bell, 0.7f, 5, 2, "15 . 13 . 10").layer(didgeridoo, 0.9f, 10, 0, "0 . 0");
+		tune("solar_flare").layer(harp, 1.0f, 3, 0, "6 10 13 18 22 18 22 24").layer(bell, 0.8f, 4, 4, "13+18 . 18+22").layer(pling, 0.6f, 4, 28, "24+22");
+		tune("supernova").layer(bell, 0.9f, 4, 0, "24 20 17 13 10 6 3").layer(bit, 0.6f, 2, 14, "0 6 12 18 24").layer(chime, 0.8f, 3, 28, "22+24 24");
+		tune("prism_beams").layer(xylophone, 0.9f, 2, 0, "6 8 10 11 13 15 17 18").layer(chime, 0.7f, 3, 14, "18 20 22 24");
+		tune("spore_bloom").layer(banjo, 0.9f, 3, 0, "10 13 15 13 17 15 13").layer(flute, 0.7f, 3, 1, "17 20 22 20 24").layer(cowBell, 0.6f, 6, 12, "6 . 6");
+		tune("sculk_awakening").layer(didgeridoo, 1.1f, 6, 0, "0 . 0 . 1").layer(bell, 0.6f, 4, 3, "12 . 11 . 12 10").layer(snare, 0.7f, 2, 24, "8 8 10 12");
 	}
 
 	private Jingles() {}

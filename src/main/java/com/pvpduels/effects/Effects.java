@@ -41,12 +41,15 @@ public final class Effects {
 	public static final String[] SHAPE_NAMES = {"Small ball", "Large ball", "Star", "Creeper", "Burst"};
 	/**
 	 * Every explosion, in the order of the menus. The ids are what is saved for each player, so they never change; the seven Domain
-	 * Expansions are the last ones: {@code domain_expansion} is the first one the mod had and is now the Crimson Shrine.
+	 * Expansions come after the older ones ({@code domain_expansion} is the first one the mod had and is now the Crimson Shrine) and
+	 * the twelve newest ones ({@link Wonders}) come last.
 	 */
 	public static final String[] EXPLOSIONS = {"orbital_strike", "orbital_wither", "shooting_star", "black_hole", "meteor_shower", "gungnir", "seven_stars",
-		"railgun", "tesseract", "eclipse", "moonfall", "cronos", "zeus", "domain_expansion", "domain_void", "domain_swords", "domain_frost", "domain_inferno", "domain_garden", "domain_ocean"};
+		"railgun", "tesseract", "eclipse", "moonfall", "cronos", "zeus", "domain_expansion", "domain_void", "domain_swords", "domain_frost", "domain_inferno", "domain_garden", "domain_ocean",
+		"fire_pillars", "tornado", "crystal_burst", "rift_storm", "dragon_strike", "titan_fist", "soul_reaper", "solar_flare", "supernova", "prism_beams", "spore_bloom", "sculk_awakening"};
 	public static final String[] EXPLOSION_NAMES = {"Orbital Strike Cannon", "Orbital Wither Cannon", "Shooting Star", "Black Hole", "Meteor Shower", "Gungnir", "Seven Stars",
-		"Railgun", "Tesseract", "Eclipse", "Moonfall", "Cronos Clock", "Zeus Storm", "Domain: Crimson Shrine", "Domain: Infinite Void", "Domain: Field of Swords", "Domain: Frozen Abyss", "Domain: Infernal Throne", "Domain: Cherry Garden", "Domain: Abyssal Sea"};
+		"Railgun", "Tesseract", "Eclipse", "Moonfall", "Cronos Clock", "Zeus Storm", "Domain: Crimson Shrine", "Domain: Infinite Void", "Domain: Field of Swords", "Domain: Frozen Abyss", "Domain: Infernal Throne", "Domain: Cherry Garden", "Domain: Abyssal Sea",
+		"Pillars of Fire", "Tornado", "Crystal Burst", "Rift Storm", "Dragon Strike", "Titan Fist", "Soul Reaper", "Solar Flare", "Supernova", "Prism Beams", "Spore Bloom", "Sculk Awakening"};
 
 	/** The chances of the rewards of a mission (each mission rolls them). Easy to change here. */
 	public static double fireworkChance = 0.70;
