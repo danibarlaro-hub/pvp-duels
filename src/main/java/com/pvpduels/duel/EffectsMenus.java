@@ -239,7 +239,7 @@ public final class EffectsMenus {
 	private static final Item[] EXPLOSION_ICONS = {Items.TNT, Items.WITHER_SKELETON_SKULL, Items.NETHER_STAR, Items.END_PORTAL_FRAME, Items.FIRE_CHARGE,
 		Items.TRIDENT, Items.AMETHYST_SHARD, Items.END_ROD, Items.END_CRYSTAL, Items.COAL_BLOCK, Items.SEA_LANTERN, Items.CLOCK, Items.BLAZE_ROD, Items.BONE_BLOCK, Items.ENDER_EYE, Items.IRON_SWORD,
 		Items.BLUE_ICE, Items.MAGMA_BLOCK, Items.CHERRY_SAPLING, Items.HEART_OF_THE_SEA,
-		Items.MAGMA_CREAM, Items.WHITE_WOOL, Items.AMETHYST_CLUSTER, Items.CRYING_OBSIDIAN, Items.DRAGON_HEAD, Items.ANVIL, Items.NETHERITE_HOE, Items.GLOWSTONE,
+		Items.MAGMA_CREAM, Items.FEATHER, Items.AMETHYST_CLUSTER, Items.CRYING_OBSIDIAN, Items.DRAGON_HEAD, Items.ANVIL, Items.NETHERITE_HOE, Items.GLOWSTONE,
 		Items.FIREWORK_STAR, Items.PRISMARINE_CRYSTALS, Items.RED_MUSHROOM, Items.SCULK_SHRIEKER};
 
 	/** Where explosion number {@code i} sits in the menus: the four middle rows, left to right (room for 36). */
