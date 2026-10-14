@@ -64,7 +64,7 @@ public final class Wonders {
 		add("crystal_burst", "Crystal Burst", "CRYSTAL BURST", ChatFormatting.LIGHT_PURPLE, Cam.ORBIT, 3.2, 5, 40, 76, 96, 164, EarthWonders::crystalBurst);
 		add("rift_storm", "Rift Storm", "RIFT STORM", ChatFormatting.DARK_PURPLE, Cam.LOW, 9, 3, 50, 96, 104, 180, SkyWonders::riftStorm);
 		add("dragon_strike", "Dragon Strike", "DRAGON STRIKE", ChatFormatting.DARK_PURPLE, Cam.WIDE, 14, 3, 58, 110, 104, 180, SkyWonders::dragonStrike);
-		add("titan_fist", "Titan Fist", "TITAN FIST", ChatFormatting.GRAY, Cam.WIDE, 18, 3, 40, 80, 100, 170, EarthWonders::titanFist);
+		add("titan_fist", "Titan Fist", "TITAN FIST", ChatFormatting.GRAY, Cam.ORBIT, 18, 3, 40, 80, 100, 170, EarthWonders::titanFist);
 		add("soul_reaper", "Soul Reaper", "SOUL REAPER", ChatFormatting.AQUA, Cam.WIDE, 8, 4, 52, 100, 100, 176, SkyWonders::soulReaper);
 		add("solar_flare", "Solar Flare", "SOLAR FLARE", ChatFormatting.YELLOW, Cam.CRANE, 14, 4, 56, 110, 104, 184, SkyWonders::solarFlare);
 		add("supernova", "Supernova", "SUPERNOVA", ChatFormatting.WHITE, Cam.LOW, 15, 8, 56, 108, 108, 190, SkyWonders::supernova);
