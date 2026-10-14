@@ -36,12 +36,15 @@ import java.util.UUID;
  * </ul>
  * A match starts a duel at once: flat arena with walls, first to 3 points. Leave with the Leave barrier, /queue leave or the
  * [LEAVE QUEUE] button.
+ * <p>
+ * A full party (two partners) queues together: whichever of the two opens the queue, both are in it, and it only matches another
+ * party (a 2v2). A single player only matches another single player.
  */
 public final class Queue {
 	public enum Mode { PUBLIC, RANDOM, OWN }
 
-	/** kit: the public / own kit chosen, or null for "random". */
-	record Entry(UUID id, String name, Mode mode, String kit, int since) {}
+	/** kit: the public / own kit chosen, or null for "random". team: a party waits (id is the one who joined; the partner waits too). */
+	record Entry(UUID id, String name, Mode mode, String kit, int since, boolean team) {}
 
 	/** A kit that can be played: where to find it and how to name it. */
 	record Choice(UUID owner, String name, boolean onShelf, String source) {}
@@ -59,8 +62,49 @@ public final class Queue {
 	}
 
 	static Entry entryOf(UUID id) {
-		for (Entry e : ENTRIES) if (e.id().equals(id)) return e;
+		for (Entry e : ENTRIES) {
+			if (e.id().equals(id)) return e;
+			if (e.team() && id.equals(Party.partnerOf(e.id()))) return e;
+		}
 		return null;
+	}
+
+	/** Takes the player (or their party) out of the queue without a word. Used when a party ends. */
+	static void drop(UUID id) {
+		Entry e = entryOf(id);
+		if (e != null) ENTRIES.remove(e);
+	}
+
+	private static ServerPlayer playerOf(MinecraftServer server, UUID id) {
+		return id == null ? null : server.getPlayerList().getPlayer(id);
+	}
+
+	/** Both players of an entry that are online (one for a single player). */
+	private static List<ServerPlayer> membersOf(MinecraftServer server, Entry e) {
+		List<ServerPlayer> out = new ArrayList<>();
+		ServerPlayer first = playerOf(server, e.id());
+		if (first != null) out.add(first);
+		if (e.team()) {
+			ServerPlayer mate = playerOf(server, Party.partnerOf(e.id()));
+			if (mate != null) out.add(mate);
+		}
+		return out;
+	}
+
+	/** The names the entry goes by: "Alice" or "Alice & Bob". */
+	private static String who(MinecraftServer server, Entry e) {
+		if (!e.team()) return e.name();
+		ServerPlayer mate = playerOf(server, Party.partnerOf(e.id()));
+		return e.name() + (mate == null ? "" : " & " + mate.getName().getString());
+	}
+
+	/** True when everybody of the entry is online and free. */
+	private static boolean available(MinecraftServer server, Entry e) {
+		ServerPlayer p = playerOf(server, e.id());
+		if (p == null || DuelManager.isBusy(p.getUUID())) return false;
+		if (!e.team()) return true;
+		UUID mate = Party.partnerOf(e.id());
+		return mate != null && playerOf(server, mate) != null && !DuelManager.isBusy(mate);
 	}
 
 	static int size() {
@@ -81,16 +125,24 @@ public final class Queue {
 		Entry e = entryOf(p.getUUID());
 		if (e == null) return false;
 		ENTRIES.remove(e);
-		if (say) p.sendSystemMessage(Msg.ok("You left the " + label(e) + " queue."));
+		if (say) {
+			p.sendSystemMessage(Msg.ok("You left the " + label(e) + " queue."));
+			if (e.team()) {
+				UUID mateId = e.id().equals(p.getUUID()) ? Party.partnerOf(e.id()) : e.id();
+				ServerPlayer mate = playerOf(p.level().getServer(), mateId);
+				if (mate != null) mate.sendSystemMessage(Msg.info(p.getName().getString() + " took your party out of the " + label(e) + " queue."));
+			}
+		}
 		return true;
 	}
 
 	private static String label(Entry e) {
-		return switch (e.mode()) {
+		String name = switch (e.mode()) {
 			case PUBLIC -> "public" + (e.kit() == null ? " (random public kit)" : " (" + e.kit() + ")");
 			case RANDOM -> "random";
 			case OWN -> "own kit (" + e.kit() + ")";
 		};
+		return e.team() ? "2v2 " + name : name;
 	}
 
 	// ------------------------------------------------------------------ joining
@@ -98,7 +150,13 @@ public final class Queue {
 	private static String canQueue(ServerPlayer p) {
 		if (DuelManager.isBusy(p.getUUID())) return "You are busy: use /leave to get out of the duel, the workshop or spectator mode first.";
 		if (BotDuel.isBot(p.getUUID())) return "Bots don't queue.";
-		if (Party.inParty(p.getUUID())) return "The queue is for 1v1. Use /party leave first if you want to use it.";
+		if (Party.inParty(p.getUUID())) {
+			// a party queues together: the partner has to be here and free
+			UUID mateId = Party.partnerOf(p.getUUID());
+			ServerPlayer mate = playerOf(p.level().getServer(), mateId);
+			if (mate == null) return "Your partner is not online.";
+			if (DuelManager.isBusy(mateId)) return mate.getName().getString() + " is busy right now.";
+		}
 		return null;
 	}
 
@@ -143,9 +201,13 @@ public final class Queue {
 		if (offer == null) return waitingName + " is not waiting with a kit right now. See /queue list.";
 		MinecraftServer server = p.level().getServer();
 		ServerPlayer owner = server.getPlayerList().getPlayer(offer.id());
-		if (owner == null || DuelManager.isBusy(owner.getUUID())) {
+		if (owner == null || !available(server, offer)) {
 			ENTRIES.remove(offer);
 			return waitingName + " is not available any more.";
+		}
+		if (offer.team() != Party.isFull(p.getUUID())) {
+			return offer.team() ? waitingName + " is waiting with a partner (2v2). You need a party too: /party invite <friend>."
+				: waitingName + " is waiting alone (1v1). Use /party leave first if you want to take it.";
 		}
 		KitStore.Kit kit;
 		try {
@@ -164,11 +226,19 @@ public final class Queue {
 	}
 
 	private static String add(ServerPlayer p, Mode mode, String kit) {
+		boolean team = Party.isFull(p.getUUID());
 		leave(p, false);
-		Entry mine = new Entry(p.getUUID(), p.getName().getString(), mode, kit, tick);
+		Entry mine = new Entry(p.getUUID(), p.getName().getString(), mode, kit, tick, team);
 		ENTRIES.add(mine);
 		p.sendSystemMessage(Msg.ok("You joined the " + label(mine) + " queue.").copy().append(Component.literal("  "))
 			.append(Msg.button("[LEAVE QUEUE]", ChatFormatting.RED, "/queue leave", "Leave the queue")));
+		if (team) {
+			ServerPlayer mate = playerOf(p.level().getServer(), Party.partnerOf(p.getUUID()));
+			if (mate != null) {
+				mate.sendSystemMessage(Msg.ok(p.getName().getString() + " put your party in the " + label(mine) + " queue.").copy().append(Component.literal("  "))
+					.append(Msg.button("[LEAVE QUEUE]", ChatFormatting.RED, "/queue leave", "Leave the queue")));
+			}
+		}
 		if (mode != Mode.OWN) tryMatch(p.level().getServer(), mine);
 		else p.sendSystemMessage(Msg.info("Waiting for somebody to take your kit '" + kit + "'. Others see it in /queue."));
 		return null;
@@ -179,10 +249,9 @@ public final class Queue {
 	private static void tryMatch(MinecraftServer server, Entry mine) {
 		Entry other = null;
 		for (Entry e : ENTRIES) {
-			if (e == mine || e.id().equals(mine.id()) || e.mode() != mine.mode()) continue;
+			if (e == mine || e.id().equals(mine.id()) || e.mode() != mine.mode() || e.team() != mine.team()) continue;
 			if (mine.mode() == Mode.PUBLIC && !sameKit(e.kit(), mine.kit())) continue;
-			ServerPlayer waiting = server.getPlayerList().getPlayer(e.id());
-			if (waiting == null || DuelManager.isBusy(waiting.getUUID())) continue; // the tick will take it out of the queue
+			if (!available(server, e)) continue; // the tick will take it out of the queue
 			other = e;
 			break; // the one who waited longest
 		}
@@ -264,15 +333,35 @@ public final class Queue {
 	}
 
 	private static void startMatch(MinecraftServer server, ServerPlayer first, ServerPlayer second, UUID kitOwner, String kitName, KitStore.Kit kit, String source) {
-		for (ServerPlayer p : new ServerPlayer[] {first, second}) {
-			ServerPlayer rival = p == first ? second : first;
+		boolean team = Party.isFull(first.getUUID()) && Party.isFull(second.getUUID());
+		ServerPlayer firstMate = team ? playerOf(server, Party.partnerOf(first.getUUID())) : null;
+		ServerPlayer secondMate = team ? playerOf(server, Party.partnerOf(second.getUUID())) : null;
+		if (team && (firstMate == null || secondMate == null)) {
+			first.sendSystemMessage(Msg.err("A partner is no longer online. Join the queue again."));
+			second.sendSystemMessage(Msg.err("A partner is no longer online. Join the queue again."));
+			return;
+		}
+		List<ServerPlayer> everybody = new ArrayList<>(List.of(first, second));
+		if (team) {
+			everybody.add(firstMate);
+			everybody.add(secondMate);
+		}
+		for (ServerPlayer p : everybody) {
+			String rivals;
+			if (!team) {
+				rivals = (p == first ? second : first).getName().getString();
+			} else if (p == first || p == firstMate) {
+				rivals = second.getName().getString() + " & " + secondMate.getName().getString();
+			} else {
+				rivals = first.getName().getString() + " & " + firstMate.getName().getString();
+			}
 			p.sendSystemMessage(Msg.title("Match found!"));
-			p.sendSystemMessage(Msg.info("  " + rival.getName().getString() + " - kit " + kitName + " (" + source + "). Flat arena, first to 3 points."));
+			p.sendSystemMessage(Msg.info("  " + (team ? "2v2 against " : "") + rivals + " - kit " + kitName + " (" + source + "). Flat arena, first to 3 "
+				+ (team ? "rounds." : "points.")));
 		}
 		DuelConfig config = new DuelConfig(kitName, true, WinMode.FIRST_TO, 3);
 		if (!DuelManager.startMatched(server, first, second, kitOwner, config, kit)) {
-			first.sendSystemMessage(Msg.err("The duel could not start. Join the queue again."));
-			second.sendSystemMessage(Msg.err("The duel could not start. Join the queue again."));
+			for (ServerPlayer p : everybody) p.sendSystemMessage(Msg.err("The duel could not start. Join the queue again."));
 		}
 	}
 
@@ -297,7 +386,7 @@ public final class Queue {
 				leave(who, true);
 			});
 		}
-		ChoiceMenu.open(p, Component.literal("Queue" + (mine == null ? "" : " (waiting)")), 3, b);
+		ChoiceMenu.open(p, Component.literal("Queue" + (Party.isFull(p.getUUID()) ? " 2v2" : "") + (mine == null ? "" : " (waiting)")), 3, b);
 	}
 
 	private static void report(ServerPlayer p, String problem) {
@@ -344,10 +433,11 @@ public final class Queue {
 	private static void openOwnMenu(ServerPlayer p) {
 		ChoiceMenu.Builder b = new ChoiceMenu.Builder(6);
 		int slot = 9;
+		boolean team = Party.isFull(p.getUUID());
 		for (Entry e : ENTRIES) {
-			if (e.mode() != Mode.OWN || e.id().equals(p.getUUID()) || slot >= 45) continue;
+			if (e.mode() != Mode.OWN || e == entryOf(p.getUUID()) || e.team() != team || slot >= 45) continue;
 			String waiting = e.name();
-			b.set(slot++, DuelMenus.icon(Items.CHEST, waiting + "'s kit: " + e.kit(), ChatFormatting.GOLD, "Waiting for a rival.", "Click to fight with this kit."), who -> {
+			b.set(slot++, DuelMenus.icon(Items.CHEST, who(p.level().getServer(), e) + "'s kit: " + e.kit(), ChatFormatting.GOLD, "Waiting for a rival" + (team ? " party." : "."), "Click to fight with this kit."), who -> {
 				who.closeContainer();
 				report(who, take(who, waiting));
 			});
@@ -379,14 +469,22 @@ public final class Queue {
 				ENTRIES.remove(e);
 				continue;
 			}
+			if (e.team() && !available(server, e)) {
+				ENTRIES.remove(e);
+				p.sendSystemMessage(Msg.err("Your party is not ready (a partner left or is busy), so you left the " + label(e) + " queue."));
+				ServerPlayer mate = playerOf(server, Party.partnerOf(e.id()));
+				if (mate != null) mate.sendSystemMessage(Msg.err("Your party left the " + label(e) + " queue."));
+				continue;
+			}
 			if (e.mode() == Mode.OWN && !KitStore.exists(e.id(), e.kit())) {
 				ENTRIES.remove(e);
 				p.sendSystemMessage(Msg.err("The kit '" + e.kit() + "' you offered no longer exists, so you left the queue."));
 				continue;
 			}
 			int seconds = (tick - e.since()) / 20;
-			p.sendOverlayMessage(Component.literal("In the " + label(e) + " queue  " + seconds / 60 + ":" + String.format("%02d", seconds % 60)
-				+ "  (Leave barrier or /queue leave to stop)").withStyle(ChatFormatting.AQUA));
+			Component overlay = Component.literal("In the " + label(e) + " queue  " + seconds / 60 + ":" + String.format("%02d", seconds % 60)
+				+ "  (Leave barrier or /queue leave to stop)").withStyle(ChatFormatting.AQUA);
+			for (ServerPlayer member : membersOf(server, e)) member.sendOverlayMessage(overlay);
 		}
 	}
 
@@ -429,7 +527,7 @@ public final class Queue {
 					return 1;
 				}
 				ctx.getSource().sendSuccess(() -> Msg.title("In the queues (" + ENTRIES.size() + ")"), false);
-				for (Entry e : ENTRIES) ctx.getSource().sendSuccess(() -> Msg.info("  " + e.name() + ": " + label(e)), false);
+				for (Entry e : ENTRIES) ctx.getSource().sendSuccess(() -> Msg.info("  " + who(ctx.getSource().getServer(), e) + ": " + label(e)), false);
 				return ENTRIES.size();
 			})));
 	}

@@ -437,7 +437,7 @@ public final class DuelManager {
 		start(server, invite, kit);
 		Duel started = BY_PLAYER.get(a.getUUID());
 		if (started != null) started.queued = true;
-		return BY_PLAYER.containsKey(a.getUUID()) && BY_PLAYER.containsKey(b.getUUID());
+		return isInDuel(a.getUUID()) && isInDuel(b.getUUID());
 	}
 
 	private static void start(MinecraftServer server, Invite invite, KitStore.Kit preloaded) {

@@ -124,8 +124,8 @@ public final class Party {
 		PENDING.remove(inviter.getUUID());
 		Queue.leave(p, false); // the queue is 1v1 only
 		Queue.leave(inviter, false);
-		p.sendSystemMessage(Msg.ok("You are in a party with " + inviter.getName().getString() + ". Challenge another pair with /duel <player>."));
-		inviter.sendSystemMessage(Msg.ok(p.getName().getString() + " is your partner now. Challenge another pair with /duel <player>."));
+		p.sendSystemMessage(Msg.ok("You are in a party with " + inviter.getName().getString() + ". Challenge another pair with /duel <player>, or wait for one in /queue."));
+		inviter.sendSystemMessage(Msg.ok(p.getName().getString() + " is your partner now. Challenge another pair with /duel <player>, or wait for one in /queue."));
 		return null;
 	}
 
@@ -146,6 +146,7 @@ public final class Party {
 		MinecraftServer server = p.level().getServer();
 		UUID partner = partnerOf(p.getUUID());
 		if (partner != null && DuelManager.isInDuel(partner)) return "Your partner is in a duel: wait until it ends.";
+		Queue.drop(p.getUUID());
 		disband(p.getUUID());
 		p.sendSystemMessage(Msg.ok("You left the party."));
 		if (partner != null) {
@@ -165,6 +166,7 @@ public final class Party {
 	static void forget(MinecraftServer server, UUID id) {
 		PENDING.remove(id);
 		PENDING.values().removeIf(p -> p.inviter().equals(id));
+		Queue.drop(id);
 		UUID partner = partnerOf(id);
 		disband(id);
 		if (partner != null) {
@@ -194,7 +196,7 @@ public final class Party {
 				}
 				ServerPlayer other = p.level().getServer().getPlayerList().getPlayer(partner);
 				String name = other == null ? "someone offline" : other.getName().getString();
-				ctx.getSource().sendSuccess(() -> Msg.info("Your party: you and " + name + ". Challenge another pair with /duel <player>. /party leave ends it."), false);
+				ctx.getSource().sendSuccess(() -> Msg.info("Your party: you and " + name + ". Challenge another pair with /duel <player>, or wait for one in /queue. /party leave ends it."), false);
 				return 1;
 			})
 			.then(Commands.literal("invite")

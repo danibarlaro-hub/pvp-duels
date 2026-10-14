@@ -84,6 +84,12 @@ public final class EffectsMenus {
 			Effects.setHideOthers(who.getUUID(), !hide);
 			openMain(who);
 		});
+		boolean sounds = Effects.jingles(me);
+		b.set(24, DuelMenus.icon(sounds ? Items.NOTE_BLOCK : Items.BARRIER, "Win and lose sounds: " + (sounds ? "on" : "off"), sounds ? ChatFormatting.GREEN : ChatFormatting.RED,
+			"A short tune plays when somebody wins", "(every explosion has its own) and a sad one", "for the loser.", "Click to turn them " + (sounds ? "off" : "on") + ". Only for you."), who -> {
+			Effects.setJingles(who.getUUID(), !sounds);
+			openMain(who);
+		});
 		ChoiceMenu.open(p, Component.literal("Victory effects"), 3, b);
 	}
 

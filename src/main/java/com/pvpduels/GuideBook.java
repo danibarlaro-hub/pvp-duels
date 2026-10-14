@@ -58,7 +58,7 @@ public final class GuideBook {
 			{"Test bot", "Admins: /testbot [name] [level] adds a fake player next to you that accepts every duel and /draw. Challenge it with /duel <name> to test alone.\n\n/testbot remove [name]"}
 		}),
 		new Topic("Queue", new String[][] {
-			{"Queue", "/queue opens the menu. Wait for somebody and the duel starts by itself: flat arena with walls, first to 3 points.\n\nLeave with the Leave barrier, /queue leave or the [LEAVE QUEUE] button."},
+			{"Queue", "/queue opens the menu. Wait for somebody and the duel starts by itself: flat arena with walls, first to 3 points.\n\nIn a party you wait together and meet another party (2v2).\n\nLeave with /queue leave or the [LEAVE QUEUE] button."},
 			{"Three queues", "Public: pick a public kit (or a random one) and match with somebody who picked the same.\n\nRandom: the kit is a surprise.\n\nOwn kit: offer one of your kits; you both fight with it."},
 			{"Queue commands", "/queue public [kit]\n/queue random\n/queue own <kit>\n/queue take <player>\n/queue list\n/queue leave"}
 		}),
@@ -99,7 +99,7 @@ public final class GuideBook {
 			{"Party", "/party invite <friend> asks a friend to be your partner. They click [ACCEPT].\n\nA party is exactly two players. /party leave ends it for both."},
 			{"2v2 duels", "When both of you are in a party, /duel <player> challenges that player and their partner.\n\nA party only duels another party."},
 			{"Rounds", "A player who is hit out watches until the round ends. A round is won when both rivals are out. No friendly fire.\n\nWin a round alone for the Clutch achievement."},
-			{"Good to know", "/leave makes your team forfeit.\n\n2v2 does not change the Elo, can't be watched yet, and the queue is 1v1 only."}
+			{"Good to know", "/leave makes your team forfeit.\n\n2v2 does not change the Elo and can't be watched yet.\n\nA party can use /queue: both wait together and meet another party."}
 		}),
 		new Topic("Effects", new String[][] {
 			{"Victory effects", "When you win, 3 fireworks go up in a row behind you, and your particles play for 5 seconds.\n\n/effects opens the menu to choose them. /effects preview shows them now."},

@@ -4,6 +4,7 @@ import com.pvpduels.PvpDuelsMod;
 import com.pvpduels.effects.DomainArt;
 import com.pvpduels.effects.DomeArt;
 import com.pvpduels.effects.Effects;
+import com.pvpduels.effects.Jingles;
 import com.pvpduels.effects.Props;
 import com.pvpduels.effects.Quality;
 import com.pvpduels.effects.Victory;
@@ -70,6 +71,8 @@ public final class Cinema {
 	static final int NORMAL_TICKS = 100;
 	/** After the camera stops it stays a little while, so the last fireworks can be seen. */
 	static final int TAIL = 25;
+	/** The sad tune of the loser starts this many ticks after the happy one ends. */
+	static final int DEFEAT_GAP = 6;
 
 	private static final String DOUBLE_TAG = "pvpduels_double";
 	private static final String CAMERA_TAG = "pvpduels_camera";
@@ -247,6 +250,8 @@ public final class Cinema {
 		Props props;
 		/** The meteors of a Meteor Shower film (the film keeps no state, so the scene holds them). */
 		final List<com.pvpduels.effects.ExplosionArt.Meteor> meteors = new ArrayList<>();
+		/** The tune of the loser (chosen when the finale starts). */
+		final Jingles.Tune sad = Jingles.randomDefeat();
 		private float lastYaw = Float.NaN;
 		/** The last position and look of the camera. */
 		Vec3 cameraAt;
@@ -550,7 +555,10 @@ public final class Cinema {
 			switch (kind) {
 				case NORMAL -> normal(a);
 				case CLASH -> clash(a);
-				case DOMAIN, FILM -> film.play(this, a);
+				case DOMAIN, FILM -> {
+					film.play(this, a);
+					sounds(a);
+				}
 			}
 			return age < total;
 		}
@@ -559,11 +567,23 @@ public final class Cinema {
 			return win < 0 ? null : server.getPlayerList().getPlayer(duel.ids[win]);
 		}
 
+		/** The victory tune of the film, and right after it the sad one of the loser. */
+		private void sounds(int a) {
+			Jingles.Tune happy = Jingles.of(film.id());
+			int t = a - film.victoryAt();
+			if (t >= 0 && t < happy.length()) Jingles.tick(level, audience(), cameraAt, happy, t);
+			int s = t - happy.length() - DEFEAT_GAP;
+			if (s >= 0 && s < sad.length()) Jingles.tick(level, audience(), cameraAt, sad, s);
+		}
+
 		private void normal(int a) {
 			if (a == 1) {
 				ServerPlayer winner = winnerPlayer();
 				if (winner != null) Victory.playAt(winner, stage[win], yaw[win], stage[1 - win]);
 			}
+			// the sad tune of the loser comes after the cheerful one of the fireworks
+			int s = a - (6 + Jingles.common().length() + DEFEAT_GAP);
+			if (s >= 0 && s < sad.length()) Jingles.tick(level, audience(), cameraAt, sad, s);
 		}
 
 		/** Where the hands of a duelist join. */

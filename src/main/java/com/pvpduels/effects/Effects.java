@@ -92,6 +92,8 @@ public final class Effects {
 		List<String> unannounced = new ArrayList<>();
 		/** The player does not want to see other players' victory effects. */
 		boolean hideOthers;
+		/** The player turned the victory sounds (the short tunes) off. */
+		boolean mutedJingles;
 		/** How many particles this player gets from the heavy effects: the number of a {@link Quality} (3 = High). */
 		int quality = Quality.HIGH.ordinal();
 	}
@@ -461,6 +463,16 @@ public final class Effects {
 
 	public static synchronized void setHideOthers(UUID id, boolean hide) {
 		data(id, null).hideOthers = hide;
+		save();
+	}
+
+	/** True when this player wants to hear the victory tunes (the default). */
+	public static synchronized boolean jingles(UUID id) {
+		return !data(id, null).mutedJingles;
+	}
+
+	public static synchronized void setJingles(UUID id, boolean on) {
+		data(id, null).mutedJingles = !on;
 		save();
 	}
 

@@ -43,6 +43,11 @@ final class Films {
 		/** How long it stays after that, so the last light can be seen. */
 		int tail();
 
+		/** The tick of the film when the victory tune starts: the last second or so of the camera, after the blast. */
+		default int victoryAt() {
+			return Math.max(0, camTicks() - 55);
+		}
+
 		Vec3 camera(Cinema.Scene s, int a);
 
 		Vec3 look(Cinema.Scene s, Vec3 cam, int a);

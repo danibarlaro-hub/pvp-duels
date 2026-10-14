@@ -3030,7 +3030,11 @@ public final class SelfTest {
 			check("Alice's party is full", a.heard("Your party is full already."));
 			check("Carl got nothing to accept", !carl.heard("wants you as a partner"));
 			run(a, "queue random");
-			check("a party can't use the 1v1 queue", a.heard("The queue is for 1v1.") && !Queue.isQueued(a.getUUID()));
+			check("a party queues together", Queue.isQueued(a.getUUID()) && Queue.isQueued(b.getUUID()) && Queue.size() == 1
+				&& a.heard("You joined the 2v2 random queue") && b.heard("put your party in the 2v2 random queue"));
+			run(b, "queue leave");
+			check("the partner can take the whole party out", !Queue.isQueued(a.getUUID()) && !Queue.isQueued(b.getUUID()) && Queue.size() == 0
+				&& b.heard("You left the 2v2 random queue") && a.heard("Bob took your party out of the 2v2 random queue"));
 		});
 		step("party: an invitation runs out after a minute", () -> {
 			long t0 = 5_000_000L;
@@ -3238,9 +3242,51 @@ public final class SelfTest {
 			run(dora, "draw accept");
 			check("Dora accepts: the 2v2 ends in a tie", t.winner == -1 && t.phase == Duel.Phase.ENDED && a.heard("Draw agreed") && carl.heard("Draw agreed"), t.winner + " " + t.phase);
 		}, () -> !DuelManager.isInDuel(a.getUUID()) && !DuelManager.isInDuel(b.getUUID()) && !DuelManager.isInDuel(dora.getUUID()) && !DuelManager.isInDuel(carl.getUUID()), 800);
+		step("2v2 queue: the party waits together", () -> {
+			for (Dummy p : new Dummy[] {a, b, carl, dora}) p.inbox.clear();
+			Queue.clearAll();
+			check("both parties are still there and qkit is public", Party.isFull(a.getUUID()) && Party.isFull(carl.getUUID()) && PublicKits.find("qkit").isPresent());
+			run(b, "queue public qkit");
+			check("Bob's party is in the queue, both of them", Queue.isQueued(a.getUUID()) && Queue.isQueued(b.getUUID()) && Queue.size() == 1);
+			check("both were told", b.heard("You joined the 2v2 public (qkit) queue") && a.heard("Bob put your party in the 2v2 public (qkit) queue"), String.valueOf(a.inbox));
+			run(a, "queue list");
+			check("/queue list shows the pair", a.heard("Bob & Alice: 2v2 public (qkit)"), String.valueOf(a.inbox));
+			run(carl, "queue random");
+			check("a different queue does not match", Queue.size() == 2 && DuelManager.teamDuelOf(a.getUUID()) == null);
+			run(dora, "queue leave");
+			check("Dora took her whole party out and Bob's stays", !Queue.isQueued(carl.getUUID()) && !Queue.isQueued(dora.getUUID()) && Queue.isQueued(a.getUUID())
+				&& carl.heard("Dora took your party out of the 2v2 random queue"));
+			run(carl, "queue take Bob");
+			check("only an own kit offer can be taken", carl.heard("Bob is not waiting with a kit right now"));
+		});
+		step("2v2 queue: the other party joins and the match starts", () -> {
+			run(carl, "queue public qkit");
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			check("a 2v2 started for the four", t != null && DuelManager.teamDuelOf(b.getUUID()) == t && DuelManager.teamDuelOf(carl.getUUID()) == t
+				&& DuelManager.teamDuelOf(dora.getUUID()) == t);
+			check("Bob's party waited, so it is team 0", t != null && t.teamName(0).equals("Bob & Alice") && t.teamName(1).equals("Carl & Dora"),
+				t == null ? "no duel" : t.teamName(0) + " / " + t.teamName(1));
+			check("nobody is in the queue any more", Queue.size() == 0 && !Queue.isQueued(a.getUUID()) && !Queue.isQueued(dora.getUUID()));
+			check("all four were told who they play", a.heard("Match found!") && dora.heard("Match found!") && a.heard("2v2 against Carl & Dora") && b.heard("2v2 against Carl & Dora")
+				&& carl.heard("2v2 against Bob & Alice") && dora.heard("2v2 against Bob & Alice"), String.valueOf(a.inbox));
+		}, () -> {
+			TeamDuel t = DuelManager.teamDuelOf(a.getUUID());
+			return t != null && t.phase == Duel.Phase.FIGHTING;
+		}, 600);
+		step("2v2 queue: the public kit is in everybody's hands; nobody can queue in a 2v2", () -> {
+			check("all four have the sword of qkit", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && b.getInventory().getItem(0).is(Items.DIAMOND_SWORD)
+				&& carl.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && dora.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			run(dora, "queue random");
+			check("a 2v2 player can't join a queue", dora.heard("spectator mode first") && !Queue.isQueued(dora.getUUID()) && Queue.size() == 0);
+			run(a, "draw");
+			run(dora, "draw accept");
+		}, () -> !DuelManager.isInDuel(a.getUUID()) && !DuelManager.isInDuel(b.getUUID()) && !DuelManager.isInDuel(dora.getUUID()) && !DuelManager.isInDuel(carl.getUUID()), 800);
 		step("2v2: the parties can be ended", () -> {
 			check("the arena is free", DuelManager.activeDuels() == 0);
+			run(a, "queue random");
+			check("Alice's party waits again", Queue.isQueued(b.getUUID()) && Queue.size() == 1);
 			run(a, "party leave");
+			check("ending the party takes it out of the queue", Queue.size() == 0 && !Queue.isQueued(a.getUUID()) && !Queue.isQueued(b.getUUID()));
 			check("Alice left, so the party is over for both", !Party.inParty(a.getUUID()) && !Party.inParty(b.getUUID()) && b.heard("Alice left the party, so it is over."));
 			Party.resetForTest();
 			check("everything is reset", !Party.inParty(carl.getUUID()) && !Party.inParty(dora.getUUID()));

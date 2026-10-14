@@ -38,6 +38,9 @@ public final class Victory {
 	private static final int FLIGHT = 3;
 	/** The explosion starts this many ticks after the win. */
 	private static final int EXPLOSION_DELAY = 10;
+	/** The tune of fireworks and particles starts here, and the tune of an explosion a while after the blast. */
+	private static final int COMMON_TUNE_AT = 4;
+	private static final int EXPLOSION_TUNE_AT = EXPLOSION_DELAY + 50;
 	private static final double VIEW_DISTANCE_SQR = 96.0 * 96.0;
 
 	private static final class Show {
@@ -262,6 +265,7 @@ public final class Victory {
 			List<ServerPlayer> viewers = viewers(s, winner);
 			floor(s, winner, viewers);
 			area(s, winner, viewers);
+			tune(s, winner, viewers);
 			if (!s.explosion.isEmpty() && s.age >= EXPLOSION_DELAY) {
 				int t = s.age - EXPLOSION_DELAY;
 				explosion(s, winner, viewers, t);
@@ -271,6 +275,14 @@ public final class Victory {
 				}
 			}
 		}
+	}
+
+	/** The victory tune: the common one for fireworks and particles, the explosion's own after the blast. */
+	private static void tune(Show s, ServerPlayer winner, List<ServerPlayer> viewers) {
+		boolean explosion = !s.explosion.isEmpty();
+		int start = explosion ? EXPLOSION_TUNE_AT : COMMON_TUNE_AT;
+		if (s.age < start) return;
+		Jingles.tick(s.level, viewers, s.origin(winner), explosion ? Jingles.of(s.explosion) : Jingles.common(), s.age - start);
 	}
 
 	/** Players near the show who want to see it (the winner always does). */
