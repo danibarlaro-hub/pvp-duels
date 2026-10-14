@@ -1,0 +1,41 @@
+--- three fake players
+--- pranks: only Dibitss can use them (not even an admin)
+PASS  Alice (not an admin) can't annoy anybody   (0)
+PASS  /annoy is hidden from a normal player and open to Dibitss
+PASS  /annoy is closed even to the server itself (an admin with every permission)
+PASS  /spam is hidden from a normal player and open to Dibitss
+PASS  /spam is closed even to the server itself (an admin with every permission)
+PASS  /haunt is hidden from a normal player and open to Dibitss
+PASS  /haunt is closed even to the server itself (an admin with every permission)
+PASS  /jumpscare is hidden from a normal player and open to Dibitss
+PASS  /jumpscare is closed even to the server itself (an admin with every permission)
+PASS  /fakeop is hidden from a normal player and open to Dibitss
+PASS  /fakeop is closed even to the server itself (an admin with every permission)
+PASS  /annoystop is hidden from a normal player and open to Dibitss
+PASS  /annoystop is closed even to the server itself (an admin with every permission)
+PASS  there is no /pranks off any more
+PASS  /annoy sends the silly sound to that player only   (1 / 1)
+PASS  and the sender is told   ([PvP Duels is active. Type /guide to see the commands., Building contest: "space station" (4 days left to build). /contest, Played 'Fahhh' to 1 player. (People in a duel are left alone.)])
+PASS  and nobody else sees it in the chat
+PASS  /annoy all reaches everybody   (3)
+PASS  an unknown sound says so
+PASS  an unknown player says so
+PASS  /jumpscare is three sounds and a big BOO   (3)
+PASS  /fakeop shows the fake line to Bob only
+PASS  /annoy spawn needs a lobby and says so when there is none   ([There is no lobby (spawn) yet: set it with the lobby command first.])
+--- pranks: /spam goes on for a while and then stops by itself
+PASS  the spam is running
+--- pranks: the spam sent several sounds and ended
+PASS  Bob got several silly sounds in 3 seconds   (5)
+PASS  and it ended by itself
+PASS  two sprees run at once
+PASS  /annoystop <who> stops only that one
+PASS  /annoystop stops everything
+PASS  /haunt wants one player
+PASS  the haunting is running
+--- pranks: the haunting goes on for two seconds
+--- pranks: the haunting played spooky sounds around Bob and ended
+PASS  Bob heard spooky sounds   (2)
+PASS  and it ended by itself
+--- pranks: done
+RESULT: PASS
