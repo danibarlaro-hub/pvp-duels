@@ -208,6 +208,9 @@ public final class Cinema {
 		return null;
 	}
 
+	/** Players whose /effects preview waits for the next tick. */
+	private static final List<UUID> PREVIEWS = new ArrayList<>();
+
 	/** What the last refused spawn of a film looked like (for the self-test and the log). */
 	public static String lastSpawnFailure = "";
 
@@ -218,12 +221,28 @@ public final class Cinema {
 			Victory.preview(p);
 			return;
 		}
-		double yaw = Math.toRadians(p.getYRot());
-		Vec3 target = new Vec3(p.getX() - Math.sin(yaw) * TRY_OUT_GAP, p.getY(), p.getZ() + Math.cos(yaw) * TRY_OUT_GAP);
-		String problem = tryOut(p, explosion, target);
-		if (problem != null) {
-			p.sendSystemMessage(Msg.err(problem));
-			Victory.preview(p);
+		// the command that called this is still running, and the game queues a summon made inside a command until the command is over:
+		// the film starts on the next tick instead
+		if (!PREVIEWS.contains(p.getUUID())) PREVIEWS.add(p.getUUID());
+	}
+
+	private static void startPreviews(MinecraftServer server) {
+		List<UUID> asked = new ArrayList<>(PREVIEWS);
+		PREVIEWS.clear();
+		for (UUID id : asked) {
+			ServerPlayer p = server.getPlayerList().getPlayer(id);
+			if (p == null) continue;
+			String explosion = Effects.explosionSlot(id);
+			String problem = explosion.isEmpty() ? "You have no explosion equipped." : null;
+			if (problem == null) {
+				double yaw = Math.toRadians(p.getYRot());
+				Vec3 target = new Vec3(p.getX() - Math.sin(yaw) * TRY_OUT_GAP, p.getY(), p.getZ() + Math.cos(yaw) * TRY_OUT_GAP);
+				problem = tryOut(p, explosion, target);
+			}
+			if (problem != null) {
+				p.sendSystemMessage(Msg.err(problem));
+				Victory.preview(p);
+			}
 		}
 	}
 
@@ -246,6 +265,7 @@ public final class Cinema {
 	}
 
 	private static void tick(MinecraftServer server) {
+		if (!PREVIEWS.isEmpty()) startPreviews(server);
 		if (SCENES.isEmpty()) return;
 		Iterator<Scene> it = SCENES.iterator();
 		List<Scene> done = new ArrayList<>();
@@ -435,7 +455,10 @@ public final class Cinema {
 			}
 		}
 
-		/** Summons an entity with the command (the same way the NPCs are made) and finds it again by its tag. */
+		/**
+	 * Summons an entity with the command (the same way the NPCs are made) and finds it again by its tag. Inside another command the
+	 * game only queues the summon until that command ends, so a film is never started from a command directly (see {@link #previewOwn}).
+	 */
 		private Entity summon(String type, String tag, Vec3 at, float yawDegrees, String extra) {
 			String command = String.format(Locale.ROOT, "summon %s %.3f %.3f %.3f {Tags:[\"%s\"],Rotation:[%.2ff,0f]%s}", type, at.x, at.y, at.z, tag, yawDegrees, extra);
 			net.minecraft.core.BlockPos block = net.minecraft.core.BlockPos.containing(at);
@@ -445,15 +468,9 @@ public final class Cinema {
 			AABB box = new AABB(at.x - 3, at.y - 3, at.z - 3, at.x + 3, at.y + 4, at.z + 3);
 			List<Entity> found = level.getEntities((Entity) null, box, e -> e.entityTags().contains(tag));
 			if (!found.isEmpty()) return found.get(0);
-			// it did not appear: say why (the log gets the refusal of the command) and where it went, if anywhere
-			server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withLevel(level), command);
-			found = level.getEntities((Entity) null, box, e -> e.entityTags().contains(tag));
-			int elsewhere = 0;
-			for (Entity e : level.getAllEntities()) if (e.entityTags().contains(tag)) elsewhere++;
-			lastSpawnFailure = type + " at " + String.format(Locale.ROOT, "(%.1f, %.1f, %.1f)", at.x, at.y, at.z) + " chunkWasLoaded=" + wasLoaded
-				+ " foundOnRetry=" + found.size() + " taggedAnywhere=" + elsewhere;
+			// it did not appear: say where, for the log and the self-test
+			lastSpawnFailure = type + " at " + String.format(Locale.ROOT, "(%.1f, %.1f, %.1f)", at.x, at.y, at.z) + " chunkWasLoaded=" + wasLoaded;
 			PvpDuelsMod.LOGGER.warn("Finale spawn failed: {}", lastSpawnFailure);
-			if (!found.isEmpty()) return found.get(0);
 			return null;
 		}
 

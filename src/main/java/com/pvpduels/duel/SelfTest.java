@@ -4516,11 +4516,15 @@ public final class SelfTest {
 		step("try-out: the last props of the Frozen Abyss leave the world", () -> {
 			drain[0] = 0;
 		}, () -> com.pvpduels.effects.Props.tagged(server) == 0 || ++drain[0] > 100, 200);
-		step("try-out: the preview command starts it, and the film can be stopped", () -> {
+		final int[] pv = new int[1];
+		step("try-out: the preview command asks for the film", () -> {
 			check("she equips the Meteor Shower", Effects.setExplosion(dora.getUUID(), "meteor_shower") == null);
 			dora.link.sent.clear();
-			boolean can = Cinema.canTryOut(dora, "meteor_shower");
 			run(dora, "effects preview");
+			pv[0] = ticks;
+		}, () -> Cinema.tryOutOf(dora.getUUID()) != null || ticks >= pv[0] + 20, 60);
+		step("try-out: the preview command starts it, and the film can be stopped", () -> {
+			boolean can = Cinema.canTryOut(dora, "meteor_shower");
 			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
 			StringBuilder why = new StringBuilder("can=" + can + " busy=" + DuelManager.isBusy(dora.getUUID()) + " scenes=" + Cinema.activeScenes() + " shows=" + Victory.activeShows() + " at " + dora.position() + " spawn[" + Cinema.lastSpawnFailure + "]");
 			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
