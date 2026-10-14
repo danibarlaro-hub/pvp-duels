@@ -218,7 +218,10 @@ public final class Cinema {
 		double yaw = Math.toRadians(p.getYRot());
 		Vec3 target = new Vec3(p.getX() - Math.sin(yaw) * TRY_OUT_GAP, p.getY(), p.getZ() + Math.cos(yaw) * TRY_OUT_GAP);
 		String problem = tryOut(p, explosion, target);
-		if (problem != null) p.sendSystemMessage(Msg.err(problem));
+		if (problem != null) {
+			p.sendSystemMessage(Msg.err(problem));
+			Victory.preview(p);
+		}
 	}
 
 	/** The duel is closing (or the server stops): the finale ends right now and everybody gets their body back. */
