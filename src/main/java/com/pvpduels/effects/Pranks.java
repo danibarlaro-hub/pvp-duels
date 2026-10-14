@@ -34,15 +34,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Predicate;
 
 /**
- * The annoying commands, for admins (and the owner, dibitss) to bother friends with: /annoy, /spam, /haunt, /jumpscare, /fakeop and
- * /annoystop. They aim at one player, at everybody ("all") or at the lobby spawn ("spawn"). Nobody in a duel is ever bothered, and every
- * player can turn all of it off for themselves with /pranks off.
+ * The annoying commands, only for dibitss (not even other admins have them): /annoy, /spam, /haunt, /jumpscare, /fakeop and
+ * /annoystop. They aim at one player, at everybody ("all") or at the lobby spawn ("spawn"). Nobody in a duel is ever bothered.
  */
 public final class Pranks {
-	private static final Predicate<CommandSourceStack> IS_ADMIN = Commands.hasPermission(Commands.LEVEL_GAMEMASTERS);
 	/** The longest a spam or a haunting can go on. */
 	static final int MAX_SECONDS = 60;
 	private static final int MAX_JOBS = 8;
@@ -108,8 +105,9 @@ public final class Pranks {
 		sent = 0;
 	}
 
+	/** Only the player called dibitss: being an admin is not enough. */
 	private static boolean allowed(CommandSourceStack source) {
-		return IS_ADMIN.test(source) || (source.getEntity() instanceof ServerPlayer p && Homes.allowed(p));
+		return source.getEntity() instanceof ServerPlayer p && Homes.allowed(p);
 	}
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -137,18 +135,13 @@ public final class Pranks {
 		dispatcher.register(Commands.literal("annoystop").requires(Pranks::allowed)
 			.executes(ctx -> stop(ctx, null))
 			.then(Commands.argument("who", StringArgumentType.word()).suggests(WHO).executes(ctx -> stop(ctx, StringArgumentType.getString(ctx, "who")))));
-		// everybody: turn the pranks off for yourself
-		dispatcher.register(Commands.literal("pranks")
-			.executes(ctx -> pranksSetting(ctx, null))
-			.then(Commands.literal("on").executes(ctx -> pranksSetting(ctx, true)))
-			.then(Commands.literal("off").executes(ctx -> pranksSetting(ctx, false))));
 	}
 
 	// ---------------------------------------------------------------- who is bothered
 
-	/** True when this player can be bothered: they did not turn pranks off and they are not in a duel. */
+	/** True when this player can be bothered: anybody who is not in a duel (a duel is never spoiled). */
 	static boolean fair(ServerPlayer p) {
-		return Effects.pranks(p.getUUID()) && !DuelManager.isInDuel(p.getUUID());
+		return !DuelManager.isInDuel(p.getUUID());
 	}
 
 	/** The players a prank aimed at {@code who} reaches right now (the fair ones), or null when there is nobody with that name. */
@@ -224,7 +217,7 @@ public final class Pranks {
 		List<ServerPlayer> to = targets(server, who);
 		playMeme(server, who, to, meme, 1.0f);
 		ctx.getSource().sendSuccess(() -> Msg.ok("Played '" + meme.name() + "' to " + said(to) + (who.equalsIgnoreCase("spawn") ? " at the spawn" : "")
-			+ ". (People in a duel, or who used /pranks off, are left alone.)"), false);
+			+ ". (People in a duel are left alone.)"), false);
 		return to.size();
 	}
 
@@ -296,7 +289,7 @@ public final class Pranks {
 			return 0;
 		}
 		if (!fair(p)) {
-			ctx.getSource().sendFailure(Msg.err(p.getName().getString() + " is in a duel or turned pranks off, so nothing was sent."));
+			ctx.getSource().sendFailure(Msg.err(p.getName().getString() + " is in a duel, so nothing was sent."));
 			return 0;
 		}
 		p.sendSystemMessage(Component.literal("[Server: Made " + p.getName().getString() + " a server operator]").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
@@ -317,14 +310,6 @@ public final class Pranks {
 		int count = removed;
 		ctx.getSource().sendSuccess(() -> Msg.ok(count == 0 ? "Nothing was running." : "Stopped " + count + " prank" + (count == 1 ? "" : "s") + "."), false);
 		return removed;
-	}
-
-	private static int pranksSetting(CommandContext<CommandSourceStack> ctx, Boolean on) throws CommandSyntaxException {
-		ServerPlayer p = ctx.getSource().getPlayerOrException();
-		if (on != null) Effects.setPranks(p.getUUID(), on);
-		boolean now = Effects.pranks(p.getUUID());
-		p.sendSystemMessage(Msg.info("Prank sounds and scares from the admins are " + (now ? "ON" : "OFF") + " for you. /pranks " + (now ? "off" : "on") + " to change it."));
-		return 1;
 	}
 
 	private static String ids() {

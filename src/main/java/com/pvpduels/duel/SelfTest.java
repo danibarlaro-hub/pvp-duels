@@ -5347,7 +5347,7 @@ public final class SelfTest {
 
 		// ---------------------------------------------------------------- the annoying commands
 		final int[] prank = new int[4];
-		step("pranks: only admins and Dibitss can use them", () -> {
+		step("pranks: only Dibitss can use them (not even an admin)", () -> {
 			Pranks.resetForTest();
 			a.link.sent.clear();
 			b.link.sent.clear();
@@ -5357,8 +5357,9 @@ public final class SelfTest {
 			for (String name : new String[] {"annoy", "spam", "haunt", "jumpscare", "fakeop", "annoystop"}) {
 				var node = server.getCommands().getDispatcher().getRoot().getChild(name);
 				check("/" + name + " is hidden from a normal player and open to Dibitss", node != null && !node.canUse(a.createCommandSourceStack()) && node.canUse(dib[0].createCommandSourceStack()));
+				check("/" + name + " is closed even to the server itself (an admin with every permission)", node != null && !node.canUse(server.createCommandSourceStack()));
 			}
-			check("/pranks is for everybody", server.getCommands().getDispatcher().getRoot().getChild("pranks").canUse(a.createCommandSourceStack()));
+			check("there is no /pranks off any more", server.getCommands().getDispatcher().getRoot().getChild("pranks") == null);
 
 			Dummy d = dib[0];
 			run(d, "annoy Bob fahhh");
@@ -5377,17 +5378,6 @@ public final class SelfTest {
 			check("an unknown sound says so", d.heard("no sound called 'nosuchsound'"));
 			run(d, "annoy Zed");
 			check("an unknown player says so", d.heard("No player called 'Zed'"));
-
-			b.link.sent.clear();
-			int beforeOff = Pranks.sent();
-			run(b, "pranks off");
-			check("a player can turn the pranks off for themselves", b.heard("OFF for you") && !com.pvpduels.effects.Effects.pranks(b.getUUID()));
-			run(d, "annoy Bob airhorn");
-			run(d, "jumpscare Bob");
-			run(d, "fakeop Bob");
-			check("a player who turned pranks off gets nothing", Pranks.sent() == beforeOff && packetCount(b, "ClientboundSetTitleTextPacket") == 0 && !b.heard("server operator"), Pranks.sent() - beforeOff + "");
-			run(b, "pranks on");
-			check("and can turn them on again", com.pvpduels.effects.Effects.pranks(b.getUUID()));
 
 			b.link.sent.clear();
 			a.inbox.clear();
