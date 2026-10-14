@@ -18,6 +18,7 @@ import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.layout.LayoutStore;
+import com.pvpduels.util.Homes;
 import com.pvpduels.util.Prefs;
 import com.pvpduels.kit.PublicKits;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -5286,6 +5287,62 @@ public final class SelfTest {
 				d.phase + " " + d.points[1] + " " + a.getOffhandItem());
 			run(a, "leave");
 		}, () -> noDuel(a) && noDuel(b), 300);
+
+		// ---------------------------------------------------------------- homes: only for dibitss, and silent
+		final Dummy[] dib = new Dummy[1];
+		step("homes: a player called Dibitss joins", () -> {
+			dib[0] = spawn("Dibitss");
+		}, () -> dib[0] != null && dib[0].isAlive(), 100);
+		step("homes: only Dibitss has them", () -> {
+			Dummy d = dib[0];
+			run(a, "sethome nope");
+			run(b, "home");
+			check("another player can't set a home (the command is not even there for them)", Homes.names().isEmpty());
+			check("the command is hidden from them", server.getCommands().getDispatcher().getRoot().getChild("sethome") != null
+				&& !server.getCommands().getDispatcher().getRoot().getChild("sethome").canUse(a.createCommandSourceStack())
+				&& server.getCommands().getDispatcher().getRoot().getChild("sethome").canUse(d.createCommandSourceStack()));
+
+			d.teleportTo((ServerLevel) d.level(), 60.5, d.getY(), 60.5, java.util.Set.of(), 90f, 10f, true);
+			run(d, "sethome base");
+			check("Dibitss sets a home", Homes.names().equals(List.of("base")) && d.heard("Home 'base' set"), String.valueOf(Homes.names()));
+			check("the homes are saved in the world folder", java.nio.file.Files.exists(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+				.resolve("pvpduels").resolve("homes.json")));
+
+			d.teleportTo((ServerLevel) d.level(), 90.5, d.getY(), 90.5, java.util.Set.of(), 0f, 0f, true);
+			d.link.sent.clear();
+			a.link.sent.clear();
+			b.link.sent.clear();
+			run(d, "home base");
+			check("/home base takes her there", Math.abs(d.getX() - 60.5) < 0.5 && Math.abs(d.getZ() - 60.5) < 0.5, d.getX() + " " + d.getZ());
+			check("and looks where she looked", Math.abs(d.getYRot() - 90f) < 1f, String.valueOf(d.getYRot()));
+			check("nothing at all appears in her chat", packetCount(d, "ClientboundSystemChatPacket") == 0 && packetCount(d, "ClientboundPlayerChatPacket") == 0, String.valueOf(d.inbox));
+			check("nothing appears in anybody else's chat", packetCount(a, "ClientboundSystemChatPacket") == 0 && packetCount(b, "ClientboundSystemChatPacket") == 0);
+
+			run(d, "home");
+			check("/home with one home and no name goes to it (no error)", !d.heard("Which one") && !d.heard("No home named"));
+			run(d, "sethome other");
+			d.inbox.clear();
+			run(d, "home");
+			check("with two homes /home asks which one", d.heard("Which one"), String.valueOf(d.inbox));
+			run(d, "home nope");
+			check("an unknown home says so", d.heard("No home named 'nope'"));
+			run(d, "homes");
+			check("/homes lists them", d.heard("base") && d.heard("other"));
+			run(d, "delhome other");
+			check("/delhome removes one", Homes.names().equals(List.of("base")));
+
+			Homes.load(server);
+			check("the homes are read back from the file", Homes.names().equals(List.of("base")), String.valueOf(Homes.names()));
+
+			run(d, "kit create");
+			d.inbox.clear();
+			run(d, "home base");
+			check("no homes inside the workshop", Workshop.isIn(d.getUUID()) && d.heard("Not now"), String.valueOf(d.inbox));
+			run(d, "leave");
+		}, () -> true, 20);
+		step("homes: Dibitss is back from the workshop", () -> {
+			check("she left the workshop", !Workshop.isIn(dib[0].getUUID()));
+		}, () -> !Workshop.isIn(dib[0].getUUID()), 200);
 
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");

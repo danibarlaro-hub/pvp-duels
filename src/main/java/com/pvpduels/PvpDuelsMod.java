@@ -96,6 +96,7 @@ public class PvpDuelsMod implements ModInitializer {
 			ReplayCommands.register(dispatcher);
 			TopCommand.register(dispatcher);
 			com.pvpduels.util.BugReports.register(dispatcher);
+			com.pvpduels.util.Homes.register(dispatcher);
 			ItemCommands.register(dispatcher, registryAccess);
 		});
 
@@ -115,6 +116,7 @@ public class PvpDuelsMod implements ModInitializer {
 		Victory.register();
 		com.pvpduels.duel.Cinema.register();
 		DuelManager.register();
+		com.pvpduels.util.Homes.init();
 		Terrain.register();
 		Spectators.register();
 		BotDuel.register();
