@@ -4722,7 +4722,7 @@ public final class SelfTest {
 			}
 			String added = text.length() >= old.length() ? text.substring(old.length()) : text;
 			check("the report was saved", com.pvpduels.util.BugReports.saved() == before + 1);
-			check("the file says who, when, where and the bug", added.contains("=== Bug #") && added.contains("Who: Dora") && added.contains("When: 20") && added.contains("Mod: PvP Duels 0.21.0")
+			check("the file says who, when, where and the bug", added.contains("=== Bug #") && added.contains("Who: Dora") && added.contains("When: 20") && added.contains("Mod: PvP Duels " + net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?"))
 				&& added.contains("Where: minecraft:") && added.contains("Bug: The kit menu showed my old kit after I changed it"), added);
 			boolean thanked = false;
 			for (Packet<?> packet : List.copyOf(dora.link.sent)) {
