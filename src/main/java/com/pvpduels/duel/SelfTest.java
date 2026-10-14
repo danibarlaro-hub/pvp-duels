@@ -18,6 +18,7 @@ import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
 import com.pvpduels.layout.LayoutStore;
+import com.pvpduels.effects.Pranks;
 import com.pvpduels.util.Homes;
 import com.pvpduels.util.Prefs;
 import com.pvpduels.kit.PublicKits;
@@ -5343,6 +5344,98 @@ public final class SelfTest {
 		step("homes: Dibitss is back from the workshop", () -> {
 			check("she left the workshop", !Workshop.isIn(dib[0].getUUID()));
 		}, () -> !Workshop.isIn(dib[0].getUUID()), 200);
+
+		// ---------------------------------------------------------------- the annoying commands
+		final int[] prank = new int[4];
+		step("pranks: only admins and Dibitss can use them", () -> {
+			Pranks.resetForTest();
+			a.link.sent.clear();
+			b.link.sent.clear();
+			dib[0].link.sent.clear();
+			run(a, "annoy Bob fahhh");
+			check("Alice (not an admin) can't annoy anybody", Pranks.sent() == 0, String.valueOf(Pranks.sent()));
+			for (String name : new String[] {"annoy", "spam", "haunt", "jumpscare", "fakeop", "annoystop"}) {
+				var node = server.getCommands().getDispatcher().getRoot().getChild(name);
+				check("/" + name + " is hidden from a normal player and open to Dibitss", node != null && !node.canUse(a.createCommandSourceStack()) && node.canUse(dib[0].createCommandSourceStack()));
+			}
+			check("/pranks is for everybody", server.getCommands().getDispatcher().getRoot().getChild("pranks").canUse(a.createCommandSourceStack()));
+
+			Dummy d = dib[0];
+			run(d, "annoy Bob fahhh");
+			check("/annoy sends the silly sound to that player only", Pranks.sent() == 1 && packetCount(b, "ClientboundSoundPacket") >= 1, Pranks.sent() + " / " + packetCount(b, "ClientboundSoundPacket"));
+			check("and the sender is told", d.heard("Played 'Fahhh' to 1 player"), String.valueOf(d.inbox));
+			check("and nobody else sees it in the chat", !a.heard("Played") && !b.heard("Played"));
+
+			a.link.sent.clear();
+			b.link.sent.clear();
+			int beforeAll = Pranks.sent();
+			run(d, "annoy all bonk");
+			check("/annoy all reaches everybody", Pranks.sent() - beforeAll >= 3 && packetCount(a, "ClientboundSoundPacket") >= 1 && packetCount(b, "ClientboundSoundPacket") >= 1,
+				(Pranks.sent() - beforeAll) + "");
+
+			run(d, "annoy Bob nosuchsound");
+			check("an unknown sound says so", d.heard("no sound called 'nosuchsound'"));
+			run(d, "annoy Zed");
+			check("an unknown player says so", d.heard("No player called 'Zed'"));
+
+			b.link.sent.clear();
+			int beforeOff = Pranks.sent();
+			run(b, "pranks off");
+			check("a player can turn the pranks off for themselves", b.heard("OFF for you") && !com.pvpduels.effects.Effects.pranks(b.getUUID()));
+			run(d, "annoy Bob airhorn");
+			run(d, "jumpscare Bob");
+			run(d, "fakeop Bob");
+			check("a player who turned pranks off gets nothing", Pranks.sent() == beforeOff && packetCount(b, "ClientboundSetTitleTextPacket") == 0 && !b.heard("server operator"), Pranks.sent() - beforeOff + "");
+			run(b, "pranks on");
+			check("and can turn them on again", com.pvpduels.effects.Effects.pranks(b.getUUID()));
+
+			b.link.sent.clear();
+			a.inbox.clear();
+			b.inbox.clear();
+			int beforeScare = Pranks.sent();
+			run(d, "jumpscare Bob");
+			check("/jumpscare is three sounds and a big BOO", Pranks.sent() - beforeScare == 3 && packetCount(b, "ClientboundSetTitleTextPacket") == 1, (Pranks.sent() - beforeScare) + "");
+			run(d, "fakeop Bob");
+			check("/fakeop shows the fake line to Bob only", b.heard("Made Bob a server operator") && !a.heard("server operator") && !d.heard("Made Bob a server operator"));
+
+			d.inbox.clear();
+			Lobby.Place spot = Lobby.spotIn(server);
+			run(d, "annoy spawn bike_horn");
+			check("/annoy spawn needs a lobby and says so when there is none", spot != null || d.heard("no lobby"), String.valueOf(d.inbox));
+		});
+
+		step("pranks: /spam goes on for a while and then stops by itself", () -> {
+			b.link.sent.clear();
+			prank[0] = ticks;
+			prank[2] = Pranks.sent();
+			run(dib[0], "spam Bob 3 bonk");
+			check("the spam is running", Pranks.activeJobs() == 1);
+		}, () -> ticks >= prank[0] + 75, 200);
+		step("pranks: the spam sent several sounds and ended", () -> {
+			int n = Pranks.sent() - prank[2];
+			check("Bob got several silly sounds in 3 seconds", n >= 3 && n <= 9 && packetCount(b, "ClientboundSoundPacket") >= 3, String.valueOf(n));
+			check("and it ended by itself", Pranks.activeJobs() == 0);
+			dib[0].inbox.clear();
+			run(dib[0], "spam Alice 60");
+			run(dib[0], "spam Bob 60 duck_quack");
+			check("two sprees run at once", Pranks.activeJobs() == 2);
+			run(dib[0], "annoystop Alice");
+			check("/annoystop <who> stops only that one", Pranks.activeJobs() == 1);
+			run(dib[0], "annoystop");
+			check("/annoystop stops everything", Pranks.activeJobs() == 0);
+			run(dib[0], "haunt all");
+			check("/haunt wants one player", dib[0].heard("Haunt one player") && Pranks.activeJobs() == 0);
+			b.link.sent.clear();
+			prank[1] = ticks;
+			prank[3] = Pranks.sent();
+			run(dib[0], "haunt Bob 2");
+			check("the haunting is running", Pranks.activeJobs() == 1);
+		}, () -> true, 20);
+		step("pranks: the haunting plays spooky sounds around Bob and ends", () -> {
+			int n = Pranks.sent() - prank[3];
+			check("Bob heard spooky sounds", n >= 1 && n <= 4 && packetCount(b, "ClientboundSoundPacket") >= 1, String.valueOf(n));
+			check("and it ended by itself", Pranks.activeJobs() == 0);
+		}, () -> ticks >= prank[1] + 60, 200);
 
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");

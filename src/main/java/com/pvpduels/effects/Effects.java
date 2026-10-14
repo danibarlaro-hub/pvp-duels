@@ -99,6 +99,7 @@ public final class Effects {
 		boolean mutedJingles;
 		/** The player turned the silly losing sounds off (they are on by default). */
 		boolean mutedMemes;
+		boolean mutedPranks;
 		/** How many particles this player gets from the heavy effects: the number of a {@link Quality} (3 = High). */
 		int quality = Quality.HIGH.ordinal();
 	}
@@ -488,6 +489,16 @@ public final class Effects {
 
 	public static synchronized void setMemes(UUID id, boolean on) {
 		data(id, null).mutedMemes = !on;
+		save();
+	}
+
+	/** True unless this player turned the admins' prank sounds and scares off for themselves (/pranks off). */
+	public static synchronized boolean pranks(UUID id) {
+		return !data(id, null).mutedPranks;
+	}
+
+	public static synchronized void setPranks(UUID id, boolean on) {
+		data(id, null).mutedPranks = !on;
 		save();
 	}
 
