@@ -17,6 +17,7 @@ import com.pvpduels.stats.StatsStore;
 import com.pvpduels.workshop.Workshop;
 import com.pvpduels.kit.KitCommands;
 import com.pvpduels.kit.KitStore;
+import com.pvpduels.layout.LayoutStore;
 import com.pvpduels.util.Prefs;
 import com.pvpduels.kit.PublicKits;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -2840,6 +2841,55 @@ public final class SelfTest {
 			check("her game was sent the whole kit", clientMatches(a), clientDiff(a));
 		});
 
+		step("kits: /kit save <name> layout makes the kit AND its layout in one go", () -> {
+			var inv = a.getInventory();
+			inv.clearContent();
+			a.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+			inv.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			inv.setItem(1, new ItemStack(Items.GOLDEN_APPLE, 5));
+			run(a, "kit save onestep");
+			check("a plain /kit save offers the one-click button for the layout", a.heard("Also make a layout"));
+			check("a plain /kit save does not make a layout", !LayoutStore.get(a.getUUID()).profiles.containsKey("onelay"));
+
+			run(a, "kit save onestep layout onelay");
+			var data = LayoutStore.get(a.getUUID());
+			check("the layout was created", data.profiles.containsKey("onelay") && a.heard("went into new layout 'onelay' at priority 1"), String.valueOf(data.profiles.keySet()));
+			var prof = data.profiles.get("onelay");
+			check("the sword is the rule of slot 1 and the apples of slot 2",
+				prof != null && prof.slots.getOrDefault(1, List.of()).equals(List.of("minecraft:diamond_sword"))
+					&& prof.slots.getOrDefault(2, List.of()).equals(List.of("minecraft:golden_apple")), prof == null ? "no layout" : String.valueOf(prof.slots));
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "onestep");
+				check("the kit exists and is linked to the layout", kit.isPresent() && "onelay".equals(kit.get().profile()), kit.isPresent() ? String.valueOf(kit.get().profile()) : "no kit");
+			} catch (IOException e) {
+				check("the kit can be read", false, e.toString());
+			}
+
+			// a second kit goes into the same layout at the next priority
+			inv.clearContent();
+			inv.setItem(0, new ItemStack(Items.NETHERITE_SWORD));
+			inv.setItem(1, new ItemStack(Items.GOLDEN_APPLE, 5));
+			run(a, "kit save onestep2 layout onelay");
+			check("the second kit went in at priority 2", a.heard("layout 'onelay' at priority 2"));
+			var slotOne = LayoutStore.get(a.getUUID()).profiles.get("onelay").slots.getOrDefault(1, List.of());
+			check("slot 1 now has both swords, in order", slotOne.equals(List.of("minecraft:diamond_sword", "minecraft:netherite_sword")), String.valueOf(slotOne));
+
+			// no layout named: the active one, and the priority can be chosen
+			String active = LayoutStore.get(a.getUUID()).active;
+			run(a, "kit save onestep3 layout");
+			check("with no layout named it goes into the active one (" + active + ")", a.heard("layout '" + active + "' at priority"));
+			run(a, "kit save onestep4 layout onelay 5");
+			check("the priority can be chosen", a.heard("layout 'onelay' at priority 5"));
+
+			// a layout name that cannot exist: the kit is still saved
+			run(a, "kit save onestep5 layout aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+			check("a bad layout name leaves the kit saved and says so", KitStore.exists(a.getUUID(), "onestep5") && a.heard("no layout was made"));
+
+			// the plain /layout inventorycopy still works the same
+			run(a, "layout inventorycopy onelay 6");
+			check("/layout inventorycopy still works", a.heard("Copied your inventory (2 items) into layout 'onelay' at priority 6"));
+		});
+
 		step("kits: a stack that is too big or unreadable is rescued, not lost", () -> {
 			var inv = a.getInventory();
 			inv.clearContent();
@@ -4717,7 +4767,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.21.0", version.equals("0.21.0"), version);
+			check("the mod says 0.22.0", version.equals("0.22.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();

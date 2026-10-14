@@ -35,6 +35,12 @@ public final class KitCommands {
 		return SharedSuggestionProvider.suggest(names, builder);
 	};
 
+	private static final SuggestionProvider<CommandSourceStack> LAYOUTS = (ctx, builder) -> {
+		ServerPlayer p = ctx.getSource().getPlayer();
+		if (p == null) return builder.buildFuture();
+		return SharedSuggestionProvider.suggest(LayoutStore.profileNames(p.getUUID()), builder);
+	};
+
 	private static final SuggestionProvider<CommandSourceStack> KEY_LETTERS = (ctx, builder) ->
 		SharedSuggestionProvider.suggest(List.of("a", "b", "c"), builder);
 
@@ -51,7 +57,14 @@ public final class KitCommands {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		dispatcher.register(Commands.literal("kit")
 			.then(Commands.literal("save")
-				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(KitCommands::save)))
+				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(ctx -> save(ctx, false, null, 0))
+					// /kit save <name> layout [layout] [priority]: the kit and its layout in one go
+					.then(Commands.literal("layout").executes(ctx -> save(ctx, true, null, 0))
+						.then(Commands.argument("layout", StringArgumentType.word()).suggests(LAYOUTS)
+							.executes(ctx -> save(ctx, true, StringArgumentType.getString(ctx, "layout"), 0))
+							.then(Commands.argument("priority", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, LayoutStore.MAX_LEVELS))
+								.executes(ctx -> save(ctx, true, StringArgumentType.getString(ctx, "layout"),
+									com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "priority"))))))))
 			.then(Commands.literal("load")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS).executes(KitCommands::load)))
 			.then(Commands.literal("show")
@@ -84,7 +97,8 @@ public final class KitCommands {
 		return StringArgumentType.getString(ctx, "name").toLowerCase(Locale.ROOT);
 	}
 
-	private static int save(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+	/** /kit save <name> [layout [layout] [priority]]: with "layout" the same inventory is also copied into a layout and the kit is linked to it. */
+	private static int save(CommandContext<CommandSourceStack> ctx, boolean withLayout, String layoutArg, int priorityArg) throws CommandSyntaxException {
 		ServerPlayer p = ctx.getSource().getPlayerOrException();
 		String name = kitName(ctx);
 		if (!KitStore.validName(name)) {
@@ -113,6 +127,21 @@ public final class KitCommands {
 				ctx.getSource().sendSuccess(() -> Msg.err("Careful, " + report.warnings().size() + " slot" + (report.warnings().size() == 1 ? " was" : "s were")
 					+ " not saved exactly:"), false);
 				for (String w : report.warnings()) ctx.getSource().sendSuccess(() -> Msg.err("  " + w), false);
+			}
+			if (withLayout) {
+				// the second bird: the same inventory goes into a layout, and the kit remembers it
+				com.pvpduels.layout.LayoutCommands.CopyResult copy = com.pvpduels.layout.LayoutCommands.copyInventory(p, layoutArg, priorityArg);
+				if (copy.ok()) {
+					KitStore.setProfile(p.getUUID(), name, copy.layout());
+					ctx.getSource().sendSuccess(() -> Msg.ok("And the same inventory went into " + (copy.created() ? "new layout '" : "layout '") + copy.layout()
+						+ "' at priority " + copy.priority() + " (" + copy.items() + " items; armor and offhand are not in layouts). Kit '" + name
+						+ "' will be sorted with it when loaded."), false);
+				} else {
+					ctx.getSource().sendSuccess(() -> Msg.err("The kit is saved, but no layout was made: " + copy.error()), false);
+				}
+			} else {
+				ctx.getSource().sendSuccess(() -> Msg.button("[+ Also make a layout from this]", net.minecraft.ChatFormatting.AQUA,
+					"/kit save " + name + " layout", "Saves this kit again and copies the same inventory into your active layout (next free priority)"), false);
 			}
 			return 1;
 		} catch (IOException | RuntimeException e) {

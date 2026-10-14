@@ -441,12 +441,19 @@ public final class LayoutCommands {
 		return 1;
 	}
 
+	/** What copyInventory did: ok with the layout, the priority and the number of items, or the reason it could not. */
+	public record CopyResult(boolean ok, String layout, int priority, int items, boolean created, String error) {
+		static CopyResult fail(String error) {
+			return new CopyResult(false, "", 0, 0, false, error);
+		}
+	}
+
 	/**
 	 * Copies the items currently in your inventory (hotbar + backpack) into a layout as exact-item rules at one
 	 * priority level. Slots that are empty right now clear that level. Armor and offhand are not copied.
+	 * layoutArg null = the active layout; priorityArg 0 = the next free level. Used by /layout inventorycopy and by /kit save <name> layout.
 	 */
-	private static int inventoryCopy(CommandContext<CommandSourceStack> ctx, String layoutArg, int priorityArg) throws CommandSyntaxException {
-		ServerPlayer p = ctx.getSource().getPlayerOrException();
+	public static CopyResult copyInventory(ServerPlayer p, String layoutArg, int priorityArg) {
 		com.pvpduels.duel.LobbyKit.strip(p); // the lobby hotbar items are not part of a layout
 		Inventory inv = p.getInventory();
 
@@ -454,23 +461,16 @@ public final class LayoutCommands {
 		for (int i = 0; i < LayoutStore.MAX_SLOT; i++) {
 			if (!inv.getItem(i).isEmpty()) items++;
 		}
-		if (items == 0) {
-			ctx.getSource().sendFailure(Msg.err("Your hotbar and backpack are empty, so there is nothing to copy."));
-			return 0;
-		}
+		if (items == 0) return CopyResult.fail("Your hotbar and backpack are empty, so there is nothing to copy.");
 
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
 		String name = layoutArg == null ? data.active : layoutArg.toLowerCase(Locale.ROOT);
 		LayoutStore.Profile profile = data.profiles.get(name);
 		boolean created = false;
 		if (profile == null) {
-			if (!NAME.matcher(name).matches()) {
-				ctx.getSource().sendFailure(Msg.err("Layout names can only use a-z, 0-9, _ and - (max 24)."));
-				return 0;
-			}
+			if (!NAME.matcher(name).matches()) return CopyResult.fail("Layout names can only use a-z, 0-9, _ and - (max 24).");
 			if (LayoutStore.customCount(data) >= LayoutStore.MAX_PROFILES) {
-				ctx.getSource().sendFailure(Msg.err("You already have " + LayoutStore.MAX_PROFILES + " layouts (the maximum). Delete one first."));
-				return 0;
+				return CopyResult.fail("You already have " + LayoutStore.MAX_PROFILES + " layouts (the maximum). Delete one first.");
 			}
 			profile = new LayoutStore.Profile();
 			data.profiles.put(name, profile);
@@ -481,9 +481,8 @@ public final class LayoutCommands {
 		if (priority == 0) {
 			priority = LayoutStore.usedLevels(profile) + 1;
 			if (priority > LayoutStore.MAX_LEVELS) {
-				ctx.getSource().sendFailure(Msg.err("All " + LayoutStore.MAX_LEVELS + " priority levels of '" + name
-					+ "' are used. Pick one to overwrite: /layout inventorycopy " + name + " <1-" + LayoutStore.MAX_LEVELS + ">"));
-				return 0;
+				return CopyResult.fail("All " + LayoutStore.MAX_LEVELS + " priority levels of '" + name
+					+ "' are used. Pick one to overwrite: /layout inventorycopy " + name + " <1-" + LayoutStore.MAX_LEVELS + ">");
 			}
 		}
 
@@ -503,14 +502,23 @@ public final class LayoutCommands {
 				profile.slots.put(slot, rules);
 			}
 		}
-		saveQuietly(p, ctx);
+		try {
+			LayoutStore.save(p.getUUID());
+		} catch (IOException e) {
+			return CopyResult.fail("Could not save your layout file: " + e.getMessage());
+		}
+		return new CopyResult(true, name, priority, items, created, "");
+	}
 
-		final String layoutName = name;
-		final int level = priority;
-		final int count = items;
-		final boolean isNew = created;
-		ctx.getSource().sendSuccess(() -> Msg.ok("Copied your inventory (" + count + " items) into "
-			+ (isNew ? "new layout '" : "layout '") + layoutName + "' at priority " + level + ". Armor and offhand are not included."), false);
+	private static int inventoryCopy(CommandContext<CommandSourceStack> ctx, String layoutArg, int priorityArg) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		CopyResult r = copyInventory(p, layoutArg, priorityArg);
+		if (!r.ok()) {
+			ctx.getSource().sendFailure(Msg.err(r.error()));
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Msg.ok("Copied your inventory (" + r.items() + " items) into "
+			+ (r.created() ? "new layout '" : "layout '") + r.layout() + "' at priority " + r.priority() + ". Armor and offhand are not included."), false);
 		return 1;
 	}
 
