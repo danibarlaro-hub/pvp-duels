@@ -38,6 +38,9 @@ jobs:
           MODE=run
           case "${GITHUB_REF_NAME}" in diag-*) MODE="${GITHUB_REF_NAME#diag-}";; esac
           PVPDUELS_SELFTEST=$MODE timeout 3000 gradle runServer --no-daemon --console=plain > second.log 2>&1 || true
+      - name: Look inside the game code (diag branches only)
+        if: always() && startsWith(github.ref_name, 'diag-')
+        run: bash .github/diag-javap.sh || true
       - name: Publish the results to the selftest-out branch
         if: always()
         env:
@@ -46,6 +49,7 @@ jobs:
           rm -rf /tmp/pub && mkdir /tmp/pub
           cp run/selftest-result.txt /tmp/pub/ 2>/dev/null || echo "no result file was written" > /tmp/pub/selftest-result.txt
           cp run/logs/latest.log /tmp/pub/server-latest.log 2>/dev/null || true
+          cp run/javap-*.txt /tmp/pub/ 2>/dev/null || true
           tail -150 first.log > /tmp/pub/first-tail.log || true
           tail -300 second.log > /tmp/pub/second-tail.log || true
           echo "${GITHUB_SHA}" > /tmp/pub/commit.txt
