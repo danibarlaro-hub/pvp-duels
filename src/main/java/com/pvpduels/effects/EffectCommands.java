@@ -44,6 +44,10 @@ public final class EffectCommands {
 			.then(Commands.argument("code", StringArgumentType.greedyString())
 				.executes(ctx -> unlockWithCode(ctx.getSource(), StringArgumentType.getString(ctx, "code")))));
 
+		// the camera of a film (a win with an explosion, the Explosion Dummy, /effects preview): jump also does it
+		dispatcher.register(Commands.literal("freecam")
+			.executes(ctx -> com.pvpduels.duel.Cinema.toggleFreeCam(ctx.getSource().getPlayerOrException()) ? 1 : 0));
+
 		dispatcher.register(Commands.literal("missions")
 			.executes(ctx -> {
 				EffectsMenus.openMissions(ctx.getSource().getPlayerOrException());

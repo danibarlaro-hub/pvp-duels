@@ -4534,6 +4534,8 @@ public final class SelfTest {
 			drain[0] = 0;
 		}, () -> com.pvpduels.effects.Props.tagged(server) == 0 || ++drain[0] > 100, 200);
 		final int[] pv = new int[1];
+		final int[] fcTick = new int[1];
+		final Vec3[] fcHome = new Vec3[1];
 		step("try-out: the preview command asks for the film", () -> {
 			check("she equips the Meteor Shower", Effects.setExplosion(dora.getUUID(), "meteor_shower") == null);
 			dora.link.sent.clear();
@@ -4549,9 +4551,51 @@ public final class SelfTest {
 			}
 			check("a film of the Meteor Shower started for her", scene != null && scene.film != null && scene.film.id().equals("meteor_shower"), why.toString());
 			check("the winner's double stands where she stands", scene != null && scene.stage[0].distanceTo(dora.position()) < 0.6, scene == null ? "no scene" : scene.stage[0] + " vs " + dora.position());
+			fcHome[0] = dora.position();
+		}, () -> {
+			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
+			return scene == null || (dora.getCamera() == scene.camera && scene.age > Cinema.PRE + 6);
+		}, 200);
+		final net.minecraft.world.entity.player.Input noKeys = new net.minecraft.world.entity.player.Input(false, false, false, false, false, false, false);
+		final net.minecraft.world.entity.player.Input jumpKey = new net.minecraft.world.entity.player.Input(false, false, false, false, true, false, false);
+		step("free camera: she rides the camera and lets go of every key", () -> {
+			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
+			check("she rides the camera of the film", scene != null && dora.getCamera() == scene.camera && !Cinema.isFree(dora.getUUID()));
+			dora.setLastClientInput(noKeys);
+			fcTick[0] = ticks;
+		}, () -> ticks >= fcTick[0] + 3, 30);
+		step("free camera: she jumps", () -> {
+			dora.setLastClientInput(jumpKey);
+			fcTick[0] = ticks;
+		}, () -> Cinema.isFree(dora.getUUID()) || ticks >= fcTick[0] + 10, 30);
+		step("free camera: she flies by herself and the film goes on", () -> {
+			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
+			check("the jump gave her a free camera", Cinema.isFree(dora.getUUID()));
+			check("her own eyes are back and she flies as a spectator", dora.getCamera() == dora && dora.gameMode() == net.minecraft.world.level.GameType.SPECTATOR);
+			check("she started where the camera was", scene != null && dora.position().distanceTo(scene.cameraAt) < 15, scene == null ? "no scene" : dora.position() + " vs " + scene.cameraAt);
+			check("the film goes on without her", scene != null && !scene.ended && Cinema.activeScenes() == 1);
+			dora.setLastClientInput(noKeys);
+			if (scene == null) return;
+			dora.teleportTo((ServerLevel) dora.level(), scene.center.x + 110, scene.center.y + 5, scene.center.z, java.util.Set.of(), 0f, 0f, true);
+			fcTick[0] = ticks;
+		}, () -> ticks >= fcTick[0] + 3, 30);
+		step("free camera: too far away she is put back at the edge, and /freecam gives her the camera back", () -> {
+			Cinema.Scene scene = Cinema.tryOutOf(dora.getUUID());
+			double flat = scene == null ? 999 : Math.hypot(dora.getX() - scene.center.x, dora.getZ() - scene.center.z);
+			check("she cannot fly farther than the edge", scene != null && flat <= Cinema.FREE_RADIUS + 1.0, String.valueOf(flat));
+			run(dora, "freecam");
+			check("the command gave her the camera of the film again", scene != null && dora.getCamera() == scene.camera && !Cinema.isFree(dora.getUUID()));
+			run(dora, "freecam");
+			check("and the command frees it again", Cinema.isFree(dora.getUUID()) && dora.getCamera() == dora);
+		});
+		step("free camera: stopping the film puts her back where she stood", () -> {
 			Cinema.resetForTest();
 			Effects.setExplosion(dora.getUUID(), "");
 			check("stopping it gives her back her eyes", dora.getCamera() == dora && dora.gameMode() != net.minecraft.world.level.GameType.SPECTATOR && Cinema.activeScenes() == 0);
+			check("she is where she was before the film", fcHome[0] != null && dora.position().distanceTo(fcHome[0]) < 0.6, dora.position() + " vs " + fcHome[0]);
+			check("she is not free any more", !Cinema.isFree(dora.getUUID()));
+			run(dora, "freecam");
+			check("/freecam with no film says so and changes nothing", dora.getCamera() == dora && dora.gameMode() != net.minecraft.world.level.GameType.SPECTATOR);
 		});
 		step("finale: clean up", () -> {
 			Cinema.resetForTest();
@@ -4570,7 +4614,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.19.0", version.equals("0.19.0"), version);
+			check("the mod says 0.20.0", version.equals("0.20.0"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();

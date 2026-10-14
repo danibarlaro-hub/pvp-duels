@@ -246,6 +246,22 @@ public final class Cinema {
 		}
 	}
 
+	/** How far from the middle of the scene a free camera may fly (blocks). */
+	static final double FREE_RADIUS = 70.0;
+
+	/** /freecam: the viewer of a film switches between the camera of the film and flying around by themselves. */
+	public static boolean toggleFreeCam(ServerPlayer p) {
+		for (Scene s : SCENES) if (s.toggleFree(p)) return true;
+		p.sendSystemMessage(Msg.err("There is no film to look around in right now."));
+		return false;
+	}
+
+	/** True while this player flies around by themselves in a film (the self-test reads it). */
+	public static boolean isFree(UUID id) {
+		for (Scene s : SCENES) for (Rider r : s.riders) if (r.riding && r.free && r.id.equals(id)) return true;
+		return false;
+	}
+
 	/** The duel is closing (or the server stops): the finale ends right now and everybody gets their body back. */
 	static void stop(Duel duel) {
 		for (Scene s : new ArrayList<>(SCENES)) if (s.duel == duel) s.stop(false);
@@ -307,6 +323,10 @@ public final class Cinema {
 		float homePitch;
 		/** True once the viewer has been seen NOT sneaking, so a key that was already down when the camera began does not skip the finale. */
 		boolean sneakReady;
+		/** True once the viewer has been seen NOT pressing jump, so a jump already in the air when the camera began does not free the camera. */
+		boolean jumpReady;
+		/** True while the viewer flies around by themselves (free camera) instead of riding the camera of the film. */
+		boolean free;
 
 		Rider(UUID id, int index) {
 			this.id = id;
@@ -532,7 +552,7 @@ public final class Cinema {
 			camera.snapTo(pos.x, pos.y, pos.z, yawNow, pitch);
 			Packet<?> packet = new ClientboundTeleportEntityPacket(camera.getId(), new PositionMoveRotation(pos, Vec3.ZERO, yawNow, pitch), Set.of(), false);
 			for (Rider r : riders) {
-				ServerPlayer p = r.riding ? server.getPlayerList().getPlayer(r.id) : null;
+				ServerPlayer p = r.riding && !r.free ? server.getPlayerList().getPlayer(r.id) : null;
 				if (p == null) continue;
 				p.connection.send(packet);
 				cameraMoves++;
@@ -575,18 +595,83 @@ public final class Cinema {
 			camera.snapTo(pos.x, pos.y, pos.z, 0f, 0f);
 		}
 
-		/** A viewer who sneaks (or gets out of the camera in any other way) skips the rest of the finale: they get their body back. */
+		/**
+		 * A viewer who sneaks (or gets out of the camera in any other way) skips the rest of the finale: they get their body back. A viewer
+		 * who jumps gets a free camera instead (see {@link #goFree}); a free viewer is only kept near the scene.
+		 */
 		private void skippers() {
 			for (Rider r : new ArrayList<>(riders)) {
 				if (!r.riding) continue;
 				ServerPlayer p = server.getPlayerList().getPlayer(r.id);
 				if (p == null) continue;
+				if (r.free) {
+					keepNear(p);
+					continue;
+				}
 				if (p.getCamera() != camera) {
 					releaseOne(r.id, true);
 					continue;
 				}
 				if (!p.isShiftKeyDown()) r.sneakReady = true;
-				else if (r.sneakReady) releaseOne(r.id, true);
+				else if (r.sneakReady) {
+					releaseOne(r.id, true);
+					continue;
+				}
+				if (!p.getLastClientInput().jump()) r.jumpReady = true;
+				else if (r.jumpReady) goFree(r, p);
+			}
+		}
+
+		/** /freecam: false when this player is not part of this film. */
+		boolean toggleFree(ServerPlayer p) {
+			for (Rider r : riders) {
+				if (!r.riding || !r.id.equals(p.getUUID())) continue;
+				if (r.free) backToCamera(r, p);
+				else goFree(r, p);
+				return true;
+			}
+			return false;
+		}
+
+		/** The viewer leaves the camera of the film and flies from where it was, like a spectator (the film goes on without them). */
+		private void goFree(Rider r, ServerPlayer p) {
+			r.free = true;
+			r.jumpReady = false;
+			p.setCamera(null);
+			Vec3 at = cameraAt != null ? cameraAt : p.position();
+			p.teleportTo(level, at.x, at.y, at.z, Set.of(), cameraYaw, cameraPitch, true);
+			p.setDeltaMovement(Vec3.ZERO);
+			p.sendSystemMessage(Component.literal("Free camera: fly around. /freecam goes back to the camera of the film.").withStyle(ChatFormatting.AQUA), true);
+		}
+
+		/** The viewer gets the camera of the film again (sneak skips the film from there, as always). */
+		private void backToCamera(Rider r, ServerPlayer p) {
+			r.free = false;
+			r.sneakReady = false;
+			r.jumpReady = false;
+			p.setCamera(camera);
+			p.sendSystemMessage(Component.literal("Camera of the film. Jump: free camera. Sneak: skip the film.").withStyle(ChatFormatting.GRAY), true);
+		}
+
+		/** A free viewer cannot fly off into the dark: too far from the middle (or too high or too low) and they are put back at the edge. */
+		private void keepNear(ServerPlayer p) {
+			Vec3 at = p.position();
+			double dx = at.x - center.x;
+			double dz = at.z - center.z;
+			double flat = Math.hypot(dx, dz);
+			double ny = Math.max(center.y - 4, Math.min(center.y + FREE_RADIUS, at.y));
+			if (flat <= FREE_RADIUS && ny == at.y) return;
+			double k = flat > FREE_RADIUS ? FREE_RADIUS / flat : 1.0;
+			p.teleportTo(level, center.x + dx * k, ny, center.z + dz * k, Set.of(), p.getYRot(), p.getXRot(), true);
+			p.setDeltaMovement(Vec3.ZERO);
+		}
+
+		/** A line above the hotbar that says what the keys do (twice: it fades). */
+		private void hint() {
+			for (Rider r : riders) {
+				if (!r.riding || r.free) continue;
+				ServerPlayer p = server.getPlayerList().getPlayer(r.id);
+				if (p != null) p.sendSystemMessage(Component.literal("Jump: free camera   |   Sneak: skip").withStyle(ChatFormatting.GRAY), true);
 			}
 		}
 
@@ -595,6 +680,7 @@ public final class Cinema {
 			for (Rider r : riders) {
 				if (!r.id.equals(id) || !r.riding) continue;
 				r.riding = false;
+				r.free = false;
 				ServerPlayer p = server.getPlayerList().getPlayer(r.id);
 				if (p == null) continue;
 				if (p.getCamera() != p) p.setCamera(null);
@@ -691,6 +777,7 @@ public final class Cinema {
 				}
 			}
 			int a = age - PRE;
+			if (a == 2 || a == 70) hint();
 			skippers();
 			moveCamera(a);
 			switch (kind) {
