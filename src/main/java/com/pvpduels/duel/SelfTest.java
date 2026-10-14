@@ -95,6 +95,8 @@ public final class SelfTest {
 			Duel.traceEnd = true; // every end of a duel is logged with where it came from
 			if (mode.equals("stop")) {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
+			} else if (mode.equals("pranks")) {
+				buildPranks();
 			} else {
 				build();
 			}
