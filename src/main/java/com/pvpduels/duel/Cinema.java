@@ -275,6 +275,10 @@ public final class Cinema {
 		final int index;
 		GameType previous = GameType.SURVIVAL;
 		boolean riding;
+		/** Where the viewer stood when the camera took them (a try-out puts them back there: the camera drags the body along). */
+		Vec3 home;
+		float homeYaw;
+		float homePitch;
 		/** True once the viewer has been seen NOT sneaking, so a key that was already down when the camera began does not skip the finale. */
 		boolean sneakReady;
 
@@ -519,6 +523,9 @@ public final class Cinema {
 				ServerPlayer p = server.getPlayerList().getPlayer(r.id);
 				if (p == null) continue;
 				r.previous = p.gameMode();
+				r.home = p.position();
+				r.homeYaw = p.getYRot();
+				r.homePitch = p.getXRot();
 				p.closeContainer();
 				p.setGameMode(GameType.SPECTATOR);
 				p.setCamera(camera);
@@ -556,7 +563,10 @@ public final class Cinema {
 				if (p == null) continue;
 				if (p.getCamera() != p) p.setCamera(null);
 				p.setGameMode(r.previous);
-				if (toStage && duel != null) {
+				if (duel == null && r.home != null) {
+					p.teleportTo(level, r.home.x, r.home.y, r.home.z, Set.of(), r.homeYaw, r.homePitch, true);
+					p.setDeltaMovement(0, 0, 0);
+				} else if (toStage && duel != null) {
 					Vec3 at = r.index >= 0 ? stage[r.index] : center.add(0, 6, 0);
 					p.teleportTo(level, at.x, at.y, at.z, Set.of(), r.index >= 0 ? yaw[r.index] : p.getYRot(), 0f, true);
 					p.setDeltaMovement(0, 0, 0);
@@ -681,8 +691,8 @@ public final class Cinema {
 			int from = film.victoryAt(this);
 			int t = a - from;
 			if (t >= 0 && t < happy.length()) Jingles.tick(level, audience(), cameraAt, happy, t);
-			// the sad tune follows the happy one, and is pushed back so that it ends with the film
-			int sadFrom = Math.max(from + happy.length() + DEFEAT_GAP, camTicks + film.tail() - sad.length() - 1);
+			// the sad tune ends with the film (after the happy one when there is room for both)
+			int sadFrom = Math.max(0, camTicks + film.tail() - sad.length() - 1);
 			int s = a - sadFrom;
 			if (s >= 0 && s < sad.length()) Jingles.tick(level, audience(), cameraAt, sad, s);
 		}
