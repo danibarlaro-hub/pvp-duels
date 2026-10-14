@@ -81,7 +81,8 @@ public final class LayoutCommands {
 					return 1;
 				})
 				.then(inventoryCopyNode()))
-			.then(inventoryCopyNode()));
+			.then(inventoryCopyNode())
+			.then(fromKitNode()));
 	}
 
 	/** /layout armor [on|off]: whether Sort also puts on the best armor you carry. */
@@ -456,12 +457,23 @@ public final class LayoutCommands {
 	public static CopyResult copyInventory(ServerPlayer p, String layoutArg, int priorityArg) {
 		com.pvpduels.duel.LobbyKit.strip(p); // the lobby hotbar items are not part of a layout
 		Inventory inv = p.getInventory();
+		return copyStacks(p, inv::getItem, "Your hotbar and backpack are empty (layouts only cover slots 1-36, not armor or the offhand), so there is nothing to copy.", layoutArg, priorityArg);
+	}
 
+	/** The same, but from a kit you saved, without loading it (nothing needs to be in your inventory). */
+	public static CopyResult copyKit(ServerPlayer p, com.pvpduels.kit.KitStore.Kit kit, String layoutArg, int priorityArg) {
+		ItemStack[] slots = kit.slots();
+		return copyStacks(p, i -> i < slots.length && slots[i] != null ? slots[i] : ItemStack.EMPTY,
+			"Kit '" + kit.name() + "' has nothing in its hotbar and backpack (layouts only cover slots 1-36, not armor or the offhand), so there is nothing to copy.",
+			layoutArg, priorityArg);
+	}
+
+	private static CopyResult copyStacks(ServerPlayer p, java.util.function.IntFunction<ItemStack> source, String emptyError, String layoutArg, int priorityArg) {
 		int items = 0;
 		for (int i = 0; i < LayoutStore.MAX_SLOT; i++) {
-			if (!inv.getItem(i).isEmpty()) items++;
+			if (!source.apply(i).isEmpty()) items++;
 		}
-		if (items == 0) return CopyResult.fail("Your hotbar and backpack are empty, so there is nothing to copy.");
+		if (items == 0) return CopyResult.fail(emptyError);
 
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
 		String name = layoutArg == null ? data.active : layoutArg.toLowerCase(Locale.ROOT);
@@ -487,7 +499,7 @@ public final class LayoutCommands {
 		}
 
 		for (int slot = 1; slot <= LayoutStore.MAX_SLOT; slot++) {
-			ItemStack stack = inv.getItem(slot - 1);
+			ItemStack stack = source.apply(slot - 1);
 			List<String> rules = new ArrayList<>(profile.slots.getOrDefault(slot, List.of()));
 			if (stack.isEmpty()) {
 				if (rules.size() >= priority) rules.set(priority - 1, "");
@@ -508,6 +520,64 @@ public final class LayoutCommands {
 			return CopyResult.fail("Could not save your layout file: " + e.getMessage());
 		}
 		return new CopyResult(true, name, priority, items, created, "");
+	}
+
+	private static final SuggestionProvider<CommandSourceStack> KITS = (ctx, builder) -> {
+		ServerPlayer p = ctx.getSource().getPlayer();
+		if (p == null) return builder.buildFuture();
+		return SharedSuggestionProvider.suggest(com.pvpduels.kit.KitStore.list(p.getUUID()), builder);
+	};
+
+	/** /layout fromkit &lt;kit&gt; [layout] [priority]: the layout comes straight from a saved kit. */
+	private static LiteralArgumentBuilder<CommandSourceStack> fromKitNode() {
+		return Commands.literal("fromkit")
+			.then(Commands.argument("kit", StringArgumentType.word()).suggests(KITS)
+				.executes(ctx -> fromKit(ctx, "kit", null, 0))
+				.then(Commands.argument("layout", StringArgumentType.word()).suggests(PROFILES)
+					.executes(ctx -> fromKit(ctx, "kit", StringArgumentType.getString(ctx, "layout"), 0))
+					.then(Commands.argument("priority", IntegerArgumentType.integer(1, LayoutStore.MAX_LEVELS))
+						.executes(ctx -> fromKit(ctx, "kit", StringArgumentType.getString(ctx, "layout"), IntegerArgumentType.getInteger(ctx, "priority"))))));
+	}
+
+	/**
+	 * Makes (or adds to) a layout from a kit you already saved: nothing has to be in your inventory. The kit is linked to the layout, so
+	 * loading it sorts with it. Used by /layout fromkit and /kit layout; kitArg is the name of the command argument that holds the kit.
+	 */
+	public static int fromKit(CommandContext<CommandSourceStack> ctx, String kitArg, String layoutArg, int priorityArg) throws CommandSyntaxException {
+		ServerPlayer p = ctx.getSource().getPlayerOrException();
+		String kitName = StringArgumentType.getString(ctx, kitArg).toLowerCase(Locale.ROOT);
+		java.util.Optional<com.pvpduels.kit.KitStore.Kit> kit;
+		try {
+			kit = com.pvpduels.kit.KitStore.read(ctx.getSource().getServer(), p.getUUID(), kitName);
+		} catch (IOException | RuntimeException e) {
+			ctx.getSource().sendFailure(Msg.err("Could not read the kit: " + e));
+			return 0;
+		}
+		if (kit.isEmpty()) {
+			List<String> names = com.pvpduels.kit.KitStore.list(p.getUUID());
+			ctx.getSource().sendFailure(Msg.err("You don't have a kit named '" + kitName + "'."
+				+ (names.isEmpty() ? " You have no saved kits yet." : " Your kits: " + String.join(", ", names))));
+			return 0;
+		}
+		CopyResult r = copyKit(p, kit.get(), layoutArg, priorityArg);
+		if (!r.ok()) {
+			ctx.getSource().sendFailure(Msg.err(r.error()));
+			return 0;
+		}
+		boolean linked = false;
+		if (!com.pvpduels.kit.KitStore.isLocked(p.getUUID(), kitName)) {
+			try {
+				com.pvpduels.kit.KitStore.setProfile(p.getUUID(), kitName, r.layout());
+				linked = true;
+			} catch (IOException e) {
+				ctx.getSource().sendFailure(Msg.err("The layout is made but the kit could not be linked to it: " + e.getMessage()));
+			}
+		}
+		boolean isLinked = linked;
+		ctx.getSource().sendSuccess(() -> Msg.ok("Copied kit '" + kitName + "' (" + r.items() + " items) into " + (r.created() ? "new layout '" : "layout '")
+			+ r.layout() + "' at priority " + r.priority() + ". Armor and offhand are not in layouts."
+			+ (isLinked ? " The kit will be sorted with this layout when you load it." : " (A kit that was given to you can't be linked.)")), false);
+		return 1;
 	}
 
 	private static int inventoryCopy(CommandContext<CommandSourceStack> ctx, String layoutArg, int priorityArg) throws CommandSyntaxException {

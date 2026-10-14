@@ -44,6 +44,7 @@ public final class GuideCommand {
 		"/sidebar [on|off]  - the scoreboard on the right with your stats and the duel score. /guide book  - get the guide book again",
 		"/kit save <name>  - save your current inventory as a kit (the chat then offers a [+ Also make a layout from this] button)",
 		"/kit save <name> layout [layout] [priority]  - the two in one go: saves the kit AND copies the same inventory into a layout (no layout = the active one, no priority = next free level) and links the kit to it, so loading the kit sorts with that layout",
+		"/kit layout <kit> [layout] [priority]  - make a layout straight from a kit you already saved (nothing needs to be in your inventory), and link the kit to it. Same as /layout fromkit <kit> [layout] [priority]",
 		"/kit load <name>  - replace your inventory with a kit",
 		"/kit list  - list your kits",
 		"/kit show <name>  - look inside a saved kit (a chest you can only look at)",

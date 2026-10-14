@@ -79,6 +79,23 @@ public final class KitStore {
 		return n;
 	}
 
+	/** What the server sees in an inventory, by part, not counting the lobby items and the guide book (for the "your inventory is empty" message). */
+	public static String describe(Inventory inv) {
+		int hotbar = 0;
+		int backpack = 0;
+		int armor = 0;
+		int offhand = 0;
+		for (int i = 0; i < SLOTS && i < inv.getContainerSize(); i++) {
+			ItemStack s = inv.getItem(i);
+			if (s.isEmpty() || com.pvpduels.GuideBook.isGuide(s) || com.pvpduels.duel.LobbyKit.isLobbyItem(s)) continue;
+			if (i < 9) hotbar++;
+			else if (i < 36) backpack++;
+			else if (i < 40) armor++;
+			else offhand++;
+		}
+		return "hotbar " + hotbar + ", backpack " + backpack + ", armor " + armor + ", offhand " + offhand + " - the lobby items and the guide book don't count";
+	}
+
 	/** "hotbar 3", "inventory 12", "boots", "offhand"... */
 	public static String slotName(int i) {
 		if (i < 9) return "hotbar " + (i + 1);

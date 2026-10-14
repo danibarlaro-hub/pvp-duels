@@ -2994,6 +2994,43 @@ public final class SelfTest {
 			check("/layout inventorycopy still works", a.heard("Copied your inventory (2 items) into layout 'onelay' at priority 6"));
 		});
 
+		step("kits: a layout straight from a saved kit, with nothing in the inventory", () -> {
+			var inv = a.getInventory();
+			inv.clearContent();
+			for (EquipmentSlot slot : new EquipmentSlot[] {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) a.setItemSlot(slot, ItemStack.EMPTY);
+			a.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+			a.inbox.clear();
+			run(a, "kit save emptyone layout");
+			check("an empty inventory says what the server sees and points to /kit layout", !KitStore.exists(a.getUUID(), "emptyone") && a.heard("inventory is empty")
+				&& a.heard("hotbar 0, backpack 0, armor 0, offhand 0") && a.heard("/kit layout <kit>"), String.valueOf(a.inbox));
+
+			// goodkit: the sword in slot 1, 5 apples in slot 2 and an iron helmet (armor is not in layouts)
+			a.inbox.clear();
+			run(a, "kit layout goodkit fromk");
+			check("a new layout was made from the saved kit", a.heard("Copied kit 'goodkit' (2 items) into new layout 'fromk' at priority 1"), String.valueOf(a.inbox));
+			var prof = LayoutStore.get(a.getUUID()).profiles.get("fromk");
+			check("the sword is the rule of slot 1 and the apples of slot 2",
+				prof != null && prof.slots.getOrDefault(1, List.of()).equals(List.of("minecraft:diamond_sword"))
+					&& prof.slots.getOrDefault(2, List.of()).equals(List.of("minecraft:golden_apple")), prof == null ? "no layout" : String.valueOf(prof.slots));
+			try {
+				var kit = KitStore.read(server, a.getUUID(), "goodkit");
+				check("the kit is linked to the layout", kit.isPresent() && "fromk".equals(kit.get().profile()), kit.isPresent() ? String.valueOf(kit.get().profile()) : "no kit");
+			} catch (IOException e) {
+				check("the kit can be read", false, e.toString());
+			}
+			check("the inventory was not touched", KitStore.stacksInInventory(inv) == 0);
+
+			a.inbox.clear();
+			run(a, "kit layout goodkit fromk 3");
+			check("the priority can be chosen", a.heard("layout 'fromk' at priority 3"), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "layout fromkit goodkit fromk");
+			check("/layout fromkit does the same, at the next free priority", a.heard("layout 'fromk' at priority 4"), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "kit layout nosuchkit");
+			check("an unknown kit says so and lists the kits", a.heard("You don't have a kit named 'nosuchkit'") && a.heard("goodkit"), String.valueOf(a.inbox));
+		});
+
 		step("kits: a stack that is too big or unreadable is rescued, not lost", () -> {
 			var inv = a.getInventory();
 			inv.clearContent();
@@ -4871,7 +4908,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.22.0", version.equals("0.22.0"), version);
+			check("the mod says 0.22.1", version.equals("0.22.1"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();

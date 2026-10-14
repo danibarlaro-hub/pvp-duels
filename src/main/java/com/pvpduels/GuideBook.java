@@ -75,7 +75,7 @@ public final class GuideBook {
 			{"Prize", "The top 3 become Builders for 3 weeks and can make their own arenas (/createarena).\n\n/contest shows how it is going, /contest results the last one.\n\nAdmins: /contest start [category], /contest end"}
 		}),
 		new Topic("Kits", new String[][] {
-			{"Your kits", "/kit save <name>\n/kit save <name> layout: the kit and its layout in one go\n/kit load <name>\n/kit list\n/kit show <name>\n/kit delete <name>"},
+			{"Your kits", "/kit save <name>\n/kit save <name> layout: the kit and its layout in one go\n/kit layout <name>: a layout from a saved kit\n/kit load <name>\n/kit list\n/kit show <name>\n/kit delete <name>"},
 			{"Quick keys", "/kit key a|b|c <kit> sets what the Quick kit keys load.\n\n/kit profile <kit> <layout> sorts a kit when you load it."},
 			{"Sharing", "/publicate <kit>\n/kit public\n/kit take <kit>\n/unpublish <kit>\n/private <kit> <player>: a locked copy"},
 			{"Kit workshop", "Create+ > Create Kit, or /kit create [kit]. A creative void.\n\n/enchant <name> [0-255]\n/infinite <1-99>\n/kit save <name> [layout]\n/leave"}

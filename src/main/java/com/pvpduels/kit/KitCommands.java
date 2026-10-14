@@ -77,6 +77,15 @@ public final class KitCommands {
 					.then(Commands.argument("kit", StringArgumentType.word()).suggests(KITS_OR_NONE)
 						.executes(KitCommands::setKey))))
 			.then(Commands.literal("keys").executes(KitCommands::showKeys))
+			// /kit layout <kit> [layout] [priority]: a layout straight from a saved kit, nothing needs to be in your inventory
+			.then(Commands.literal("layout")
+				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS)
+					.executes(ctx -> com.pvpduels.layout.LayoutCommands.fromKit(ctx, "name", null, 0))
+					.then(Commands.argument("layout", StringArgumentType.word()).suggests(LAYOUTS)
+						.executes(ctx -> com.pvpduels.layout.LayoutCommands.fromKit(ctx, "name", StringArgumentType.getString(ctx, "layout"), 0))
+						.then(Commands.argument("priority", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, LayoutStore.MAX_LEVELS))
+							.executes(ctx -> com.pvpduels.layout.LayoutCommands.fromKit(ctx, "name", StringArgumentType.getString(ctx, "layout"),
+								com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "priority")))))))
 			.then(Commands.literal("profile")
 				.then(Commands.argument("name", StringArgumentType.word()).suggests(KITS)
 					.then(Commands.argument("profile", StringArgumentType.word()).suggests(PROFILES)
@@ -113,8 +122,9 @@ public final class KitCommands {
 		if (KitStore.stacksInInventory(p.getInventory()) == 0) {
 			// Never write a blank kit (and never replace a good one with a blank one). Show the player what the server has.
 			KitStore.resync(p);
-			ctx.getSource().sendFailure(Msg.err("Your inventory is empty (that is what the server sees), so nothing was saved"
-				+ (KitStore.exists(p.getUUID(), name) ? " and kit '" + name + "' stays as it was" : "") + ". Put your items in first, then run /kit save " + name + " again."));
+			ctx.getSource().sendFailure(Msg.err("Your inventory is empty (that is what the server sees: " + KitStore.describe(p.getInventory()) + "), so nothing was saved"
+				+ (KitStore.exists(p.getUUID(), name) ? " and kit '" + name + "' stays as it was" : "") + ". Put your items in first, then run /kit save " + name + " again."
+				+ " (To make a layout from a kit you already saved, without loading it: /kit layout <kit> [layout] [priority].)"));
 			return 0;
 		}
 		try {
