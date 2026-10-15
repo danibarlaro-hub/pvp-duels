@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("handicap")) {
+				buildHandicap();
 			} else {
 				build();
 			}
@@ -580,6 +582,116 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: a head start for the weaker player
+
+	private static void handicapSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("handicap: the rule and its text", () -> {
+			check("no head start is the default", DuelConfig.Rules.DEFAULT.handicap() == 0 && DuelConfig.Rules.DEFAULT.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault());
+			var rival = new DuelConfig.Rules(true, true, true, true, 2);
+			var self = new DuelConfig.Rules(true, true, true, true, -3);
+			check("the challenged player (index 1) gets a positive head start", rival.headStart(1) == 2 && rival.headStart(0) == 0);
+			check("the challenger (index 0) gets a negative one", self.headStart(0) == 3 && self.headStart(1) == 0);
+			check("a head start is not the default rules", !rival.isDefault() && !self.isDefault());
+			check("the text says it", rival.describe(ArenaKind.FLAT).equals("Head start of 2 extra hearts for the challenged player")
+				&& new DuelConfig.Rules(true, true, true, true, -1).describe(ArenaKind.FLAT).equals("Head start of 1 extra heart for the challenger"), rival.describe(ArenaKind.FLAT));
+			check("it can not be huge", new DuelConfig.Rules(true, true, true, true, 99).handicap() == DuelConfig.Rules.MAX_HANDICAP && new DuelConfig.Rules(true, true, true, true, -99).handicap() == -DuelConfig.Rules.MAX_HANDICAP);
+			check("the button goes through none, the rival 1 2 3 5, then you 1 2 3 5 and back to none", DuelMenus.nextHandicap(0) == 1 && DuelMenus.nextHandicap(1) == 2 && DuelMenus.nextHandicap(5) == -1
+				&& DuelMenus.nextHandicap(-5) == 0 && DuelMenus.nextHandicap(7) == 0);
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save hkit");
+			a.getInventory().clearContent();
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "duel Bob");
+			menuStep(a, "hkit");
+		});
+		step("handicap: the menu", () -> { menuStep(a, "Flat void arena"); });
+		step("handicap: menu version", () -> { menuStep(a, "With walls"); });
+		step("handicap: menu mode", () -> { menuStep(a, "First to N points"); });
+		step("handicap: menu amount", () -> { menuStep(a, "First to 2"); });
+		step("handicap: the rules menu has the button", () -> {
+			check("it starts with none", menuHas(a, "Head start: none"));
+			menuStep(a, "Head start: none");
+		});
+		step("handicap: two clicks", () -> {
+			check("one click: Bob gets 1 heart", menuHas(a, "Head start: 1 heart for Bob"));
+			menuStep(a, "Head start: 1 heart for Bob");
+		});
+		step("handicap: second click", () -> {
+			check("two clicks: 2 hearts for Bob", menuHas(a, "Head start: 2 hearts for Bob"));
+			menuStep(a, "Continue");
+		});
+		step("handicap: send the challenge", () -> {
+			menuStep(a, "Send the challenge");
+			check("the request lists the head start", b.heard("Head start of 2 extra hearts for the challenged player"), String.valueOf(b.inbox));
+			run(b, "accept Alice");
+			Duel d = duel(a);
+			check("the duel has it", d != null && d.config.rules().handicap() == 2, d == null ? "no duel" : String.valueOf(d.config.rules()));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("handicap: Bob has two extra hearts in round 1", () -> {
+			check("Bob has 4 points of yellow hearts (2 hearts)", b.getAbsorptionAmount() == 4f, String.valueOf(b.getAbsorptionAmount()));
+			check("Alice has none", a.getAbsorptionAmount() == 0f, String.valueOf(a.getAbsorptionAmount()));
+			check("the effect is hidden: no icon", b.getEffect(MobEffects.ABSORPTION) != null && !b.getEffect(MobEffects.ABSORPTION).isVisible());
+			softHit(a, b, 3f);
+			check("a blow takes the yellow hearts first and the health stays full", b.getAbsorptionAmount() < 4f && b.getHealth() >= b.getMaxHealth() - 0.01f,
+				b.getAbsorptionAmount() + " " + b.getHealth());
+			hit(a, b);
+		}, () -> roundIs(a, 2), 600);
+		step("handicap: in round 2 he has them again", () -> {
+			check("Bob is back to 4 points", b.getAbsorptionAmount() == 4f, String.valueOf(b.getAbsorptionAmount()));
+			check("Alice still has none", a.getAbsorptionAmount() == 0f);
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("handicap: after the duel the hearts are gone", () -> {
+			check("Bob has no yellow hearts in the lobby", b.getAbsorptionAmount() == 0f && !b.hasEffect(MobEffects.ABSORPTION), b.getAbsorptionAmount() + " " + b.hasEffect(MobEffects.ABSORPTION));
+		});
+		step("handicap: the other way, Alice gets three", () -> {
+			invite(a, b, new DuelConfig("hkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1, new DuelConfig.Rules(true, true, true, true, -3)));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("handicap: Alice has 6 points", () -> {
+			check("Alice has 3 hearts of yellow hearts (6 points)", a.getAbsorptionAmount() == 6f, String.valueOf(a.getAbsorptionAmount()));
+			check("Bob has none", b.getAbsorptionAmount() == 0f);
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("handicap: a duel without a head start", () -> {
+			invite(a, b, new DuelConfig("hkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("handicap: nobody has extra hearts", () -> {
+			check("without a head start nobody has yellow hearts", a.getAbsorptionAmount() == 0f && b.getAbsorptionAmount() == 0f);
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("handicap: clean up", () -> {
+			run(a, "kit delete hkit");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildHandicap() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		handicapSteps();
+		step("handicap: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +966,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		handicapSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);

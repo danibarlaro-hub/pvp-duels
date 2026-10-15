@@ -8,8 +8,26 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 	 * regen: natural health regeneration. fallDamage: damage from falling. hunger: the food bar goes down.
 	 * building: placing and breaking blocks in the circular and unlimited arenas (the flat arena has its own rules).
 	 */
-	public record Rules(boolean regen, boolean fallDamage, boolean hunger, boolean building) {
-		public static final Rules DEFAULT = new Rules(true, true, true, true);
+	public record Rules(boolean regen, boolean fallDamage, boolean hunger, boolean building, int handicap) {
+		public static final Rules DEFAULT = new Rules(true, true, true, true, 0);
+		/** The most extra hearts a head start can give. */
+		public static final int MAX_HANDICAP = 10;
+
+		/** Without a head start. */
+		public Rules(boolean regen, boolean fallDamage, boolean hunger, boolean building) {
+			this(regen, fallDamage, hunger, building, 0);
+		}
+
+		public Rules {
+			handicap = Math.max(-MAX_HANDICAP, Math.min(MAX_HANDICAP, handicap));
+		}
+
+		/** The extra (absorption) hearts that duelist {@code index} (0 = the challenger, 1 = the challenged player) starts every round with. */
+		public int headStart(int index) {
+			if (handicap > 0 && index == 1) return handicap;
+			if (handicap < 0 && index == 0) return -handicap;
+			return 0;
+		}
 
 		public boolean isDefault() {
 			return equals(DEFAULT);
@@ -22,6 +40,10 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 			if (!fallDamage) parts.add("no fall damage");
 			if (!hunger && regen) parts.add("no hunger loss");
 			if (!building && (arena == ArenaKind.CIRCLE || arena == ArenaKind.UNLIMITED || arena == ArenaKind.CUSTOM)) parts.add("no building");
+			if (handicap != 0) {
+				int hearts = Math.abs(handicap);
+				parts.add("head start of " + hearts + (hearts == 1 ? " extra heart" : " extra hearts") + " for the " + (handicap > 0 ? "challenged player" : "challenger"));
+			}
 			if (parts.isEmpty()) return "default rules";
 			String text = String.join(", ", parts);
 			return Character.toUpperCase(text.charAt(0)) + text.substring(1);

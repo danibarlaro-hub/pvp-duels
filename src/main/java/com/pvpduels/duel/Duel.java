@@ -260,6 +260,7 @@ public final class Duel {
 		p.clearFire();
 		p.setHealth(p.getMaxHealth());
 		p.setAbsorptionAmount(0f);
+		giveHeadStart(p, config.rules().headStart(i));
 		p.getFoodData().setFoodLevel(20);
 		p.getFoodData().setSaturation(20f);
 		KitStore.give(p, kit);
@@ -270,6 +271,17 @@ public final class Duel {
 		// The arena can be dark at night, so both players always see well.
 		p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 72000, 0, false, false));
 		space.teleportToSpawn(p, arena, i);
+	}
+
+	/**
+	 * A head start: yellow (absorption) hearts for this round. The absorption effect raises the limit, then the amount is set to exactly
+	 * the hearts asked for (an effect of level N allows 2 x (N+1) hearts).
+	 */
+	static void giveHeadStart(ServerPlayer p, int hearts) {
+		if (hearts <= 0) return;
+		int level = (hearts + 1) / 2 - 1;
+		p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 72000, level, false, false));
+		p.setAbsorptionAmount(hearts * 2f);
 	}
 
 	/**

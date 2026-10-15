@@ -38,6 +38,8 @@ public final class DuelMenus {
 		boolean fallDamage = true;
 		boolean hunger = true;
 		boolean building = true;
+		/** The head start: + hearts for the challenged player, - hearts for the challenger, 0 = none. */
+		int handicap;
 		WinMode mode = WinMode.ROUNDS;
 		int limit = 3;
 
@@ -353,6 +355,14 @@ public final class DuelMenus {
 				rules(who, setup);
 			});
 		}
+		if (!Party.inParty(p.getUUID())) {
+			String label = setup.handicap == 0 ? "none" : Math.abs(setup.handicap) + (Math.abs(setup.handicap) == 1 ? " heart" : " hearts") + " for " + (setup.handicap > 0 ? setup.opponentName : "you");
+			b.set(2, icon(Items.GOLDEN_APPLE, "Head start: " + label, setup.handicap == 0 ? ChatFormatting.GRAY : ChatFormatting.GOLD,
+				"Extra yellow hearts at the start of every round,", "for the weaker player. Click to change it:", "none, " + setup.opponentName + " +1, +2, +3, +5, then you +1, +2, +3, +5."), who2 -> {
+				setup.handicap = nextHandicap(setup.handicap);
+				rules(who2, setup);
+			});
+		}
 		b.set(22, icon(Items.EMERALD, "Continue", ChatFormatting.GREEN), who -> confirm(who, setup));
 		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> amount(who, setup));
 		ChoiceMenu.open(p, Component.literal("Duel: rules"), 3, b);
@@ -360,13 +370,21 @@ public final class DuelMenus {
 
 	// ------------------------------------------------------------------ 7. confirm
 
+	/** The head starts the button goes through: none, then the rival gets 1, 2, 3, 5 hearts, then you get 1, 2, 3, 5. */
+	static final int[] HANDICAPS = {0, 1, 2, 3, 5, -1, -2, -3, -5};
+
+	static int nextHandicap(int now) {
+		for (int i = 0; i < HANDICAPS.length; i++) if (HANDICAPS[i] == now) return HANDICAPS[(i + 1) % HANDICAPS.length];
+		return 0;
+	}
+
 	private static DuelConfig config(Setup setup) {
 		if (setup.arena == ArenaKind.CUSTOM) {
 			return DuelConfig.inCustomArena(setup.kit, setup.custom, setup.mode, setup.limit,
-				new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
+				new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building, setup.handicap));
 		}
 		return new DuelConfig(setup.kit, setup.arena, setup.walls, setup.arena == ArenaKind.CIRCLE ? setup.radius : 0, setup.mode, setup.limit,
-			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
+			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building, setup.handicap));
 	}
 
 	private static void confirm(ServerPlayer p, Setup setup) {
