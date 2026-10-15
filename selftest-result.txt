@@ -1,0 +1,45 @@
+--- two fake players
+--- vote: who wins and which arenas there are
+PASS  1v1: five arenas and the public ones of the Builders
+PASS  2v2: only the five
+PASS  three different arenas are offered   ([Option[kind=CIRCLE, walls=false, radius=150, custom=], Option[kind=FLAT, walls=false, radius=0, custom=], Option[kind=FLAT, walls=true, radius=0, custom=]])
+PASS  when nobody voted any of the three can be picked
+PASS  a tie is decided at random between the tied ones only
+PASS  the most votes wins
+--- vote: a match asks for a vote
+PASS  vkit is on the public shelf
+PASS  without a vote nothing happens   ([There is no arena vote for you right now. It starts when the queue finds you a match.])
+PASS  the match started a vote and not a duel   (com.pvpduels.duel.ArenaVote$Vote@309a3f5f)
+PASS  both were told the three arenas   ([There is no arena vote for you right now. It starts when the queue finds you a match., You joined the public (vkit) queue.  [LEAVE QUEUE], Match found!,   Bob - kit vkit (public kit). First to 3 points., Vote for the arena (5 seconds),   [1] Flat arena (with walls)  [2] Flat arena (no walls)  [3] Circular arena (radius 100)  ,   /arenavote opens a menu. If nobody votes, or it is a tie, it is picked at random.])
+PASS  the match text no longer says which arena   ([There is no arena vote for you right now. It starts when the queue finds you a match., You joined the public (vkit) queue.  [LEAVE QUEUE], Match found!,   Bob - kit vkit (public kit). First to 3 points., Vote for the arena (5 seconds),   [1] Flat arena (with walls)  [2] Flat arena (no walls)  [3] Circular arena (radius 100)  ,   /arenavote opens a menu. If nobody votes, or it is a tie, it is picked at random.])
+--- vote: both vote for the second arena
+PASS  Alice's vote is counted and she is told   ([You voted for Flat arena (no walls).] 100)
+PASS  when everybody voted the time is cut short   (40)
+--- vote: the duel is in the arena they chose
+PASS  a flat arena without walls, kit vkit, first to 3   (Flat arena (no walls))
+PASS  they were told which one won   ([You voted for Flat arena (no walls)., Arena vote  1s   1: 0   2: 2   3: 0, Arena: Flat arena (no walls) (2 votes)., Duel vs Bob,   Kit: vkit   Arena: Flat arena (no walls),   Mode: First to 3 points   Use /leave to quit.])
+PASS  the vote is over
+--- vote: a second match, Alice changes her mind
+PASS  a new vote
+PASS  one vote for the third arena
+PASS  she changed it: the third has none, the first has one
+PASS  Bob agrees
+--- vote: the first arena, with walls
+PASS  a flat arena with walls   (Flat arena (with walls))
+PASS  it was the votes of two   ([You joined the public (vkit) queue.  [LEAVE QUEUE], Match found!,   Bob - kit vkit (public kit). First to 3 points., Vote for the arena (5 seconds),   [1] Flat arena (with walls)  [2] Flat arena (no walls)  [3] Circular arena (radius 100)  ,   /arenavote opens a menu. If nobody votes, or it is a tie, it is picked at random., You voted for Circular arena (radius 100)., You voted for Flat arena (with walls)., Arena vote  1s   1: 2   2: 0   3: 0, Arena: Flat arena (with walls) (2 votes)., Duel vs Bob,   Kit: vkit   Arena: Flat arena (with walls),   Mode: First to 3 points   Use /leave to quit.])
+--- vote: the menu, and a vote that ends by time with only one voter
+PASS  the menu has the three arenas
+PASS  clicking one votes for it
+PASS  and the menu shows the vote
+--- vote: when time ends the one vote decides
+PASS  the arena of the only vote   (Flat arena (no walls))
+PASS  with one vote said in the singular   ([You joined the public (vkit) queue.  [LEAVE QUEUE], Match found!,   Bob - kit vkit (public kit). First to 3 points., Vote for the arena (5 seconds),   [1] Flat arena (with walls)  [2] Flat arena (no walls)  [3] Circular arena (radius 100)  ,   /arenavote opens a menu. If nobody votes, or it is a tie, it is picked at random., You voted for Flat arena (no walls)., Arena vote  4s   1: 0   2: 1   3: 0, Arena vote  3s   1: 0   2: 1   3: 0, Arena vote  2s   1: 0   2: 1   3: 0, Arena vote  1s   1: 0   2: 1   3: 0, Arena: Flat arena (no walls) (1 vote)., Duel vs Bob,   Kit: vkit   Arena: Flat arena (no walls),   Mode: First to 3 points   Use /leave to quit.])
+--- vote: somebody got busy while voting, the match is cancelled
+PASS  a vote is running
+PASS  Alice is in a practice duel meanwhile
+--- vote: the cancelled match
+PASS  Bob was told why   ([You joined the public (vkit) queue.  [LEAVE QUEUE], Match found!,   Alice - kit vkit (public kit). First to 3 points., Vote for the arena (5 seconds),   [1] Flat arena (with walls)  [2] Flat arena (no walls)  [3] Circular arena (radius 100)  ,   /arenavote opens a menu. If nobody votes, or it is a tie, it is picked at random., Bot joined the game, Arena vote  4s   1: 0   2: 0   3: 0, Mission complete: Win 3 duels in a row,   Reward: Firework color Black [EFFECTS], Mission complete!, Arena vote  3s   1: 0   2: 0   3: 0, Arena vote  2s   1: 0   2: 0   3: 0, Arena vote  1s   1: 0   2: 0   3: 0, The match was cancelled: Alice is busy.])
+PASS  Bob has no duel
+--- vote: clean up
+--- vote: done
+RESULT: PASS
