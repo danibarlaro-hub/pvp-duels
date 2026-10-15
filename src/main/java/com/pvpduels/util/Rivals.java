@@ -242,13 +242,17 @@ public final class Rivals {
 						return SharedSuggestionProvider.suggest(out, builder);
 					})
 					.executes(ctx -> {
-						String name = StringArgumentType.getString(ctx, "player");
-						String problem = remove(ctx.getSource().getPlayerOrException(), name);
+						ServerPlayer me = ctx.getSource().getPlayerOrException();
+						String typed = StringArgumentType.getString(ctx, "player");
+						String name = typed;
+						for (UUID id : of(me.getUUID())) if (nameOf(id).equalsIgnoreCase(typed)) name = nameOf(id); // the name as it is written in the list
+						String problem = remove(me, typed);
 						if (problem != null) {
 							ctx.getSource().sendFailure(Msg.err(problem));
 							return 0;
 						}
-						ctx.getSource().sendSuccess(() -> Msg.ok(name + " is not on your list any more."), false);
+						String shown = name;
+						ctx.getSource().sendSuccess(() -> Msg.ok(shown + " is not on your list any more."), false);
 						return 1;
 					}))));
 	}
