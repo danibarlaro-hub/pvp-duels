@@ -1,0 +1,300 @@
+[09:30:19] [Server thread/INFO] (pvpduels) [selftest] PASS  an unknown player says so
+[09:30:19] [Server thread/INFO] (pvpduels) [selftest] PASS  /jumpscare is three sounds and a big BOO   (3)
+[09:30:19] [Server thread/INFO] (pvpduels) [selftest] PASS  /fakeop shows the fake line to Bob only
+[09:30:19] [Server thread/INFO] (pvpduels) [selftest] PASS  /annoy spawn needs a lobby and says so when there is none   ([There is no lobby (spawn) yet: set it with the lobby command first.])
+[09:30:19] [Server thread/INFO] (pvpduels) [selftest] --- pranks: /spam goes on for a while and then stops by itself
+[09:30:19] [Server thread/INFO] (pvpduels) [selftest] PASS  the spam is running
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] --- pranks: the spam sent several sounds and ended
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob got several silly sounds in 3 seconds   (6)
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] PASS  and it ended by itself
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] PASS  two sprees run at once
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] PASS  /annoystop <who> stops only that one
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] PASS  /annoystop stops everything
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] PASS  /haunt wants one player
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] PASS  the haunting is running
+[09:30:23] [Server thread/INFO] (pvpduels) [selftest] --- pranks: the haunting goes on for two seconds
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] --- pranks: the haunting played spooky sounds around Bob and ended
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob heard spooky sounds   (2)
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  and it ended by itself
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] --- bugs: Dibitss reads the reports of the others
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #1 from Alice: The kit menu showed my old kit
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #2 from Bob: The arena was not cleaned after a round
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #3 from Alice: A third problem with the queue and the barrier
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  three reports are in the file and all three are open
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  /bugs is hidden from a normal player and open to Dibitss
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  /bugs lists the open ones, with buttons
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  /bugs show tells the whole report
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  /bugs fix 2 marks it
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  the report itself was not touched
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  marking it twice says so
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  the open list no longer has it
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  the fixed list has only it, with a reopen button
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  the list of all has the three
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  /bugs reopen opens it again
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  a number that does not exist is refused
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #4 from Alice: Extra problem number 0 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #5 from Alice: Extra problem number 1 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #6 from Alice: Extra problem number 2 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #7 from Alice: Extra problem number 3 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #8 from Alice: Extra problem number 4 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #9 from Alice: Extra problem number 5 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #10 from Alice: Extra problem number 6 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) Bug report #11 from Alice: Extra problem number 7 in the test
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  eleven reports make two pages
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  a page too far shows the last one, with a way back
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  the owner is told on joining that reports are waiting, and a normal player is told nothing
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] --- h2h: the record of every pair, from both sides
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  with no duels /h2h says so
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  a player she never dueled shows zero duels and a challenge button
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  a name nobody knows is refused
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  her own name is refused
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice's side: 2 wins, 1 loss, 1 tie, rounds 6-4   (View[other=faa5dca3-c3d4-354b-ae1b-dde9e5a14b3b, otherName=Bob, wins=2, losses=1, draws=1, roundsFor=6, roundsAgainst=4, last=1792056626749, lastResult=0, lastKit=pot, streak=0])
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob's side is the mirror, whoever challenged first   (View[other=10920508-d5d8-3eed-93d2-92f193afe7d7, otherName=Alice, wins=1, losses=2, draws=1, roundsFor=4, roundsAgainst=6, last=1792056626749, lastResult=0, lastKit=pot, streak=0])
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  the last duel was a tie with the kit pot, and the tie broke the streak
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  each side knows the name of the other
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  two wins in a row make a streak of 2 for Alice and -2 for Bob   (2 -2)
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  /h2h Bob tells the numbers, the streak and the last duel   (6)
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob sees it from his side (capitals are forgiven) and that Alice is winning
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  /h2h lists the rivals, the one with more duels first, with buttons
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  a rival who is offline can be looked up by the name saved in the file
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  it is all in the file: it survives a restart   (View[other=faa5dca3-c3d4-354b-ae1b-dde9e5a14b3b, otherName=Bob, wins=4, losses=1, draws=1, roundsFor=10, roundsAgainst=5, last=1792056626750, lastResult=1, lastKit=pot, streak=2])
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] PASS  ago() says it in plain words
+[09:30:26] [Server thread/INFO] (pvpduels) [selftest] --- tournament: five new players
+[09:30:26] [Server thread/INFO] (Minecraft) Tina[local] logged in with entity id 60541 at (0.0, 0.0, 0.0)
+[09:30:26] [Server thread/INFO] (Minecraft) Tina joined the game
+[09:30:26] [Server thread/INFO] (Minecraft) Uma[local] logged in with entity id 60542 at (0.0, 0.0, 0.0)
+[09:30:26] [Server thread/INFO] (Minecraft) Uma joined the game
+[09:30:26] [Server thread/INFO] (Minecraft) Vera[local] logged in with entity id 60543 at (0.0, 0.0, 0.0)
+[09:30:26] [Server thread/INFO] (Minecraft) Vera joined the game
+[09:30:26] [Server thread/INFO] (Minecraft) Wade[local] logged in with entity id 60544 at (0.0, 0.0, 0.0)
+[09:30:26] [Server thread/INFO] (Minecraft) Wade joined the game
+[09:30:26] [Server thread/INFO] (Minecraft) Xena[local] logged in with entity id 60545 at (0.0, 0.0, 0.0)
+[09:30:26] [Server thread/INFO] (Minecraft) Xena joined the game
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] --- tournament: nothing is open, so the commands say so
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  the public kit for the matches exists
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  start with nothing open   ([PvP Duels is active. Type /guide to see the commands., Building contest: "mountain fortress" (4 days left to build). /contest, Uma joined the game, Vera joined the game, Wade joined the game, Xena joined the game, Saved kit 'tkit' from your inventory: 1 item stack in the file. See it with /kit show tkit., [+ Also make a layout from this], Kit 'tkit' is now public. Everybody can copy it with /kit take tkit. Use /unpublish tkit to take it back., There is no tournament. /tournament create opens one.])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  join with nothing open
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  leave with nothing open
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  a kit that is not public is refused   ([There is no public kit named 'nosuchkit'. Use random, or one of the public kits (/publicate puts a kit on the shelf).])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  the plain command explains how to open one
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  the seeds of a bracket of 8 pair 1-8, 4-5, 2-7, 3-6
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] --- tournament: Tina opens it and the others join
+[09:30:27] [Server thread/INFO] (pvpduels) Tournament opened by Tina (up to 8, first to 1, kit tkit)
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  it is open with Tina alone
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  everybody was told, with a button   ([Tina opened a tournament!,   Up to 8 players, first to 1, kit tkit.  [JOIN]])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  a second one can't be opened
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  alone she can't start   ([At least 3 players are needed (now 1).])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  Uma joined and Tina heard it
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  twice is refused
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  only the host starts it   ([Only Tina (or an admin) can start it.])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  Wade left before the start   ([Wade left the tournament (3/8).])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  five players
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  the sign-up list shows everybody   ([Tournament of Tina (signing up 5/8),   First to 1, kit tkit.,   Players: Tina, Uma, Vera, Wade, Xena,   [JOIN] [START]])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] --- tournament: it starts and the best seeds get the byes
+[09:30:27] [Server thread/INFO] (pvpduels) Tournament started with 5 players
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  running, with a bracket of 8
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  three byes in the first round   ([Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  the rounds have their names   ([Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?])
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  two matches are ready: a quarterfinal and a semifinal   (2)
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  the quarterfinal is seed 4 against seed 5   (4 / 5)
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  the semifinal is seed 2 against seed 3   (2 / 3)
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  everybody was told it started
+[09:30:27] [Server thread/INFO] (pvpduels) [selftest] PASS  seed 1 was told about the bye   (Xena)
+[09:30:30] [Server thread/INFO] (pvpduels) Duel started: Vera vs Uma (DuelConfig[kit=tkit, arena=FLAT, walls=true, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true, mutator=NONE, swapKit=, handicap=0], custom=], slot 0)
+[09:30:30] [Server thread/INFO] (pvpduels) Duel started: Wade vs Tina (DuelConfig[kit=tkit, arena=FLAT, walls=true, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true, mutator=NONE, swapKit=, handicap=0], custom=], slot 1)
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the two matches start by themselves
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  pair 0 is in a duel together
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  it is a first-to-1 tournament duel with the kit
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  both were told   ([The tournament started! 5 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], Quarterfinals: you play Uma in 2 s., You are seed 4 of 5., Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?, Tournament: you play Uma in 2 s, Tournament: you play Uma in 2 s, Tournament: you play Uma in 1 s, Tournament: you play Uma in 1 s, Duel vs Uma,   Kit: tkit   Arena: Flat arena (with walls),   Mode: First to 1 point   Use /leave to quit., Quarterfinals: Vera vs Uma  (first to 1, kit tkit),   Semifinals: Wade vs Tina has started. [WATCH]])
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  pair 1 is in a duel together
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  it is a first-to-1 tournament duel with the kit
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  both were told   ([The tournament started! 5 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], You have a bye in the first round: you go straight to the Semifinals., Semifinals: you play Tina in 2 s., You are seed 2 of 5., Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?, Tournament: you play Tina in 2 s, Tournament: you play Tina in 2 s, Tournament: you play Tina in 1 s, Tournament: you play Tina in 1 s,   Quarterfinals: Vera vs Uma has started. [WATCH], Duel vs Tina,   Kit: tkit   Arena: Flat arena (with walls),   Mode: First to 1 point   Use /leave to quit., Semifinals: Wade vs Tina  (first to 1, kit tkit)])
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  the bracket shows them fighting
+[09:30:30] [Server thread/INFO] (pvpduels) [selftest] PASS  seed 1 can watch the matches   ([The tournament started! 5 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], You have a bye in the first round: you go straight to the Semifinals., You are seed 1 of 5., Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?,   Quarterfinals: Vera vs Uma has started. [WATCH],   Semifinals: Wade vs Tina has started. [WATCH]])
+[09:30:34] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the first player of each pair wins
+[09:30:37] [Server thread/INFO] (pvpduels) Duel Vera vs Uma is finishing (round 1, phase ROUND_END, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:963)
+	at knot//com.pvpduels.duel.Duel.tick(Duel.java:395)
+	at knot//com.pvpduels.duel.DuelManager.onTick(DuelManager.java:136)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zfl000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:3445)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[09:30:37] [Server thread/INFO] (pvpduels) Replay 7jzz6 saved: Vera vs Uma, 7 seconds, 0 KB
+[09:30:37] [Server thread/INFO] (pvpduels) Duel Wade vs Tina is finishing (round 1, phase ROUND_END, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:963)
+	at knot//com.pvpduels.duel.Duel.tick(Duel.java:395)
+	at knot//com.pvpduels.duel.DuelManager.onTick(DuelManager.java:136)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zfl000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:3445)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[09:30:37] [Server thread/INFO] (pvpduels) Replay 5wklt saved: Wade vs Tina, 7 seconds, 0 KB
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the winners go through, the others are out, nobody is offered a rematch
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the quarterfinal winner goes to the semifinal   ([Vera defeated Uma. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 1 - 0,   Quarterfinals: Vera beat Uma 1-0., You go through to the Semifinals., Semifinals: you play Xena in 2 s., Duel finished: Vera 1 - 0 Uma, Summary (0:08 long, 1 round),   Vera: 1 hit, 20.0 damage, best combo 1,   Uma: 0 hits, 0.0 damage, best combo 0, Elo: 1000 -> 1016 (+16), Elo with kit tkit: 1000 -> 1016 (+16)  /top kit tkit, Against Uma: you 1 - 0 Uma  /h2h Uma,   Semifinals: Wade beat Tina 1-0.])
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the quarterfinal loser is out   ([Vera defeated Uma. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 0 - 1,   Quarterfinals: Vera beat Uma 1-0., You are out of the tournament (Quarterfinals). You can still watch: /duels., Duel finished: Vera 1 - 0 Uma, Summary (0:08 long, 1 round),   Vera: 1 hit, 20.0 damage, best combo 1,   Uma: 0 hits, 0.0 damage, best combo 0, Elo: 1000 -> 984 (-16), Elo with kit tkit: 1000 -> 984 (-16)  /top kit tkit, Against Vera: you 0 - 1 Vera  /h2h Vera,   Semifinals: Wade beat Tina 1-0.])
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the semifinal winner goes to the final   ([Wade defeated Tina. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 1 - 0,   Quarterfinals: Vera beat Uma 1-0.,   Semifinals: Wade beat Tina 1-0., You go through to the Final., Duel finished: Wade 1 - 0 Tina, Summary (0:08 long, 1 round),   Wade: 1 hit, 20.0 damage, best combo 1,   Tina: 0 hits, 0.0 damage, best combo 0, Elo: 1000 -> 1016 (+16), Elo with kit tkit: 1000 -> 1016 (+16)  /top kit tkit, Against Tina: you 1 - 0 Tina  /h2h Tina])
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the semifinal loser is out
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  everybody in it heard the result
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the bracket has the scores   ([Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera 1 - 0 Uma  ->  Vera,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs Vera  starts in 2 s,   Wade 1 - 0 Tina  ->  Wade, Final:,   ? vs Wade])
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  no [REMATCH] for a tournament match
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  they can't ask /again either   ([You have no previous duel to repeat.])
+[09:30:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the other semifinal is ready: seed 1 against the quarterfinal winner   (Xena vs Vera)
+[09:30:40] [Server thread/INFO] (pvpduels) Duel started: Xena vs Vera (DuelConfig[kit=tkit, arena=FLAT, walls=true, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true, mutator=NONE, swapKit=, handicap=0], custom=], slot 2)
+[09:30:42] [Server thread/INFO] (pvpduels) Duel Vera vs Uma closed (1 - 0).
+[09:30:42] [Server thread/INFO] (pvpduels) Duel Wade vs Tina closed (1 - 0).
+[09:30:44] [Server thread/INFO] (pvpduels) [selftest] --- tournament: seed 1 wins the second semifinal
+[09:30:44] [Server thread/INFO] (pvpduels) [selftest] PASS  they are fighting each other
+[09:30:47] [Server thread/INFO] (pvpduels) Duel Xena vs Vera is finishing (round 1, phase ROUND_END, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:963)
+	at knot//com.pvpduels.duel.Duel.tick(Duel.java:395)
+	at knot//com.pvpduels.duel.DuelManager.onTick(DuelManager.java:136)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zfl000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:3445)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[09:30:47] [Server thread/INFO] (pvpduels) Replay 6uv9e saved: Xena vs Vera, 7 seconds, 0 KB
+[09:30:47] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the final is ready
+[09:30:47] [Server thread/INFO] (pvpduels) [selftest] PASS  the final is ready with the two winners   (Xena vs Wade)
+[09:30:47] [Server thread/INFO] (pvpduels) [selftest] PASS  the semifinal loser is out
+[09:30:50] [Server thread/INFO] (pvpduels) Duel started: Xena vs Wade (DuelConfig[kit=tkit, arena=FLAT, walls=true, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true, mutator=NONE, swapKit=, handicap=0], custom=], slot 0)
+[09:30:52] [Server thread/INFO] (pvpduels) Duel Xena vs Vera closed (1 - 0).
+[09:30:54] [Server thread/INFO] (pvpduels) [selftest] --- tournament: a tie in the final is played again
+[09:30:54] [Server thread/INFO] (pvpduels) [selftest] PASS  the final is a duel
+[09:30:54] [Server thread/INFO] (pvpduels) Duel Xena vs Wade is finishing (round 1, phase FIGHTING, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:963)
+	at knot//com.pvpduels.duel.Duel.finishAsTieForTest(Duel.java:200)
+	at knot//com.pvpduels.duel.SelfTest.lambda$tournamentSteps$16(SelfTest.java:2789)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:233)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:146)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zfl000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:3445)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[09:30:54] [Server thread/INFO] (pvpduels) Replay 17mjd saved: Xena vs Wade, 5 seconds, 0 KB
+[09:30:54] [Server thread/INFO] (pvpduels) [selftest] PASS  both heard it was a tie and that it is played again   ([It was a tie, so the match is played again in 2 s., Duel finished: Xena 0 - 0 Wade, Summary (0:05 long, 1 round),   Xena: 0 hits, 0.0 damage, best combo 0,   Wade: 0 hits, 0.0 damage, best combo 0, Elo: 1017 -> 1017 (+0), Elo with kit tkit: 1017 -> 1017 (+0)  /top kit tkit, Against Wade: you 0 - 0 Wade (1 tie)  /h2h Wade])
+[09:30:54] [Server thread/INFO] (pvpduels) [selftest] PASS  the final is ready again
+[09:30:57] [Server thread/INFO] (pvpduels) Duel started: Xena vs Wade (DuelConfig[kit=tkit, arena=FLAT, walls=true, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true, mutator=NONE, swapKit=, handicap=0], custom=], slot 1)
+[09:30:59] [Server thread/INFO] (pvpduels) Duel Xena vs Wade closed (0 - 0).
+[09:31:01] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the second player wins the final
+[09:31:01] [Server thread/INFO] (pvpduels) [selftest] PASS  a new duel, not the old one
+[09:31:04] [Server thread/INFO] (pvpduels) Duel Xena vs Wade is finishing (round 1, phase ROUND_END, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:963)
+	at knot//com.pvpduels.duel.Duel.tick(Duel.java:395)
+	at knot//com.pvpduels.duel.DuelManager.onTick(DuelManager.java:136)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zfl000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:3445)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[09:31:04] [Server thread/INFO] (pvpduels) Replay 8onuu saved: Xena vs Wade, 7 seconds, 0 KB
+[09:31:04] [Server thread/INFO] (pvpduels) Tournament over: Wade won, Xena second (5 players)
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the champion
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  the champion is the second player of the final   (Wade)
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  everybody was told
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  the champion got a title on screen and the others the winner's name
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  the bracket is complete   ([Tournament - finished, Quarterfinals:,   Xena goes through (bye),   Vera 1 - 0 Uma  ->  Vera,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena 1 - 0 Vera  ->  Xena,   Wade 1 - 0 Tina  ->  Wade, Final:,   Xena 0 - 1 Wade  ->  Wade])
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  one title saved
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  it is in the file
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  /tournament top lists the champion   ([Tournament champions,   1. Wade: 1 title, 1 in the final, 1 played,   2. Xena: 0 titles, 1 in the final, 1 played,   3. Tina: 0 titles, 0 in the final, 1 played,   4. Uma: 0 titles, 0 in the final, 1 played,   5. Vera: 0 titles, 0 in the final, 1 played, Last tournaments,   Wade won (second Xena), 5 players, first to 1, tkit])
+[09:31:04] [Server thread/INFO] (pvpduels) [selftest] PASS  the plain command shows the last bracket   ([There is no tournament right now. /tournament create [players 3-8] [first to 1-5] [kit|random] opens one for your friends., The last one:, Tournament - finished, Quarterfinals:,   Xena goes through (bye),   Vera 1 - 0 Uma  ->  Vera,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena 1 - 0 Vera  ->  Xena,   Wade 1 - 0 Tina  ->  Wade, Final:,   Xena 0 - 1 Wade  ->  Wade])
+[09:31:09] [Server thread/INFO] (pvpduels) Duel Xena vs Wade closed (0 - 1).
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] --- tournament: three players, one quits before his match
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  the arenas are free again
+[09:31:10] [Server thread/INFO] (pvpduels) Tournament opened by Tina (up to 3, first to 1, kit tkit)
+[09:31:10] [Server thread/INFO] (pvpduels) Tournament started with 3 players
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  it was full, so it started by itself
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  they were told
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  one semifinal is ready
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  he quit and was told
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the other one goes through without playing
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  he was told   ([Tina opened a tournament!,   Up to 3 players, first to 1, kit tkit.  [JOIN],   When 3 or more are in, /tournament start begins it (it starts by itself when it is full)., Uma joined the tournament (2/3)., Vera joined the tournament (3/3)., The tournament is full, so it starts now., The tournament started! 3 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], Semifinals: you play Uma in 2 s., You are seed 2 of 3., Tournament - 3 players, first to 1, kit tkit, Semifinals:,   Vera goes through (bye),   Tina vs Uma  starts in 2 s, Final:,   Vera vs ?, Uma quit the tournament.,   Semifinals: Tina beat Uma (walkover)., You go through to the Final., Final: you play Vera in 2 s., Tournament: you play Vera in 2 s])
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  the quitter is out
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  the final is seed 1 against him   (Vera vs Tina)
+[09:31:10] [Server thread/INFO] (Minecraft) Vera lost connection: Test dummy removed
+[09:31:10] [Server thread/INFO] (Minecraft) Vera left the game
+[09:31:10] [Server thread/INFO] (pvpduels) [selftest] PASS  the finalist with the better seed left the game
+[09:31:22] [Server thread/INFO] (pvpduels) Tournament over: Tina won, Vera second (3 players)
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] --- tournament: whoever is missing loses on time
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  the one who stayed is the champion   (Tina)
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  the bracket says forfeit   ([Tournament - finished, Semifinals:,   Vera goes through (bye),   Tina 0 - 0 Uma  ->  Tina (walkover), Final:,   Vera 0 - 0 Tina  ->  Tina (forfeit)])
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  he was warned that the match would be lost   ([Vera left the game, Tournament: you play Vera in 2 s, Tournament: you play Vera in 1 s, Tournament: you play Vera in 1 s, Your tournament match is waiting: Vera is not online. 9 s left before the match is lost.,   Final: Tina beat Vera (forfeit)., TOURNAMENT OVER: Tina is the champion!,   Second place: Vera. Tina has won 1 tournament.  /tournament top])
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  two titles are kept for two different players
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the host cancels, and the host leaving cancels
+[09:31:22] [Server thread/INFO] (pvpduels) Tournament opened by Wade (up to 4, first to 2, random kits)
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  first to 2 with random kits   ([Wade opened a tournament!,   Up to 4 players, first to 2, random kits.  [JOIN]])
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  only the host cancels   ([Only Wade (or an admin) can cancel it.])
+[09:31:22] [Server thread/INFO] (pvpduels) Tournament cancelled: Wade cancelled the tournament.
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  the host cancelled it and Xena was told   ([Wade cancelled the tournament.])
+[09:31:22] [Server thread/INFO] (pvpduels) Tournament opened by Wade (up to 4, first to 1, kit tkit)
+[09:31:22] [Server thread/INFO] (pvpduels) Tournament cancelled: Xena cancelled the tournament.
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  an admin can cancel anything
+[09:31:22] [Server thread/INFO] (pvpduels) Tournament opened by Wade (up to 4, first to 1, kit tkit)
+[09:31:22] [Server thread/INFO] (Minecraft) Wade lost connection: Test dummy removed
+[09:31:22] [Server thread/INFO] (Minecraft) Wade left the game
+[09:31:22] [Server thread/INFO] (pvpduels) Tournament cancelled: Wade (the host) left, so the tournament was cancelled.
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] --- tournament: the host left
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] PASS  when the host leaves the game it is cancelled   ([Wade left the game, Wade (the host) left, so the tournament was cancelled.])
+[09:31:22] [Server thread/INFO] (pvpduels) [selftest] --- tournament: clean up
+[09:31:22] [Server thread/INFO] (Minecraft) Tina lost connection: Test dummy removed
+[09:31:22] [Server thread/INFO] (Minecraft) Tina left the game
+[09:31:22] [Server thread/INFO] (Minecraft) Uma lost connection: Test dummy removed
+[09:31:22] [Server thread/INFO] (Minecraft) Uma left the game
+[09:31:22] [Server thread/INFO] (Minecraft) Xena lost connection: Test dummy removed
+[09:31:22] [Server thread/INFO] (Minecraft) Xena left the game
+[09:31:23] [Server thread/INFO] (pvpduels) [selftest] PASS  nobody is left and the arenas are free
+[09:31:23] [Server thread/INFO] (pvpduels) [selftest] --- sanity: commands from outside a duel
+[09:31:23] [Server thread/INFO] (pvpduels) [selftest] PASS  /leave outside a duel gives an error
+[09:31:23] [Server thread/INFO] (pvpduels) [selftest] PASS  you can't duel yourself
+[09:31:23] [Server thread/INFO] (pvpduels) [selftest] --- shutdown while somebody is in the workshop
+[09:31:23] [Server thread/INFO] (pvpduels) Alice opened the kit workshop
+[09:31:23] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is in the workshop when the server stops
+[09:31:23] [Server thread/INFO] (pvpduels) [selftest] RESULT: FAIL (1 failed checks)
+[09:31:23] [Server thread/INFO] (Minecraft) Stopping server
+[09:31:23] [Server thread/INFO] (Minecraft) Saving players
+[09:31:23] [Server thread/INFO] (Minecraft) Saving worlds
+[09:31:23] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[09:31:23] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[09:31:23] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[09:31:23] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[09:31:23] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[09:31:23] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[09:31:23] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[09:31:23] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[09:31:23] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[09:31:23] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[09:31:23] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1792054798800.json
+
+BUILD SUCCESSFUL in 31m 27s
+5 actionable tasks: 2 executed, 3 up-to-date
+Configuration cache entry stored.
