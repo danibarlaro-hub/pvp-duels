@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("arenavote")) {
+				buildArenavote();
 			} else {
 				build();
 			}
@@ -580,6 +582,164 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: the arena vote of the queue
+
+	private static void arenavoteSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("vote: who wins and which arenas there are", () -> {
+			ArenaVote.forced = null;
+			ArenaVote.useRandom(new java.util.Random(3));
+			var pool = ArenaVote.pool(false);
+			check("1v1: five arenas and the public ones of the Builders", pool.size() >= 5 && pool.get(0).name().equals("Flat arena (with walls)") && pool.get(1).name().equals("Flat arena (no walls)")
+				&& pool.get(2).name().equals("Circular arena (radius 100)") && pool.get(3).name().equals("Circular arena (radius 150)") && pool.get(4).name().equals("Unlimited arena"));
+			check("2v2: only the five", ArenaVote.pool(true).size() == 5);
+			var three = ArenaVote.pick(false);
+			check("three different arenas are offered", three.size() == 3 && !three.get(0).equals(three.get(1)) && !three.get(0).equals(three.get(2)) && !three.get(1).equals(three.get(2)), String.valueOf(three));
+			ArenaVote.Vote v = new ArenaVote.Vote();
+			v.options.addAll(pool.subList(0, 3));
+			boolean[] seen = new boolean[3];
+			for (int i = 0; i < 60; i++) seen[ArenaVote.winner(v)] = true;
+			check("when nobody voted any of the three can be picked", seen[0] && seen[1] && seen[2]);
+			v.choice.put(UUID.randomUUID(), 0);
+			v.choice.put(UUID.randomUUID(), 1);
+			seen = new boolean[3];
+			for (int i = 0; i < 60; i++) seen[ArenaVote.winner(v)] = true;
+			check("a tie is decided at random between the tied ones only", seen[0] && seen[1] && !seen[2]);
+			v.choice.put(UUID.randomUUID(), 1);
+			boolean always = true;
+			for (int i = 0; i < 30; i++) always &= ArenaVote.winner(v) == 1;
+			check("the most votes wins", always && ArenaVote.votesFor(v, 1) == 2 && ArenaVote.votesFor(v, 0) == 1 && ArenaVote.votesFor(v, 2) == 0);
+		});
+		step("vote: a match asks for a vote", () -> {
+			ArenaVote.enabled = true;
+			ArenaVote.clearAll();
+			ArenaVote.voteTicks = 100;
+			ArenaVote.forced = java.util.List.of(new ArenaVote.Option(ArenaKind.FLAT, true, 0, ""), new ArenaVote.Option(ArenaKind.FLAT, false, 0, ""),
+				new ArenaVote.Option(ArenaKind.CIRCLE, false, 100, ""));
+			Queue.clearAll();
+			Queue.useRandom(new java.util.Random(5));
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save vkit");
+			run(a, "publicate vkit");
+			check("vkit is on the public shelf", PublicKits.find("vkit").isPresent());
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "arenavote 1");
+			check("without a vote nothing happens", a.heard("There is no arena vote for you right now") && ArenaVote.size() == 0, String.valueOf(a.inbox));
+			run(a, "queue public vkit");
+			run(b, "queue public vkit");
+			var v = ArenaVote.voteOf(a.getUUID());
+			check("the match started a vote and not a duel", v != null && ArenaVote.voteOf(b.getUUID()) == v && duel(a) == null && duel(b) == null && !Queue.isQueued(a.getUUID()) && !Queue.isQueued(b.getUUID()),
+				String.valueOf(v));
+			check("both were told the three arenas", a.heard("Vote for the arena (5 seconds)") && b.heard("Vote for the arena") && a.heard("[1] Flat arena (with walls)") && a.heard("[2] Flat arena (no walls)")
+				&& a.heard("[3] Circular arena (radius 100)") && b.heard("[3] Circular arena (radius 100)"), String.valueOf(a.inbox));
+			check("the match text no longer says which arena", a.heard("First to 3 points.") && !a.heard("Flat arena, first to 3"), String.valueOf(a.inbox));
+		});
+		step("vote: both vote for the second arena", () -> {
+			var v = ArenaVote.voteOf(a.getUUID());
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "arenavote 2");
+			check("Alice's vote is counted and she is told", a.heard("You voted for Flat arena (no walls).") && ArenaVote.votesFor(v, 1) == 1 && v.left > 40, a.inbox + " " + v.left);
+			run(b, "arenavote 2");
+			check("when everybody voted the time is cut short", ArenaVote.votesFor(v, 1) == 2 && v.left <= 40, String.valueOf(v.left));
+		}, () -> duel(a) != null, 200);
+		step("vote: the duel is in the arena they chose", () -> {
+			Duel d = duel(a);
+			check("a flat arena without walls, kit vkit, first to 3", d != null && d.config.arena() == ArenaKind.FLAT && !d.config.walls() && d.config.kit().equals("vkit") && d.config.mode() == WinMode.FIRST_TO
+				&& d.config.limit() == 3, d == null ? "no duel" : d.config.arenaName());
+			check("they were told which one won", a.heard("Arena: Flat arena (no walls) (2 votes).") && b.heard("Arena: Flat arena (no walls) (2 votes)."), String.valueOf(a.inbox));
+			check("the vote is over", ArenaVote.size() == 0 && !ArenaVote.isVoting(a.getUUID()));
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("vote: a second match, Alice changes her mind", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "queue public vkit");
+			run(b, "queue public vkit");
+			var v = ArenaVote.voteOf(a.getUUID());
+			check("a new vote", v != null);
+			run(a, "arenavote 3");
+			check("one vote for the third arena", ArenaVote.votesFor(v, 2) == 1);
+			run(a, "arenavote 1");
+			check("she changed it: the third has none, the first has one", ArenaVote.votesFor(v, 2) == 0 && ArenaVote.votesFor(v, 0) == 1 && v.choice.size() == 1);
+			run(b, "arenavote 1");
+			check("Bob agrees", ArenaVote.votesFor(v, 0) == 2);
+		}, () -> duel(a) != null, 200);
+		step("vote: the first arena, with walls", () -> {
+			Duel d = duel(a);
+			check("a flat arena with walls", d != null && d.config.arena() == ArenaKind.FLAT && d.config.walls(), d == null ? "no duel" : d.config.arenaName());
+			check("it was the votes of two", a.heard("Arena: Flat arena (with walls) (2 votes)."), String.valueOf(a.inbox));
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("vote: the menu, and a vote that ends by time with only one voter", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "queue public vkit");
+			run(b, "queue public vkit");
+			run(a, "arenavote");
+			check("the menu has the three arenas", menuHas(a, "1. Flat arena (with walls)") && menuHas(a, "2. Flat arena (no walls)") && menuHas(a, "3. Circular arena (radius 100)"));
+			check("clicking one votes for it", clickMenu(a, "2. Flat arena (no walls)") && ArenaVote.votesFor(ArenaVote.voteOf(a.getUUID()), 1) == 1);
+			check("and the menu shows the vote", menuHas(a, "2. Flat arena (no walls)"));
+			a.closeContainer();
+		}, () -> duel(a) != null, 200);
+		step("vote: when time ends the one vote decides", () -> {
+			Duel d = duel(a);
+			check("the arena of the only vote", d != null && d.config.arena() == ArenaKind.FLAT && !d.config.walls(), d == null ? "no duel" : d.config.arenaName());
+			check("with one vote said in the singular", a.heard("Arena: Flat arena (no walls) (1 vote)."), String.valueOf(a.inbox));
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("vote: somebody got busy while voting, the match is cancelled", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "queue public vkit");
+			run(b, "queue public vkit");
+			check("a vote is running", ArenaVote.isVoting(a.getUUID()));
+			run(a, "botduel vkit");
+			check("Alice is in a practice duel meanwhile", duel(a) != null && duel(a).practice);
+		}, () -> ArenaVote.size() == 0, 300);
+		step("vote: the cancelled match", () -> {
+			check("Bob was told why", b.heard("The match was cancelled: Alice is busy."), String.valueOf(b.inbox));
+			check("Bob has no duel", duel(b) == null && !ArenaVote.isVoting(b.getUUID()));
+			run(a, "leave");
+		}, () -> noDuel(a), 600);
+		step("vote: clean up", () -> {
+			ArenaVote.enabled = false;
+			ArenaVote.voteTicks = 300;
+			ArenaVote.forced = null;
+			ArenaVote.clearAll();
+			ArenaVote.useRandom(new java.util.Random());
+			Queue.clearAll();
+			Queue.useRandom(new java.util.Random());
+			run(a, "unpublish vkit");
+			run(a, "kit delete vkit");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildArenavote() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		arenavoteSteps();
+		step("vote: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +1014,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		arenavoteSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
@@ -2152,6 +2313,7 @@ public final class SelfTest {
 
 		// ---------------------------------------------------------------- queue and the ranking per kit
 		step("queue: setup", () -> {
+			ArenaVote.enabled = false; // the old queue tests expect the match to start at once
 			StatsStore.resetKitsForTest();
 			Queue.clearAll();
 			Queue.useRandom(new java.util.Random(7));
