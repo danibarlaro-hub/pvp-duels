@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("bugs")) {
+				buildBugs();
 			} else {
 				build();
 			}
@@ -578,6 +580,95 @@ public final class SelfTest {
 			check("and it ended by itself", Pranks.activeJobs() == 0);
 		});
 
+	}
+
+	// ------------------------------------------------------------------ one idea at a time: /bugs, the bug reports inside the game
+
+	private static void bugsSteps() {
+		final Dummy[] dib = new Dummy[1];
+		step("bugs: Dibitss reads the reports of the others", () -> {
+			var existing = server.getPlayerList().getPlayerByName("Dibitss");
+			dib[0] = existing instanceof Dummy d ? d : spawn("Dibitss");
+			try {
+				java.nio.file.Files.deleteIfExists(com.pvpduels.util.BugReports.file());
+				java.nio.file.Files.deleteIfExists(com.pvpduels.util.BugBoard.fixedFile());
+			} catch (java.io.IOException e) {
+				check("the old reports can be cleared", false, e.toString());
+			}
+			com.pvpduels.util.BugReports.resetForTest();
+			run(a, "bugreport The kit menu showed my old kit");
+			com.pvpduels.util.BugReports.resetForTest();
+			run(b, "bugreport The arena was not cleaned after a round");
+			com.pvpduels.util.BugReports.resetForTest();
+			run(a, "bugreport A third problem with the queue and the barrier");
+			check("three reports are in the file and all three are open", com.pvpduels.util.BugBoard.read().size() == 3 && com.pvpduels.util.BugBoard.openCount() == 3);
+			var node = server.getCommands().getDispatcher().getRoot().getChild("bugs");
+			check("/bugs is hidden from a normal player and open to Dibitss", node != null && !node.canUse(a.createCommandSourceStack()) && node.canUse(dib[0].createCommandSourceStack()));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs");
+			check("/bugs lists the open ones, with buttons", dib[0].heard("3 open, 0 fixed") && dib[0].heard("#3 Alice") && dib[0].heard("#2 Bob") && dib[0].heard("#1 Alice")
+				&& dib[0].heard("[SHOW]") && dib[0].heard("[FIXED]"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs show 2");
+			check("/bugs show tells the whole report", dib[0].heard("Bug #2") && dib[0].heard("OPEN") && dib[0].heard("Who: Bob") && dib[0].heard("The arena was not cleaned after a round")
+				&& dib[0].heard("[MARK AS FIXED]"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs fix 2");
+			check("/bugs fix 2 marks it", dib[0].heard("Bug #2 is marked as fixed") && com.pvpduels.util.BugBoard.fixed().containsKey(2) && com.pvpduels.util.BugBoard.openCount() == 2);
+			check("the report itself was not touched", com.pvpduels.util.BugBoard.read().size() == 3 && com.pvpduels.util.BugBoard.read().get(1).text().equals("The arena was not cleaned after a round"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs fix 2");
+			check("marking it twice says so", dib[0].heard("already marked as fixed"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs");
+			check("the open list no longer has it", dib[0].heard("2 open, 1 fixed") && dib[0].heard("#3 Alice") && !dib[0].heard("#2 Bob"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs fixed");
+			check("the fixed list has only it, with a reopen button", dib[0].heard("#2 Bob") && dib[0].heard("[REOPEN]") && !dib[0].heard("#1 Alice"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs all");
+			check("the list of all has the three", dib[0].heard("#1 Alice") && dib[0].heard("#2 Bob") && dib[0].heard("#3 Alice"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs reopen 2");
+			check("/bugs reopen opens it again", dib[0].heard("open again") && com.pvpduels.util.BugBoard.openCount() == 3 && com.pvpduels.util.BugBoard.fixed().isEmpty());
+			dib[0].inbox.clear();
+			run(dib[0], "bugs fix 99");
+			run(dib[0], "bugs show 99");
+			check("a number that does not exist is refused", dib[0].heard("There is no bug report #99") && com.pvpduels.util.BugBoard.fixed().isEmpty());
+			for (int i = 0; i < 8; i++) {
+				com.pvpduels.util.BugReports.resetForTest();
+				run(a, "bugreport Extra problem number " + i + " in the test");
+			}
+			dib[0].inbox.clear();
+			run(dib[0], "bugs");
+			check("eleven reports make two pages", dib[0].heard("page 1/2") && dib[0].heard("[NEXT >]") && !dib[0].heard("[< PREVIOUS]") && dib[0].heard("#11 Alice") && !dib[0].heard("#1 Alice"));
+			dib[0].inbox.clear();
+			run(dib[0], "bugs open 9");
+			check("a page too far shows the last one, with a way back", dib[0].heard("page 2/2") && dib[0].heard("[< PREVIOUS]") && dib[0].heard("#1 Alice"));
+			dib[0].inbox.clear();
+			com.pvpduels.util.BugBoard.tellOwner(dib[0]);
+			a.inbox.clear();
+			com.pvpduels.util.BugBoard.tellOwner(a);
+			check("the owner is told on joining that reports are waiting, and a normal player is told nothing", dib[0].heard("11 bug reports are waiting") && dib[0].heard("[SEE THEM]") && !a.heard("waiting"));
+			try {
+				java.nio.file.Files.deleteIfExists(com.pvpduels.util.BugReports.file());
+				java.nio.file.Files.deleteIfExists(com.pvpduels.util.BugBoard.fixedFile());
+			} catch (java.io.IOException e) {
+				check("the test reports can be cleared", false, e.toString());
+			}
+			com.pvpduels.util.BugReports.resetForTest();
+		});
+	}
+
+	private static void buildBugs() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		bugsSteps();
+		step("bugs: done", () -> finish());
 	}
 
 	private static void buildPranks() {
@@ -5486,6 +5577,9 @@ public final class SelfTest {
 
 		// ---------------------------------------------------------------- the annoying commands
 		pranksSteps(dib);
+
+		// ---------------------------------------------------------------- /bugs
+		bugsSteps();
 
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
