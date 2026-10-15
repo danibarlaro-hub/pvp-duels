@@ -99,6 +99,8 @@ public final class Effects {
 		boolean mutedJingles;
 		/** The player turned the silly losing sounds off (they are on by default). */
 		boolean mutedMemes;
+		/** The finishing blow this player picked (an id of {@link LastHit}); empty = none. */
+		String lastHit = "";
 		/** How many particles this player gets from the heavy effects: the number of a {@link Quality} (3 = High). */
 		int quality = Quality.HIGH.ordinal();
 	}
@@ -132,6 +134,7 @@ public final class Effects {
 		for (int i = 0; i < d.area.length; i++) if (d.area[i] == null) d.area[i] = "";
 		for (int i = 0; i < d.fwShape.length; i++) if (d.fwShape[i] == null || d.fwShape[i].isEmpty()) d.fwShape[i] = "small_ball";
 		if (d.explosion == null) d.explosion = "";
+		if (d.lastHit == null) d.lastHit = "";
 		if (d.day == null) d.day = "";
 		if (d.progress == null) d.progress = new HashMap<>();
 		if (d.done == null) d.done = new ArrayList<>();
@@ -488,6 +491,16 @@ public final class Effects {
 
 	public static synchronized void setMemes(UUID id, boolean on) {
 		data(id, null).mutedMemes = !on;
+		save();
+	}
+
+	/** The id of the finishing blow this player picked (empty = none). */
+	public static synchronized String lastHit(UUID id) {
+		return data(id, null).lastHit;
+	}
+
+	public static synchronized void setLastHit(UUID id, String style) {
+		data(id, null).lastHit = style == null ? "" : style;
 		save();
 	}
 

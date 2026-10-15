@@ -7,6 +7,7 @@ import com.pvpduels.duel.EffectsMenus;
 import com.pvpduels.util.Msg;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -48,11 +49,39 @@ public final class EffectCommands {
 		dispatcher.register(Commands.literal("freecam")
 			.executes(ctx -> com.pvpduels.duel.Cinema.toggleFreeCam(ctx.getSource().getPlayerOrException()) ? 1 : 0));
 
+		// the little show on the player you hit when you end a round
+		dispatcher.register(Commands.literal("finisher")
+			.executes(ctx -> {
+				EffectsMenus.openFinishers(ctx.getSource().getPlayerOrException());
+				return 1;
+			})
+			.then(Commands.argument("style", StringArgumentType.word())
+				.suggests((ctx, builder) -> SharedSuggestionProvider.suggest(LastHit.names(), builder))
+				.executes(ctx -> chooseFinisher(ctx.getSource(), StringArgumentType.getString(ctx, "style")))));
+
 		dispatcher.register(Commands.literal("missions")
 			.executes(ctx -> {
 				EffectsMenus.openMissions(ctx.getSource().getPlayerOrException());
 				return 1;
 			}));
+	}
+
+	/** /finisher <style>: picks the finishing blow (none turns it off) and shows it once. */
+	private static int chooseFinisher(CommandSourceStack source, String text) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer player = source.getPlayerOrException();
+		String problem = LastHit.choose(player.getUUID(), text);
+		if (problem != null) {
+			source.sendFailure(Msg.err(problem + " Choose one of: " + String.join(", ", LastHit.names()) + "."));
+			return 0;
+		}
+		LastHit.Style style = LastHit.styleOf(player.getUUID());
+		if (style == LastHit.Style.NONE) {
+			source.sendSuccess(() -> Msg.ok("No finishing blow."), false);
+		} else {
+			LastHit.preview(player, style);
+			source.sendSuccess(() -> Msg.ok("Finishing blow: " + style.label + ". It plays on the player you hit when you end a round."), false);
+		}
+		return 1;
 	}
 
 	/** Admins: gives a player everything, to try the effects. */

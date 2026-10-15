@@ -1,6 +1,7 @@
 package com.pvpduels.duel;
 
 import com.pvpduels.effects.Effects;
+import com.pvpduels.effects.LastHit;
 import com.pvpduels.effects.MemeSounds;
 import com.pvpduels.effects.Missions;
 import com.pvpduels.effects.Particles;
@@ -99,7 +100,34 @@ public final class EffectsMenus {
 			if (now) MemeSounds.play(List.of(who), MemeSounds.random());
 			openMain(who);
 		});
+		LastHit.Style finisher = LastHit.styleOf(me);
+		b.set(4, DuelMenus.icon(Items.IRON_SWORD, "Finishing blow: " + finisher.label, ChatFormatting.GOLD, "A little show on the player you hit when", "you end a round. Everybody near sees it.",
+			"Click to choose it. Also /finisher."), EffectsMenus::openFinishers);
 		ChoiceMenu.open(p, Component.literal("Victory effects"), 3, b);
+	}
+
+	// ------------------------------------------------------------------ finishing blows
+
+	public static void openFinishers(ServerPlayer p) {
+		UUID me = p.getUUID();
+		LastHit.Style now = LastHit.styleOf(me);
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(3);
+		LastHit.Style[] all = LastHit.Style.values();
+		int[] slots = {2, 3, 4, 5, 6, 11, 12, 13, 14};
+		for (int i = 0; i < all.length; i++) {
+			LastHit.Style s = all[i];
+			boolean on = s == now;
+			List<String> lines = new java.util.ArrayList<>(List.of(s.lore));
+			lines.add(on ? "Selected." : s == LastHit.Style.NONE ? "Click to turn it off." : "Click to use it (you see a preview).");
+			b.set(slots[i], DuelMenus.icon(s.icon, s.label, on ? ChatFormatting.GREEN : ChatFormatting.WHITE, lines.toArray(new String[0])), who -> {
+				LastHit.choose(who.getUUID(), s.id);
+				if (s != LastHit.Style.NONE) LastHit.preview(who, s);
+				who.sendSystemMessage(Msg.ok(s == LastHit.Style.NONE ? "No finishing blow." : "Finishing blow: " + s.label + "."));
+				openFinishers(who);
+			});
+		}
+		b.set(18, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
+		ChoiceMenu.open(p, Component.literal("Finishing blow"), 3, b);
 	}
 
 	// ------------------------------------------------------------------ fireworks

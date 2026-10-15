@@ -113,6 +113,7 @@ public final class GuideBook {
 			{"Newest explosions", "Pillars of Fire, Tornado, Crystal Burst, Rift Storm, Dragon Strike, Titan Fist, Soul Reaper, Solar Flare, Supernova, Prism Beams, Spore Bloom and Sculk Awakening.\n\nEach has its own film and tune."},
 			{"Win and lose sounds", "A short tune plays when somebody wins: fireworks and particles share one, every explosion has its own.\n\nThe loser gets a sad one (trombone, womp womp...).\n\nTurn them off in /effects. Only for you."},
 			{"Silly sounds", "20 silly sounds (Fahhh, Bonk, Air horn, Sad trombone...) can play when somebody loses, instead of the sad tune.\n\n/effects has a button to turn them off. It is only for you."},
+			{"Finishing blows", "Pick a little show for the player you hit when you end a round: lightning (only drawn), shatter, firework, soul, totem pop, poof, splat or a surprise.\n\n/finisher or the sword in /effects. It starts off."},
 			{"Effect quality", "Only for what you see: Potato, Low, Mid, High and Ultra Pro Max.\n\nPotato sends a tenth of the particles (slow computers), Ultra Pro Max double. Click it in /effects."}
 		}),
 		new Topic("About", new String[][] {

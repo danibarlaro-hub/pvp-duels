@@ -10,6 +10,7 @@ import com.pvpduels.arena.ArenaStudio;
 import com.pvpduels.arena.BuilderRank;
 import com.pvpduels.arena.Contest;
 import com.pvpduels.effects.Effects;
+import com.pvpduels.effects.LastHit;
 import com.pvpduels.effects.Missions;
 import com.pvpduels.effects.Particles;
 import com.pvpduels.effects.Victory;
@@ -97,6 +98,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("lasthit")) {
+				buildLasthit();
 			} else {
 				build();
 			}
@@ -580,6 +583,124 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: finishing blows
+
+	private static void lasthitSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("lasthit: the command and the menus", () -> {
+			LastHit.resetForTest();
+			check("nobody has a finishing blow at the start", LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE && LastHit.styleOf(b.getUUID()) == LastHit.Style.NONE);
+			a.inbox.clear();
+			run(a, "finisher nosuch");
+			check("a name that does not exist is refused", a.heard("There is no finishing blow called 'nosuch'") && LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE, String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "finisher totem");
+			check("a name picks it and says so", LastHit.styleOf(a.getUUID()) == LastHit.Style.TOTEM && a.heard("Finishing blow: Totem pop."), String.valueOf(a.inbox));
+			check("and shows it once, only to the player", LastHit.played() == 1 && LastHit.last().equals("totem") && LastHit.lastViewers() == 1,
+				LastHit.played() + " " + LastHit.last() + " " + LastHit.lastViewers());
+			a.inbox.clear();
+			run(a, "finisher none");
+			check("none turns it off and plays nothing", LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE && a.heard("No finishing blow.") && LastHit.played() == 1, String.valueOf(a.inbox));
+			run(a, "finisher");
+			check("the menu has all of them", menuHas(a, "None") && menuHas(a, "Lightning") && menuHas(a, "Shatter") && menuHas(a, "Firework") && menuHas(a, "Soul")
+				&& menuHas(a, "Totem pop") && menuHas(a, "Poof") && menuHas(a, "Splat") && menuHas(a, "Surprise"));
+			check("clicking one chooses it and shows it", clickMenu(a, "Soul") && LastHit.styleOf(a.getUUID()) == LastHit.Style.SOUL && LastHit.played() == 2 && LastHit.last().equals("soul"),
+				LastHit.styleOf(a.getUUID()) + " " + LastHit.played());
+			Effects.reloadForTest();
+			check("the choice is in the file: it survives a restart", LastHit.styleOf(a.getUUID()) == LastHit.Style.SOUL);
+			a.closeContainer();
+			run(a, "effects");
+			check("the effects menu has the sword with the choice", menuHas(a, "Finishing blow: Soul"));
+			a.closeContainer();
+			check("every style can be shown", showAll());
+			run(a, "finisher none");
+			check("the names of the command are the ids of the styles", LastHit.names().size() == 9 && LastHit.names().contains("surprise") && LastHit.of("Totem pop") == LastHit.Style.TOTEM
+				&& LastHit.of("") == LastHit.Style.NONE && LastHit.of("zzz") == null);
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save lhkit");
+			a.getInventory().clearContent();
+			invite(a, b, new DuelConfig("lhkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 4));
+			check("a duel to four started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("lasthit: a round ended with nothing chosen plays nothing", () -> {
+			LastHit.resetForTest();
+			hit(a, b);
+			check("no finishing blow was played", LastHit.played() == 0, String.valueOf(LastHit.played()));
+		}, () -> roundIs(a, 2), 600);
+		step("lasthit: Alice picked the totem and everybody near sees it", () -> {
+			run(a, "finisher totem");
+			LastHit.resetForTest();
+			hit(a, b);
+			check("it played once", LastHit.played() == 1 && LastHit.last().equals("totem"), LastHit.played() + " " + LastHit.last());
+			check("both players in the arena saw it", LastHit.lastViewers() == 2, String.valueOf(LastHit.lastViewers()));
+		}, () -> roundIs(a, 3), 600);
+		step("lasthit: Bob hid the effects of others and Alice picked a surprise", () -> {
+			Effects.setHideOthers(b.getUUID(), true);
+			run(a, "finisher surprise");
+			LastHit.resetForTest();
+			hit(a, b);
+			check("it played once and it was one of the real styles", LastHit.played() == 1 && !LastHit.last().equals("surprise") && !LastHit.last().equals("none") && LastHit.of(LastHit.last()) != null,
+				LastHit.played() + " " + LastHit.last());
+			check("only Alice, who chose it, saw it", LastHit.lastViewers() == 1, String.valueOf(LastHit.lastViewers()));
+		}, () -> roundIs(a, 4), 600);
+		step("lasthit: a death with no killer plays nothing", () -> {
+			Effects.setHideOthers(b.getUUID(), false);
+			run(b, "finisher lightning");
+			LastHit.resetForTest();
+			b.invulnerableTime = 0;
+			b.hurtServer((ServerLevel) b.level(), b.damageSources().genericKill(), 1000f);
+			check("Bob died on his own and nothing was played, even though both chose one", LastHit.played() == 0, LastHit.played() + " " + LastHit.last());
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("lasthit: clean up", () -> {
+			run(a, "finisher none");
+			run(b, "finisher none");
+			run(a, "kit delete lhkit");
+			Effects.setHideOthers(b.getUUID(), false);
+			LastHit.resetForTest();
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	/** Every style runs without an error and counts as one show. */
+	private static boolean showAll() {
+		try {
+			LastHit.resetForTest();
+			int n = 0;
+			for (LastHit.Style s : LastHit.Style.values()) {
+				if (s == LastHit.Style.NONE) continue;
+				LastHit.preview(a, s);
+				n++;
+			}
+			return LastHit.played() == n && n == 8;
+		} catch (RuntimeException e) {
+			log("showAll failed: " + e);
+			return false;
+		}
+	}
+
+	private static void buildLasthit() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		lasthitSteps();
+		step("lasthit: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +975,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		lasthitSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
