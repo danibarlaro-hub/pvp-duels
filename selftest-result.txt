@@ -1,0 +1,59 @@
+--- two fake players
+--- mutators: the pieces work alone
+PASS  seven choices in the menu, in a ring
+PASS  a random mutator is always a real one and never the same twice in a row
+PASS  and over many rounds all five show up   ([SPEED, HEARTS, LOW_GRAVITY, SPOTLIGHT, HEAVY])
+PASS  a plain setting plays itself
+PASS  rules with a mutator are not the default ones, and the old constructor means none
+PASS  the rules tell it in words   (Speed mutator)
+PASS  the effects of Low gravity are on
+PASS  the effects of Speed are on
+PASS  the effects of Heavy hitters are on
+PASS  the effects of Double hearts are on
+PASS  the effects of Spotlight are on
+PASS  every mutator gives only its own effects
+PASS  double hearts means 40 health, and full   (40.0/40.0)
+PASS  no mutator gives nothing
+PASS  the kit for the test was saved
+--- mutators: Alice opens the duel menu
+PASS  menu has the option 'mutkit'
+--- mutators: arena
+PASS  menu has the option 'Flat void arena'
+--- mutators: version
+PASS  menu has the option 'With walls'
+--- mutators: mode
+PASS  menu has the option 'First to N points'
+--- mutators: amount
+PASS  menu has the option 'First to 1'
+--- mutators: the rules menu has the nether star
+PASS  it starts with no mutator
+PASS  menu has the option 'Round mutator: None'
+--- mutators: one click moves to the next
+PASS  the first click says low gravity
+PASS  menu has the option 'Round mutator: Low gravity'
+--- mutators: second click, speed
+PASS  the second click says speed
+PASS  menu has the option 'Continue'
+--- mutators: confirm and send
+PASS  menu has the option 'Send the challenge'
+PASS  the invitation tells the mutator   ([, Alice challenged you to a duel!,   Kit: mutkit   Arena: Flat arena (with walls),   Mode: First to 1 point,   Rules: Speed mutator,   [ACCEPT]   [DENY]   (expires in 60 seconds)])
+--- mutators: both duelists run faster, and a totem does not take it away
+PASS  the duel has the mutator
+PASS  both have Speed II
+PASS  both were told   ([Duel request sent to Bob. It expires in 60 seconds., Duel vs Bob,   Kit: mutkit   Arena: Flat arena (with walls),   Mode: First to 1 point   Use /leave to quit.,   Rules: Speed mutator,   Round mutator: Speed - Everybody runs faster (Speed II)., Achievement unlocked: Kit Maker - Save your first kit., Achievement: Kit Maker])
+PASS  the totem saved her and the round goes on   (FIGHTING 1.0)
+PASS  and the twist of the round is back after the totem took every effect
+--- mutators: nothing is left after the duel
+PASS  no twist on Alice or Bob once they are back
+PASS  a duel with a random mutator started
+--- mutators: round 1 of the random duel
+PASS  round 1 got a real mutator   (HEAVY)
+PASS  both have its effects and were told   ([Duel request sent to Bob. It expires in 60 seconds., Duel vs Bob,   Kit: mutkit   Arena: Flat arena (no walls),   Mode: First to 3 points   Use /leave to quit.,   Rules: A random mutator every round,   Round mutator: Heavy hitters - Everybody hits harder (Strength I).])
+--- mutators: round 2 draws another one
+PASS  round 2 got a real mutator that is not the one of round 1   (HEAVY then SPOTLIGHT)
+PASS  the new twist is on both, the old one is gone
+PASS  and they were told again
+--- mutators: clean up
+PASS  leaving takes the twist away
+--- mutators: done
+RESULT: PASS
