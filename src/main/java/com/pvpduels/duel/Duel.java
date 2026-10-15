@@ -8,6 +8,7 @@ import com.pvpduels.kit.KitStore;
 import com.pvpduels.layout.InventorySorter;
 import com.pvpduels.layout.LayoutStore;
 import com.pvpduels.stats.Seasons;
+import com.pvpduels.stats.Leaderboards;
 import com.pvpduels.stats.StatsStore;
 import com.pvpduels.util.Msg;
 import net.minecraft.ChatFormatting;
@@ -795,6 +796,7 @@ public final class Duel {
 		if (TestDummy.accepts(ids[0]) || TestDummy.accepts(ids[1])) return;
 		eloInfo = StatsStore.recordDuel(ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
 		Seasons.record(ids[0], names[0], eloInfo[1] - eloInfo[0], ids[1], names[1], eloInfo[3] - eloInfo[2]);
+		Leaderboards.markDirty();
 		kitEloInfo = StatsStore.recordKitDuel(config.kit(), ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
 		com.pvpduels.stats.HeadToHead.record(ids[0], names[0], ids[1], names[1], winner, points[0], points[1], config.kit());
 		recordAchievements();

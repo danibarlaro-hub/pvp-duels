@@ -111,6 +111,8 @@ public final class SelfTest {
 				buildAccuracy();
 			} else if (mode.equals("seasons")) {
 				buildSeasons();
+			} else if (mode.equals("board")) {
+				buildBoard();
 			} else {
 				build();
 			}
@@ -843,6 +845,86 @@ public final class SelfTest {
 		final ItemStack[][] saved = new ItemStack[2][41];
 		final int[] wait = new int[1];
 		step("accuracy: a duel starts (swinging outside a duel is harmless)", () -> {
+	// ------------------------------------------------------------------ one idea at a time: boards with the top 10
+
+	private static StatsStore.Entry boardEntry(String name, int elo, int wins, int streak) {
+		StatsStore.Stats s = new StatsStore.Stats();
+		s.elo = elo;
+		s.wins = wins;
+		s.bestStreak = streak;
+		s.name = name;
+		return new StatsStore.Entry(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8)), name, s);
+	}
+
+	private static String boardText(net.minecraft.world.entity.Entity board) {
+		return board instanceof net.minecraft.world.entity.Display.TextDisplay td ? td.getText().getString() : "(not a text display)";
+	}
+
+	private static net.minecraft.world.entity.Entity boardAt(ServerLevel level, double x, double y, double z, String kind) {
+		var found = level.getEntities((net.minecraft.world.entity.Entity) null, new net.minecraft.world.phys.AABB(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1),
+			e -> e.entityTags().contains("pvpduels_board_" + kind));
+		return found.isEmpty() ? null : found.get(0);
+	}
+
+	private static void boardSteps() {
+		final double[] where = new double[3];
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final net.minecraft.world.entity.Entity[] shown = new net.minecraft.world.entity.Entity[1];
+		step("board: what a board says", () -> {
+			var rows = java.util.List.of(boardEntry("Zed", 1200, 7, 3), boardEntry("Yan", 1100, 1, 1), boardEntry("Xia", 1000, 0, 0));
+			check("by Elo", com.pvpduels.stats.Leaderboards.lines("elo", rows).equals(java.util.List.of("TOP 10 - ELO", "1. Zed  1200 Elo", "2. Yan  1100 Elo", "3. Xia  1000 Elo")),
+				String.valueOf(com.pvpduels.stats.Leaderboards.lines("elo", rows)));
+			check("by wins (one win is singular)", com.pvpduels.stats.Leaderboards.lines("wins", rows).equals(java.util.List.of("TOP 10 - WINS", "1. Zed  7 wins", "2. Yan  1 win", "3. Xia  0 wins")),
+				String.valueOf(com.pvpduels.stats.Leaderboards.lines("wins", rows)));
+			check("by win streak", com.pvpduels.stats.Leaderboards.lines("streak", rows).get(0).equals("TOP 10 - WIN STREAK") && com.pvpduels.stats.Leaderboards.lines("streak", rows).get(1).equals("1. Zed  streak 3"));
+			check("with nobody it says so", com.pvpduels.stats.Leaderboards.lines("elo", java.util.List.of()).equals(java.util.List.of("TOP 10 - ELO", "Nobody has played a duel yet.")));
+			java.util.List<StatsStore.Entry> twelve = new java.util.ArrayList<>();
+			for (int i = 0; i < 12; i++) twelve.add(boardEntry("P" + i, 1500 - i, i, i));
+			check("only the first ten, with the title that is eleven lines", com.pvpduels.stats.Leaderboards.lines("elo", twelve).size() == 11);
+			check("quotes and slashes of a name are dropped", com.pvpduels.stats.Leaderboards.lines("elo", java.util.List.of(boardEntry("Ev\"il\\x", 1000, 0, 0))).get(1).equals("1. Evilx  1000 Elo"));
+			check("the component says the same as the lines", com.pvpduels.stats.Leaderboards.component("wins", rows).getString().equals(String.join("\n", com.pvpduels.stats.Leaderboards.lines("wins", rows))));
+			check("three kinds and no more", com.pvpduels.stats.Leaderboards.validKind("elo") && com.pvpduels.stats.Leaderboards.validKind("wins") && com.pvpduels.stats.Leaderboards.validKind("streak")
+				&& !com.pvpduels.stats.Leaderboards.validKind("kills"));
+			var node = server.getCommands().getDispatcher().getRoot().getChild("leaderboard");
+			check("/leaderboard is hidden from a normal player and open to an admin", node != null && !node.canUse(a.createCommandSourceStack()) && node.canUse(server.createCommandSourceStack()));
+		});
+		step("board: place, refresh, move, remove", () -> {
+			var level = (ServerLevel) a.level();
+			com.pvpduels.stats.Leaderboards.resetForTest();
+			var rows = new java.util.ArrayList<>(java.util.List.of(boardEntry("Zed", 1200, 7, 3), boardEntry("Yan", 1100, 1, 1)));
+			com.pvpduels.stats.Leaderboards.source = by -> rows;
+			double x = a.getX() + 4;
+			double y = a.getY() + 2.2;
+			double z = a.getZ();
+			var elo = com.pvpduels.stats.Leaderboards.place(level, x, y, z, "elo");
+			check("a text display with the tag of the board was made", elo instanceof net.minecraft.world.entity.Display.TextDisplay && elo.entityTags().contains("pvpduels_board_elo"),
+				String.valueOf(elo));
+			check("placing it also filled it", boardText(elo).equals("TOP 10 - ELO\n1. Zed  1200 Elo\n2. Yan  1100 Elo"), boardText(elo));
+			check("it is registered", com.pvpduels.stats.Leaderboards.count() == 1 && com.pvpduels.stats.Leaderboards.describe().get(0).startsWith("elo at "));
+			check("a second refresh finds nothing new", com.pvpduels.stats.Leaderboards.refresh(server) == 0);
+			rows.add(0, boardEntry("Wim", 1300, 9, 5));
+			check("when the ranking changes the board is written again", com.pvpduels.stats.Leaderboards.refresh(server) == 1 && boardText(elo).startsWith("TOP 10 - ELO\n1. Wim  1300 Elo\n2. Zed"), boardText(elo));
+			var wins = com.pvpduels.stats.Leaderboards.place(level, x, y + 3, z, "wins");
+			check("a board of wins next to it", wins != null && boardText(wins).startsWith("TOP 10 - WINS\n1. Wim  9 wins") && com.pvpduels.stats.Leaderboards.count() == 2, boardText(wins));
+			check("each board keeps its own text", boardText(elo).startsWith("TOP 10 - ELO"));
+			com.pvpduels.stats.Leaderboards.reloadForTest();
+			check("the places are in the file: they survive a restart", com.pvpduels.stats.Leaderboards.count() == 2);
+			check("a board far away is not found", !com.pvpduels.stats.Leaderboards.remove(level, x + 100, y, z, 12));
+			check("the closest board goes away", com.pvpduels.stats.Leaderboards.remove(level, x, y, z, 12) && elo.isRemoved() && !wins.isRemoved() && com.pvpduels.stats.Leaderboards.count() == 1);
+			check("the other one too", com.pvpduels.stats.Leaderboards.remove(level, x, y + 3, z, 12) && wins.isRemoved() && com.pvpduels.stats.Leaderboards.count() == 0);
+			check("and with none left there is nothing to remove", !com.pvpduels.stats.Leaderboards.remove(level, x, y, z, 12));
+			com.pvpduels.stats.Leaderboards.resetForTest();
+		});
+		step("board: a duel ends and the board follows", () -> {
+			var level = (ServerLevel) a.level();
+			com.pvpduels.stats.Leaderboards.resetForTest();
+			where[0] = a.getX() + 4;
+			where[1] = a.getY() + 2.2;
+			where[2] = a.getZ();
+			shown[0] = com.pvpduels.stats.Leaderboards.place(level, where[0], where[1], where[2], "wins");
+			check("a board of wins with the real statistics", shown[0] != null);
+			((net.minecraft.world.entity.Display.TextDisplay) shown[0]).setText(net.minecraft.network.chat.Component.literal("stale"));
+			com.pvpduels.stats.Leaderboards.forgetLastForTest();
 			for (int i = 0; i < 41; i++) {
 				saved[0][i] = a.getInventory().getItem(i).copy();
 				saved[1][i] = b.getInventory().getItem(i).copy();
@@ -1173,6 +1255,26 @@ public final class SelfTest {
 			run(a, "kit delete seasonkit");
 			com.pvpduels.stats.Seasons.resetForTest();
 			Effects.resetForTest();
+			run(a, "kit save boardkit");
+			a.getInventory().clearContent();
+			invite(a, b, new DuelConfig("boardkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("board: Alice wins", () -> { hit(a, b); }, () -> noDuel(a) && noDuel(b), 800);
+		step("board: the board follows by itself", () -> {
+			// the chunk of the board may have been unloaded while they dueled in the arena: it is written as soon as it is loaded again
+		}, () -> {
+			var found = boardAt((ServerLevel) a.level(), where[0], where[1], where[2], "wins");
+			return found != null && boardText(found).equals(String.join("\n", com.pvpduels.stats.Leaderboards.lines("wins", StatsStore.ranking("wins"))));
+		}, 900);
+		step("board: the board shows the new ranking", () -> {
+			var found = boardAt((ServerLevel) a.level(), where[0], where[1], where[2], "wins");
+			String expected = String.join("\n", com.pvpduels.stats.Leaderboards.lines("wins", StatsStore.ranking("wins")));
+			check("the stale text was replaced by the ranking after the duel", found != null && boardText(found).equals(expected), found == null ? "no board" : boardText(found));
+			check("Alice, who has wins, is on it", found != null && boardText(found).contains("Alice"), found == null ? "no board" : boardText(found));
+			com.pvpduels.stats.Leaderboards.remove((ServerLevel) a.level(), where[0], where[1], where[2], 12);
+			com.pvpduels.stats.Leaderboards.resetForTest();
+			run(a, "kit delete boardkit");
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			for (int i = 0; i < 41; i++) {
@@ -1184,6 +1286,7 @@ public final class SelfTest {
 
 	private static void buildDrill() {
 	private static void buildSeasons() {
+	private static void buildBoard() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
@@ -1194,6 +1297,8 @@ public final class SelfTest {
 		step("drill: done", () -> finish());
 		seasonsSteps();
 		step("seasons: done", () -> finish());
+		boardSteps();
+		step("board: done", () -> finish());
 	}
 
 
@@ -1479,6 +1584,7 @@ public final class SelfTest {
 		accuracySteps();
 		drillSteps();
 		seasonsSteps();
+		boardSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
