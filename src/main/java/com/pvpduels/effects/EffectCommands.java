@@ -61,6 +61,15 @@ public final class EffectCommands {
 			.then(Commands.argument("sound", StringArgumentType.word())
 				.suggests((ctx, builder) -> SharedSuggestionProvider.suggest(loseSoundNames(), builder))
 				.executes(ctx -> setLoseSound(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "sound")))));
+		// the little show on the player you hit when you end a round
+		dispatcher.register(Commands.literal("finisher")
+			.executes(ctx -> {
+				EffectsMenus.openFinishers(ctx.getSource().getPlayerOrException());
+				return 1;
+			})
+			.then(Commands.argument("style", StringArgumentType.word())
+				.suggests((ctx, builder) -> SharedSuggestionProvider.suggest(LastHit.names(), builder))
+				.executes(ctx -> chooseFinisher(ctx.getSource(), StringArgumentType.getString(ctx, "style")))));
 
 		dispatcher.register(Commands.literal("missions")
 			.executes(ctx -> {
@@ -93,6 +102,24 @@ public final class EffectCommands {
 		Effects.setLoseSound(player.getUUID(), meme.id());
 		MemeSounds.play(List.of(player), meme);
 		player.sendSystemMessage(Msg.ok("Your losing sound is " + meme.name() + " now. Everybody who has the silly sounds on hears it when you lose a duel."));
+		return 1;
+	}
+
+	/** /finisher <style>: picks the finishing blow (none turns it off) and shows it once. */
+	private static int chooseFinisher(CommandSourceStack source, String text) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer player = source.getPlayerOrException();
+		String problem = LastHit.choose(player.getUUID(), text);
+		if (problem != null) {
+			source.sendFailure(Msg.err(problem + " Choose one of: " + String.join(", ", LastHit.names()) + "."));
+			return 0;
+		}
+		LastHit.Style style = LastHit.styleOf(player.getUUID());
+		if (style == LastHit.Style.NONE) {
+			source.sendSuccess(() -> Msg.ok("No finishing blow."), false);
+		} else {
+			LastHit.preview(player, style);
+			source.sendSuccess(() -> Msg.ok("Finishing blow: " + style.label + ". It plays on the player you hit when you end a round."), false);
+		}
 		return 1;
 	}
 

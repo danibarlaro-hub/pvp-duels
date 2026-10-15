@@ -674,6 +674,7 @@ public final class Duel {
 		String reason = killer != null && killer.getUUID().equals(ids[1 - i])
 			? names[1 - i] + " defeated " + names[i] + "."
 			: names[i] + " died.";
+		if (killer instanceof ServerPlayer hitter && hitter.getUUID().equals(ids[1 - i])) com.pvpduels.effects.LastHit.play(hitter, p);
 		endRound(1 - i, reason + blows[i].describe(p));
 	}
 
