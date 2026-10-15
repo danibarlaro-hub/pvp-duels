@@ -58,7 +58,9 @@ public final class ReplayPlayer {
 	/** After the last picture the replay stays this long, then it ends. */
 	private static final int END_HOLD = 60;
 	private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND};
-	static final String[] VIEWS = {"Side", "Behind the first player", "Behind the second player", "From above"};
+	static final String[] VIEWS = {"Side", "Behind the first player", "Behind the second player", "From above", "Free flight"};
+	/** The index of the view where the viewer flies around on their own. */
+	static final int FREE = 4;
 
 	/** For the self-test. */
 	private static int started;
@@ -89,6 +91,8 @@ public final class ReplayPlayer {
 	private int waiting;
 	private int processed = -1;
 	private int eventCursor;
+	/** How many events were played (for the self-test: a jump must not play what it skips). */
+	int played;
 	private final boolean[] swingBefore = new boolean[2];
 	private final boolean[] hurtBefore = new boolean[2];
 	private final int[][] shownEquip = new int[2][ReplayData.SLOTS];
@@ -96,6 +100,7 @@ public final class ReplayPlayer {
 	private Vec3 camLook;
 	private Vec3 perp = new Vec3(0, 0, 1);
 	private float lastYaw = Float.NaN;
+	private float lastPitch = 30f;
 	private Vec3 spot0;
 	private Vec3 spot1;
 
@@ -275,19 +280,37 @@ public final class ReplayPlayer {
 		viewer.sendSystemMessage(Msg.title("Replay: " + data.names[0] + " vs " + data.names[1] + "  (" + data.config.kit() + ", " + data.config.arenaName() + ")"));
 		viewer.sendSystemMessage(Msg.info("  Score " + data.points[0] + " - " + data.points[1] + ", " + data.seconds() + " seconds. Blocks, pearls and crystals are not repeated, only the players."));
 		viewer.sendSystemMessage(controls());
+		viewer.sendSystemMessage(controls2());
 	}
 
+	/** The first line of buttons: what plays and how fast. */
 	static Component controls() {
 		return Component.literal("  ")
 			.append(Msg.button("[PAUSE]", ChatFormatting.YELLOW, "/replay pause", "Pause or resume"))
+			.append(Component.literal(" "))
+			.append(Msg.button("[<5s]", ChatFormatting.GRAY, "/replay seek -5", "Jump 5 seconds back"))
+			.append(Component.literal(" "))
+			.append(Msg.button("[5s>]", ChatFormatting.GRAY, "/replay seek 5", "Jump 5 seconds forward"))
+			.append(Component.literal(" "))
+			.append(Msg.button("[<F]", ChatFormatting.GRAY, "/replay step back", "Pause and go back one picture"))
+			.append(Component.literal(" "))
+			.append(Msg.button("[F>]", ChatFormatting.GRAY, "/replay step", "Pause and go forward one picture"))
+			.append(Component.literal(" "))
+			.append(Msg.button("[0.25x]", ChatFormatting.GRAY, "/replay speed 0.25", "Very slow motion"))
 			.append(Component.literal(" "))
 			.append(Msg.button("[0.5x]", ChatFormatting.GRAY, "/replay speed 0.5", "Slow motion"))
 			.append(Component.literal(" "))
 			.append(Msg.button("[1x]", ChatFormatting.GREEN, "/replay speed 1", "Normal speed"))
 			.append(Component.literal(" "))
-			.append(Msg.button("[2x]", ChatFormatting.GRAY, "/replay speed 2", "Twice as fast"))
-			.append(Component.literal(" "))
+			.append(Msg.button("[2x]", ChatFormatting.GRAY, "/replay speed 2", "Twice as fast"));
+	}
+
+	/** The second line: where you look from, and the ways out. */
+	static Component controls2() {
+		return Component.literal("  ")
 			.append(Msg.button("[VIEW]", ChatFormatting.AQUA, "/replay view", "Change the camera angle"))
+			.append(Component.literal(" "))
+			.append(Msg.button("[FREE]", ChatFormatting.AQUA, "/replay free", "Fly around on your own (click again to go back to the camera)"))
 			.append(Component.literal(" "))
 			.append(Msg.button("[CAMERA]", ChatFormatting.AQUA, "/replay camera", "Get the camera back if you left it by sneaking"))
 			.append(Component.literal(" "))
@@ -311,8 +334,30 @@ public final class ReplayPlayer {
 				return "Speed " + trim(speed) + "x.";
 			}
 			case "view" -> {
-				view = (view + 1) % VIEWS.length;
-				return "Camera: " + VIEWS[view] + ".";
+				return setView((view + 1) % VIEWS.length);
+			}
+			case "free" -> {
+				return setView(view == FREE ? 0 : FREE);
+			}
+			case "seek" -> {
+				double seconds = Math.max(-3600, Math.min(3600, value));
+				double before = pos;
+				jump(pos + seconds * 20.0);
+				if (pos == before) return seconds < 0 ? "Already at the start." : "Already at the end.";
+				return (seconds < 0 ? "Back " : "Forward ") + trim(Math.abs(seconds)) + " s.";
+			}
+			case "step" -> {
+				paused = true;
+				int last = data.frames - 1;
+				int now = (int) Math.floor(pos);
+				if (value < 0) {
+					if (now <= 0) return "This is the first picture.";
+					jump(now - 1);
+				} else {
+					if (now >= last) return "This is the last picture.";
+					pos = now + 1;
+				}
+				return "Picture " + (int) Math.floor(pos) + " of " + last + " (paused).";
 			}
 			case "restart" -> {
 				restart();
@@ -320,6 +365,7 @@ public final class ReplayPlayer {
 			}
 			case "camera" -> {
 				ServerPlayer p = server.getPlayerList().getPlayer(viewerId);
+				if (view == FREE) return setView(0);
 				if (p != null && camera != null && riding) p.setCamera(camera);
 				return "You are looking through the camera again.";
 			}
@@ -331,6 +377,47 @@ public final class ReplayPlayer {
 
 	private static String trim(double v) {
 		return v == Math.floor(v) ? String.valueOf((long) v) : String.format(Locale.ROOT, "%.2f", v);
+	}
+
+	/** Changes the angle. The free view lets the viewer go: they fly where they want, and the camera waits. */
+	private String setView(int next) {
+		ServerPlayer p = viewer();
+		int before = view;
+		view = next;
+		if (p != null && camera != null && riding) {
+			if (next == FREE && before != FREE) {
+				p.setCamera(p);
+				p.teleportTo(level, camPos.x, camPos.y, camPos.z, Set.of(), Float.isNaN(lastYaw) ? 0f : lastYaw, lastPitch, true);
+				return "Free flight: fly where you want. [VIEW] or [FREE] put the camera back.";
+			}
+			if (before == FREE && next != FREE) {
+				camPos = directorTarget(pos, view, true);
+				camLook = lookTarget(view);
+				p.setCamera(camera);
+			}
+		}
+		return "Camera: " + VIEWS[view] + ".";
+	}
+
+	/** Goes to another moment without repeating what happened in between (no sounds, no hits). */
+	private void jump(double target) {
+		int last = data.frames - 1;
+		pos = Math.max(0, Math.min(last, target));
+		int f = (int) Math.floor(pos);
+		processed = f;
+		eventCursor = 0;
+		while (eventCursor < data.events.size() && data.events.get(eventCursor).tick() <= f) eventCursor++;
+		for (int p = 0; p < 2; p++) {
+			int flags = data.flags[p][f];
+			swingBefore[p] = (flags & ReplayData.FLAG_SWING) != 0;
+			hurtBefore[p] = (flags & ReplayData.FLAG_HURT) != 0;
+		}
+		for (int[] row : shownEquip) java.util.Arrays.fill(row, -1);
+		endTimer = 0;
+		if (view != FREE) {
+			camPos = directorTarget(pos, view, true);
+			camLook = lookTarget(view);
+		}
 	}
 
 	private void restart() {
@@ -405,7 +492,7 @@ public final class ReplayPlayer {
 		}
 		advanceEvents(viewer, (int) Math.floor(pos));
 		moveDoubles(viewer);
-		moveCamera(viewer);
+		if (view != FREE) moveCamera(viewer);
 		if (age % 4 == 0) hud(viewer);
 	}
 
@@ -446,6 +533,7 @@ public final class ReplayPlayer {
 			}
 			while (eventCursor < data.events.size() && data.events.get(eventCursor).tick() <= f) {
 				event(viewer, data.events.get(eventCursor), f);
+				played++;
 				eventCursor++;
 			}
 		}
@@ -583,6 +671,7 @@ public final class ReplayPlayer {
 		}
 		lastYaw = yaw;
 		float pitch = (float) Math.max(-89, Math.min(89, -Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z)))));
+		lastPitch = pitch;
 		camera.snapTo(camPos.x, camPos.y, camPos.z, yaw, pitch);
 		if (riding) viewer.connection.send(new ClientboundTeleportEntityPacket(camera.getId(), new PositionMoveRotation(camPos, Vec3.ZERO, yaw, pitch), Set.of(), false));
 	}

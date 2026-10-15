@@ -55,7 +55,7 @@ public final class GuideBook {
 			{"Rivals", "/rival add <player> puts a player on your list (up to 10). When they join you get a message with a [CHALLENGE] button, and when you join you see which rivals are online.\n\n/rival shows the list, /rival remove <player> takes one off."},
 			{"Draw", "/draw offers a tie during a round (1v1 or 2v2). The rival clicks [ACCEPT] or uses /draw accept; /draw deny says no. It lasts 60 s.\n\nA tie ends the duel and breaks win streaks."},
 			{"Replays", "Every 1v1 duel against a player is recorded. /replay lists yours.\n\nAn admin has to send you one: [ASK ADMIN] or /replay ask <id>. You get a message when they answer."},
-			{"Watching replays", "/replay watch <id> plays it with a camera. Buttons: [PAUSE], [0.5x] [1x] [2x], [VIEW] (4 angles), [RESTART], [STOP].\n\nBlocks and pearls are not replayed."}
+			{"Watching replays", "/replay watch <id> plays it with a camera. Buttons: [PAUSE], [<5s] [5s>] jumps, [<F] [F>] one picture, [0.25x] to [2x], [VIEW], [FREE] (fly around), [RESTART], [STOP].\n\nBlocks and pearls are not replayed."}
 		}),
 		new Topic("Practice", new String[][] {
 			{"Combo drill", "/drill [kit] (or the clock in the Practice Bot menu): 60 seconds against a bot that never hits back.\n\nIt counts hits, best combo and accuracy, and saves your records. /drill records shows them."},

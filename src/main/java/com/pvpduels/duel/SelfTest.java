@@ -133,6 +133,8 @@ public final class SelfTest {
 				buildClutch();
 			} else if (mode.equals("watchtools")) {
 				buildWatchtools();
+			} else if (mode.equals("replaycam")) {
+				buildReplaycam();
 			} else {
 				build();
 			}
@@ -2112,6 +2114,176 @@ public final class SelfTest {
 	private static void buildKitview() {
 	private static void buildClutch() {
 	private static void buildWatchtools() {
+	private static void replaycamSteps() {
+		final String[] rid = new String[1];
+		final int[] t = new int[2];
+		final double[] p = new double[4];
+		final ReplayPlayer[] ref = new ReplayPlayer[1];
+		final ItemStack[] saved = new ItemStack[41];
+		step("replay camera: a short duel against the test bot is recorded", () -> {
+			for (int i = 0; i < 41; i++) saved[i] = a.getInventory().getItem(i).copy();
+			try {
+				ReplayStore.reloadForTest(Files.createTempDirectory("pvpduels-replays"));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			a.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save rkit");
+			a.getInventory().clearContent();
+			String problem = TestDummy.spawn(a, TestDummy.freeName(server), BotLevel.STATIC);
+			Dummy bot = (Dummy) server.getPlayerList().getPlayerByName("TestBot");
+			check("the bot was created", problem == null && bot != null, String.valueOf(problem));
+			DuelManager.sendInvite(a, bot, a.getUUID(), new DuelConfig("rkit", false, WinMode.FIRST_TO, 1), false);
+			check("the bot accepted by itself", duel(a) != null && duel(bot) == duel(a));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("replay camera: the fight goes on for a while", () -> t[0] = ticks, () -> ticks >= t[0] + 170, 400);
+		step("replay camera: Alice knocks it out", () -> {
+			Dummy bot = (Dummy) server.getPlayerList().getPlayerByName("TestBot");
+			hit(a, bot);
+			check("Alice won", duel(a) != null && duel(a).winner == 0);
+		}, () -> noDuel(a), 600);
+		step("replay camera: let the end of the duel settle", () -> t[0] = ticks, () -> ticks >= t[0] + 40, 200);
+		step("replay camera: Alice watches the replay", () -> {
+			check("one replay was kept", ReplayStore.count() == 1, "" + ReplayStore.count());
+			rid[0] = ReplayStore.recent(null, 1).get(0).id;
+			a.inbox.clear();
+			ReplayCommands.watch(a, rid[0], true);
+			check("the replay started", ReplayPlayer.isIn(a.getUUID()));
+		}, () -> ReplayPlayer.of(a.getUUID()) != null && a.getCamera() != a, 200);
+		step("replay camera: two lines of buttons", () -> {
+			ReplayPlayer s = ReplayPlayer.of(a.getUUID());
+			ref[0] = s;
+			check("the first line has pause, the jumps, the pictures and the speeds", a.heard("[PAUSE]") && a.heard("[<5s]") && a.heard("[5s>]") && a.heard("[<F]") && a.heard("[F>]")
+				&& a.heard("[0.25x]") && a.heard("[0.5x]") && a.heard("[1x]") && a.heard("[2x]"), String.valueOf(a.inbox));
+			check("the second line has the views and the ways out", a.heard("[VIEW]") && a.heard("[FREE]") && a.heard("[CAMERA]") && a.heard("[RESTART]") && a.heard("[STOP]"));
+			check("five views and the last one is the free flight", ReplayPlayer.VIEWS.length == 5 && ReplayPlayer.VIEWS[4].equals("Free flight") && ReplayPlayer.FREE == 4);
+			check("the recording is long enough to jump around in", s.data.frames > 150, "" + s.data.frames);
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 15, 100);
+		step("replay camera: one picture at a time", () -> {
+			ReplayPlayer s = ref[0];
+			check("it is playing", s.pos > 5 && !s.paused, "" + s.pos);
+			run(a, "replay pause");
+			p[0] = Math.floor(s.pos);
+			a.inbox.clear();
+			run(a, "replay step");
+			check("one picture forward, paused", s.paused && s.pos == p[0] + 1, p[0] + " -> " + s.pos);
+			check("Alice is told which picture", a.heard("Picture " + (int) (p[0] + 1) + " of "), String.valueOf(a.inbox));
+			run(a, "replay step");
+			run(a, "replay step");
+			check("three forward", s.pos == p[0] + 3, p[0] + " -> " + s.pos);
+			run(a, "replay step back");
+			check("one back", s.pos == p[0] + 2 && s.paused, p[0] + " -> " + s.pos);
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 6, 100);
+		step("replay camera: jumps are quiet and keep the pause", () -> {
+			ReplayPlayer s = ref[0];
+			check("the picture stayed where it was while paused", s.pos == p[0] + 2, p[0] + " -> " + s.pos);
+			p[1] = s.pos;
+			p[2] = s.played;
+			a.inbox.clear();
+			run(a, "replay seek 2");
+			check("two seconds forward", s.pos == Math.min(s.data.frames - 1, p[1] + 40) && s.paused, p[1] + " -> " + s.pos);
+			check("Alice is told", a.heard("Forward 2 s."), String.valueOf(a.inbox));
+			run(a, "replay seek -1");
+			check("one second back", s.pos == Math.min(s.data.frames - 1, p[1] + 40) - 20, "" + s.pos);
+			a.inbox.clear();
+			run(a, "replay seek -1000");
+			check("far back is the start", s.pos == 0 && a.heard("Back 1000 s."), s.pos + " " + a.inbox);
+			a.inbox.clear();
+			run(a, "replay seek -5");
+			check("at the start it says so", s.pos == 0 && a.heard("Already at the start."), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "replay step back");
+			check("and there is no picture before the first", s.pos == 0 && a.heard("first picture"), String.valueOf(a.inbox));
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 4, 100);
+		step("replay camera: the events skipped by a jump were not played", () -> {
+			ReplayPlayer s = ref[0];
+			check("no event was played by the jumps", s.played == (int) p[2], s.played + " / " + (int) p[2]);
+			run(a, "replay speed 0.25");
+			check("quarter speed plays again", s.speed == 0.25 && !s.paused);
+			p[3] = s.pos;
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 20, 100);
+		step("replay camera: quarter speed is four times slower", () -> {
+			ReplayPlayer s = ref[0];
+			double moved = s.pos - p[3];
+			check("about 5 pictures in 20 ticks", moved > 3 && moved < 7, "" + moved);
+			run(b, "replay seek 5");
+			check("somebody who is not watching gets an error for the jump", b.heard("You are not watching a replay"));
+			b.inbox.clear();
+			run(b, "replay step");
+			check("and for the picture", b.heard("You are not watching a replay"));
+			b.inbox.clear();
+			run(b, "replay free");
+			check("and for the free flight", b.heard("You are not watching a replay"));
+		});
+		step("replay camera: free flight", () -> {
+			ReplayPlayer s = ref[0];
+			a.inbox.clear();
+			run(a, "replay free");
+			check("the view is the free flight", s.view == ReplayPlayer.FREE, "" + s.view);
+			check("Alice looks through her own eyes now", a.getCamera() == a && a.gameMode() == GameType.SPECTATOR);
+			check("Alice is told how to go back", a.heard("Free flight"), String.valueOf(a.inbox));
+			p[0] = s.pos;
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 20, 100);
+		step("replay camera: the picture goes on while she flies", () -> {
+			ReplayPlayer s = ref[0];
+			check("the replay kept playing", s.pos > p[0] + 2, p[0] + " -> " + s.pos);
+			check("she is still in the replay", ReplayPlayer.isIn(a.getUUID()) && a.getCamera() == a);
+			run(a, "replay seek 1");
+			check("jumps work in free flight", s.pos >= p[0] + 20);
+			run(a, "replay view");
+			check("[VIEW] puts the camera back", s.view == 0 && a.getCamera() != a, s.view + " " + (a.getCamera() == a));
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 6, 100);
+		step("replay camera: the camera button also ends the free flight", () -> {
+			ReplayPlayer s = ref[0];
+			run(a, "replay free");
+			check("free again", s.view == ReplayPlayer.FREE && a.getCamera() == a);
+			run(a, "replay camera");
+			check("[CAMERA] gives the camera back", s.view == 0 && a.getCamera() != a, s.view + " " + (a.getCamera() == a));
+			run(a, "replay free");
+			run(a, "replay free");
+			check("[FREE] twice is a round trip", s.view == 0 && a.getCamera() != a);
+			run(a, "replay free");
+			check("and now she flies for the end", s.view == ReplayPlayer.FREE && a.getCamera() == a);
+		});
+		step("replay camera: the last seconds, played for real (the hit that ended it is in there)", () -> {
+			ReplayPlayer s = ref[0];
+			a.inbox.clear();
+			p[2] = s.played;
+			int last = s.data.frames - 1;
+			run(a, "replay speed 1");
+			int from = Math.max(0, last - 120);
+			run(a, "replay seek " + ((from - s.pos) / 20.0));
+			check("the picture is 120 ticks before the end", Math.abs(s.pos - from) < 0.01, s.pos + " / " + from + " / " + last);
+			check("the jump did not play anything", s.played == (int) p[2], s.played + " / " + (int) p[2]);
+		}, () -> !ReplayPlayer.isIn(a.getUUID()), 500);
+		step("replay camera: it ended while she was flying and put everything back", () -> {
+			check("the events after the jump were played", ref[0].played > (int) p[2], ref[0].played + " / " + (int) p[2]);
+			check("the title named the winner", titleHeard(a, "Alice WINS"));
+			check("Alice has her own eyes, her mode and her things", a.getCamera() == a && a.gameMode() != GameType.SPECTATOR && !PlayerBackup.exists(a.getUUID()));
+			check("nothing of the replay is left and the arena is free", taggedCount("pvpduels_replay") == 0 && DuelManager.activeDuels() == 0 && ReplayPlayer.sessions() == 0);
+		});
+		step("replay camera: clean up for the next tests", () -> {
+			check("the test bot is removed", TestDummy.remove(server, "TestBot") == 1 && server.getPlayerList().getPlayerByName("TestBot") == null);
+			ReplayStore.delete(rid[0]);
+			run(a, "kit delete rkit");
+			for (int i = 0; i < 41; i++) a.getInventory().setItem(i, saved[i]);
+			Cinema.resetForTest();
+			Cinema.enabled = false;
+			Effects.resetForTest();
+			Missions.resetForTest();
+			Victory.resetForTest();
+			check("the kit is gone and the replay store is empty", !KitStore.exists(a.getUUID(), "rkit") && ReplayStore.count() == 0);
+		});
+	}
+
+	private static void buildReplaycam() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
@@ -2144,6 +2316,10 @@ public final class SelfTest {
 		step("watch tools: done", () -> finish());
 	}
 
+
+		replaycamSteps();
+		step("replay camera: done", () -> finish());
+	}
 
 	private static void buildPranks() {
 		Cinema.enabled = false;
@@ -2437,6 +2613,7 @@ public final class SelfTest {
 		rivalsSteps();
 		clutchSteps();
 		watchtoolsSteps();
+		replaycamSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
