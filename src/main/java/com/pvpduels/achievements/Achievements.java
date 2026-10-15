@@ -40,48 +40,68 @@ public final class Achievements {
 
 	private static final Achievement[] ALL = {
 		new Achievement("first_duel", DUELS, "First Steps", "Play your first duel.", "duels", 1, null, ChatFormatting.GOLD, Items.WOODEN_SWORD),
+		new Achievement("duels_50", DUELS, "Regular", "Play 50 duels.", "duels", 50, "Regular", ChatFormatting.GRAY, Items.PAPER),
+		new Achievement("duels_250", DUELS, "Veteran", "Play 250 duels.", "duels", 250, "Veteran", ChatFormatting.WHITE, Items.WRITTEN_BOOK),
 		new Achievement("first_win", DUELS, "First Victory", "Win a duel.", "wins", 1, "Rookie", ChatFormatting.GREEN, Items.STONE_SWORD),
 		new Achievement("wins_10", DUELS, "Duelist", "Win 10 duels.", "wins", 10, "Duelist", ChatFormatting.GOLD, Items.IRON_SWORD),
 		new Achievement("wins_25", DUELS, "Gladiator", "Win 25 duels.", "wins", 25, "Gladiator", ChatFormatting.GOLD, Items.GOLDEN_SWORD),
 		new Achievement("wins_50", DUELS, "Champion", "Win 50 duels.", "wins", 50, "Champion", ChatFormatting.GOLD, Items.DIAMOND_SWORD),
 		new Achievement("wins_100", DUELS, "Legend", "Win 100 duels.", "wins", 100, "Legend", ChatFormatting.GOLD, Items.NETHERITE_SWORD),
+		new Achievement("wins_250", DUELS, "Warlord", "Win 250 duels.", "wins", 250, "Warlord", ChatFormatting.GOLD, Items.NETHERITE_AXE),
+		new Achievement("wins_500", DUELS, "Immortal", "Win 500 duels.", "wins", 500, "Immortal", ChatFormatting.GOLD, Items.DRAGON_HEAD),
 		new Achievement("streak_3", DUELS, "Hot Streak", "Win 3 duels in a row.", "streak", 3, "Streaker", ChatFormatting.RED, Items.BLAZE_POWDER),
 		new Achievement("streak_5", DUELS, "On Fire", "Win 5 duels in a row.", "streak", 5, "On Fire", ChatFormatting.RED, Items.FIRE_CHARGE),
 		new Achievement("streak_10", DUELS, "Unstoppable", "Win 10 duels in a row.", "streak", 10, "Unstoppable", ChatFormatting.RED, Items.NETHER_STAR),
+		new Achievement("streak_20", DUELS, "Godlike", "Win 20 duels in a row.", "streak", 20, "Godlike", ChatFormatting.RED, Items.END_CRYSTAL),
 		new Achievement("flawless", DUELS, "Flawless", "Win a duel without losing a single round (first to 2 or more).", "flawless", 1, "Flawless", ChatFormatting.AQUA, Items.SHIELD),
 		new Achievement("flawless_5", DUELS, "Untouchable", "Win 5 duels without losing a round.", "flawless", 5, "Untouchable", ChatFormatting.AQUA, Items.NETHERITE_CHESTPLATE),
+		new Achievement("flawless_25", DUELS, "Perfectionist", "Win 25 duels without losing a round.", "flawless", 25, "Perfectionist", ChatFormatting.AQUA, Items.BEACON),
 		new Achievement("elo_1100", DUELS, "Rising Star", "Reach 1100 Elo.", "elo", 1100, "Rising Star", ChatFormatting.AQUA, Items.COPPER_INGOT),
 		new Achievement("elo_1200", DUELS, "Expert", "Reach 1200 Elo.", "elo", 1200, "Expert", ChatFormatting.AQUA, Items.GOLD_INGOT),
 		new Achievement("elo_1400", DUELS, "Master", "Reach 1400 Elo.", "elo", 1400, "Master", ChatFormatting.AQUA, Items.DIAMOND),
+		new Achievement("elo_1600", DUELS, "Grandmaster", "Reach 1600 Elo.", "elo", 1600, "Grandmaster", ChatFormatting.AQUA, Items.EMERALD),
+		new Achievement("elo_1800", DUELS, "Mythic", "Reach 1800 Elo.", "elo", 1800, "Mythic", ChatFormatting.LIGHT_PURPLE, Items.AMETHYST_SHARD),
 		new Achievement("combo_5", DUELS, "Combo Starter", "Land a 5-hit combo.", "combo", 5, null, ChatFormatting.RED, Items.IRON_AXE),
 		new Achievement("combo_10", DUELS, "Combo Master", "Land a 10-hit combo.", "combo", 10, "Combo King", ChatFormatting.RED, Items.DIAMOND_AXE),
+		new Achievement("combo_15", DUELS, "Combo God", "Land a 15-hit combo.", "combo", 15, "Combo God", ChatFormatting.RED, Items.MACE),
 		new Achievement("totems_5", DUELS, "Second Chance", "Pop 5 totems of undying in duels.", "totems", 5, null, ChatFormatting.YELLOW, Items.TOTEM_OF_UNDYING),
+		new Achievement("totems_50", DUELS, "Nine Lives", "Pop 50 totems of undying in duels.", "totems", 50, "Nine Lives", ChatFormatting.YELLOW, Items.TOTEM_OF_UNDYING),
 		new Achievement("pearls_10", DUELS, "Pearl Thrower", "Throw 10 ender pearls in duels.", "pearls", 10, null, ChatFormatting.DARK_AQUA, Items.ENDER_PEARL),
+		new Achievement("pearls_50", DUELS, "Ender Rider", "Throw 50 ender pearls in duels.", "pearls", 50, "Ender Rider", ChatFormatting.DARK_AQUA, Items.ENDER_EYE),
 		new Achievement("apples_10", DUELS, "An Apple a Day", "Eat 10 golden apples in duels.", "apples", 10, null, ChatFormatting.YELLOW, Items.GOLDEN_APPLE),
+		new Achievement("apples_50", DUELS, "Apple Addict", "Eat 50 golden apples in duels.", "apples", 50, "Apple Addict", ChatFormatting.YELLOW, Items.ENCHANTED_GOLDEN_APPLE),
 		new Achievement("kits_3", DUELS, "Versatile", "Win with 3 different kits.", "kit_wins", 3, "Versatile", ChatFormatting.LIGHT_PURPLE, Items.CHEST),
 		new Achievement("kits_10", DUELS, "Jack of All Kits", "Win with 10 different kits.", "kit_wins", 10, null, ChatFormatting.LIGHT_PURPLE, Items.ENDER_CHEST),
+		new Achievement("kits_25", DUELS, "Kit Master", "Win with 25 different kits.", "kit_wins", 25, "Kit Master", ChatFormatting.LIGHT_PURPLE, Items.SHULKER_BOX),
 		new Achievement("arenas_4", DUELS, "Traveler", "Duel in 4 different kinds of arena.", "arena_kinds", 4, "Traveler", ChatFormatting.GREEN, Items.COMPASS),
 		new Achievement("queue_1", DUELS, "Queue Up", "Win a duel from the queue.", "queue_wins", 1, null, ChatFormatting.GREEN, Items.CLOCK),
 		new Achievement("queue_10", DUELS, "Queue Veteran", "Win 10 duels from the queue.", "queue_wins", 10, "Matchmaker", ChatFormatting.GREEN, Items.RECOVERY_COMPASS),
+		new Achievement("queue_50", DUELS, "Grinder", "Win 50 duels from the queue.", "queue_wins", 50, "Grinder", ChatFormatting.GREEN, Items.HOPPER),
 		new Achievement("team_first", DUELS, "Better Together", "Win a 2v2 duel.", "team_wins", 1, "Teammate", ChatFormatting.GREEN, Items.LEAD),
 		new Achievement("team_10", DUELS, "Dynamic Duo", "Win 10 duels in 2v2.", "team_wins", 10, "Duo", ChatFormatting.GREEN, Items.GOLDEN_CARROT),
+		new Achievement("team_25", DUELS, "Dream Team", "Win 25 duels in 2v2.", "team_wins", 25, "Dream Team", ChatFormatting.GREEN, Items.GOLDEN_APPLE),
 		new Achievement("clutch_1", DUELS, "Clutch", "Win a round alone against both rivals after your partner is out.", "team_clutches", 1, null, ChatFormatting.RED, Items.CLOCK),
 		new Achievement("clutch_5", DUELS, "Clutch Master", "Win 5 rounds alone against both rivals in 2v2.", "team_clutches", 5, "Clutch Master", ChatFormatting.RED, Items.TOTEM_OF_UNDYING),
 		new Achievement("spectate_5", DUELS, "Fan", "Watch 5 duels.", "spectated", 5, null, ChatFormatting.GRAY, Items.SPYGLASS),
+		new Achievement("spectate_25", DUELS, "Superfan", "Watch 25 duels.", "spectated", 25, "Superfan", ChatFormatting.GRAY, Items.ENDER_EYE),
 
 		new Achievement("bot_10", PRACTICE, "Bot Buster", "Knock out the practice bot 10 times.", "bot_kos", 10, null, ChatFormatting.GREEN, Items.ZOMBIE_HEAD),
 		new Achievement("bot_100", PRACTICE, "Bot Crusher", "Knock out the practice bot 100 times.", "bot_kos", 100, "Crusher", ChatFormatting.GREEN, Items.WITHER_SKELETON_SKULL),
+		new Achievement("bot_500", PRACTICE, "Terminator", "Knock out the practice bot 500 times.", "bot_kos", 500, "Terminator", ChatFormatting.GREEN, Items.CREEPER_HEAD),
 
 		new Achievement("kit_first", KITS, "Kit Maker", "Save your first kit.", "kits_saved", 1, null, ChatFormatting.LIGHT_PURPLE, Items.CRAFTING_TABLE),
 		new Achievement("kit_10", KITS, "Collector", "Have 10 saved kits.", "kits_saved", 10, "Collector", ChatFormatting.LIGHT_PURPLE, Items.BUNDLE),
 		new Achievement("kit_share", KITS, "Generous", "Share a kit with everybody.", "kits_published", 1, "Generous", ChatFormatting.LIGHT_PURPLE, Items.EMERALD),
+		new Achievement("kit_50", KITS, "Hoarder", "Have 50 saved kits.", "kits_saved", 50, "Hoarder", ChatFormatting.LIGHT_PURPLE, Items.ENDER_CHEST),
 
 		new Achievement("arena_first", BUILDING, "Architect", "Save your first custom arena.", "arenas_saved", 1, "Architect", ChatFormatting.YELLOW, Items.BRICKS),
 		new Achievement("arena_share", BUILDING, "Open Doors", "Make one of your arenas public.", "arenas_published", 1, null, ChatFormatting.YELLOW, Items.OAK_DOOR),
 		new Achievement("contest_join", BUILDING, "Contestant", "Hand in a build to the weekly contest.", "contest_entries", 1, null, ChatFormatting.YELLOW, Items.PAINTING),
 		new Achievement("contest_vote", BUILDING, "Critic", "Vote in 5 building contests.", "contest_votes", 5, "Critic", ChatFormatting.YELLOW, Items.WRITABLE_BOOK),
+		new Achievement("contest_judge", BUILDING, "Judge", "Vote in 20 building contests.", "contest_votes", 20, "Judge", ChatFormatting.YELLOW, Items.LECTERN),
 		new Achievement("contest_podium", BUILDING, "Builder", "Place 1st, 2nd or 3rd in a building contest.", "contest_podiums", 1, "Builder", ChatFormatting.YELLOW, Items.GOLDEN_PICKAXE),
-		new Achievement("contest_win", BUILDING, "Master Builder", "Win a building contest.", "contest_wins", 1, "Master Builder", ChatFormatting.YELLOW, Items.GOLDEN_HELMET)
+		new Achievement("contest_win", BUILDING, "Master Builder", "Win a building contest.", "contest_wins", 1, "Master Builder", ChatFormatting.YELLOW, Items.GOLDEN_HELMET),
+		new Achievement("contest_wins_3", BUILDING, "Hall of Fame", "Win 3 building contests.", "contest_wins", 3, "Hall of Fame", ChatFormatting.YELLOW, Items.GOLD_BLOCK)
 	};
 
 	/** Everything we know about one player. */
@@ -247,6 +267,21 @@ public final class Achievements {
 		List<Achievement> list = new ArrayList<>();
 		for (Achievement a : ALL) if (a.hasTitle() && d.unlocked.containsKey(a.id())) list.add(a);
 		return list;
+	}
+
+	/** The achievements that give a title and that this player has not unlocked yet. */
+	public static synchronized List<Achievement> lockedTitlesOf(UUID id) {
+		Data d = data(id, null);
+		List<Achievement> list = new ArrayList<>();
+		for (Achievement a : ALL) if (a.hasTitle() && !d.unlocked.containsKey(a.id())) list.add(a);
+		return list;
+	}
+
+	/** How many titles exist in all (the ones that can be won). */
+	public static int titleCount() {
+		int n = 0;
+		for (Achievement a : ALL) if (a.hasTitle()) n++;
+		return n;
 	}
 
 	/** The title being worn, or null. */
