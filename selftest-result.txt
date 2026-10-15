@@ -1,0 +1,16 @@
+--- two fake players
+--- accuracy: a duel starts (swinging outside a duel is harmless)
+PASS  the kit for the test was saved
+PASS  a swing outside a duel changes nothing
+PASS  a duel started
+--- accuracy: four swings with the sword and one that is not an attack, then a plain hit
+--- accuracy: a hit while falling is a critical hit
+--- accuracy: the last hit ends the duel
+--- accuracy: the summary tells the swings that hit and the critical hits
+PASS  Alice: 3 of 4 sword swings hit (the stone swings do not count) and one was a critical hit   (  Alice: 3 hits, 24.0 damage, best combo 3, accuracy 75% (3/4 swings), 1 crit)
+PASS  Bob swung once and hit nothing
+PASS  Bob read the same summary
+PASS  the hits before it are still told as before
+PASS  Accuracy.describe says nothing when nothing happened
+--- accuracy: done
+RESULT: PASS
