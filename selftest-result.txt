@@ -1,0 +1,19 @@
+--- two fake players
+--- bugs: Dibitss reads the reports of the others
+PASS  three reports are in the file and all three are open
+PASS  /bugs is hidden from a normal player and open to Dibitss
+PASS  /bugs lists the open ones, with buttons
+PASS  /bugs show tells the whole report
+PASS  /bugs fix 2 marks it
+PASS  the report itself was not touched
+PASS  marking it twice says so
+PASS  the open list no longer has it
+PASS  the fixed list has only it, with a reopen button
+PASS  the list of all has the three
+PASS  /bugs reopen opens it again
+PASS  a number that does not exist is refused
+PASS  eleven reports make two pages
+PASS  a page too far shows the last one, with a way back
+PASS  the owner is told on joining that reports are waiting, and a normal player is told nothing
+--- bugs: done
+RESULT: PASS
