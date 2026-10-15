@@ -1,0 +1,7 @@
+## ClientboundMoveEntity
+net.minecraft.network.protocol.game.ClientboundMoveEntityPacket
+net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$Pos
+net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$PosRot
+net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$Rot
+## ClientboundRotateHead
+net.minecraft.network.protocol.game.ClientboundRotateHeadPacket

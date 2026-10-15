@@ -1,0 +1,7 @@
+MC jar: /home/runner/.gradle/caches/fabric-loom/26.2/minecraft-client.jar
+caution: filename not matched:  data/minecraft/dimension/*
+inspect-out:
+all-jars.txt
+block-ids.txt
+classpath.txt
+code
