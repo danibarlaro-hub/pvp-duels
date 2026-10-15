@@ -1,0 +1,22 @@
+--- two fake players
+--- losing sound: /losesound picks the silly sound that plays when YOU lose
+PASS  nobody has chosen a losing sound at the start
+PASS  with none chosen a random one of the twenty comes out
+PASS  /losesound bonk chooses it and she hears it
+PASS  it is the sound that plays when SHE loses
+PASS  Bob did not get hers: his losses stay random
+PASS  capitals and hyphens are forgiven
+PASS  a name that does not exist is refused and changes nothing
+PASS  the effects menu shows her choice
+PASS  menu has the option 'Your losing sound: Sad trombone'
+PASS  the choice menu lists the sounds and Random
+PASS  menu has the option 'Air horn'
+PASS  clicking one chooses it and lets her hear it
+PASS  menu has the option 'Random'
+PASS  Random takes the choice away
+PASS  menu has the option 'Back'
+PASS  Back goes to the effects menu
+PASS  the choice is in the file: it survives a restart
+PASS  /losesound random goes back to a different one each time
+--- losing sound: done
+RESULT: PASS
