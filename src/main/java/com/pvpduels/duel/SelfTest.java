@@ -99,34 +99,34 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("losesound")) {
+				buildLoseSound();
 			} else if (mode.equals("bugs")) {
 				buildBugs();
 			} else if (mode.equals("h2h")) {
 				buildH2h();
-			} else if (mode.equals("losesound")) {
-				buildLoseSound();
-			} else if (mode.equals("titles")) {
-				buildTitles();
-			} else if (mode.equals("drill")) {
-				buildDrill();
 			} else if (mode.equals("accuracy")) {
 				buildAccuracy();
-			} else if (mode.equals("seasons")) {
-				buildSeasons();
-			} else if (mode.equals("board")) {
-				buildBoard();
+			} else if (mode.equals("titles")) {
+				buildTitles();
 			} else if (mode.equals("mutators")) {
 				buildMutators();
 			} else if (mode.equals("swap")) {
 				buildSwap();
-			} else if (mode.equals("handicap")) {
-				buildHandicap();
+			} else if (mode.equals("seasons")) {
+				buildSeasons();
+			} else if (mode.equals("board")) {
+				buildBoard();
+			} else if (mode.equals("drill")) {
+				buildDrill();
 			} else if (mode.equals("lasthit")) {
 				buildLasthit();
 			} else if (mode.equals("arenavote")) {
 				buildArenavote();
 			} else if (mode.equals("kitview")) {
 				buildKitview();
+			} else if (mode.equals("handicap")) {
+				buildHandicap();
 			} else if (mode.equals("rivals")) {
 				buildRivals();
 			} else if (mode.equals("clutch")) {
@@ -620,6 +620,58 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: your own losing sound
+
+	private static void loseSoundSteps() {
+		step("losing sound: /losesound picks the silly sound that plays when YOU lose", () -> {
+			UUID id = a.getUUID();
+			Effects.resetForTest();
+			check("nobody has chosen a losing sound at the start", Effects.loseSound(id).isEmpty() && Effects.loseSound(b.getUUID()).isEmpty());
+			check("with none chosen a random one of the twenty comes out", com.pvpduels.effects.MemeSounds.forLoser(id) != null && com.pvpduels.effects.MemeSounds.forLoser(null) != null);
+			a.inbox.clear();
+			a.link.sent.clear();
+			run(a, "losesound bonk");
+			check("/losesound bonk chooses it and she hears it", Effects.loseSound(id).equals("bonk") && memePackets(a) == 1 && a.heard("Bonk"));
+			check("it is the sound that plays when SHE loses", com.pvpduels.effects.MemeSounds.forLoser(id).id().equals("bonk"));
+			check("Bob did not get hers: his losses stay random", Effects.loseSound(b.getUUID()).isEmpty() && com.pvpduels.effects.MemeSounds.forLoser(b.getUUID()) != null);
+			a.inbox.clear();
+			run(a, "losesound Sad-Trombone");
+			check("capitals and hyphens are forgiven", Effects.loseSound(id).equals("sad_trombone"));
+			a.inbox.clear();
+			run(a, "losesound nope");
+			check("a name that does not exist is refused and changes nothing", a.heard("No silly sound is called") && Effects.loseSound(id).equals("sad_trombone"));
+			run(a, "effects");
+			check("the effects menu shows her choice", menuHas(a, "Your losing sound: Sad trombone"));
+			menuStep(a, "Your losing sound: Sad trombone");
+			check("the choice menu lists the sounds and Random", menuHas(a, "Air horn") && menuHas(a, "Fahhh") && menuHas(a, "Game over") && menuHas(a, "Random") && menuHas(a, "Back"));
+			a.link.sent.clear();
+			menuStep(a, "Air horn");
+			check("clicking one chooses it and lets her hear it", Effects.loseSound(id).equals("airhorn") && memePackets(a) == 1);
+			menuStep(a, "Random");
+			check("Random takes the choice away", Effects.loseSound(id).isEmpty());
+			menuStep(a, "Back");
+			check("Back goes to the effects menu", menuHas(a, "Your losing sound: Random"));
+			a.closeContainer();
+			run(a, "losesound bonk");
+			Effects.reloadForTest();
+			check("the choice is in the file: it survives a restart", Effects.loseSound(id).equals("bonk"));
+			a.inbox.clear();
+			run(a, "losesound random");
+			check("/losesound random goes back to a different one each time", Effects.loseSound(id).isEmpty() && a.heard("random now"));
+		});
+	}
+
+	private static void buildLoseSound() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		loseSoundSteps();
+		step("losing sound: done", () -> finish());
+	}
+
 	// ------------------------------------------------------------------ one idea at a time: /bugs, the bug reports inside the game
 
 	private static void bugsSteps() {
@@ -699,6 +751,16 @@ public final class SelfTest {
 	}
 
 	private static void buildBugs() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		bugsSteps();
+		step("bugs: done", () -> finish());
+	}
+
 	// ------------------------------------------------------------------ one idea at a time: /h2h, head to head against every friend
 
 	private static void h2hSteps() {
@@ -760,48 +822,92 @@ public final class SelfTest {
 	}
 
 	private static void buildH2h() {
-	// ------------------------------------------------------------------ one idea at a time: your own losing sound
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		h2hSteps();
+		step("h2h: done", () -> finish());
+	}
 
-	private static void loseSoundSteps() {
-		step("losing sound: /losesound picks the silly sound that plays when YOU lose", () -> {
-			UUID id = a.getUUID();
-			Effects.resetForTest();
-			check("nobody has chosen a losing sound at the start", Effects.loseSound(id).isEmpty() && Effects.loseSound(b.getUUID()).isEmpty());
-			check("with none chosen a random one of the twenty comes out", com.pvpduels.effects.MemeSounds.forLoser(id) != null && com.pvpduels.effects.MemeSounds.forLoser(null) != null);
-			a.inbox.clear();
-			a.link.sent.clear();
-			run(a, "losesound bonk");
-			check("/losesound bonk chooses it and she hears it", Effects.loseSound(id).equals("bonk") && memePackets(a) == 1 && a.heard("Bonk"));
-			check("it is the sound that plays when SHE loses", com.pvpduels.effects.MemeSounds.forLoser(id).id().equals("bonk"));
-			check("Bob did not get hers: his losses stay random", Effects.loseSound(b.getUUID()).isEmpty() && com.pvpduels.effects.MemeSounds.forLoser(b.getUUID()) != null);
-			a.inbox.clear();
-			run(a, "losesound Sad-Trombone");
-			check("capitals and hyphens are forgiven", Effects.loseSound(id).equals("sad_trombone"));
-			a.inbox.clear();
-			run(a, "losesound nope");
-			check("a name that does not exist is refused and changes nothing", a.heard("No silly sound is called") && Effects.loseSound(id).equals("sad_trombone"));
-			run(a, "effects");
-			check("the effects menu shows her choice", menuHas(a, "Your losing sound: Sad trombone"));
-			menuStep(a, "Your losing sound: Sad trombone");
-			check("the choice menu lists the sounds and Random", menuHas(a, "Air horn") && menuHas(a, "Fahhh") && menuHas(a, "Game over") && menuHas(a, "Random") && menuHas(a, "Back"));
-			a.link.sent.clear();
-			menuStep(a, "Air horn");
-			check("clicking one chooses it and lets her hear it", Effects.loseSound(id).equals("airhorn") && memePackets(a) == 1);
-			menuStep(a, "Random");
-			check("Random takes the choice away", Effects.loseSound(id).isEmpty());
-			menuStep(a, "Back");
-			check("Back goes to the effects menu", menuHas(a, "Your losing sound: Random"));
-			a.closeContainer();
-			run(a, "losesound bonk");
-			Effects.reloadForTest();
-			check("the choice is in the file: it survives a restart", Effects.loseSound(id).equals("bonk"));
-			a.inbox.clear();
-			run(a, "losesound random");
-			check("/losesound random goes back to a different one each time", Effects.loseSound(id).isEmpty() && a.heard("random now"));
+	// ------------------------------------------------------------------ one idea at a time: accuracy in the summary of a duel
+
+	private static void accuracySteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final int[] wait = new int[1];
+		step("accuracy: a duel starts (swinging outside a duel is harmless)", () -> {
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save aimkit");
+			check("the kit for the test was saved", KitStore.exists(a.getUUID(), "aimkit"));
+			a.getInventory().clearContent();
+			a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			check("a swing outside a duel changes nothing", duel(a) == null);
+			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("aimkit", false, WinMode.FIRST_TO, 1), false);
+			run(b, "accept Alice");
+			check("a duel started", duel(a) != null && duel(b) == duel(a));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("accuracy: four swings with the sword and one that is not an attack, then a plain hit", () -> {
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			for (int i = 0; i < 4; i++) a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STONE));
+			for (int i = 0; i < 3; i++) a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			b.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			b.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			a.fallDistance = 0;
+			softHit(a, b, 2f);
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 20, 80); // the weapon needs to charge again after she swapped items, or it is not a critical hit
+		step("accuracy: a hit while falling is a critical hit", () -> {
+			a.fallDistance = 3.0;
+			a.setOnGround(false);
+			softHit(a, b, 2f);
+			a.fallDistance = 0;
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 4, 40);
+		step("accuracy: the last hit ends the duel", () -> {
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("accuracy: the summary tells the swings that hit and the critical hits", () -> {
+			String aliceLine = "";
+			for (String line : a.inbox) if (line.contains("Alice: ") && line.contains("hit")) aliceLine = line;
+			check("Alice: 3 of 4 sword swings hit (the stone swings do not count) and one was a critical hit", a.heard("accuracy 75% (3/4 swings), 1 crit"), aliceLine);
+			check("Bob swung once and hit nothing", a.heard("Bob: 0 hits") && a.heard("accuracy 0% (0/1 swing)"));
+			check("Bob read the same summary", b.heard("accuracy 75% (3/4 swings), 1 crit"));
+			check("the hits before it are still told as before", a.heard("Alice: 3 hits"));
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+			check("Accuracy.describe says nothing when nothing happened", describeNothing());
 		});
 	}
 
-	private static void buildLoseSound() {
+	private static boolean describeNothing() {
+		return Accuracy.describe(0, 0, 0).isEmpty() && Accuracy.describe(2, 5, 0).equals("accuracy 100% (2/2 swings)") && Accuracy.describe(0, 1, 2).equals("2 crits");
+	}
+
+	private static void buildAccuracy() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		accuracySteps();
+		step("accuracy: done", () -> finish());
+	}
+
 	// ------------------------------------------------------------------ one idea at a time: more titles to unlock
 
 	private static void titlesSteps() {
@@ -863,92 +969,16 @@ public final class SelfTest {
 	}
 
 	private static void buildTitles() {
-	// ------------------------------------------------------------------ one idea at a time: accuracy in the summary of a duel
-
-	private static void accuracySteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		final int[] wait = new int[1];
-		step("accuracy: a duel starts (swinging outside a duel is harmless)", () -> {
-	// ------------------------------------------------------------------ one idea at a time: boards with the top 10
-
-	private static StatsStore.Entry boardEntry(String name, int elo, int wins, int streak) {
-		StatsStore.Stats s = new StatsStore.Stats();
-		s.elo = elo;
-		s.wins = wins;
-		s.bestStreak = streak;
-		s.name = name;
-		return new StatsStore.Entry(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8)), name, s);
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		titlesSteps();
+		step("titles: done", () -> finish());
 	}
 
-	private static String boardText(net.minecraft.world.entity.Entity board) {
-		return board instanceof net.minecraft.world.entity.Display.TextDisplay td ? td.getText().getString() : "(not a text display)";
-	}
-
-	private static net.minecraft.world.entity.Entity boardAt(ServerLevel level, double x, double y, double z, String kind) {
-		var found = level.getEntities((net.minecraft.world.entity.Entity) null, new net.minecraft.world.phys.AABB(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1),
-			e -> e.entityTags().contains("pvpduels_board_" + kind));
-		return found.isEmpty() ? null : found.get(0);
-	}
-
-	private static void boardSteps() {
-		final double[] where = new double[3];
-		final ItemStack[][] saved = new ItemStack[2][41];
-		final net.minecraft.world.entity.Entity[] shown = new net.minecraft.world.entity.Entity[1];
-		step("board: what a board says", () -> {
-			var rows = java.util.List.of(boardEntry("Zed", 1200, 7, 3), boardEntry("Yan", 1100, 1, 1), boardEntry("Xia", 1000, 0, 0));
-			check("by Elo", com.pvpduels.stats.Leaderboards.lines("elo", rows).equals(java.util.List.of("TOP 10 - ELO", "1. Zed  1200 Elo", "2. Yan  1100 Elo", "3. Xia  1000 Elo")),
-				String.valueOf(com.pvpduels.stats.Leaderboards.lines("elo", rows)));
-			check("by wins (one win is singular)", com.pvpduels.stats.Leaderboards.lines("wins", rows).equals(java.util.List.of("TOP 10 - WINS", "1. Zed  7 wins", "2. Yan  1 win", "3. Xia  0 wins")),
-				String.valueOf(com.pvpduels.stats.Leaderboards.lines("wins", rows)));
-			check("by win streak", com.pvpduels.stats.Leaderboards.lines("streak", rows).get(0).equals("TOP 10 - WIN STREAK") && com.pvpduels.stats.Leaderboards.lines("streak", rows).get(1).equals("1. Zed  streak 3"));
-			check("with nobody it says so", com.pvpduels.stats.Leaderboards.lines("elo", java.util.List.of()).equals(java.util.List.of("TOP 10 - ELO", "Nobody has played a duel yet.")));
-			java.util.List<StatsStore.Entry> twelve = new java.util.ArrayList<>();
-			for (int i = 0; i < 12; i++) twelve.add(boardEntry("P" + i, 1500 - i, i, i));
-			check("only the first ten, with the title that is eleven lines", com.pvpduels.stats.Leaderboards.lines("elo", twelve).size() == 11);
-			check("quotes and slashes of a name are dropped", com.pvpduels.stats.Leaderboards.lines("elo", java.util.List.of(boardEntry("Ev\"il\\x", 1000, 0, 0))).get(1).equals("1. Evilx  1000 Elo"));
-			check("the component says the same as the lines", com.pvpduels.stats.Leaderboards.component("wins", rows).getString().equals(String.join("\n", com.pvpduels.stats.Leaderboards.lines("wins", rows))));
-			check("three kinds and no more", com.pvpduels.stats.Leaderboards.validKind("elo") && com.pvpduels.stats.Leaderboards.validKind("wins") && com.pvpduels.stats.Leaderboards.validKind("streak")
-				&& !com.pvpduels.stats.Leaderboards.validKind("kills"));
-			var node = server.getCommands().getDispatcher().getRoot().getChild("leaderboard");
-			check("/leaderboard is hidden from a normal player and open to an admin", node != null && !node.canUse(a.createCommandSourceStack()) && node.canUse(server.createCommandSourceStack()));
-		});
-		step("board: place, refresh, move, remove", () -> {
-			var level = (ServerLevel) a.level();
-			com.pvpduels.stats.Leaderboards.resetForTest();
-			var rows = new java.util.ArrayList<>(java.util.List.of(boardEntry("Zed", 1200, 7, 3), boardEntry("Yan", 1100, 1, 1)));
-			com.pvpduels.stats.Leaderboards.source = by -> rows;
-			double x = a.getX() + 4;
-			double y = a.getY() + 2.2;
-			double z = a.getZ();
-			var elo = com.pvpduels.stats.Leaderboards.place(level, x, y, z, "elo");
-			check("a text display with the tag of the board was made", elo instanceof net.minecraft.world.entity.Display.TextDisplay && elo.entityTags().contains("pvpduels_board_elo"),
-				String.valueOf(elo));
-			check("placing it also filled it", boardText(elo).equals("TOP 10 - ELO\n1. Zed  1200 Elo\n2. Yan  1100 Elo"), boardText(elo));
-			check("it is registered", com.pvpduels.stats.Leaderboards.count() == 1 && com.pvpduels.stats.Leaderboards.describe().get(0).startsWith("elo at "));
-			check("a second refresh finds nothing new", com.pvpduels.stats.Leaderboards.refresh(server) == 0);
-			rows.add(0, boardEntry("Wim", 1300, 9, 5));
-			check("when the ranking changes the board is written again", com.pvpduels.stats.Leaderboards.refresh(server) == 1 && boardText(elo).startsWith("TOP 10 - ELO\n1. Wim  1300 Elo\n2. Zed"), boardText(elo));
-			var wins = com.pvpduels.stats.Leaderboards.place(level, x, y + 3, z, "wins");
-			check("a board of wins next to it", wins != null && boardText(wins).startsWith("TOP 10 - WINS\n1. Wim  9 wins") && com.pvpduels.stats.Leaderboards.count() == 2, boardText(wins));
-			check("each board keeps its own text", boardText(elo).startsWith("TOP 10 - ELO"));
-			com.pvpduels.stats.Leaderboards.reloadForTest();
-			check("the places are in the file: they survive a restart", com.pvpduels.stats.Leaderboards.count() == 2);
-			check("a board far away is not found", !com.pvpduels.stats.Leaderboards.remove(level, x + 100, y, z, 12));
-			check("the closest board goes away", com.pvpduels.stats.Leaderboards.remove(level, x, y, z, 12) && elo.isRemoved() && !wins.isRemoved() && com.pvpduels.stats.Leaderboards.count() == 1);
-			check("the other one too", com.pvpduels.stats.Leaderboards.remove(level, x, y + 3, z, 12) && wins.isRemoved() && com.pvpduels.stats.Leaderboards.count() == 0);
-			check("and with none left there is nothing to remove", !com.pvpduels.stats.Leaderboards.remove(level, x, y, z, 12));
-			com.pvpduels.stats.Leaderboards.resetForTest();
-		});
-		step("board: a duel ends and the board follows", () -> {
-			var level = (ServerLevel) a.level();
-			com.pvpduels.stats.Leaderboards.resetForTest();
-			where[0] = a.getX() + 4;
-			where[1] = a.getY() + 2.2;
-			where[2] = a.getZ();
-			shown[0] = com.pvpduels.stats.Leaderboards.place(level, where[0], where[1], where[2], "wins");
-			check("a board of wins with the real statistics", shown[0] != null);
-			((net.minecraft.world.entity.Display.TextDisplay) shown[0]).setText(net.minecraft.network.chat.Component.literal("stale"));
-			com.pvpduels.stats.Leaderboards.forgetLastForTest();
 	// ------------------------------------------------------------------ one idea at a time: round mutators
 
 	private static boolean hasTwist(Dummy p, Mutator m) {
@@ -970,355 +1000,263 @@ public final class SelfTest {
 		final ItemStack[][] saved = new ItemStack[2][41];
 		final Mutator[] seen = new Mutator[2];
 		step("mutators: the pieces work alone", () -> {
-	// ------------------------------------------------------------------ one idea at a time: kit swap
-
-	private static void swapSteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		final int[] wait = new int[1];
-		step("swap: two kits for the test", () -> {
-	// ------------------------------------------------------------------ one idea at a time: a head start for the weaker player
-
-	private static void handicapSteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		step("handicap: the rule and its text", () -> {
-			check("no head start is the default", DuelConfig.Rules.DEFAULT.handicap() == 0 && DuelConfig.Rules.DEFAULT.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault());
-			var rival = new DuelConfig.Rules(true, true, true, true, 2);
-			var self = new DuelConfig.Rules(true, true, true, true, -3);
-			check("the challenged player (index 1) gets a positive head start", rival.headStart(1) == 2 && rival.headStart(0) == 0);
-			check("the challenger (index 0) gets a negative one", self.headStart(0) == 3 && self.headStart(1) == 0);
-			check("a head start is not the default rules", !rival.isDefault() && !self.isDefault());
-			check("the text says it", rival.describe(ArenaKind.FLAT).equals("Head start of 2 extra hearts for the challenged player")
-				&& new DuelConfig.Rules(true, true, true, true, -1).describe(ArenaKind.FLAT).equals("Head start of 1 extra heart for the challenger"), rival.describe(ArenaKind.FLAT));
-			check("it can not be huge", new DuelConfig.Rules(true, true, true, true, 99).handicap() == DuelConfig.Rules.MAX_HANDICAP && new DuelConfig.Rules(true, true, true, true, -99).handicap() == -DuelConfig.Rules.MAX_HANDICAP);
-			check("the button goes through none, the rival 1 2 3 5, then you 1 2 3 5 and back to none", DuelMenus.nextHandicap(0) == 1 && DuelMenus.nextHandicap(1) == 2 && DuelMenus.nextHandicap(5) == -1
-				&& DuelMenus.nextHandicap(-5) == 0 && DuelMenus.nextHandicap(7) == 0);
-	// ------------------------------------------------------------------ one idea at a time: finishing blows
-
-	private static void lasthitSteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		step("lasthit: the command and the menus", () -> {
-			LastHit.resetForTest();
-			check("nobody has a finishing blow at the start", LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE && LastHit.styleOf(b.getUUID()) == LastHit.Style.NONE);
-			a.inbox.clear();
-			run(a, "finisher nosuch");
-			check("a name that does not exist is refused", a.heard("There is no finishing blow called 'nosuch'") && LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE, String.valueOf(a.inbox));
-			a.inbox.clear();
-			run(a, "finisher totem");
-			check("a name picks it and says so", LastHit.styleOf(a.getUUID()) == LastHit.Style.TOTEM && a.heard("Finishing blow: Totem pop."), String.valueOf(a.inbox));
-			check("and shows it once, only to the player", LastHit.played() == 1 && LastHit.last().equals("totem") && LastHit.lastViewers() == 1,
-				LastHit.played() + " " + LastHit.last() + " " + LastHit.lastViewers());
-			a.inbox.clear();
-			run(a, "finisher none");
-			check("none turns it off and plays nothing", LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE && a.heard("No finishing blow.") && LastHit.played() == 1, String.valueOf(a.inbox));
-			run(a, "finisher");
-			check("the menu has all of them", menuHas(a, "None") && menuHas(a, "Lightning") && menuHas(a, "Shatter") && menuHas(a, "Firework") && menuHas(a, "Soul")
-				&& menuHas(a, "Totem pop") && menuHas(a, "Poof") && menuHas(a, "Splat") && menuHas(a, "Surprise"));
-			check("clicking one chooses it and shows it", clickMenu(a, "Soul") && LastHit.styleOf(a.getUUID()) == LastHit.Style.SOUL && LastHit.played() == 2 && LastHit.last().equals("soul"),
-				LastHit.styleOf(a.getUUID()) + " " + LastHit.played());
-			Effects.reloadForTest();
-			check("the choice is in the file: it survives a restart", LastHit.styleOf(a.getUUID()) == LastHit.Style.SOUL);
-			a.closeContainer();
-			run(a, "effects");
-			check("the effects menu has the sword with the choice", menuHas(a, "Finishing blow: Soul"));
-			a.closeContainer();
-			check("every style can be shown", showAll());
-			run(a, "finisher none");
-			check("the names of the command are the ids of the styles", LastHit.names().size() == 9 && LastHit.names().contains("surprise") && LastHit.of("Totem pop") == LastHit.Style.TOTEM
-				&& LastHit.of("") == LastHit.Style.NONE && LastHit.of("zzz") == null);
-	// ------------------------------------------------------------------ one idea at a time: the arena vote of the queue
-
-	private static void arenavoteSteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		step("vote: who wins and which arenas there are", () -> {
-			ArenaVote.forced = null;
-			ArenaVote.useRandom(new java.util.Random(3));
-			var pool = ArenaVote.pool(false);
-			check("1v1: five arenas and the public ones of the Builders", pool.size() >= 5 && pool.get(0).name().equals("Flat arena (with walls)") && pool.get(1).name().equals("Flat arena (no walls)")
-				&& pool.get(2).name().equals("Circular arena (radius 100)") && pool.get(3).name().equals("Circular arena (radius 150)") && pool.get(4).name().equals("Unlimited arena"));
-			check("2v2: only the five", ArenaVote.pool(true).size() == 5);
-			var three = ArenaVote.pick(false);
-			check("three different arenas are offered", three.size() == 3 && !three.get(0).equals(three.get(1)) && !three.get(0).equals(three.get(2)) && !three.get(1).equals(three.get(2)), String.valueOf(three));
-			ArenaVote.Vote v = new ArenaVote.Vote();
-			v.options.addAll(pool.subList(0, 3));
-			boolean[] seen = new boolean[3];
-			for (int i = 0; i < 60; i++) seen[ArenaVote.winner(v)] = true;
-			check("when nobody voted any of the three can be picked", seen[0] && seen[1] && seen[2]);
-			v.choice.put(UUID.randomUUID(), 0);
-			v.choice.put(UUID.randomUUID(), 1);
-			seen = new boolean[3];
-			for (int i = 0; i < 60; i++) seen[ArenaVote.winner(v)] = true;
-			check("a tie is decided at random between the tied ones only", seen[0] && seen[1] && !seen[2]);
-			v.choice.put(UUID.randomUUID(), 1);
-			boolean always = true;
-			for (int i = 0; i < 30; i++) always &= ArenaVote.winner(v) == 1;
-			check("the most votes wins", always && ArenaVote.votesFor(v, 1) == 2 && ArenaVote.votesFor(v, 0) == 1 && ArenaVote.votesFor(v, 2) == 0);
-		});
-		step("vote: a match asks for a vote", () -> {
-			ArenaVote.enabled = true;
-			ArenaVote.clearAll();
-			ArenaVote.voteTicks = 100;
-			ArenaVote.forced = java.util.List.of(new ArenaVote.Option(ArenaKind.FLAT, true, 0, ""), new ArenaVote.Option(ArenaKind.FLAT, false, 0, ""),
-				new ArenaVote.Option(ArenaKind.CIRCLE, false, 100, ""));
-			Queue.clearAll();
-			Queue.useRandom(new java.util.Random(5));
-	// ------------------------------------------------------------------ one idea at a time: look at the kit before accepting
-
-	private static void kitviewSteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		step("kitview: a challenge has a button to look at the kit", () -> {
-	// ------------------------------------------------------------------ one idea at a time: clutch scenarios
-
-	private static void clutchSteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		final String[] bn = new String[1];
-		step("clutch: the command refuses what it should", () -> {
-			Clutch.resetForTest();
-	// ------------------------------------------------------------------ one idea at a time: tools for the people who watch
-
-	private static void watchtoolsSteps() {
-		final ItemStack[][] saved = new ItemStack[2][41];
-		final Dummy[] w = new Dummy[1];
-		final int[] t = new int[1];
-		step("watch tools: setup and what a non-watcher gets", () -> {
-			Reactions.resetForTest();
-			w[0] = spawn("Watcher");
 			for (int i = 0; i < 41; i++) {
 				saved[0][i] = a.getInventory().getItem(i).copy();
 				saved[1][i] = b.getInventory().getItem(i).copy();
 			}
+			check("seven choices in the menu, in a ring", Mutator.values().length == 7 && Mutator.NONE.next() == Mutator.LOW_GRAVITY && Mutator.RANDOM.next() == Mutator.NONE);
+			Mutator before = Mutator.NONE;
+			boolean fair = true;
+			java.util.Set<Mutator> all = new java.util.HashSet<>();
+			for (int i = 0; i < 300; i++) {
+				Mutator m = Mutator.RANDOM.forRound(before);
+				if (!isReal(m) || m == before) fair = false;
+				all.add(m);
+				before = m;
+			}
+			check("a random mutator is always a real one and never the same twice in a row", fair);
+			check("and over many rounds all five show up", all.size() == 5, String.valueOf(all));
+			check("a plain setting plays itself", Mutator.SPEED.forRound(Mutator.SPEED) == Mutator.SPEED && Mutator.NONE.forRound(Mutator.NONE) == Mutator.NONE);
+			DuelConfig.Rules speedRules = new DuelConfig.Rules(true, true, true, true, Mutator.SPEED);
+			check("rules with a mutator are not the default ones, and the old constructor means none",
+				!speedRules.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault() && new DuelConfig.Rules(true, true, true, true, null).isDefault());
+			check("the rules tell it in words", speedRules.describe(ArenaKind.FLAT).equals("Speed mutator")
+				&& new DuelConfig.Rules(true, true, true, true, Mutator.RANDOM).describe(ArenaKind.FLAT).equals("A random mutator every round")
+				&& new DuelConfig.Rules(false, true, true, true, Mutator.HEAVY).describe(ArenaKind.FLAT).equals("No natural regeneration, heavy hitters mutator"),
+				speedRules.describe(ArenaKind.FLAT));
+			boolean clean = true;
+			for (Mutator m : Mutator.real()) {
+				a.removeAllEffects();
+				m.apply(a, true);
+				check("the effects of " + m.label() + " are on", hasTwist(a, m));
+				for (Mutator other : Mutator.real()) if (other != m && hasTwist(a, other)) clean = false;
+			}
+			check("every mutator gives only its own effects", clean);
+			a.removeAllEffects();
+			Mutator.HEARTS.apply(a, true);
+			check("double hearts means 40 health, and full", a.getMaxHealth() == 40f && a.getHealth() == 40f, a.getHealth() + "/" + a.getMaxHealth());
+			a.removeAllEffects();
+			Mutator.NONE.apply(a, true);
+			check("no mutator gives nothing", !hasTwist(a, Mutator.SPEED) && a.getMaxHealth() == 20f);
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
-			run(a, "kit save aimkit");
-			check("the kit for the test was saved", KitStore.exists(a.getUUID(), "aimkit"));
+			run(a, "kit save mutkit");
+			check("the kit for the test was saved", KitStore.exists(a.getUUID(), "mutkit"));
 			a.getInventory().clearContent();
-			a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
-			check("a swing outside a duel changes nothing", duel(a) == null);
-			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("aimkit", false, WinMode.FIRST_TO, 1), false);
+		});
+		step("mutators: Alice opens the duel menu", () -> {
+			run(a, "duel Bob");
+			menuStep(a, "mutkit");
+		});
+		step("mutators: arena", () -> { menuStep(a, "Flat void arena"); });
+		step("mutators: version", () -> { menuStep(a, "With walls"); });
+		step("mutators: mode", () -> { menuStep(a, "First to N points"); });
+		step("mutators: amount", () -> { menuStep(a, "First to 1"); });
+		step("mutators: the rules menu has the nether star", () -> {
+			check("it starts with no mutator", menuHas(a, "Round mutator: None"));
+			menuStep(a, "Round mutator: None");
+		});
+		step("mutators: one click moves to the next", () -> {
+			check("the first click says low gravity", menuHas(a, "Round mutator: Low gravity"));
+			menuStep(a, "Round mutator: Low gravity");
+		});
+		step("mutators: second click, speed", () -> {
+			check("the second click says speed", menuHas(a, "Round mutator: Speed"));
+			menuStep(a, "Continue");
+		});
+		step("mutators: confirm and send", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			menuStep(a, "Send the challenge");
+			check("the invitation tells the mutator", b.heard("Rules: Speed mutator"), String.valueOf(b.inbox));
 			run(b, "accept Alice");
-			check("a duel started", duel(a) != null && duel(b) == duel(a));
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
-		step("accuracy: four swings with the sword and one that is not an attack, then a plain hit", () -> {
-			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
-			for (int i = 0; i < 4; i++) a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
-			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STONE));
-			for (int i = 0; i < 3; i++) a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
-			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
-			b.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
-			b.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
-			a.fallDistance = 0;
-			softHit(a, b, 2f);
-			wait[0] = ticks;
-		}, () -> ticks >= wait[0] + 20, 80); // the weapon needs to charge again after she swapped items, or it is not a critical hit
-		step("accuracy: a hit while falling is a critical hit", () -> {
-			a.fallDistance = 3.0;
-			a.setOnGround(false);
-			softHit(a, b, 2f);
-			a.fallDistance = 0;
-			wait[0] = ticks;
-		}, () -> ticks >= wait[0] + 4, 40);
-		step("accuracy: the last hit ends the duel", () -> {
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("mutators: both duelists run faster, and a totem does not take it away", () -> {
+			Duel d = duel(a);
+			check("the duel has the mutator", d != null && d.config.rules().mutator() == Mutator.SPEED && d.roundMutator() == Mutator.SPEED);
+			check("both have Speed II", hasTwist(a, Mutator.SPEED) && hasTwist(b, Mutator.SPEED) && a.getEffect(MobEffects.SPEED).getAmplifier() == 1
+				&& b.getEffect(MobEffects.SPEED).getAmplifier() == 1);
+			check("both were told", a.heard("Round mutator: Speed") && b.heard("Round mutator: Speed"), String.valueOf(a.inbox));
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+			hit(b, a);
+			check("the totem saved her and the round goes on", a.getMainHandItem().isEmpty() && d.phase == Duel.Phase.FIGHTING && a.getHealth() <= 1.01f && a.hasEffect(MobEffects.REGENERATION),
+				d.phase + " " + a.getHealth());
+			check("and the twist of the round is back after the totem took every effect", hasTwist(a, Mutator.SPEED));
 			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("mutators: nothing is left after the duel", () -> {
+			check("no twist on Alice or Bob once they are back", !hasTwist(a, Mutator.SPEED) && !hasTwist(b, Mutator.SPEED));
+			a.inbox.clear();
+			b.inbox.clear();
+			invite(a, b, new DuelConfig("mutkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 3, new DuelConfig.Rules(true, true, true, true, Mutator.RANDOM)));
+			check("a duel with a random mutator started", duel(a) != null && duel(a).config.rules().mutator() == Mutator.RANDOM);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("mutators: round 1 of the random duel", () -> {
+			Duel d = duel(a);
+			Mutator m1 = d.roundMutator();
+			seen[0] = m1;
+			check("round 1 got a real mutator", isReal(m1), String.valueOf(m1));
+			check("both have its effects and were told", hasTwist(a, m1) && hasTwist(b, m1) && a.heard("Round mutator: " + m1.label()) && b.heard("Round mutator: " + m1.label()), String.valueOf(a.inbox));
+			hit(a, b);
+		}, () -> roundIs(a, 2), 600);
+		step("mutators: round 2 draws another one", () -> {
+			Duel d = duel(a);
+			Mutator m2 = d.roundMutator();
+			seen[1] = m2;
+			check("round 2 got a real mutator that is not the one of round 1", isReal(m2) && m2 != seen[0], seen[0] + " then " + m2);
+			check("the new twist is on both, the old one is gone", hasTwist(a, m2) && hasTwist(b, m2) && !hasTwist(a, seen[0]) && !hasTwist(b, seen[0]));
+			check("and they were told again", a.heard("Round mutator: " + m2.label()));
+			run(a, "leave");
 		}, () -> noDuel(a) && noDuel(b), 600);
-		step("accuracy: the summary tells the swings that hit and the critical hits", () -> {
-			String aliceLine = "";
-			for (String line : a.inbox) if (line.contains("Alice: ") && line.contains("hit")) aliceLine = line;
-			check("Alice: 3 of 4 sword swings hit (the stone swings do not count) and one was a critical hit", a.heard("accuracy 75% (3/4 swings), 1 crit"), aliceLine);
-			check("Bob swung once and hit nothing", a.heard("Bob: 0 hits") && a.heard("accuracy 0% (0/1 swing)"));
-			check("Bob read the same summary", b.heard("accuracy 75% (3/4 swings), 1 crit"));
-			check("the hits before it are still told as before", a.heard("Alice: 3 hits"));
+		step("mutators: clean up", () -> {
+			check("leaving takes the twist away", !hasTwist(a, seen[1]) && !hasTwist(b, seen[1]));
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			for (int i = 0; i < 41; i++) {
 				a.getInventory().setItem(i, saved[0][i]);
 				b.getInventory().setItem(i, saved[1][i]);
 			}
-			check("Accuracy.describe says nothing when nothing happened", describeNothing());
 		});
 	}
 
-	private static boolean describeNothing() {
-		return Accuracy.describe(0, 0, 0).isEmpty() && Accuracy.describe(2, 5, 0).equals("accuracy 100% (2/2 swings)") && Accuracy.describe(0, 1, 2).equals("2 crits");
-	}
-
-	private static void buildAccuracy() {
-	// ------------------------------------------------------------------ one idea at a time: rivals
-
-	private static void rivalsSteps() {
-		step("rivals: the list", () -> {
-			Rivals.resetForTest();
-			a.inbox.clear();
-			b.inbox.clear();
-			run(a, "rival");
-			check("an empty list says how to start", a.heard("You have no rivals yet"), String.valueOf(a.inbox));
-			run(a, "rival add Alice");
-			check("you can't be your own rival", a.heard("You can't be your own rival") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
-			run(a, "rival add Nobodyhere");
-			check("a name nobody knows is refused", a.heard("I don't know a player called 'Nobodyhere'") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
-			a.inbox.clear();
-			run(a, "rival add Bob");
-			check("Bob is added", a.heard("Bob is on your list now") && Rivals.isRival(a.getUUID(), b.getUUID()) && !Rivals.isRival(b.getUUID(), a.getUUID()), String.valueOf(a.inbox));
-			a.inbox.clear();
-			run(a, "rival add bob");
-			check("twice is refused", a.heard("Bob is already on your list") && Rivals.of(a.getUUID()).size() == 1, String.valueOf(a.inbox));
-			a.inbox.clear();
-			run(a, "rival");
-			check("the list shows Bob online with a button", a.heard("Your rivals (1/10)") && a.heard("Bob - online") && a.heard("[CHALLENGE]"), String.valueOf(a.inbox));
-			Rivals.reloadForTest();
-			check("the list is in the file: it survives a restart", Rivals.isRival(a.getUUID(), b.getUUID()) && Rivals.nameOf(b.getUUID()).equals("Bob"));
-		});
-		step("rivals: the messages when somebody joins", () -> {
-			a.inbox.clear();
-			b.inbox.clear();
-			Rivals.joined(server, b);
-			check("Alice is told her rival is online, with the button", a.heard("Your rival Bob is online.") && a.heard("[CHALLENGE]"), String.valueOf(a.inbox));
-			check("Bob, who has no rivals, hears nothing", !b.heard("Your rival"), String.valueOf(b.inbox));
-			run(b, "rival add Alice");
-			a.inbox.clear();
-			b.inbox.clear();
-			Rivals.joined(server, a);
-			check("when Alice joins, Bob is told", b.heard("Your rival Alice is online."), String.valueOf(b.inbox));
-			check("and Alice is told that Bob is here", a.heard("Your rival Bob is online."), String.valueOf(a.inbox));
-		});
-		step("rivals: remove, and the limit", () -> {
-			a.inbox.clear();
-			run(a, "rival remove Zed");
-			check("a name that is not there says so", a.heard("Zed is not on your list"), String.valueOf(a.inbox));
-			a.inbox.clear();
-			run(a, "rival remove BOB");
-			check("Bob is taken off (any case)", a.heard("Bob is not on your list any more") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
-			a.inbox.clear();
-			Rivals.joined(server, b);
-			check("he is not announced any more", !a.heard("Your rival"), String.valueOf(a.inbox));
-			for (int i = 0; i < Rivals.MAX; i++) Rivals.addForTest(a.getUUID(), UUID.nameUUIDFromBytes(("rival" + i).getBytes(java.nio.charset.StandardCharsets.UTF_8)), "Fake" + i);
-			a.inbox.clear();
-			run(a, "rival add Bob");
-			check("a full list refuses more", a.heard("You can have 10 rivals at most") && !Rivals.isRival(a.getUUID(), b.getUUID()), String.valueOf(a.inbox));
-			a.inbox.clear();
-			run(a, "rival");
-			check("the offline ones are listed as offline", a.heard("Your rivals (10/10)") && a.heard("Fake0 - offline"), String.valueOf(a.inbox));
-			Rivals.resetForTest();
-		});
-	}
-
-	private static void buildRivals() {
+	private static void buildMutators() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
 			a = spawn("Alice");
 			b = spawn("Bob");
 		}, () -> ticks > 60, 300);
-		bugsSteps();
-		step("bugs: done", () -> finish());
-		h2hSteps();
-		step("h2h: done", () -> finish());
-		loseSoundSteps();
-		step("losing sound: done", () -> finish());
-		titlesSteps();
-		step("titles: done", () -> finish());
-		accuracySteps();
-		step("accuracy: done", () -> finish());
+		mutatorsSteps();
+		step("mutators: done", () -> finish());
 	}
 
-	// ------------------------------------------------------------------ one idea at a time: the combo drill
 
-	private static void swings(Dummy who, int n) {
-		for (int i = 0; i < n; i++) who.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
-	}
+	// ------------------------------------------------------------------ one idea at a time: kit swap
 
-	private static void drillSteps() {
+	private static void swapSteps() {
 		final ItemStack[][] saved = new ItemStack[2][41];
 		final int[] wait = new int[1];
-		final int oldTicks = Duel.drillTicks;
-		step("drill: a drill starts", () -> {
-			Drill.resetForTest();
-			Duel.drillTicks = 200;
+		step("swap: two kits for the test", () -> {
 			for (int i = 0; i < 41; i++) {
 				saved[0][i] = a.getInventory().getItem(i).copy();
 				saved[1][i] = b.getInventory().getItem(i).copy();
 			}
+			DuelConfig.Rules swapRules = new DuelConfig.Rules(true, true, true, true, "swapb");
+			check("the rules know the swap", swapRules.swaps() && !swapRules.isDefault() && swapRules.describe(ArenaKind.FLAT).equals("Kit swap with 'swapb'")
+				&& !new DuelConfig.Rules(true, true, true, true).swaps() && new DuelConfig.Rules(true, true, true, true, null).isDefault(), swapRules.describe(ArenaKind.FLAT));
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
-			run(a, "kit save drillkit");
+			run(a, "kit save swapa");
 			a.getInventory().clearContent();
-			check("no records yet", Drill.get(a.getUUID()).drills == 0);
-			a.inbox.clear();
-			run(a, "drill records");
-			check("/drill records says there is nothing yet", a.heard("You have not done a combo drill yet"), String.valueOf(a.inbox));
-			a.inbox.clear();
-			run(a, "drill nosuchkit");
-			check("a kit that does not exist is refused", a.heard("You have no kit named 'nosuchkit'") && duel(a) == null);
-			a.inbox.clear();
-			run(a, "drill drillkit");
-			check("a practice duel with the drill running", duel(a) != null && duel(a).practice && duel(a).drillLeft == 200, duel(a) == null ? "no duel" : String.valueOf(duel(a).drillLeft));
-			check("Alice was told what the drill is", a.heard("Combo drill against Bot") && a.heard("10 seconds"), String.valueOf(a.inbox));
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("drill: five swings, one hit", () -> {
-			Dummy bot = (Dummy) duel(a).player(1);
-			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
-			swings(a, 5);
-			softHit(a, bot, 2f);
-			wait[0] = ticks;
-		}, () -> ticks >= wait[0] + 4, 40);
-		step("drill: a second hit", () -> {
-			softHit(a, (Dummy) duel(a).player(1), 2f);
-			wait[0] = ticks;
-		}, () -> ticks >= wait[0] + 4, 40);
-		step("drill: a third hit", () -> {
-			softHit(a, (Dummy) duel(a).player(1), 2f);
-			wait[0] = ticks;
-		}, () -> ticks >= wait[0] + 16, 60);
-		step("drill: the sidebar shows the clock and the aim", () -> {
-			check("the clock is on the sidebar", sidebarHas(a, "Drill: 0:"), String.valueOf(sidebar(a)));
-			check("and the accuracy", sidebarHas(a, "Accuracy: 60%"), String.valueOf(sidebar(a)));
-			a.inbox.clear();
-		}, () -> noDuel(a), 600);
-		step("drill: the time is over", () -> {
-			check("the drill told the numbers", a.heard("Combo drill: 10 seconds") && a.heard("Hits: 3  (0.3 per second)") && a.heard("Best combo: 3") && a.heard("Damage: ") && a.heard("Knockouts: 0"),
-				String.valueOf(a.inbox));
-			check("and the aim: 3 of the 5 swings", a.heard("Aim: accuracy 60% (3/5 swings)"), String.valueOf(a.inbox));
-			check("the first drill breaks the records of combo and hits", a.heard("NEW RECORD: best combo 3 (was 0) most hits 3 (was 0)"), String.valueOf(a.inbox));
-			check("accuracy needs 20 swings, so it is not a record yet", !a.heard("best accuracy 60%") && a.heard("best accuracy - (needs 20 swings), 1 drill done."), String.valueOf(a.inbox));
-			check("it ends by itself, with its own last line", a.heard("Type /drill to try again.") && !a.heard("left the duel") && !a.heard("Practice total") && !a.heard("no longer in the game"), String.valueOf(a.inbox));
-			var rec = Drill.get(a.getUUID());
-			check("the records are saved", rec.combo == 3 && rec.hits == 3 && rec.accuracy == 0 && rec.drills == 1, rec.combo + " " + rec.hits + " " + rec.accuracy + " " + rec.drills);
-			a.inbox.clear();
-			run(a, "drill records");
-			check("/drill records tells them", a.heard("Your combo drill records") && a.heard("Best combo: 3   Most hits: 3") && a.heard("Drills done: 1"), String.valueOf(a.inbox));
-			run(a, "drill drillkit");
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("drill: a second drill, many swings and one hit", () -> {
-			Dummy bot = (Dummy) duel(a).player(1);
-			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
-			swings(a, 25);
-			softHit(a, bot, 2f);
-			a.inbox.clear();
-		}, () -> noDuel(a), 600);
-		step("drill: only the accuracy is a new record", () -> {
-			check("one hit in 25 swings is 4%, a record because there were 20 swings", a.heard("Aim: accuracy 4% (1/25 swings)") && a.heard("NEW RECORD: best accuracy 4% (was 0%)"), String.valueOf(a.inbox));
-			check("the combo and the hits are not records", !a.heard("best combo 1") && !a.heard("most hits 1"));
-			var rec = Drill.get(a.getUUID());
-			check("the records kept the better ones", rec.combo == 3 && rec.hits == 3 && rec.accuracy == 4 && rec.drills == 2, rec.combo + " " + rec.hits + " " + rec.accuracy + " " + rec.drills);
-			Drill.reloadForTest();
-			check("they are in the file: they survive a restart", Drill.get(a.getUUID()).combo == 3 && Drill.get(a.getUUID()).accuracy == 4 && Drill.get(a.getUUID()).drills == 2);
-			check("the accuracy of a drill", Drill.percent(0, 0) == 0 && Drill.percent(10, 5) == 50 && Drill.percent(4, 9) == 100);
-			run(a, "botduel drillkit");
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_AXE));
+			run(a, "kit save swapb");
+			a.getInventory().clearContent();
+			check("both kits were saved", KitStore.exists(a.getUUID(), "swapa") && KitStore.exists(a.getUUID(), "swapb"));
 		});
-		step("drill: the Practice Bot menu has the drill", () -> {
-			check("the clock is in the menu", menuHas(a, "Combo drill"));
-			menuStep(a, "Combo drill");
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("drill: /leave stops it and breaks no record", () -> {
-			check("the drill is running", duel(a) != null && duel(a).drillLeft > 0);
+		step("swap: Alice opens the duel menu", () -> {
+			run(a, "duel Bob");
+			menuStep(a, "swapa");
+		});
+		step("swap: arena", () -> { menuStep(a, "Flat void arena"); });
+		step("swap: version", () -> { menuStep(a, "With walls"); });
+		step("swap: mode", () -> { menuStep(a, "First to N points"); });
+		step("swap: amount", () -> { menuStep(a, "First to 3"); });
+		step("swap: the rules menu has the hopper", () -> {
+			check("it starts off", menuHas(a, "Kit swap: OFF"));
+			menuStep(a, "Kit swap: OFF");
+		});
+		step("swap: the kit of the duel is refused as the second one", () -> {
 			a.inbox.clear();
+			menuStep(a, "swapa");
+		});
+		step("swap: and the menu comes back", () -> {
+			check("Alice was told why", a.heard("That is the kit of the duel"), String.valueOf(a.inbox));
+			check("the rules menu is open again, still off", menuHas(a, "Kit swap: OFF"));
+			menuStep(a, "Kit swap: OFF");
+		});
+		step("swap: she picks the other kit", () -> { menuStep(a, "swapb"); });
+		step("swap: the hopper shows it and a click would switch it off", () -> {
+			check("it says the second kit", menuHas(a, "Kit swap: swapb"));
+			menuStep(a, "Kit swap: swapb");
+		});
+		step("swap: switched off, then on again", () -> {
+			check("one click switched it off", menuHas(a, "Kit swap: OFF"));
+			menuStep(a, "Kit swap: OFF");
+		});
+		step("swap: pick again", () -> { menuStep(a, "swapb"); });
+		step("swap: continue and send", () -> {
+			check("it is on again", menuHas(a, "Kit swap: swapb"));
+			menuStep(a, "Continue");
+		});
+		step("swap: confirm", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			menuStep(a, "Send the challenge");
+			check("the invitation tells the swap", b.heard("Rules: Kit swap with 'swapb'"), String.valueOf(b.inbox));
+			run(b, "accept Alice");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("swap: round 1, Alice has the sword and Bob the axe", () -> {
+			check("the duel has the swap", duel(a) != null && duel(a).config.rules().swaps() && duel(a).config.rules().swapKit().equals("swapb"));
+			check("Alice has her kit, a sword", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(a.getInventory().getItem(0)));
+			check("Bob has the second kit, an axe", b.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(b.getInventory().getItem(0)));
+			check("both were told which kit they have", a.heard("you play with swapa, Bob with swapb") && b.heard("you play with swapb, Alice with swapa"), String.valueOf(b.inbox));
+			check("the sidebars say the kit of each", sidebarHas(a, "Kit: swapa") && sidebarHas(b, "Kit: swapb"), String.valueOf(sidebar(b)));
+			a.inbox.clear();
+			b.inbox.clear();
+			hit(a, b);
+		}, () -> roundIs(a, 2), 600);
+		step("swap: round 2, they trade", () -> {
+			check("Alice has the axe now", a.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(a.getInventory().getItem(0)));
+			check("Bob has the sword now", b.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(b.getInventory().getItem(0)));
+			check("they were told again", a.heard("you play with swapb, Bob with swapa") && b.heard("you play with swapa, Alice with swapb"), String.valueOf(a.inbox));
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 10, 100);
+		step("swap: the sidebars changed too", () -> {
+			check("each one sees the kit they have now", sidebarHas(a, "Kit: swapb") && sidebarHas(b, "Kit: swapa"), String.valueOf(sidebar(a)));
+			hit(a, b);
+		}, () -> roundIs(a, 3), 600);
+		step("swap: round 3, back as they started", () -> {
+			check("Alice has the sword again", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(a.getInventory().getItem(0)));
+			check("Bob has the axe again", b.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(b.getInventory().getItem(0)));
 			run(a, "leave");
-		}, () -> noDuel(a), 600);
-		step("drill: clean up", () -> {
-			check("leaving does not count as a drill", Drill.get(a.getUUID()).drills == 2 && !a.heard("NEW RECORD"));
-			Duel.drillTicks = oldTicks;
-			Drill.resetForTest();
-			run(a, "kit delete drillkit");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("swap: a second kit that is gone is told and ignored", () -> {
+			a.inbox.clear();
+			invite(a, b, new DuelConfig("swapa", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1, new DuelConfig.Rules(true, true, true, true, "nosuchkit")));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("swap: both play with the first kit", () -> {
+			check("Alice was told", a.heard("can not be read, so there is no kit swap"), String.valueOf(a.inbox));
+			check("both have the sword", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && b.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("swap: clean up", () -> {
+			run(a, "kit delete swapa");
+			run(a, "kit delete swapb");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+			check("the test kits are gone", !KitStore.exists(a.getUUID(), "swapa") && !KitStore.exists(a.getUUID(), "swapb"));
+		});
+	}
+
+	private static void buildSwap() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		swapSteps();
+		step("swap: done", () -> finish());
+	}
+
+
 	// ------------------------------------------------------------------ one idea at a time: Elo seasons
 
 	private static UUID seasonPlayer(String name) {
@@ -1472,6 +1410,114 @@ public final class SelfTest {
 			run(a, "kit delete seasonkit");
 			com.pvpduels.stats.Seasons.resetForTest();
 			Effects.resetForTest();
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildSeasons() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		seasonsSteps();
+		step("seasons: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: boards with the top 10
+
+	private static StatsStore.Entry boardEntry(String name, int elo, int wins, int streak) {
+		StatsStore.Stats s = new StatsStore.Stats();
+		s.elo = elo;
+		s.wins = wins;
+		s.bestStreak = streak;
+		s.name = name;
+		return new StatsStore.Entry(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8)), name, s);
+	}
+
+	private static String boardText(net.minecraft.world.entity.Entity board) {
+		return board instanceof net.minecraft.world.entity.Display.TextDisplay td ? td.getText().getString() : "(not a text display)";
+	}
+
+	private static net.minecraft.world.entity.Entity boardAt(ServerLevel level, double x, double y, double z, String kind) {
+		var found = level.getEntities((net.minecraft.world.entity.Entity) null, new net.minecraft.world.phys.AABB(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1),
+			e -> e.entityTags().contains("pvpduels_board_" + kind));
+		return found.isEmpty() ? null : found.get(0);
+	}
+
+	private static void boardSteps() {
+		final double[] where = new double[3];
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final net.minecraft.world.entity.Entity[] shown = new net.minecraft.world.entity.Entity[1];
+		step("board: what a board says", () -> {
+			var rows = java.util.List.of(boardEntry("Zed", 1200, 7, 3), boardEntry("Yan", 1100, 1, 1), boardEntry("Xia", 1000, 0, 0));
+			check("by Elo", com.pvpduels.stats.Leaderboards.lines("elo", rows).equals(java.util.List.of("TOP 10 - ELO", "1. Zed  1200 Elo", "2. Yan  1100 Elo", "3. Xia  1000 Elo")),
+				String.valueOf(com.pvpduels.stats.Leaderboards.lines("elo", rows)));
+			check("by wins (one win is singular)", com.pvpduels.stats.Leaderboards.lines("wins", rows).equals(java.util.List.of("TOP 10 - WINS", "1. Zed  7 wins", "2. Yan  1 win", "3. Xia  0 wins")),
+				String.valueOf(com.pvpduels.stats.Leaderboards.lines("wins", rows)));
+			check("by win streak", com.pvpduels.stats.Leaderboards.lines("streak", rows).get(0).equals("TOP 10 - WIN STREAK") && com.pvpduels.stats.Leaderboards.lines("streak", rows).get(1).equals("1. Zed  streak 3"));
+			check("with nobody it says so", com.pvpduels.stats.Leaderboards.lines("elo", java.util.List.of()).equals(java.util.List.of("TOP 10 - ELO", "Nobody has played a duel yet.")));
+			java.util.List<StatsStore.Entry> twelve = new java.util.ArrayList<>();
+			for (int i = 0; i < 12; i++) twelve.add(boardEntry("P" + i, 1500 - i, i, i));
+			check("only the first ten, with the title that is eleven lines", com.pvpduels.stats.Leaderboards.lines("elo", twelve).size() == 11);
+			check("quotes and slashes of a name are dropped", com.pvpduels.stats.Leaderboards.lines("elo", java.util.List.of(boardEntry("Ev\"il\\x", 1000, 0, 0))).get(1).equals("1. Evilx  1000 Elo"));
+			check("the component says the same as the lines", com.pvpduels.stats.Leaderboards.component("wins", rows).getString().equals(String.join("\n", com.pvpduels.stats.Leaderboards.lines("wins", rows))));
+			check("three kinds and no more", com.pvpduels.stats.Leaderboards.validKind("elo") && com.pvpduels.stats.Leaderboards.validKind("wins") && com.pvpduels.stats.Leaderboards.validKind("streak")
+				&& !com.pvpduels.stats.Leaderboards.validKind("kills"));
+			var node = server.getCommands().getDispatcher().getRoot().getChild("leaderboard");
+			check("/leaderboard is hidden from a normal player and open to an admin", node != null && !node.canUse(a.createCommandSourceStack()) && node.canUse(server.createCommandSourceStack()));
+		});
+		step("board: place, refresh, move, remove", () -> {
+			var level = (ServerLevel) a.level();
+			com.pvpduels.stats.Leaderboards.resetForTest();
+			var rows = new java.util.ArrayList<>(java.util.List.of(boardEntry("Zed", 1200, 7, 3), boardEntry("Yan", 1100, 1, 1)));
+			com.pvpduels.stats.Leaderboards.source = by -> rows;
+			double x = a.getX() + 4;
+			double y = a.getY() + 2.2;
+			double z = a.getZ();
+			var elo = com.pvpduels.stats.Leaderboards.place(level, x, y, z, "elo");
+			check("a text display with the tag of the board was made", elo instanceof net.minecraft.world.entity.Display.TextDisplay && elo.entityTags().contains("pvpduels_board_elo"),
+				String.valueOf(elo));
+			check("placing it also filled it", boardText(elo).equals("TOP 10 - ELO\n1. Zed  1200 Elo\n2. Yan  1100 Elo"), boardText(elo));
+			check("it is registered", com.pvpduels.stats.Leaderboards.count() == 1 && com.pvpduels.stats.Leaderboards.describe().get(0).startsWith("elo at "));
+			check("a second refresh finds nothing new", com.pvpduels.stats.Leaderboards.refresh(server) == 0);
+			rows.add(0, boardEntry("Wim", 1300, 9, 5));
+			check("when the ranking changes the board is written again", com.pvpduels.stats.Leaderboards.refresh(server) == 1 && boardText(elo).startsWith("TOP 10 - ELO\n1. Wim  1300 Elo\n2. Zed"), boardText(elo));
+			var wins = com.pvpduels.stats.Leaderboards.place(level, x, y + 3, z, "wins");
+			check("a board of wins next to it", wins != null && boardText(wins).startsWith("TOP 10 - WINS\n1. Wim  9 wins") && com.pvpduels.stats.Leaderboards.count() == 2, boardText(wins));
+			check("each board keeps its own text", boardText(elo).startsWith("TOP 10 - ELO"));
+			com.pvpduels.stats.Leaderboards.reloadForTest();
+			check("the places are in the file: they survive a restart", com.pvpduels.stats.Leaderboards.count() == 2);
+			check("a board far away is not found", !com.pvpduels.stats.Leaderboards.remove(level, x + 100, y, z, 12));
+			check("the closest board goes away", com.pvpduels.stats.Leaderboards.remove(level, x, y, z, 12) && elo.isRemoved() && !wins.isRemoved() && com.pvpduels.stats.Leaderboards.count() == 1);
+			check("the other one too", com.pvpduels.stats.Leaderboards.remove(level, x, y + 3, z, 12) && wins.isRemoved() && com.pvpduels.stats.Leaderboards.count() == 0);
+			check("and with none left there is nothing to remove", !com.pvpduels.stats.Leaderboards.remove(level, x, y, z, 12));
+			com.pvpduels.stats.Leaderboards.resetForTest();
+		});
+		step("board: a duel ends and the board follows", () -> {
+			var level = (ServerLevel) a.level();
+			com.pvpduels.stats.Leaderboards.resetForTest();
+			where[0] = a.getX() + 4;
+			where[1] = a.getY() + 2.2;
+			where[2] = a.getZ();
+			shown[0] = com.pvpduels.stats.Leaderboards.place(level, where[0], where[1], where[2], "wins");
+			check("a board of wins with the real statistics", shown[0] != null);
+			((net.minecraft.world.entity.Display.TextDisplay) shown[0]).setText(net.minecraft.network.chat.Component.literal("stale"));
+			com.pvpduels.stats.Leaderboards.forgetLastForTest();
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
 			run(a, "kit save boardkit");
 			a.getInventory().clearContent();
 			invite(a, b, new DuelConfig("boardkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1));
@@ -1492,272 +1538,187 @@ public final class SelfTest {
 			com.pvpduels.stats.Leaderboards.remove((ServerLevel) a.level(), where[0], where[1], where[2], 12);
 			com.pvpduels.stats.Leaderboards.resetForTest();
 			run(a, "kit delete boardkit");
-			check("seven choices in the menu, in a ring", Mutator.values().length == 7 && Mutator.NONE.next() == Mutator.LOW_GRAVITY && Mutator.RANDOM.next() == Mutator.NONE);
-			Mutator before = Mutator.NONE;
-			boolean fair = true;
-			java.util.Set<Mutator> all = new java.util.HashSet<>();
-			for (int i = 0; i < 300; i++) {
-				Mutator m = Mutator.RANDOM.forRound(before);
-				if (!isReal(m) || m == before) fair = false;
-				all.add(m);
-				before = m;
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
 			}
-			check("a random mutator is always a real one and never the same twice in a row", fair);
-			check("and over many rounds all five show up", all.size() == 5, String.valueOf(all));
-			check("a plain setting plays itself", Mutator.SPEED.forRound(Mutator.SPEED) == Mutator.SPEED && Mutator.NONE.forRound(Mutator.NONE) == Mutator.NONE);
-			DuelConfig.Rules speedRules = new DuelConfig.Rules(true, true, true, true, Mutator.SPEED);
-			check("rules with a mutator are not the default ones, and the old constructor means none",
-				!speedRules.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault() && new DuelConfig.Rules(true, true, true, true, null).isDefault());
-			check("the rules tell it in words", speedRules.describe(ArenaKind.FLAT).equals("Speed mutator")
-				&& new DuelConfig.Rules(true, true, true, true, Mutator.RANDOM).describe(ArenaKind.FLAT).equals("A random mutator every round")
-				&& new DuelConfig.Rules(false, true, true, true, Mutator.HEAVY).describe(ArenaKind.FLAT).equals("No natural regeneration, heavy hitters mutator"),
-				speedRules.describe(ArenaKind.FLAT));
-			boolean clean = true;
-			for (Mutator m : Mutator.real()) {
-				a.removeAllEffects();
-				m.apply(a, true);
-				check("the effects of " + m.label() + " are on", hasTwist(a, m));
-				for (Mutator other : Mutator.real()) if (other != m && hasTwist(a, other)) clean = false;
+		});
+	}
+
+	private static void buildBoard() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		boardSteps();
+		step("board: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: the combo drill
+
+	private static void swings(Dummy who, int n) {
+		for (int i = 0; i < n; i++) who.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+	}
+
+	private static void drillSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final int[] wait = new int[1];
+		final int oldTicks = Duel.drillTicks;
+		step("drill: a drill starts", () -> {
+			Drill.resetForTest();
+			Duel.drillTicks = 200;
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
 			}
-			check("every mutator gives only its own effects", clean);
-			a.removeAllEffects();
-			Mutator.HEARTS.apply(a, true);
-			check("double hearts means 40 health, and full", a.getMaxHealth() == 40f && a.getHealth() == 40f, a.getHealth() + "/" + a.getMaxHealth());
-			a.removeAllEffects();
-			Mutator.NONE.apply(a, true);
-			check("no mutator gives nothing", !hasTwist(a, Mutator.SPEED) && a.getMaxHealth() == 20f);
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
-			run(a, "kit save mutkit");
-			check("the kit for the test was saved", KitStore.exists(a.getUUID(), "mutkit"));
+			run(a, "kit save drillkit");
 			a.getInventory().clearContent();
-		});
-		step("mutators: Alice opens the duel menu", () -> {
-			run(a, "duel Bob");
-			menuStep(a, "mutkit");
-		});
-		step("mutators: arena", () -> { menuStep(a, "Flat void arena"); });
-		step("mutators: version", () -> { menuStep(a, "With walls"); });
-		step("mutators: mode", () -> { menuStep(a, "First to N points"); });
-		step("mutators: amount", () -> { menuStep(a, "First to 1"); });
-		step("mutators: the rules menu has the nether star", () -> {
-			check("it starts with no mutator", menuHas(a, "Round mutator: None"));
-			menuStep(a, "Round mutator: None");
-		});
-		step("mutators: one click moves to the next", () -> {
-			check("the first click says low gravity", menuHas(a, "Round mutator: Low gravity"));
-			menuStep(a, "Round mutator: Low gravity");
-		});
-		step("mutators: second click, speed", () -> {
-			check("the second click says speed", menuHas(a, "Round mutator: Speed"));
-			menuStep(a, "Continue");
-		});
-		step("mutators: confirm and send", () -> {
+			check("no records yet", Drill.get(a.getUUID()).drills == 0);
 			a.inbox.clear();
-			b.inbox.clear();
-			menuStep(a, "Send the challenge");
-			check("the invitation tells the mutator", b.heard("Rules: Speed mutator"), String.valueOf(b.inbox));
-			run(b, "accept Alice");
+			run(a, "drill records");
+			check("/drill records says there is nothing yet", a.heard("You have not done a combo drill yet"), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "drill nosuchkit");
+			check("a kit that does not exist is refused", a.heard("You have no kit named 'nosuchkit'") && duel(a) == null);
+			a.inbox.clear();
+			run(a, "drill drillkit");
+			check("a practice duel with the drill running", duel(a) != null && duel(a).practice && duel(a).drillLeft == 200, duel(a) == null ? "no duel" : String.valueOf(duel(a).drillLeft));
+			check("Alice was told what the drill is", a.heard("Combo drill against Bot") && a.heard("10 seconds"), String.valueOf(a.inbox));
 		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("mutators: both duelists run faster, and a totem does not take it away", () -> {
-			Duel d = duel(a);
-			check("the duel has the mutator", d != null && d.config.rules().mutator() == Mutator.SPEED && d.roundMutator() == Mutator.SPEED);
-			check("both have Speed II", hasTwist(a, Mutator.SPEED) && hasTwist(b, Mutator.SPEED) && a.getEffect(MobEffects.SPEED).getAmplifier() == 1
-				&& b.getEffect(MobEffects.SPEED).getAmplifier() == 1);
-			check("both were told", a.heard("Round mutator: Speed") && b.heard("Round mutator: Speed"), String.valueOf(a.inbox));
-			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
-			hit(b, a);
-			check("the totem saved her and the round goes on", a.getMainHandItem().isEmpty() && d.phase == Duel.Phase.FIGHTING && a.getHealth() <= 1.01f && a.hasEffect(MobEffects.REGENERATION),
-				d.phase + " " + a.getHealth());
-			check("and the twist of the round is back after the totem took every effect", hasTwist(a, Mutator.SPEED));
-			hit(a, b);
-		}, () -> noDuel(a) && noDuel(b), 800);
-		step("mutators: nothing is left after the duel", () -> {
-			check("no twist on Alice or Bob once they are back", !hasTwist(a, Mutator.SPEED) && !hasTwist(b, Mutator.SPEED));
-			a.inbox.clear();
-			b.inbox.clear();
-			invite(a, b, new DuelConfig("mutkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 3, new DuelConfig.Rules(true, true, true, true, Mutator.RANDOM)));
-			check("a duel with a random mutator started", duel(a) != null && duel(a).config.rules().mutator() == Mutator.RANDOM);
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("mutators: round 1 of the random duel", () -> {
-			Duel d = duel(a);
-			Mutator m1 = d.roundMutator();
-			seen[0] = m1;
-			check("round 1 got a real mutator", isReal(m1), String.valueOf(m1));
-			check("both have its effects and were told", hasTwist(a, m1) && hasTwist(b, m1) && a.heard("Round mutator: " + m1.label()) && b.heard("Round mutator: " + m1.label()), String.valueOf(a.inbox));
-			hit(a, b);
-		}, () -> roundIs(a, 2), 600);
-		step("mutators: round 2 draws another one", () -> {
-			Duel d = duel(a);
-			Mutator m2 = d.roundMutator();
-			seen[1] = m2;
-			check("round 2 got a real mutator that is not the one of round 1", isReal(m2) && m2 != seen[0], seen[0] + " then " + m2);
-			check("the new twist is on both, the old one is gone", hasTwist(a, m2) && hasTwist(b, m2) && !hasTwist(a, seen[0]) && !hasTwist(b, seen[0]));
-			check("and they were told again", a.heard("Round mutator: " + m2.label()));
-			run(a, "leave");
-		}, () -> noDuel(a) && noDuel(b), 600);
-		step("mutators: clean up", () -> {
-			check("leaving takes the twist away", !hasTwist(a, seen[1]) && !hasTwist(b, seen[1]));
-			DuelConfig.Rules swapRules = new DuelConfig.Rules(true, true, true, true, "swapb");
-			check("the rules know the swap", swapRules.swaps() && !swapRules.isDefault() && swapRules.describe(ArenaKind.FLAT).equals("Kit swap with 'swapb'")
-				&& !new DuelConfig.Rules(true, true, true, true).swaps() && new DuelConfig.Rules(true, true, true, true, null).isDefault(), swapRules.describe(ArenaKind.FLAT));
-			a.getInventory().clearContent();
-			b.getInventory().clearContent();
-			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
-			run(a, "kit save swapa");
-			a.getInventory().clearContent();
-			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_AXE));
-			run(a, "kit save swapb");
-			a.getInventory().clearContent();
-			check("both kits were saved", KitStore.exists(a.getUUID(), "swapa") && KitStore.exists(a.getUUID(), "swapb"));
-		});
-		step("swap: Alice opens the duel menu", () -> {
-			run(a, "duel Bob");
-			menuStep(a, "swapa");
-		});
-		step("swap: arena", () -> { menuStep(a, "Flat void arena"); });
-		step("swap: version", () -> { menuStep(a, "With walls"); });
-		step("swap: mode", () -> { menuStep(a, "First to N points"); });
-		step("swap: amount", () -> { menuStep(a, "First to 3"); });
-		step("swap: the rules menu has the hopper", () -> {
-			check("it starts off", menuHas(a, "Kit swap: OFF"));
-			menuStep(a, "Kit swap: OFF");
-		});
-		step("swap: the kit of the duel is refused as the second one", () -> {
-			a.inbox.clear();
-			menuStep(a, "swapa");
-		});
-		step("swap: and the menu comes back", () -> {
-			check("Alice was told why", a.heard("That is the kit of the duel"), String.valueOf(a.inbox));
-			check("the rules menu is open again, still off", menuHas(a, "Kit swap: OFF"));
-			menuStep(a, "Kit swap: OFF");
-		});
-		step("swap: she picks the other kit", () -> { menuStep(a, "swapb"); });
-		step("swap: the hopper shows it and a click would switch it off", () -> {
-			check("it says the second kit", menuHas(a, "Kit swap: swapb"));
-			menuStep(a, "Kit swap: swapb");
-		});
-		step("swap: switched off, then on again", () -> {
-			check("one click switched it off", menuHas(a, "Kit swap: OFF"));
-			menuStep(a, "Kit swap: OFF");
-		});
-		step("swap: pick again", () -> { menuStep(a, "swapb"); });
-		step("swap: continue and send", () -> {
-			check("it is on again", menuHas(a, "Kit swap: swapb"));
-			menuStep(a, "Continue");
-		});
-		step("swap: confirm", () -> {
-			a.inbox.clear();
-			b.inbox.clear();
-			menuStep(a, "Send the challenge");
-			check("the invitation tells the swap", b.heard("Rules: Kit swap with 'swapb'"), String.valueOf(b.inbox));
-			run(b, "accept Alice");
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("swap: round 1, Alice has the sword and Bob the axe", () -> {
-			check("the duel has the swap", duel(a) != null && duel(a).config.rules().swaps() && duel(a).config.rules().swapKit().equals("swapb"));
-			check("Alice has her kit, a sword", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(a.getInventory().getItem(0)));
-			check("Bob has the second kit, an axe", b.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(b.getInventory().getItem(0)));
-			check("both were told which kit they have", a.heard("you play with swapa, Bob with swapb") && b.heard("you play with swapb, Alice with swapa"), String.valueOf(b.inbox));
-			check("the sidebars say the kit of each", sidebarHas(a, "Kit: swapa") && sidebarHas(b, "Kit: swapb"), String.valueOf(sidebar(b)));
-			a.inbox.clear();
-			b.inbox.clear();
-			hit(a, b);
-		}, () -> roundIs(a, 2), 600);
-		step("swap: round 2, they trade", () -> {
-			check("Alice has the axe now", a.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(a.getInventory().getItem(0)));
-			check("Bob has the sword now", b.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(b.getInventory().getItem(0)));
-			check("they were told again", a.heard("you play with swapb, Bob with swapa") && b.heard("you play with swapa, Alice with swapb"), String.valueOf(a.inbox));
+		step("drill: five swings, one hit", () -> {
+			Dummy bot = (Dummy) duel(a).player(1);
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			swings(a, 5);
+			softHit(a, bot, 2f);
 			wait[0] = ticks;
-		}, () -> ticks >= wait[0] + 10, 100);
-		step("swap: the sidebars changed too", () -> {
-			check("each one sees the kit they have now", sidebarHas(a, "Kit: swapb") && sidebarHas(b, "Kit: swapa"), String.valueOf(sidebar(a)));
-			hit(a, b);
-		}, () -> roundIs(a, 3), 600);
-		step("swap: round 3, back as they started", () -> {
-			check("Alice has the sword again", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(a.getInventory().getItem(0)));
-			check("Bob has the axe again", b.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(b.getInventory().getItem(0)));
-			run(a, "leave");
-		}, () -> noDuel(a) && noDuel(b), 600);
-		step("swap: a second kit that is gone is told and ignored", () -> {
+		}, () -> ticks >= wait[0] + 4, 40);
+		step("drill: a second hit", () -> {
+			softHit(a, (Dummy) duel(a).player(1), 2f);
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 4, 40);
+		step("drill: a third hit", () -> {
+			softHit(a, (Dummy) duel(a).player(1), 2f);
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 16, 60);
+		step("drill: the sidebar shows the clock and the aim", () -> {
+			check("the clock is on the sidebar", sidebarHas(a, "Drill: 0:"), String.valueOf(sidebar(a)));
+			check("and the accuracy", sidebarHas(a, "Accuracy: 60%"), String.valueOf(sidebar(a)));
 			a.inbox.clear();
-			invite(a, b, new DuelConfig("swapa", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1, new DuelConfig.Rules(true, true, true, true, "nosuchkit")));
-			check("a duel started", duel(a) != null);
+		}, () -> noDuel(a), 600);
+		step("drill: the time is over", () -> {
+			check("the drill told the numbers", a.heard("Combo drill: 10 seconds") && a.heard("Hits: 3  (0.3 per second)") && a.heard("Best combo: 3") && a.heard("Damage: ") && a.heard("Knockouts: 0"),
+				String.valueOf(a.inbox));
+			check("and the aim: 3 of the 5 swings", a.heard("Aim: accuracy 60% (3/5 swings)"), String.valueOf(a.inbox));
+			check("the first drill breaks the records of combo and hits", a.heard("NEW RECORD: best combo 3 (was 0) most hits 3 (was 0)"), String.valueOf(a.inbox));
+			check("accuracy needs 20 swings, so it is not a record yet", !a.heard("best accuracy 60%") && a.heard("best accuracy - (needs 20 swings), 1 drill done."), String.valueOf(a.inbox));
+			check("it ends by itself, with its own last line", a.heard("Type /drill to try again.") && !a.heard("left the duel") && !a.heard("Practice total") && !a.heard("no longer in the game"), String.valueOf(a.inbox));
+			var rec = Drill.get(a.getUUID());
+			check("the records are saved", rec.combo == 3 && rec.hits == 3 && rec.accuracy == 0 && rec.drills == 1, rec.combo + " " + rec.hits + " " + rec.accuracy + " " + rec.drills);
+			a.inbox.clear();
+			run(a, "drill records");
+			check("/drill records tells them", a.heard("Your combo drill records") && a.heard("Best combo: 3   Most hits: 3") && a.heard("Drills done: 1"), String.valueOf(a.inbox));
+			run(a, "drill drillkit");
 		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("swap: both play with the first kit", () -> {
-			check("Alice was told", a.heard("can not be read, so there is no kit swap"), String.valueOf(a.inbox));
-			check("both have the sword", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && b.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+		step("drill: a second drill, many swings and one hit", () -> {
+			Dummy bot = (Dummy) duel(a).player(1);
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			swings(a, 25);
+			softHit(a, bot, 2f);
+			a.inbox.clear();
+		}, () -> noDuel(a), 600);
+		step("drill: only the accuracy is a new record", () -> {
+			check("one hit in 25 swings is 4%, a record because there were 20 swings", a.heard("Aim: accuracy 4% (1/25 swings)") && a.heard("NEW RECORD: best accuracy 4% (was 0%)"), String.valueOf(a.inbox));
+			check("the combo and the hits are not records", !a.heard("best combo 1") && !a.heard("most hits 1"));
+			var rec = Drill.get(a.getUUID());
+			check("the records kept the better ones", rec.combo == 3 && rec.hits == 3 && rec.accuracy == 4 && rec.drills == 2, rec.combo + " " + rec.hits + " " + rec.accuracy + " " + rec.drills);
+			Drill.reloadForTest();
+			check("they are in the file: they survive a restart", Drill.get(a.getUUID()).combo == 3 && Drill.get(a.getUUID()).accuracy == 4 && Drill.get(a.getUUID()).drills == 2);
+			check("the accuracy of a drill", Drill.percent(0, 0) == 0 && Drill.percent(10, 5) == 50 && Drill.percent(4, 9) == 100);
+			run(a, "botduel drillkit");
+		});
+		step("drill: the Practice Bot menu has the drill", () -> {
+			check("the clock is in the menu", menuHas(a, "Combo drill"));
+			menuStep(a, "Combo drill");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("drill: /leave stops it and breaks no record", () -> {
+			check("the drill is running", duel(a) != null && duel(a).drillLeft > 0);
+			a.inbox.clear();
 			run(a, "leave");
-		}, () -> noDuel(a) && noDuel(b), 600);
-		step("swap: clean up", () -> {
-			run(a, "kit delete swapa");
-			run(a, "kit delete swapb");
-			run(a, "kit save hkit");
+		}, () -> noDuel(a), 600);
+		step("drill: clean up", () -> {
+			check("leaving does not count as a drill", Drill.get(a.getUUID()).drills == 2 && !a.heard("NEW RECORD"));
+			Duel.drillTicks = oldTicks;
+			Drill.resetForTest();
+			run(a, "kit delete drillkit");
 			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildDrill() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		drillSteps();
+		step("drill: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: finishing blows
+
+	private static void lasthitSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("lasthit: the command and the menus", () -> {
+			LastHit.resetForTest();
+			check("nobody has a finishing blow at the start", LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE && LastHit.styleOf(b.getUUID()) == LastHit.Style.NONE);
 			a.inbox.clear();
-			b.inbox.clear();
-			run(a, "duel Bob");
-			menuStep(a, "hkit");
-		});
-		step("handicap: the menu", () -> { menuStep(a, "Flat void arena"); });
-		step("handicap: menu version", () -> { menuStep(a, "With walls"); });
-		step("handicap: menu mode", () -> { menuStep(a, "First to N points"); });
-		step("handicap: menu amount", () -> { menuStep(a, "First to 2"); });
-		step("handicap: the rules menu has the button", () -> {
-			check("it starts with none", menuHas(a, "Head start: none"));
-			menuStep(a, "Head start: none");
-		});
-		step("handicap: two clicks", () -> {
-			check("one click: Bob gets 1 heart", menuHas(a, "Head start: 1 heart for Bob"));
-			menuStep(a, "Head start: 1 heart for Bob");
-		});
-		step("handicap: second click", () -> {
-			check("two clicks: 2 hearts for Bob", menuHas(a, "Head start: 2 hearts for Bob"));
-			menuStep(a, "Continue");
-		});
-		step("handicap: send the challenge", () -> {
-			menuStep(a, "Send the challenge");
-			check("the request lists the head start", b.heard("Head start of 2 extra hearts for the challenged player"), String.valueOf(b.inbox));
-			run(b, "accept Alice");
-			Duel d = duel(a);
-			check("the duel has it", d != null && d.config.rules().handicap() == 2, d == null ? "no duel" : String.valueOf(d.config.rules()));
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("handicap: Bob has two extra hearts in round 1", () -> {
-			check("Bob has 4 points of yellow hearts (2 hearts)", b.getAbsorptionAmount() == 4f, String.valueOf(b.getAbsorptionAmount()));
-			check("Alice has none", a.getAbsorptionAmount() == 0f, String.valueOf(a.getAbsorptionAmount()));
-			check("the effect is hidden: no icon", b.getEffect(MobEffects.ABSORPTION) != null && !b.getEffect(MobEffects.ABSORPTION).isVisible());
-			softHit(a, b, 3f);
-			check("a blow takes the yellow hearts first and the health stays full", b.getAbsorptionAmount() < 4f && b.getHealth() >= b.getMaxHealth() - 0.01f,
-				b.getAbsorptionAmount() + " " + b.getHealth());
-			hit(a, b);
-		}, () -> roundIs(a, 2), 600);
-		step("handicap: in round 2 he has them again", () -> {
-			check("Bob is back to 4 points", b.getAbsorptionAmount() == 4f, String.valueOf(b.getAbsorptionAmount()));
-			check("Alice still has none", a.getAbsorptionAmount() == 0f);
-			hit(a, b);
-		}, () -> noDuel(a) && noDuel(b), 800);
-		step("handicap: after the duel the hearts are gone", () -> {
-			check("Bob has no yellow hearts in the lobby", b.getAbsorptionAmount() == 0f && !b.hasEffect(MobEffects.ABSORPTION), b.getAbsorptionAmount() + " " + b.hasEffect(MobEffects.ABSORPTION));
-		});
-		step("handicap: the other way, Alice gets three", () -> {
-			invite(a, b, new DuelConfig("hkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1, new DuelConfig.Rules(true, true, true, true, -3)));
-			check("a duel started", duel(a) != null);
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("handicap: Alice has 6 points", () -> {
-			check("Alice has 3 hearts of yellow hearts (6 points)", a.getAbsorptionAmount() == 6f, String.valueOf(a.getAbsorptionAmount()));
-			check("Bob has none", b.getAbsorptionAmount() == 0f);
-			run(a, "leave");
-		}, () -> noDuel(a) && noDuel(b), 600);
-		step("handicap: a duel without a head start", () -> {
-			invite(a, b, new DuelConfig("hkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1));
-			check("a duel started", duel(a) != null);
-		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
-		step("handicap: nobody has extra hearts", () -> {
-			check("without a head start nobody has yellow hearts", a.getAbsorptionAmount() == 0f && b.getAbsorptionAmount() == 0f);
-			run(a, "leave");
-		}, () -> noDuel(a) && noDuel(b), 600);
-		step("handicap: clean up", () -> {
-			run(a, "kit delete hkit");
+			run(a, "finisher nosuch");
+			check("a name that does not exist is refused", a.heard("There is no finishing blow called 'nosuch'") && LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE, String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "finisher totem");
+			check("a name picks it and says so", LastHit.styleOf(a.getUUID()) == LastHit.Style.TOTEM && a.heard("Finishing blow: Totem pop."), String.valueOf(a.inbox));
+			check("and shows it once, only to the player", LastHit.played() == 1 && LastHit.last().equals("totem") && LastHit.lastViewers() == 1,
+				LastHit.played() + " " + LastHit.last() + " " + LastHit.lastViewers());
+			a.inbox.clear();
+			run(a, "finisher none");
+			check("none turns it off and plays nothing", LastHit.styleOf(a.getUUID()) == LastHit.Style.NONE && a.heard("No finishing blow.") && LastHit.played() == 1, String.valueOf(a.inbox));
+			run(a, "finisher");
+			check("the menu has all of them", menuHas(a, "None") && menuHas(a, "Lightning") && menuHas(a, "Shatter") && menuHas(a, "Firework") && menuHas(a, "Soul")
+				&& menuHas(a, "Totem pop") && menuHas(a, "Poof") && menuHas(a, "Splat") && menuHas(a, "Surprise"));
+			check("clicking one chooses it and shows it", clickMenu(a, "Soul") && LastHit.styleOf(a.getUUID()) == LastHit.Style.SOUL && LastHit.played() == 2 && LastHit.last().equals("soul"),
+				LastHit.styleOf(a.getUUID()) + " " + LastHit.played());
+			Effects.reloadForTest();
+			check("the choice is in the file: it survives a restart", LastHit.styleOf(a.getUUID()) == LastHit.Style.SOUL);
+			a.closeContainer();
+			run(a, "effects");
+			check("the effects menu has the sword with the choice", menuHas(a, "Finishing blow: Soul"));
+			a.closeContainer();
+			check("every style can be shown", showAll());
+			run(a, "finisher none");
+			check("the names of the command are the ids of the styles", LastHit.names().size() == 9 && LastHit.names().contains("surprise") && LastHit.of("Totem pop") == LastHit.Style.TOTEM
+				&& LastHit.of("") == LastHit.Style.NONE && LastHit.of("zzz") == null);
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
 			run(a, "kit save lhkit");
 			a.getInventory().clearContent();
 			invite(a, b, new DuelConfig("lhkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 4));
@@ -1798,6 +1759,87 @@ public final class SelfTest {
 			run(a, "kit delete lhkit");
 			Effects.setHideOthers(b.getUUID(), false);
 			LastHit.resetForTest();
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	/** Every style runs without an error and counts as one show. */
+	private static boolean showAll() {
+		try {
+			LastHit.resetForTest();
+			int n = 0;
+			for (LastHit.Style s : LastHit.Style.values()) {
+				if (s == LastHit.Style.NONE) continue;
+				LastHit.preview(a, s);
+				n++;
+			}
+			return LastHit.played() == n && n == 8;
+		} catch (RuntimeException e) {
+			log("showAll failed: " + e);
+			return false;
+		}
+	}
+
+	private static void buildLasthit() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		lasthitSteps();
+		step("lasthit: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: the arena vote of the queue
+
+	private static void arenavoteSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("vote: who wins and which arenas there are", () -> {
+			ArenaVote.forced = null;
+			ArenaVote.useRandom(new java.util.Random(3));
+			var pool = ArenaVote.pool(false);
+			check("1v1: five arenas and the public ones of the Builders", pool.size() >= 5 && pool.get(0).name().equals("Flat arena (with walls)") && pool.get(1).name().equals("Flat arena (no walls)")
+				&& pool.get(2).name().equals("Circular arena (radius 100)") && pool.get(3).name().equals("Circular arena (radius 150)") && pool.get(4).name().equals("Unlimited arena"));
+			check("2v2: only the five", ArenaVote.pool(true).size() == 5);
+			var three = ArenaVote.pick(false);
+			check("three different arenas are offered", three.size() == 3 && !three.get(0).equals(three.get(1)) && !three.get(0).equals(three.get(2)) && !three.get(1).equals(three.get(2)), String.valueOf(three));
+			ArenaVote.Vote v = new ArenaVote.Vote();
+			v.options.addAll(pool.subList(0, 3));
+			boolean[] seen = new boolean[3];
+			for (int i = 0; i < 60; i++) seen[ArenaVote.winner(v)] = true;
+			check("when nobody voted any of the three can be picked", seen[0] && seen[1] && seen[2]);
+			v.choice.put(UUID.randomUUID(), 0);
+			v.choice.put(UUID.randomUUID(), 1);
+			seen = new boolean[3];
+			for (int i = 0; i < 60; i++) seen[ArenaVote.winner(v)] = true;
+			check("a tie is decided at random between the tied ones only", seen[0] && seen[1] && !seen[2]);
+			v.choice.put(UUID.randomUUID(), 1);
+			boolean always = true;
+			for (int i = 0; i < 30; i++) always &= ArenaVote.winner(v) == 1;
+			check("the most votes wins", always && ArenaVote.votesFor(v, 1) == 2 && ArenaVote.votesFor(v, 0) == 1 && ArenaVote.votesFor(v, 2) == 0);
+		});
+		step("vote: a match asks for a vote", () -> {
+			ArenaVote.enabled = true;
+			ArenaVote.clearAll();
+			ArenaVote.voteTicks = 100;
+			ArenaVote.forced = java.util.List.of(new ArenaVote.Option(ArenaKind.FLAT, true, 0, ""), new ArenaVote.Option(ArenaKind.FLAT, false, 0, ""),
+				new ArenaVote.Option(ArenaKind.CIRCLE, false, 100, ""));
+			Queue.clearAll();
+			Queue.useRandom(new java.util.Random(5));
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
 			run(a, "kit save vkit");
 			run(a, "publicate vkit");
 			check("vkit is on the public shelf", PublicKits.find("vkit").isPresent());
@@ -1892,6 +1934,39 @@ public final class SelfTest {
 			Queue.useRandom(new java.util.Random());
 			run(a, "unpublish vkit");
 			run(a, "kit delete vkit");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildArenavote() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		arenavoteSteps();
+		step("vote: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: look at the kit before accepting
+
+	private static void kitviewSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("kitview: a challenge has a button to look at the kit", () -> {
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
 			a.getInventory().setItem(1, new ItemStack(Items.GOLDEN_APPLE, 5));
 			a.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
 			run(a, "kit save viewkit");
@@ -1936,6 +2011,222 @@ public final class SelfTest {
 			run(b, "duel viewkit Alice");
 			check("Bob is told the kit is gone", b.heard("The kit 'viewkit' no longer exists") && !(b.containerMenu instanceof ChestMenu), String.valueOf(b.inbox));
 			run(b, "deny Alice");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildKitview() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		kitviewSteps();
+		step("kitview: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: a head start for the weaker player
+
+	private static void handicapSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("handicap: the rule and its text", () -> {
+			check("no head start is the default", DuelConfig.Rules.DEFAULT.handicap() == 0 && DuelConfig.Rules.DEFAULT.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault());
+			var rival = new DuelConfig.Rules(true, true, true, true, 2);
+			var self = new DuelConfig.Rules(true, true, true, true, -3);
+			check("the challenged player (index 1) gets a positive head start", rival.headStart(1) == 2 && rival.headStart(0) == 0);
+			check("the challenger (index 0) gets a negative one", self.headStart(0) == 3 && self.headStart(1) == 0);
+			check("a head start is not the default rules", !rival.isDefault() && !self.isDefault());
+			check("the text says it", rival.describe(ArenaKind.FLAT).equals("Head start of 2 extra hearts for the challenged player")
+				&& new DuelConfig.Rules(true, true, true, true, -1).describe(ArenaKind.FLAT).equals("Head start of 1 extra heart for the challenger"), rival.describe(ArenaKind.FLAT));
+			check("it can not be huge", new DuelConfig.Rules(true, true, true, true, 99).handicap() == DuelConfig.Rules.MAX_HANDICAP && new DuelConfig.Rules(true, true, true, true, -99).handicap() == -DuelConfig.Rules.MAX_HANDICAP);
+			check("the button goes through none, the rival 1 2 3 5, then you 1 2 3 5 and back to none", DuelMenus.nextHandicap(0) == 1 && DuelMenus.nextHandicap(1) == 2 && DuelMenus.nextHandicap(5) == -1
+				&& DuelMenus.nextHandicap(-5) == 0 && DuelMenus.nextHandicap(7) == 0);
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save hkit");
+			a.getInventory().clearContent();
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "duel Bob");
+			menuStep(a, "hkit");
+		});
+		step("handicap: the menu", () -> { menuStep(a, "Flat void arena"); });
+		step("handicap: menu version", () -> { menuStep(a, "With walls"); });
+		step("handicap: menu mode", () -> { menuStep(a, "First to N points"); });
+		step("handicap: menu amount", () -> { menuStep(a, "First to 2"); });
+		step("handicap: the rules menu has the button", () -> {
+			check("it starts with none", menuHas(a, "Head start: none"));
+			menuStep(a, "Head start: none");
+		});
+		step("handicap: two clicks", () -> {
+			check("one click: Bob gets 1 heart", menuHas(a, "Head start: 1 heart for Bob"));
+			menuStep(a, "Head start: 1 heart for Bob");
+		});
+		step("handicap: second click", () -> {
+			check("two clicks: 2 hearts for Bob", menuHas(a, "Head start: 2 hearts for Bob"));
+			menuStep(a, "Continue");
+		});
+		step("handicap: send the challenge", () -> {
+			menuStep(a, "Send the challenge");
+			check("the request lists the head start", b.heard("Head start of 2 extra hearts for the challenged player"), String.valueOf(b.inbox));
+			run(b, "accept Alice");
+			Duel d = duel(a);
+			check("the duel has it", d != null && d.config.rules().handicap() == 2, d == null ? "no duel" : String.valueOf(d.config.rules()));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("handicap: Bob has two extra hearts in round 1", () -> {
+			check("Bob has 4 points of yellow hearts (2 hearts)", b.getAbsorptionAmount() == 4f, String.valueOf(b.getAbsorptionAmount()));
+			check("Alice has none", a.getAbsorptionAmount() == 0f, String.valueOf(a.getAbsorptionAmount()));
+			check("the effect is hidden: no icon", b.getEffect(MobEffects.ABSORPTION) != null && !b.getEffect(MobEffects.ABSORPTION).isVisible());
+			softHit(a, b, 3f);
+			check("a blow takes the yellow hearts first and the health stays full", b.getAbsorptionAmount() < 4f && b.getHealth() >= b.getMaxHealth() - 0.01f,
+				b.getAbsorptionAmount() + " " + b.getHealth());
+			hit(a, b);
+		}, () -> roundIs(a, 2), 600);
+		step("handicap: in round 2 he has them again", () -> {
+			check("Bob is back to 4 points", b.getAbsorptionAmount() == 4f, String.valueOf(b.getAbsorptionAmount()));
+			check("Alice still has none", a.getAbsorptionAmount() == 0f);
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("handicap: after the duel the hearts are gone", () -> {
+			check("Bob has no yellow hearts in the lobby", b.getAbsorptionAmount() == 0f && !b.hasEffect(MobEffects.ABSORPTION), b.getAbsorptionAmount() + " " + b.hasEffect(MobEffects.ABSORPTION));
+		});
+		step("handicap: the other way, Alice gets three", () -> {
+			invite(a, b, new DuelConfig("hkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1, new DuelConfig.Rules(true, true, true, true, -3)));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("handicap: Alice has 6 points", () -> {
+			check("Alice has 3 hearts of yellow hearts (6 points)", a.getAbsorptionAmount() == 6f, String.valueOf(a.getAbsorptionAmount()));
+			check("Bob has none", b.getAbsorptionAmount() == 0f);
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("handicap: a duel without a head start", () -> {
+			invite(a, b, new DuelConfig("hkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("handicap: nobody has extra hearts", () -> {
+			check("without a head start nobody has yellow hearts", a.getAbsorptionAmount() == 0f && b.getAbsorptionAmount() == 0f);
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("handicap: clean up", () -> {
+			run(a, "kit delete hkit");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildHandicap() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		handicapSteps();
+		step("handicap: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: rivals
+
+	private static void rivalsSteps() {
+		step("rivals: the list", () -> {
+			Rivals.resetForTest();
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "rival");
+			check("an empty list says how to start", a.heard("You have no rivals yet"), String.valueOf(a.inbox));
+			run(a, "rival add Alice");
+			check("you can't be your own rival", a.heard("You can't be your own rival") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
+			run(a, "rival add Nobodyhere");
+			check("a name nobody knows is refused", a.heard("I don't know a player called 'Nobodyhere'") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival add Bob");
+			check("Bob is added", a.heard("Bob is on your list now") && Rivals.isRival(a.getUUID(), b.getUUID()) && !Rivals.isRival(b.getUUID(), a.getUUID()), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival add bob");
+			check("twice is refused", a.heard("Bob is already on your list") && Rivals.of(a.getUUID()).size() == 1, String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival");
+			check("the list shows Bob online with a button", a.heard("Your rivals (1/10)") && a.heard("Bob - online") && a.heard("[CHALLENGE]"), String.valueOf(a.inbox));
+			Rivals.reloadForTest();
+			check("the list is in the file: it survives a restart", Rivals.isRival(a.getUUID(), b.getUUID()) && Rivals.nameOf(b.getUUID()).equals("Bob"));
+		});
+		step("rivals: the messages when somebody joins", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			Rivals.joined(server, b);
+			check("Alice is told her rival is online, with the button", a.heard("Your rival Bob is online.") && a.heard("[CHALLENGE]"), String.valueOf(a.inbox));
+			check("Bob, who has no rivals, hears nothing", !b.heard("Your rival"), String.valueOf(b.inbox));
+			run(b, "rival add Alice");
+			a.inbox.clear();
+			b.inbox.clear();
+			Rivals.joined(server, a);
+			check("when Alice joins, Bob is told", b.heard("Your rival Alice is online."), String.valueOf(b.inbox));
+			check("and Alice is told that Bob is here", a.heard("Your rival Bob is online."), String.valueOf(a.inbox));
+		});
+		step("rivals: remove, and the limit", () -> {
+			a.inbox.clear();
+			run(a, "rival remove Zed");
+			check("a name that is not there says so", a.heard("Zed is not on your list"), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival remove BOB");
+			check("Bob is taken off (any case)", a.heard("Bob is not on your list any more") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
+			a.inbox.clear();
+			Rivals.joined(server, b);
+			check("he is not announced any more", !a.heard("Your rival"), String.valueOf(a.inbox));
+			for (int i = 0; i < Rivals.MAX; i++) Rivals.addForTest(a.getUUID(), UUID.nameUUIDFromBytes(("rival" + i).getBytes(java.nio.charset.StandardCharsets.UTF_8)), "Fake" + i);
+			a.inbox.clear();
+			run(a, "rival add Bob");
+			check("a full list refuses more", a.heard("You can have 10 rivals at most") && !Rivals.isRival(a.getUUID(), b.getUUID()), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival");
+			check("the offline ones are listed as offline", a.heard("Your rivals (10/10)") && a.heard("Fake0 - offline"), String.valueOf(a.inbox));
+			Rivals.resetForTest();
+		});
+	}
+
+	private static void buildRivals() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		rivalsSteps();
+		step("rivals: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: clutch scenarios
+
+	private static void clutchSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final String[] bn = new String[1];
+		step("clutch: the command refuses what it should", () -> {
+			Clutch.resetForTest();
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
 			run(a, "kit save ckit");
 			a.getInventory().clearContent();
 			a.inbox.clear();
@@ -2004,6 +2295,43 @@ public final class SelfTest {
 		step("clutch: clean up", () -> {
 			Clutch.resetForTest();
 			run(a, "kit delete ckit");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildClutch() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		clutchSteps();
+		step("clutch: done", () -> finish());
+	}
+
+
+	// ------------------------------------------------------------------ one idea at a time: tools for the people who watch
+
+	private static void watchtoolsSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final Dummy[] w = new Dummy[1];
+		final int[] t = new int[1];
+		step("watch tools: setup and what a non-watcher gets", () -> {
+			Reactions.resetForTest();
+			w[0] = spawn("Watcher");
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
 			run(a, "kit save wkit");
 			a.getInventory().clearContent();
 			w[0].inbox.clear();
@@ -2084,38 +2412,18 @@ public final class SelfTest {
 		});
 	}
 
-	private static void buildDrill() {
-	private static void buildSeasons() {
-	private static void buildBoard() {
-	private static void buildMutators() {
-			check("the test kits are gone", !KitStore.exists(a.getUUID(), "swapa") && !KitStore.exists(a.getUUID(), "swapb"));
-		});
-	}
-
-	private static void buildSwap() {
-	private static void buildHandicap() {
-	/** Every style runs without an error and counts as one show. */
-	private static boolean showAll() {
-		try {
-			LastHit.resetForTest();
-			int n = 0;
-			for (LastHit.Style s : LastHit.Style.values()) {
-				if (s == LastHit.Style.NONE) continue;
-				LastHit.preview(a, s);
-				n++;
-			}
-			return LastHit.played() == n && n == 8;
-		} catch (RuntimeException e) {
-			log("showAll failed: " + e);
-			return false;
-		}
-	}
-
-	private static void buildLasthit() {
-	private static void buildArenavote() {
-	private static void buildKitview() {
-	private static void buildClutch() {
 	private static void buildWatchtools() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		watchtoolsSteps();
+		step("watch tools: done", () -> finish());
+	}
+
+
 	private static void replaycamSteps() {
 		final String[] rid = new String[1];
 		final int[] t = new int[2];
@@ -2292,35 +2600,10 @@ public final class SelfTest {
 			a = spawn("Alice");
 			b = spawn("Bob");
 		}, () -> ticks > 60, 300);
-		drillSteps();
-		step("drill: done", () -> finish());
-		seasonsSteps();
-		step("seasons: done", () -> finish());
-		boardSteps();
-		step("board: done", () -> finish());
-		mutatorsSteps();
-		step("mutators: done", () -> finish());
-		swapSteps();
-		step("swap: done", () -> finish());
-		handicapSteps();
-		step("handicap: done", () -> finish());
-		lasthitSteps();
-		step("lasthit: done", () -> finish());
-		arenavoteSteps();
-		step("vote: done", () -> finish());
-		kitviewSteps();
-		step("kitview: done", () -> finish());
-		rivalsSteps();
-		step("rivals: done", () -> finish());
-		clutchSteps();
-		step("clutch: done", () -> finish());
-		watchtoolsSteps();
-		step("watch tools: done", () -> finish());
-	}
-
-
 		replaycamSteps();
 		step("replay camera: done", () -> finish());
+	}
+
 	private static Dummy dummyNamed(String name) {
 		return (Dummy) server.getPlayerList().getPlayerByName(name);
 	}
@@ -2878,15 +3161,15 @@ public final class SelfTest {
 			check("the summary of the duel told Alice how she stands against Bob", a.heard("Against Bob: you "));
 		});
 		accuracySteps();
-		drillSteps();
-		seasonsSteps();
-		boardSteps();
 		mutatorsSteps();
 		swapSteps();
-		handicapSteps();
+		seasonsSteps();
+		boardSteps();
+		drillSteps();
 		lasthitSteps();
 		arenavoteSteps();
 		kitviewSteps();
+		handicapSteps();
 		rivalsSteps();
 		clutchSteps();
 		watchtoolsSteps();
@@ -7532,6 +7815,7 @@ public final class SelfTest {
 
 		// ---------------------------------------------------------------- /bugs
 		bugsSteps();
+
 		// ---------------------------------------------------------------- /h2h
 		h2hSteps();
 
