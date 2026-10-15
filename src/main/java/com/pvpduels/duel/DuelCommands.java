@@ -36,6 +36,16 @@ public final class DuelCommands {
 				.executes(ctx -> deny(ctx, null))
 				.then(Commands.argument("player", StringArgumentType.word()).suggests(INVITERS)
 					.executes(ctx -> deny(ctx, StringArgumentType.getString(ctx, "player")))))
+			.then(Commands.literal("viewkit")
+				.executes(ctx -> {
+					DuelManager.viewKit(ctx.getSource().getPlayerOrException(), null);
+					return 1;
+				})
+				.then(Commands.argument("player", StringArgumentType.word()).suggests(INVITERS)
+					.executes(ctx -> {
+						DuelManager.viewKit(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "player"));
+						return 1;
+					})))
 			.then(Commands.argument("player", StringArgumentType.word()).suggests(ONLINE)
 				.executes(DuelCommands::open)));
 

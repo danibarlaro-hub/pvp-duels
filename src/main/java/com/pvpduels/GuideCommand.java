@@ -13,6 +13,7 @@ public final class GuideCommand {
 		"DUELS: /duel <player>  - choose kit, arena, version and how the duel is decided, then send the challenge",
 		"HEAD START: in the rules menu of /duel <player> (1v1 only) the golden apple button gives extra yellow hearts at the start of every round to the weaker player: none, the rival gets 1, 2, 3 or 5 hearts, or you get 1, 2, 3 or 5. Click it to go to the next one. It shows in the challenge and ends with the duel",
 		"/accept [player] or /duel accept [player]  - accept a challenge (you can also click [ACCEPT] in the chat); /deny [player]  - deny it. Requests expire after 60 seconds",
+		"/accept [player] or /duel accept [player]  - accept a challenge (you can also click [ACCEPT] in the chat); /deny [player]  - deny it; the [VIEW KIT] button (or /duel viewkit [player]) opens the kit of the challenge as a look-only chest, so you can see what you would fight with before you decide. Requests expire after 60 seconds",
 		"A totem of undying in either hand saves you in a duel like in vanilla (you stay in the round with 1 heart), and you only lose a round when you really die: health plus absorption, so a golden apple counts",
 		"After every duel you get a summary: how long it lasted and, for each of you, hits, damage, best combo and the totems, ender pearls, golden apples and potions used",
 		"/leave  - quit your duel (you lose, or it ends in a draw/by score if it was unlimited). /again  - ask for a rematch with the same settings",
