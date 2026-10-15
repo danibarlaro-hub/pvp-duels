@@ -1,0 +1,22 @@
+--- two fake players
+--- rivals: the list
+PASS  an empty list says how to start   ([You have no rivals yet. /rival add <player> puts one on your list: you are told when they join.])
+PASS  you can't be your own rival   ([You have no rivals yet. /rival add <player> puts one on your list: you are told when they join., You can't be your own rival.])
+PASS  a name nobody knows is refused   ([You have no rivals yet. /rival add <player> puts one on your list: you are told when they join., You can't be your own rival., I don't know a player called 'Nobodyhere'. They need to be online now, or to have played a duel before.])
+PASS  Bob is added   ([Bob is on your list now. You are told when they join.])
+PASS  twice is refused   ([Bob is already on your list.])
+PASS  the list shows Bob online with a button   ([Your rivals (1/10),   Bob - online  [CHALLENGE]])
+PASS  the list is in the file: it survives a restart
+--- rivals: the messages when somebody joins
+PASS  Alice is told her rival is online, with the button   ([Your rival Bob is online.  [CHALLENGE]])
+PASS  Bob, who has no rivals, hears nothing   ([])
+PASS  when Alice joins, Bob is told   ([Your rival Alice is online.  [CHALLENGE]])
+PASS  and Alice is told that Bob is here   ([Your rival Bob is online.  [CHALLENGE]])
+--- rivals: remove, and the limit
+PASS  a name that is not there says so   ([Zed is not on your list. /rival shows it.])
+PASS  Bob is taken off (any case)   ([Bob is not on your list any more.])
+PASS  he is not announced any more   ([])
+PASS  a full list refuses more   ([You can have 10 rivals at most. Remove one with /rival remove <player>.])
+PASS  the offline ones are listed as offline   ([Your rivals (10/10),   Fake0 - offline,   Fake1 - offline,   Fake2 - offline,   Fake3 - offline,   Fake4 - offline,   Fake5 - offline,   Fake6 - offline,   Fake7 - offline,   Fake8 - offline,   Fake9 - offline])
+--- rivals: done
+RESULT: PASS
