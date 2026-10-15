@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("mutators")) {
+				buildMutators();
 			} else {
 				build();
 			}
@@ -580,6 +582,159 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: round mutators
+
+	private static boolean hasTwist(Dummy p, Mutator m) {
+		return switch (m) {
+			case LOW_GRAVITY -> p.hasEffect(MobEffects.SLOW_FALLING) && p.hasEffect(MobEffects.JUMP_BOOST);
+			case SPEED -> p.hasEffect(MobEffects.SPEED);
+			case HEAVY -> p.hasEffect(MobEffects.STRENGTH);
+			case HEARTS -> p.hasEffect(MobEffects.HEALTH_BOOST);
+			case SPOTLIGHT -> p.hasEffect(MobEffects.GLOWING);
+			default -> false;
+		};
+	}
+
+	private static boolean isReal(Mutator m) {
+		return m != null && m != Mutator.NONE && m != Mutator.RANDOM;
+	}
+
+	private static void mutatorsSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final Mutator[] seen = new Mutator[2];
+		step("mutators: the pieces work alone", () -> {
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			check("seven choices in the menu, in a ring", Mutator.values().length == 7 && Mutator.NONE.next() == Mutator.LOW_GRAVITY && Mutator.RANDOM.next() == Mutator.NONE);
+			Mutator before = Mutator.NONE;
+			boolean fair = true;
+			java.util.Set<Mutator> all = new java.util.HashSet<>();
+			for (int i = 0; i < 300; i++) {
+				Mutator m = Mutator.RANDOM.forRound(before);
+				if (!isReal(m) || m == before) fair = false;
+				all.add(m);
+				before = m;
+			}
+			check("a random mutator is always a real one and never the same twice in a row", fair);
+			check("and over many rounds all five show up", all.size() == 5, String.valueOf(all));
+			check("a plain setting plays itself", Mutator.SPEED.forRound(Mutator.SPEED) == Mutator.SPEED && Mutator.NONE.forRound(Mutator.NONE) == Mutator.NONE);
+			DuelConfig.Rules speedRules = new DuelConfig.Rules(true, true, true, true, Mutator.SPEED);
+			check("rules with a mutator are not the default ones, and the old constructor means none",
+				!speedRules.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault() && new DuelConfig.Rules(true, true, true, true, null).isDefault());
+			check("the rules tell it in words", speedRules.describe(ArenaKind.FLAT).equals("Speed mutator")
+				&& new DuelConfig.Rules(true, true, true, true, Mutator.RANDOM).describe(ArenaKind.FLAT).equals("A random mutator every round")
+				&& new DuelConfig.Rules(false, true, true, true, Mutator.HEAVY).describe(ArenaKind.FLAT).equals("No natural regeneration, heavy hitters mutator"),
+				speedRules.describe(ArenaKind.FLAT));
+			boolean clean = true;
+			for (Mutator m : Mutator.real()) {
+				a.removeAllEffects();
+				m.apply(a, true);
+				check("the effects of " + m.label() + " are on", hasTwist(a, m));
+				for (Mutator other : Mutator.real()) if (other != m && hasTwist(a, other)) clean = false;
+			}
+			check("every mutator gives only its own effects", clean);
+			a.removeAllEffects();
+			Mutator.HEARTS.apply(a, true);
+			check("double hearts means 40 health, and full", a.getMaxHealth() == 40f && a.getHealth() == 40f, a.getHealth() + "/" + a.getMaxHealth());
+			a.removeAllEffects();
+			Mutator.NONE.apply(a, true);
+			check("no mutator gives nothing", !hasTwist(a, Mutator.SPEED) && a.getMaxHealth() == 20f);
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save mutkit");
+			check("the kit for the test was saved", KitStore.exists(a.getUUID(), "mutkit"));
+			a.getInventory().clearContent();
+		});
+		step("mutators: Alice opens the duel menu", () -> {
+			run(a, "duel Bob");
+			menuStep(a, "mutkit");
+		});
+		step("mutators: arena", () -> { menuStep(a, "Flat void arena"); });
+		step("mutators: version", () -> { menuStep(a, "With walls"); });
+		step("mutators: mode", () -> { menuStep(a, "First to N points"); });
+		step("mutators: amount", () -> { menuStep(a, "First to 1"); });
+		step("mutators: the rules menu has the nether star", () -> {
+			check("it starts with no mutator", menuHas(a, "Round mutator: None"));
+			menuStep(a, "Round mutator: None");
+		});
+		step("mutators: one click moves to the next", () -> {
+			check("the first click says low gravity", menuHas(a, "Round mutator: Low gravity"));
+			menuStep(a, "Round mutator: Low gravity");
+		});
+		step("mutators: second click, speed", () -> {
+			check("the second click says speed", menuHas(a, "Round mutator: Speed"));
+			menuStep(a, "Continue");
+		});
+		step("mutators: confirm and send", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			menuStep(a, "Send the challenge");
+			check("the invitation tells the mutator", b.heard("Rules: Speed mutator"), String.valueOf(b.inbox));
+			run(b, "accept Alice");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("mutators: both duelists run faster, and a totem does not take it away", () -> {
+			Duel d = duel(a);
+			check("the duel has the mutator", d != null && d.config.rules().mutator() == Mutator.SPEED && d.roundMutator() == Mutator.SPEED);
+			check("both have Speed II", hasTwist(a, Mutator.SPEED) && hasTwist(b, Mutator.SPEED) && a.getEffect(MobEffects.SPEED).getAmplifier() == 1
+				&& b.getEffect(MobEffects.SPEED).getAmplifier() == 1);
+			check("both were told", a.heard("Round mutator: Speed") && b.heard("Round mutator: Speed"), String.valueOf(a.inbox));
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+			hit(b, a);
+			check("the totem saved her and the round goes on", a.getMainHandItem().isEmpty() && d.phase == Duel.Phase.FIGHTING && a.getHealth() <= 1.01f && a.hasEffect(MobEffects.REGENERATION),
+				d.phase + " " + a.getHealth());
+			check("and the twist of the round is back after the totem took every effect", hasTwist(a, Mutator.SPEED));
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("mutators: nothing is left after the duel", () -> {
+			check("no twist on Alice or Bob once they are back", !hasTwist(a, Mutator.SPEED) && !hasTwist(b, Mutator.SPEED));
+			a.inbox.clear();
+			b.inbox.clear();
+			invite(a, b, new DuelConfig("mutkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 3, new DuelConfig.Rules(true, true, true, true, Mutator.RANDOM)));
+			check("a duel with a random mutator started", duel(a) != null && duel(a).config.rules().mutator() == Mutator.RANDOM);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("mutators: round 1 of the random duel", () -> {
+			Duel d = duel(a);
+			Mutator m1 = d.roundMutator();
+			seen[0] = m1;
+			check("round 1 got a real mutator", isReal(m1), String.valueOf(m1));
+			check("both have its effects and were told", hasTwist(a, m1) && hasTwist(b, m1) && a.heard("Round mutator: " + m1.label()) && b.heard("Round mutator: " + m1.label()), String.valueOf(a.inbox));
+			hit(a, b);
+		}, () -> roundIs(a, 2), 600);
+		step("mutators: round 2 draws another one", () -> {
+			Duel d = duel(a);
+			Mutator m2 = d.roundMutator();
+			seen[1] = m2;
+			check("round 2 got a real mutator that is not the one of round 1", isReal(m2) && m2 != seen[0], seen[0] + " then " + m2);
+			check("the new twist is on both, the old one is gone", hasTwist(a, m2) && hasTwist(b, m2) && !hasTwist(a, seen[0]) && !hasTwist(b, seen[0]));
+			check("and they were told again", a.heard("Round mutator: " + m2.label()));
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("mutators: clean up", () -> {
+			check("leaving takes the twist away", !hasTwist(a, seen[1]) && !hasTwist(b, seen[1]));
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildMutators() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		mutatorsSteps();
+		step("mutators: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +1009,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		mutatorsSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);

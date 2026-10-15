@@ -183,6 +183,7 @@ public final class DuelManager {
 		Duel duel = BY_PLAYER.get(p.getUUID());
 		if (duel == null) return true;
 		if (duel.canTakeDamage() && Totems.tryPop(p, source)) {
+			duel.mutatorAgain(p);
 			countHit(p, source, Math.min(amount, p.getMaxHealth()));
 			return false;
 		}
