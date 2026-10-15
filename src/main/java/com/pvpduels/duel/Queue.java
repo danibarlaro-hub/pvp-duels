@@ -332,6 +332,17 @@ public final class Queue {
 		}
 	}
 
+	/** A match of a /tournament: the public kit with this name, or (null) a random kit for each match. Returns what went wrong, or null once the duel started. */
+	static String startForTournament(MinecraftServer server, ServerPlayer first, ServerPlayer second, String publicKit, int firstTo) {
+		Choice choice = publicKit != null ? publicChoice(publicKit) : randomChoice(first, second);
+		if (choice == null) return publicKit != null ? "the public kit '" + publicKit + "' no longer exists" : "nobody has a kit to fight with";
+		KitStore.Kit kit = load(server, choice);
+		if (kit == null) return "the kit '" + choice.name() + "' is empty or cannot be read";
+		DuelConfig config = new DuelConfig(choice.name(), true, WinMode.FIRST_TO, firstTo);
+		if (!DuelManager.startTournament(server, first, second, choice.owner(), config, kit)) return "the duel could not start";
+		return null;
+	}
+
 	private static void startMatch(MinecraftServer server, ServerPlayer first, ServerPlayer second, UUID kitOwner, String kitName, KitStore.Kit kit, String source) {
 		boolean team = Party.isFull(first.getUUID()) && Party.isFull(second.getUUID());
 		ServerPlayer firstMate = team ? playerOf(server, Party.partnerOf(first.getUUID())) : null;

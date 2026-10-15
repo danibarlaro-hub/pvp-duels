@@ -135,6 +135,8 @@ public final class SelfTest {
 				buildWatchtools();
 			} else if (mode.equals("replaycam")) {
 				buildReplaycam();
+			} else if (mode.equals("tournament")) {
+				buildTournament();
 			} else {
 				build();
 			}
@@ -2319,6 +2321,281 @@ public final class SelfTest {
 
 		replaycamSteps();
 		step("replay camera: done", () -> finish());
+	private static Dummy dummyNamed(String name) {
+		return (Dummy) server.getPlayerList().getPlayerByName(name);
+	}
+
+	private static String[] openMatch(String round) {
+		for (String[] m : Tournament.openMatchesForTest()) if (m[3].equals(round)) return m;
+		return null;
+	}
+
+	/** How many matches of the bracket have a result (a bye is not a match). */
+	private static int doneMatches() {
+		int n = 0;
+		for (String line : Tournament.linesForTest()) if (line.contains("  ->  ")) n++;
+		return n;
+	}
+
+	private static boolean bracketHas(String text) {
+		for (String line : Tournament.linesForTest()) if (line.contains(text)) return true;
+		return false;
+	}
+
+	private static void tournamentSteps() {
+		final String[] names = {"Tina", "Uma", "Vera", "Wade", "Xena"};
+		final Dummy[] pl = new Dummy[5];
+		final int[] t = new int[2];
+		final String[][] pair = new String[4][];
+		step("tournament: five new players", () -> {
+			for (int i = 0; i < 5; i++) pl[i] = spawn(names[i]);
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 20, 200);
+		step("tournament: nothing is open, so the commands say so", () -> {
+			Tournament.resetForTest();
+			Tournament.fastForTest();
+			Tournament.useRandom(new java.util.Random(7));
+			pl[0].getInventory().clearContent();
+			pl[0].getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(pl[0], "kit save tkit");
+			pl[0].getInventory().clearContent();
+			run(pl[0], "publicate tkit");
+			check("the public kit for the matches exists", PublicKits.find("tkit").isPresent());
+			run(pl[0], "tournament start");
+			check("start with nothing open", pl[0].heard("There is no tournament"), String.valueOf(pl[0].inbox));
+			pl[0].inbox.clear();
+			run(pl[0], "tournament join");
+			check("join with nothing open", pl[0].heard("There is no tournament"));
+			pl[0].inbox.clear();
+			run(pl[0], "tournament leave");
+			check("leave with nothing open", pl[0].heard("You are not in a tournament"));
+			pl[0].inbox.clear();
+			run(pl[0], "tournament create 8 1 nosuchkit");
+			check("a kit that is not public is refused", pl[0].heard("There is no public kit named 'nosuchkit'") && Tournament.phaseForTest().equals("none"), String.valueOf(pl[0].inbox));
+			pl[0].inbox.clear();
+			run(pl[0], "tournament");
+			check("the plain command explains how to open one", pl[0].heard("There is no tournament right now"));
+			check("the seeds of a bracket of 8 pair 1-8, 4-5, 2-7, 3-6", java.util.Arrays.equals(Tournament.seedOrder(8), new int[] {1, 8, 4, 5, 2, 7, 3, 6})
+				&& java.util.Arrays.equals(Tournament.seedOrder(4), new int[] {1, 4, 2, 3}));
+		});
+		step("tournament: Tina opens it and the others join", () -> {
+			for (Dummy p : pl) p.inbox.clear();
+			run(pl[0], "tournament create 8 1 tkit");
+			check("it is open with Tina alone", Tournament.phaseForTest().equals("SIGNUP") && Tournament.entrantsForTest() == 1);
+			check("everybody was told, with a button", pl[1].heard("Tina opened a tournament!") && pl[1].heard("[JOIN]") && pl[1].heard("first to 1") && pl[1].heard("kit tkit"), String.valueOf(pl[1].inbox));
+			pl[1].inbox.clear();
+			run(pl[1], "tournament create");
+			check("a second one can't be opened", pl[1].heard("There is already a tournament"));
+			pl[0].inbox.clear();
+			run(pl[0], "tournament start");
+			check("alone she can't start", pl[0].heard("At least 3 players are needed (now 1)"), String.valueOf(pl[0].inbox));
+			run(pl[1], "tournament join");
+			check("Uma joined and Tina heard it", Tournament.entrantsForTest() == 2 && pl[0].heard("Uma joined the tournament (2/8)"));
+			pl[1].inbox.clear();
+			run(pl[1], "tournament join");
+			check("twice is refused", pl[1].heard("You are already in"));
+			run(pl[2], "tournament join");
+			pl[1].inbox.clear();
+			run(pl[1], "tournament start");
+			check("only the host starts it", pl[1].heard("Only Tina (or an admin) can start it") && Tournament.phaseForTest().equals("SIGNUP"), String.valueOf(pl[1].inbox));
+			run(pl[3], "tournament join");
+			pl[0].inbox.clear();
+			run(pl[3], "tournament leave");
+			check("Wade left before the start", Tournament.entrantsForTest() == 3 && pl[0].heard("Wade left the tournament (3/8)"), String.valueOf(pl[0].inbox));
+			run(pl[3], "tournament join");
+			run(pl[4], "tournament join");
+			check("five players", Tournament.entrantsForTest() == 5);
+			pl[0].inbox.clear();
+			run(pl[0], "tournament");
+			check("the sign-up list shows everybody", pl[0].heard("Players: Tina, Uma, Vera, Wade, Xena") && pl[0].heard("[START]"), String.valueOf(pl[0].inbox));
+		});
+		step("tournament: it starts and the best seeds get the byes", () -> {
+			for (Dummy p : pl) p.inbox.clear();
+			run(pl[0], "tournament start");
+			check("running, with a bracket of 8", Tournament.phaseForTest().equals("RUNNING") && Tournament.bracketSizeForTest() == 8);
+			List<String> lines = Tournament.linesForTest();
+			int byes = 0;
+			for (String l : lines) if (l.contains("goes through (bye)")) byes++;
+			check("three byes in the first round", byes == 3, String.valueOf(lines));
+			check("the rounds have their names", lines.contains("Quarterfinals:") && lines.contains("Semifinals:") && lines.contains("Final:"), String.valueOf(lines));
+			check("two matches are ready: a quarterfinal and a semifinal", Tournament.openMatchesForTest().size() == 2 && openMatch("Quarterfinals") != null && openMatch("Semifinals") != null,
+				Tournament.openMatchesForTest().size() + "");
+			pair[0] = openMatch("Quarterfinals");
+			pair[1] = openMatch("Semifinals");
+			int s0 = Tournament.seedOfForTest(pair[0][0]);
+			int s1 = Tournament.seedOfForTest(pair[0][1]);
+			check("the quarterfinal is seed 4 against seed 5", s0 == 4 && s1 == 5, s0 + " / " + s1);
+			int s2 = Tournament.seedOfForTest(pair[1][0]);
+			int s3 = Tournament.seedOfForTest(pair[1][1]);
+			check("the semifinal is seed 2 against seed 3", s2 == 2 && s3 == 3, s2 + " / " + s3);
+			boolean told = true;
+			for (Dummy p : pl) told &= p.heard("The tournament started! 5 players, first to 1, kit tkit.");
+			check("everybody was told it started", told);
+			String best = null;
+			for (String n : names) if (Tournament.seedOfForTest(n) == 1) best = n;
+			check("seed 1 was told about the bye", best != null && dummyNamed(best).heard("You have a bye in the first round"), String.valueOf(best));
+			pair[3] = new String[] {best};
+		}, () -> DuelManager.activeDuels() == 2, 600);
+		step("tournament: the two matches start by themselves", () -> {
+			for (int i = 0; i < 2; i++) {
+				Dummy x = dummyNamed(pair[i][0]);
+				Dummy y = dummyNamed(pair[i][1]);
+				check("pair " + i + " is in a duel together", duel(x) != null && duel(x) == duel(y));
+				check("it is a first-to-1 tournament duel with the kit", duel(x).tournament && duel(x).config.kit().equals("tkit") && duel(x).config.limit() == 1);
+				check("both were told", x.heard(pair[i][3] + ": " + pair[i][0] + " vs " + pair[i][1]) && y.heard(pair[i][3] + ": " + pair[i][0] + " vs " + pair[i][1]), String.valueOf(x.inbox));
+			}
+			check("the bracket shows them fighting", bracketHas("FIGHTING 0 - 0"));
+			check("seed 1 can watch the matches", dummyNamed(pair[3][0]).heard("has started.") && dummyNamed(pair[3][0]).heard("[WATCH]"), String.valueOf(dummyNamed(pair[3][0]).inbox));
+		}, () -> phaseIs(dummyNamed(pair[0][0]), Duel.Phase.FIGHTING) && phaseIs(dummyNamed(pair[1][0]), Duel.Phase.FIGHTING), 600);
+		step("tournament: the first player of each pair wins", () -> {
+			for (Dummy p : pl) p.inbox.clear();
+			hit(dummyNamed(pair[0][0]), dummyNamed(pair[0][1]));
+			hit(dummyNamed(pair[1][0]), dummyNamed(pair[1][1]));
+		}, () -> doneMatches() >= 2, 300);
+		step("tournament: the winners go through, the others are out, nobody is offered a rematch", () -> {
+			Dummy qw = dummyNamed(pair[0][0]);
+			Dummy ql = dummyNamed(pair[0][1]);
+			Dummy sw = dummyNamed(pair[1][0]);
+			Dummy sl = dummyNamed(pair[1][1]);
+			check("the quarterfinal winner goes to the semifinal", qw.heard("You go through to the Semifinals."), String.valueOf(qw.inbox));
+			check("the quarterfinal loser is out", ql.heard("You are out of the tournament (Quarterfinals)"), String.valueOf(ql.inbox));
+			check("the semifinal winner goes to the final", sw.heard("You go through to the Final."), String.valueOf(sw.inbox));
+			check("the semifinal loser is out", sl.heard("You are out of the tournament (Semifinals)"));
+			check("everybody in it heard the result", dummyNamed(pair[3][0]).heard("Quarterfinals: " + qw.getName().getString() + " beat " + ql.getName().getString() + " 1-0."));
+			check("the bracket has the scores", bracketHas(qw.getName().getString() + " 1 - 0 " + ql.getName().getString() + "  ->  " + qw.getName().getString()), String.valueOf(Tournament.linesForTest()));
+			check("no [REMATCH] for a tournament match", !qw.heard("Rematch?") && !ql.heard("Rematch?") && !sw.heard("Rematch?"));
+			qw.inbox.clear();
+			run(qw, "again");
+			check("they can't ask /again either", qw.heard("You have no previous duel to repeat."), String.valueOf(qw.inbox));
+			String[] semi = openMatch("Semifinals");
+			check("the other semifinal is ready: seed 1 against the quarterfinal winner", semi != null && semi.length > 0 && Tournament.openMatchesForTest().size() == 1
+				&& Tournament.seedOfForTest(semi[0]) == 1 && semi[1].equals(qw.getName().getString()), semi == null ? "none" : semi[0] + " vs " + semi[1]);
+			pair[2] = semi;
+		}, () -> DuelManager.activeDuels() == 1 && phaseIs(dummyNamed(openMatch("Semifinals") == null ? "Tina" : openMatch("Semifinals")[0]), Duel.Phase.FIGHTING), 800);
+		step("tournament: seed 1 wins the second semifinal", () -> {
+			Dummy x = dummyNamed(pair[2][0]);
+			Dummy y = dummyNamed(pair[2][1]);
+			check("they are fighting each other", duel(x) != null && duel(x) == duel(y) && duel(x).tournament);
+			for (Dummy p : pl) p.inbox.clear();
+			hit(x, y);
+		}, () -> doneMatches() >= 3, 300);
+		step("tournament: the final is ready", () -> {
+			String[] fin = openMatch("Final");
+			check("the final is ready with the two winners", fin != null && fin[0].equals(pair[2][0]) && fin[1].equals(pair[1][0]), fin == null ? "none" : fin[0] + " vs " + fin[1]);
+			check("the semifinal loser is out", dummyNamed(pair[2][1]).heard("You are out of the tournament (Semifinals)"));
+			pair[3] = fin;
+		}, () -> phaseIs(dummyNamed(pair[3] == null || pair[3].length < 2 ? "Tina" : pair[3][0]), Duel.Phase.FIGHTING), 800);
+		step("tournament: a tie in the final is played again", () -> {
+			Dummy x = dummyNamed(pair[3][0]);
+			Dummy y = dummyNamed(pair[3][1]);
+			check("the final is a duel", duel(x) != null && duel(x) == duel(y) && duel(x).tournament);
+			for (Dummy p : pl) p.inbox.clear();
+			duel(x).finishAsTieForTest();
+			check("both heard it was a tie and that it is played again", x.heard("It was a tie, so the match is played again") && y.heard("It was a tie, so the match is played again"), String.valueOf(x.inbox));
+			check("the final is ready again", openMatch("Final") != null && openMatch("Final")[2].equals("READY"));
+		}, () -> phaseIs(dummyNamed(pair[3][0]), Duel.Phase.FIGHTING) && Tournament.openMatchesForTest().size() == 1 && Tournament.openMatchesForTest().get(0)[2].equals("RUNNING"), 800);
+		step("tournament: the second player wins the final", () -> {
+			Dummy x = dummyNamed(pair[3][0]);
+			Dummy y = dummyNamed(pair[3][1]);
+			check("a new duel, not the old one", duel(x) != null && duel(x) == duel(y) && duel(x).phase == Duel.Phase.FIGHTING);
+			for (Dummy p : pl) p.inbox.clear();
+			hit(y, x);
+		}, () -> Tournament.phaseForTest().equals("none"), 800);
+		step("tournament: the champion", () -> {
+			String champion = pair[3][1];
+			check("the champion is the second player of the final", champion.equals(Tournament.championForTest()), String.valueOf(Tournament.championForTest()));
+			boolean all = true;
+			for (Dummy p : pl) all &= p.heard("TOURNAMENT OVER: " + champion + " is the champion!");
+			check("everybody was told", all);
+			check("the champion got a title on screen and the others the winner's name", titleHeard(dummyNamed(champion), "CHAMPION") && titleHeard(dummyNamed(pair[3][0]), champion + " WINS"));
+			check("the bracket is complete", bracketHas(champion + " 1 - 0 " + pair[3][0]) || bracketHas(pair[3][0] + " 0 - 1 " + champion), String.valueOf(Tournament.linesForTest()));
+			check("one title saved", Tournament.titles(dummyNamed(champion).getUUID()) == 1);
+			Tournament.reloadForTest();
+			check("it is in the file", Tournament.titles(dummyNamed(champion).getUUID()) == 1 && Tournament.titles(dummyNamed(pair[3][0]).getUUID()) == 0);
+			pl[0].inbox.clear();
+			run(pl[0], "tournament top");
+			check("/tournament top lists the champion", pl[0].heard(champion + ": 1 title") && pl[0].heard("Last tournaments") && pl[0].heard(champion + " won (second " + pair[3][0] + ")"), String.valueOf(pl[0].inbox));
+			pl[0].inbox.clear();
+			run(pl[0], "tournament");
+			check("the plain command shows the last bracket", pl[0].heard("There is no tournament right now") && pl[0].heard("The last one:") && pl[0].heard("Final:"), String.valueOf(pl[0].inbox));
+			t[0] = ticks;
+		}, () -> ticks >= t[0] + 120, 300);
+		step("tournament: three players, one quits before his match", () -> {
+			check("the arenas are free again", DuelManager.activeDuels() == 0);
+			for (Dummy p : pl) if (p != null) p.inbox.clear();
+			run(pl[0], "tournament create 3 1 tkit");
+			run(pl[1], "tournament join");
+			run(pl[2], "tournament join");
+			check("it was full, so it started by itself", Tournament.phaseForTest().equals("RUNNING") && Tournament.bracketSizeForTest() == 4 && Tournament.entrantsForTest() == 3);
+			check("they were told", pl[0].heard("The tournament is full, so it starts now."));
+			check("one semifinal is ready", Tournament.openMatchesForTest().size() == 1 && openMatch("Semifinals") != null);
+			pair[0] = openMatch("Semifinals");
+			pair[1] = new String[] {null};
+			for (String n : names) if (Tournament.seedOfForTest(n) == 1) pair[1][0] = n;
+			Dummy quitter = dummyNamed(pair[0][1]);
+			quitter.inbox.clear();
+			run(quitter, "tournament leave");
+			check("he quit and was told", quitter.heard("You quit the tournament."));
+		}, () -> bracketHas("(walkover)"), 300);
+		step("tournament: the other one goes through without playing", () -> {
+			check("he was told", dummyNamed(pair[0][0]).heard("You go through to the Final."), String.valueOf(dummyNamed(pair[0][0]).inbox));
+			check("the quitter is out", dummyNamed(pair[0][1]).heard("You are out of the tournament (Semifinals)"));
+			String[] fin = openMatch("Final");
+			check("the final is seed 1 against him", fin != null && fin[0].equals(pair[1][0]) && fin[1].equals(pair[0][0]), fin == null ? "none" : fin[0] + " vs " + fin[1]);
+			pair[2] = fin;
+			DuelManager.activeDuels();
+			Dummy absent = dummyNamed(pair[2][0]);
+			absent.inbox.clear();
+			dummyNamed(pair[2][1]).inbox.clear();
+			TestDummy.disconnect(server, absent.getUUID());
+			check("the finalist with the better seed left the game", dummyNamed(pair[2][0]) == null);
+		}, () -> Tournament.phaseForTest().equals("none"), 1000);
+		step("tournament: whoever is missing loses on time", () -> {
+			check("the one who stayed is the champion", pair[2][1].equals(Tournament.championForTest()), String.valueOf(Tournament.championForTest()));
+			check("the bracket says forfeit", bracketHas("(forfeit)"), String.valueOf(Tournament.linesForTest()));
+			check("he was warned that the match would be lost", dummyNamed(pair[2][1]).heard("is not online") && dummyNamed(pair[2][1]).heard("before the match is lost"), String.valueOf(dummyNamed(pair[2][1]).inbox));
+			check("two titles are kept for two different players", Tournament.titles(dummyNamed(pair[2][1]).getUUID()) >= 1);
+		});
+		step("tournament: the host cancels, and the host leaving cancels", () -> {
+			Dummy host = dummyNamed("Wade");
+			Dummy guest = dummyNamed("Xena");
+			host.inbox.clear();
+			guest.inbox.clear();
+			run(host, "tournament create 4 2");
+			check("first to 2 with random kits", Tournament.phaseForTest().equals("SIGNUP") && guest.heard("first to 2") && guest.heard("random kits"), String.valueOf(guest.inbox));
+			run(guest, "tournament join");
+			guest.inbox.clear();
+			run(guest, "tournament cancel");
+			check("only the host cancels", guest.heard("Only Wade (or an admin) can cancel it") && Tournament.phaseForTest().equals("SIGNUP"), String.valueOf(guest.inbox));
+			guest.inbox.clear();
+			run(host, "tournament cancel");
+			check("the host cancelled it and Xena was told", Tournament.phaseForTest().equals("none") && guest.heard("Wade cancelled the tournament."), String.valueOf(guest.inbox));
+			run(host, "tournament create 4 1 tkit");
+			run(guest, "tournament join");
+			guest.inbox.clear();
+			check("an admin can cancel anything", Tournament.cancel(guest, true) == null && Tournament.phaseForTest().equals("none"));
+			run(host, "tournament create 4 1 tkit");
+			run(guest, "tournament join");
+			guest.inbox.clear();
+			TestDummy.disconnect(server, host.getUUID());
+			check("when the host leaves the game it is cancelled", Tournament.phaseForTest().equals("none") && guest.heard("the host) left"), String.valueOf(guest.inbox));
+		});
+		step("tournament: clean up", () -> {
+			for (String n : names) {
+				Dummy p = dummyNamed(n);
+				if (p != null) TestDummy.disconnect(server, p.getUUID());
+			}
+			Tournament.resetForTest();
+			check("nobody is left and the arenas are free", DuelManager.activeDuels() == 0);
+		});
+	}
+
+	private static void buildTournament() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("a moment for the world", () -> {}, () -> ticks > 60, 300);
+		tournamentSteps();
+		step("tournament: done", () -> finish());
 	}
 
 	private static void buildPranks() {
@@ -7258,6 +7535,7 @@ public final class SelfTest {
 		// ---------------------------------------------------------------- /h2h
 		h2hSteps();
 
+		tournamentSteps();
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
 			check("/leave outside a duel gives an error", a.heard("not in a duel"));

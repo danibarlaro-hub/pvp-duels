@@ -21,6 +21,7 @@ import com.pvpduels.duel.Queue;
 import com.pvpduels.duel.ReplayCommands;
 import com.pvpduels.duel.Spectators;
 import com.pvpduels.duel.Terrain;
+import com.pvpduels.duel.Tournament;
 import com.pvpduels.duel.SelfTest;
 import com.pvpduels.duel.TestDummy;
 import com.pvpduels.kit.KitCommands;
@@ -86,6 +87,7 @@ public class PvpDuelsMod implements ModInitializer {
 			Spectators.registerCommands(dispatcher);
 			Npcs.registerCommands(dispatcher);
 			Queue.registerCommands(dispatcher);
+			Tournament.registerCommands(dispatcher);
 			ArenaStudio.registerCommands(dispatcher);
 			ArenaCommands.register(dispatcher);
 			BuilderRank.registerCommands(dispatcher);
@@ -115,6 +117,7 @@ public class PvpDuelsMod implements ModInitializer {
 		LobbyKit.register();
 		Npcs.register();
 		Queue.register();
+		Tournament.register();
 		ArenaStudio.register();
 		Contest.register();
 		Achievements.register();

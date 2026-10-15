@@ -138,6 +138,8 @@ public final class Duel {
 	private int[] kitEloInfo;
 	/** True when the duel came from the queue. */
 	boolean queued;
+	/** A match of a /tournament: its result goes to the bracket and there is no rematch. */
+	boolean tournament;
 	/** The day the duel started: its missions count for that day even if it ends after midnight. */
 	private final java.time.LocalDate startedOn = Missions.today();
 	/** The winner's victory effects were played. */
@@ -965,6 +967,7 @@ public final class Duel {
 			if (winner != -2) ReplayStore.add(replay.finish(winner, points));
 			replay = null;
 		}
+		if (tournament) Tournament.onDuelFinished(this);
 		if (!celebrated && !practice) {
 			celebrated = true;
 			// A real 1v1 ends with the finale (camera, doubles, effects); a tie with two domains makes them clash. Without a
@@ -1019,7 +1022,7 @@ public final class Duel {
 				p.sendSystemMessage(Msg.info("Against " + names[1 - i] + ": you " + h2h.wins() + " - " + h2h.losses() + " " + names[1 - i]
 					+ (h2h.draws() > 0 ? " (" + h2h.draws() + (h2h.draws() == 1 ? " tie)" : " ties)") : "") + "  /h2h " + names[1 - i]));
 			}
-			p.sendSystemMessage(Msg.info("Rematch? ").copy().append(Component.literal("[REMATCH]").withStyle(style -> style.withColor(ChatFormatting.GREEN).withBold(true)
+			if (!tournament) p.sendSystemMessage(Msg.info("Rematch? ").copy().append(Component.literal("[REMATCH]").withStyle(style -> style.withColor(ChatFormatting.GREEN).withBold(true)
 				.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/again"))
 				.withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("Ask for a rematch with the same settings"))))));
 		}
