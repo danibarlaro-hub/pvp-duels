@@ -1,0 +1,30 @@
+--- two fake players
+--- watch tools: setup and what a non-watcher gets
+PASS  follow needs a duel   ([You are not watching a duel. /spectate <player> first.])
+PASS  react needs a duel   ([Only people who are watching a duel can react. /spectate <player> first.])
+PASS  the menu needs a duel too   ([Only people who are watching a duel can react. /spectate <player> first.])
+--- watch tools: the duelists are told who watches
+PASS  Watcher is watching
+PASS  both duelists were told   ([Watcher is watching.] / [Watcher is watching.])
+PASS  the watcher was told about the tools   ([Watching Alice vs Bob,   You are in spectator mode. /leave stops watching and brings you back. [LEAVE],   /follow sees through a duelist's eyes, /react sends a reaction (GG, fire, wow...) to the duelists.])
+--- watch tools: follow a duelist
+PASS  a name that is not a duelist is refused   ([Zed is not one of the duelists you are watching (Alice and Bob).])
+PASS  the camera is Bob   (Dummy['Bob'/2, l='ServerLevel[world]', x=8.50, y=101.00, z=0.50])
+PASS  without a name it switches to the other duelist
+PASS  and back
+PASS  off gives the eyes back   ([Zed is not one of the duelists you are watching (Alice and Bob)., You see through the eyes of Bob. /follow switches to the other one, /follow off stops., You see through the eyes of Alice. /follow switches to the other one, /follow off stops., You see through the eyes of Bob. /follow switches to the other one, /follow off stops., You see with your own eyes again.])
+PASS  any case works
+--- watch tools: reactions
+PASS  a reaction that does not exist is refused   ([There is no reaction called 'nosuch'. Use one of: gg, fire, wow, love, ouch, clap.])
+PASS  both duelists and the watcher see GG   ([Watcher: GG!] / [Watcher: GG!])
+PASS  a second one at once has to wait   ([Wait a moment before the next reaction.])
+PASS  with no wait it works   (2 Watcher: On fire!)
+PASS  the menu has the six
+PASS  clicking one sends it   (3 Watcher: Wow!)
+PASS  a duelist can't react   ([Only people who are watching a duel can react. /spectate <player> first.])
+--- watch tools: leaving
+PASS  the watcher left, with their own eyes
+PASS  the duelists were told   ([Watcher stopped watching.])
+--- watch tools: clean up
+--- watch tools: done
+RESULT: PASS
