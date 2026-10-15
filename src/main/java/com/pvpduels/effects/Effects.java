@@ -99,6 +99,8 @@ public final class Effects {
 		boolean mutedJingles;
 		/** The player turned the silly losing sounds off (they are on by default). */
 		boolean mutedMemes;
+		/** The silly sound everybody hears when THIS player loses (the id of a {@link MemeSounds.Meme}); "" = a random one each time. */
+		String loseSound = "";
 		/** How many particles this player gets from the heavy effects: the number of a {@link Quality} (3 = High). */
 		int quality = Quality.HIGH.ordinal();
 	}
@@ -142,6 +144,7 @@ public final class Effects {
 		if (d.weekKits == null) d.weekKits = new ArrayList<>();
 		if (d.unannounced == null) d.unannounced = new ArrayList<>();
 		if (d.quality < 0 || d.quality >= Quality.values().length) d.quality = Quality.HIGH.ordinal();
+		if (d.loseSound == null) d.loseSound = "";
 	}
 
 	private static synchronized void ensureLoaded() {
@@ -488,6 +491,16 @@ public final class Effects {
 
 	public static synchronized void setMemes(UUID id, boolean on) {
 		data(id, null).mutedMemes = !on;
+		save();
+	}
+
+	/** The id of the silly sound this player chose for when they lose, or "" (a random one each time). */
+	public static synchronized String loseSound(UUID id) {
+		return data(id, null).loseSound;
+	}
+
+	public static synchronized void setLoseSound(UUID id, String sound) {
+		data(id, null).loseSound = sound == null ? "" : sound;
 		save();
 	}
 

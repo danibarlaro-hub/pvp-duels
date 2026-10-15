@@ -101,6 +101,8 @@ public final class SelfTest {
 				buildBugs();
 			} else if (mode.equals("h2h")) {
 				buildH2h();
+			} else if (mode.equals("losesound")) {
+				buildLoseSound();
 			} else {
 				build();
 			}
@@ -724,6 +726,48 @@ public final class SelfTest {
 	}
 
 	private static void buildH2h() {
+	// ------------------------------------------------------------------ one idea at a time: your own losing sound
+
+	private static void loseSoundSteps() {
+		step("losing sound: /losesound picks the silly sound that plays when YOU lose", () -> {
+			UUID id = a.getUUID();
+			Effects.resetForTest();
+			check("nobody has chosen a losing sound at the start", Effects.loseSound(id).isEmpty() && Effects.loseSound(b.getUUID()).isEmpty());
+			check("with none chosen a random one of the twenty comes out", com.pvpduels.effects.MemeSounds.forLoser(id) != null && com.pvpduels.effects.MemeSounds.forLoser(null) != null);
+			a.inbox.clear();
+			a.link.sent.clear();
+			run(a, "losesound bonk");
+			check("/losesound bonk chooses it and she hears it", Effects.loseSound(id).equals("bonk") && memePackets(a) == 1 && a.heard("Bonk"));
+			check("it is the sound that plays when SHE loses", com.pvpduels.effects.MemeSounds.forLoser(id).id().equals("bonk"));
+			check("Bob did not get hers: his losses stay random", Effects.loseSound(b.getUUID()).isEmpty() && com.pvpduels.effects.MemeSounds.forLoser(b.getUUID()) != null);
+			a.inbox.clear();
+			run(a, "losesound Sad-Trombone");
+			check("capitals and hyphens are forgiven", Effects.loseSound(id).equals("sad_trombone"));
+			a.inbox.clear();
+			run(a, "losesound nope");
+			check("a name that does not exist is refused and changes nothing", a.heard("No silly sound is called") && Effects.loseSound(id).equals("sad_trombone"));
+			run(a, "effects");
+			check("the effects menu shows her choice", menuHas(a, "Your losing sound: Sad trombone"));
+			menuStep(a, "Your losing sound: Sad trombone");
+			check("the choice menu lists the sounds and Random", menuHas(a, "Air horn") && menuHas(a, "Fahhh") && menuHas(a, "Game over") && menuHas(a, "Random") && menuHas(a, "Back"));
+			a.link.sent.clear();
+			menuStep(a, "Air horn");
+			check("clicking one chooses it and lets her hear it", Effects.loseSound(id).equals("airhorn") && memePackets(a) == 1);
+			menuStep(a, "Random");
+			check("Random takes the choice away", Effects.loseSound(id).isEmpty());
+			menuStep(a, "Back");
+			check("Back goes to the effects menu", menuHas(a, "Your losing sound: Random"));
+			a.closeContainer();
+			run(a, "losesound bonk");
+			Effects.reloadForTest();
+			check("the choice is in the file: it survives a restart", Effects.loseSound(id).equals("bonk"));
+			a.inbox.clear();
+			run(a, "losesound random");
+			check("/losesound random goes back to a different one each time", Effects.loseSound(id).isEmpty() && a.heard("random now"));
+		});
+	}
+
+	private static void buildLoseSound() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
@@ -734,6 +778,8 @@ public final class SelfTest {
 		step("bugs: done", () -> finish());
 		h2hSteps();
 		step("h2h: done", () -> finish());
+		loseSoundSteps();
+		step("losing sound: done", () -> finish());
 	}
 
 	private static void buildPranks() {
@@ -4866,6 +4912,7 @@ public final class SelfTest {
 			Effects.setJingles(a.getUUID(), true);
 			a.closeContainer();
 		});
+		loseSoundSteps();
 		final int[] tryo = new int[3];
 		final Vec3[] tryAt = new Vec3[1];
 		step("try-out: Dora watches the film of her Shooting Star on the dummy", () -> {

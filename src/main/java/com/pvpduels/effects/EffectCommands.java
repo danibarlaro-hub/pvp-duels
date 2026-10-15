@@ -7,9 +7,13 @@ import com.pvpduels.duel.EffectsMenus;
 import com.pvpduels.util.Msg;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 
 /** /effects (your victory effects), /missions (the daily and weekly missions), /unlock_all (admins with the code). */
@@ -48,11 +52,48 @@ public final class EffectCommands {
 		dispatcher.register(Commands.literal("freecam")
 			.executes(ctx -> com.pvpduels.duel.Cinema.toggleFreeCam(ctx.getSource().getPlayerOrException()) ? 1 : 0));
 
+		// the silly sound that plays when YOU lose
+		dispatcher.register(Commands.literal("losesound")
+			.executes(ctx -> {
+				EffectsMenus.openLoseSound(ctx.getSource().getPlayerOrException());
+				return 1;
+			})
+			.then(Commands.argument("sound", StringArgumentType.word())
+				.suggests((ctx, builder) -> SharedSuggestionProvider.suggest(loseSoundNames(), builder))
+				.executes(ctx -> setLoseSound(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "sound")))));
+
 		dispatcher.register(Commands.literal("missions")
 			.executes(ctx -> {
 				EffectsMenus.openMissions(ctx.getSource().getPlayerOrException());
 				return 1;
 			}));
+	}
+
+	private static List<String> loseSoundNames() {
+		List<String> names = new ArrayList<>();
+		names.add("random");
+		for (MemeSounds.Meme m : MemeSounds.all()) names.add(m.id());
+		return names;
+	}
+
+	/** /losesound <name|random>: the silly sound everybody hears when this player loses. */
+	private static int setLoseSound(ServerPlayer player, String typed) {
+		String id = typed.toLowerCase(Locale.ROOT).replace('-', '_');
+		if (id.equals("random") || id.equals("none") || id.equals("off")) {
+			Effects.setLoseSound(player.getUUID(), "");
+			MemeSounds.play(List.of(player), MemeSounds.random());
+			player.sendSystemMessage(Msg.ok("Your losing sound is random now: a different silly sound each time."));
+			return 1;
+		}
+		MemeSounds.Meme meme = MemeSounds.of(id);
+		if (meme == null) {
+			player.sendSystemMessage(Msg.err("No silly sound is called '" + typed + "'. Type /losesound to see the twenty of them."));
+			return 0;
+		}
+		Effects.setLoseSound(player.getUUID(), meme.id());
+		MemeSounds.play(List.of(player), meme);
+		player.sendSystemMessage(Msg.ok("Your losing sound is " + meme.name() + " now. Everybody who has the silly sounds on hears it when you lose a duel."));
+		return 1;
 	}
 
 	/** Admins: gives a player everything, to try the effects. */
