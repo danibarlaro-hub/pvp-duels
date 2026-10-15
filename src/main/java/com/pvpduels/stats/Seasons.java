@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.LongSupplier;
+import java.util.function.Predicate;
 
 /**
  * Elo seasons. A season lasts 28 days. During it every real duel moves a separate season rating (it starts at 1000 for everybody, and
@@ -358,7 +359,7 @@ public final class Seasons {
 	// ------------------------------------------------------------------ commands and events
 
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-		var admin = Commands.hasPermission(Commands.LEVEL_GAMEMASTERS);
+		Predicate<CommandSourceStack> admin = Commands.hasPermission(Commands.LEVEL_GAMEMASTERS);
 		dispatcher.register(Commands.literal("season")
 			.executes(ctx -> show(ctx.getSource()))
 			.then(Commands.literal("top").executes(ctx -> top(ctx.getSource())))
