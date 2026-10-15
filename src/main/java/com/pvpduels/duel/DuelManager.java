@@ -233,7 +233,7 @@ public final class DuelManager {
 
 	/** The duel is decided: remember it so /again works right away. */
 	static void onFinished(Duel d) {
-		if (d.practice) return; // /again against a bot makes no sense: use /botduel
+		if (d.practice || d.tournament) return; // /again against a bot makes no sense (use /botduel), and a tournament match is not played twice
 		LAST.put(d.ids[0], new Last(d.ids[1], d.names[1], d.kitOwner, d.config));
 		LAST.put(d.ids[1], new Last(d.ids[0], d.names[0], d.kitOwner, d.config));
 	}
@@ -438,6 +438,22 @@ public final class DuelManager {
 		Duel started = BY_PLAYER.get(a.getUUID());
 		if (started != null) started.queued = true;
 		return isInDuel(a.getUUID()) && isInDuel(b.getUUID());
+	}
+
+	/** A match of a /tournament: a normal duel whose result goes to the bracket. */
+	static boolean startTournament(MinecraftServer server, ServerPlayer a, ServerPlayer b, UUID kitOwner, DuelConfig config, KitStore.Kit kit) {
+		Invite invite = new Invite(a.getUUID(), a.getName().getString(), b.getUUID(), b.getName().getString(), kitOwner, config, false, tickCounter);
+		start(server, invite, kit);
+		Duel started = BY_PLAYER.get(a.getUUID());
+		if (started == null || started.phase == Duel.Phase.ENDED || !isInDuel(b.getUUID())) return false;
+		started.tournament = true;
+		return true;
+	}
+
+	/** Is there an arena for one more duel? */
+	static boolean hasFreeSlot() {
+		for (int i = 0; i < SLOTS.length; i++) if (SLOTS[i] == null && TEAM_SLOTS[i] == null && !REPLAY_SLOTS[i]) return true;
+		return false;
 	}
 
 	private static void start(MinecraftServer server, Invite invite, KitStore.Kit preloaded) {

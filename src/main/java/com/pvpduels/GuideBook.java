@@ -60,7 +60,8 @@ public final class GuideBook {
 		new Topic("Queue", new String[][] {
 			{"Queue", "/queue opens the menu. Wait for somebody and the duel starts by itself: flat arena with walls, first to 3 points.\n\nIn a party you wait together and meet another party (2v2).\n\nLeave with /queue leave or the [LEAVE QUEUE] button."},
 			{"Three queues", "Public: pick a public kit (or a random one) and match with somebody who picked the same.\n\nRandom: the kit is a surprise.\n\nOwn kit: offer one of your kits; you both fight with it."},
-			{"Queue commands", "/queue public [kit]\n/queue random\n/queue own <kit>\n/queue take <player>\n/queue list\n/queue leave"}
+			{"Queue commands", "/queue public [kit]\n/queue random\n/queue own <kit>\n/queue take <player>\n/queue list\n/queue leave"},
+			{"Tournaments", "/tournament create [players 3-8] [first to 1-5] [kit|random]: friends sign up with [JOIN], the host uses /tournament start.\n\nKnockout bracket by Elo (byes for the best), ties are replayed, 2 minutes to show up.\n\n/tournament bracket, leave, cancel, top"}
 		}),
 		new Topic("Arenas", new String[][] {
 			{"Custom arenas", "/createarena or Create+ > Create Arena. Pick a template and build in a 64x64 plot.\n\nTo fight in one, pick Custom arena in the arena step of /duel."},
