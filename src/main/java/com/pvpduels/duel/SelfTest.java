@@ -1456,6 +1456,9 @@ public final class SelfTest {
 		final double[] where = new double[3];
 		final ItemStack[][] saved = new ItemStack[2][41];
 		final net.minecraft.world.entity.Entity[] shown = new net.minecraft.world.entity.Entity[1];
+		final int[] wait = new int[1];
+		// Right after a duel Alice has just been teleported back and her chunk is not yet visible to entity searches: a moment for the world.
+		step("board: a moment after the last duel", () -> wait[0] = 0, () -> ++wait[0] > 40, 300);
 		step("board: what a board says", () -> {
 			var rows = java.util.List.of(boardEntry("Zed", 1200, 7, 3), boardEntry("Yan", 1100, 1, 1), boardEntry("Xia", 1000, 0, 0));
 			check("by Elo", com.pvpduels.stats.Leaderboards.lines("elo", rows).equals(java.util.List.of("TOP 10 - ELO", "1. Zed  1200 Elo", "2. Yan  1100 Elo", "3. Xia  1000 Elo")),
