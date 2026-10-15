@@ -701,7 +701,7 @@ public final class SelfTest {
 			run(a, "queue public vkit");
 			run(b, "queue public vkit");
 			check("a vote is running", ArenaVote.isVoting(a.getUUID()));
-			run(a, "botduel vkit");
+			run(a, "botduel vkit passive");
 			check("Alice is in a practice duel meanwhile", duel(a) != null && duel(a).practice);
 		}, () -> ArenaVote.size() == 0, 300);
 		step("vote: the cancelled match", () -> {
