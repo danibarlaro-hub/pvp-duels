@@ -1,0 +1,53 @@
+--- two fake players
+--- handicap: the rule and its text
+PASS  no head start is the default
+PASS  the challenged player (index 1) gets a positive head start
+PASS  the challenger (index 0) gets a negative one
+PASS  a head start is not the default rules
+PASS  the text says it   (Head start of 2 extra hearts for the challenged player)
+PASS  it can not be huge
+PASS  the button goes through none, the rival 1 2 3 5, then you 1 2 3 5 and back to none
+PASS  menu has the option 'hkit'
+--- handicap: the menu
+PASS  menu has the option 'Flat void arena'
+--- handicap: menu version
+PASS  menu has the option 'With walls'
+--- handicap: menu mode
+PASS  menu has the option 'First to N points'
+--- handicap: menu amount
+PASS  menu has the option 'First to 2'
+--- handicap: the rules menu has the button
+PASS  it starts with none
+PASS  menu has the option 'Head start: none'
+--- handicap: two clicks
+PASS  one click: Bob gets 1 heart
+PASS  menu has the option 'Head start: 1 heart for Bob'
+--- handicap: second click
+PASS  two clicks: 2 hearts for Bob
+PASS  menu has the option 'Continue'
+--- handicap: send the challenge
+PASS  menu has the option 'Send the challenge'
+PASS  the request lists the head start   ([, Alice challenged you to a duel!,   Kit: hkit   Arena: Flat arena (with walls),   Mode: First to 2 points,   Rules: Head start of 2 extra hearts for the challenged player,   [ACCEPT]   [DENY]   (expires in 60 seconds)])
+PASS  the duel has it   (Rules[regen=true, fallDamage=true, hunger=true, building=true, handicap=2])
+--- handicap: Bob has two extra hearts in round 1
+PASS  Bob has 4 points of yellow hearts (2 hearts)   (4.0)
+PASS  Alice has none   (0.0)
+PASS  the effect is hidden: no icon
+PASS  a blow takes the yellow hearts first and the health stays full   (1.0 20.0)
+--- handicap: in round 2 he has them again
+PASS  Bob is back to 4 points   (4.0)
+PASS  Alice still has none
+--- handicap: after the duel the hearts are gone
+PASS  Bob has no yellow hearts in the lobby   (0.0 false)
+--- handicap: the other way, Alice gets three
+PASS  a duel started
+--- handicap: Alice has 6 points
+PASS  Alice has 3 hearts of yellow hearts (6 points)   (6.0)
+PASS  Bob has none
+--- handicap: a duel without a head start
+PASS  a duel started
+--- handicap: nobody has extra hearts
+PASS  without a head start nobody has yellow hearts
+--- handicap: clean up
+--- handicap: done
+RESULT: PASS
