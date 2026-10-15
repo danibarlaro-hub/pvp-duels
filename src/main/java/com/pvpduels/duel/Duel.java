@@ -106,6 +106,10 @@ public final class Duel {
 	private final int[] recapHits = new int[2];
 	private final float[] recapDamage = new float[2];
 	private final int[] recapBest = new int[2];
+	/** Swings of a melee weapon, melee hits that did damage, and critical hits, for each duelist. */
+	private final int[] recapSwings = new int[2];
+	private final int[] recapMelee = new int[2];
+	private final int[] recapCrits = new int[2];
 	private final int[] recapCombo = new int[2];
 	private final int[] recapLast = {-1000, -1000};
 	/** What each duelist had used (Stats.ITEM_USED) when the duel began, for the items listed in RecapItems. */
@@ -483,11 +487,22 @@ public final class Duel {
 
 	/** A hit between the two duelists. "victim" is the one who was hurt; amount is the damage it did. */
 	void onHit(int victim, float amount) {
-		if (practice) onPracticeHit(victim, amount);
-		else onRealHit(victim, amount);
+		onHit(victim, amount, null);
 	}
 
-	private void onRealHit(int victim, float amount) {
+	/** Same, with the damage source (to tell a melee hit from an arrow or an explosion, and to see a critical hit). */
+	void onHit(int victim, float amount, net.minecraft.world.damagesource.DamageSource source) {
+		if (practice) onPracticeHit(victim, amount);
+		else onRealHit(victim, amount, source);
+	}
+
+	/** The duelist number {@code i} swung an arm: a swing of a weapon counts for the accuracy. */
+	void onSwing(int i, ServerPlayer p) {
+		if (phase != Phase.FIGHTING || i < 0 || i > 1 || !Accuracy.isMeleeHand(p.getMainHandItem())) return;
+		recapSwings[i]++;
+	}
+
+	private void onRealHit(int victim, float amount, net.minecraft.world.damagesource.DamageSource source) {
 		if (phase != Phase.FIGHTING || amount <= 0f) return;
 		if (lastCountedTick == elapsed && lastCountedVictim == victim) return; // the same blow reported twice
 		lastCountedTick = elapsed;
@@ -498,6 +513,10 @@ public final class Duel {
 		recapCombo[hitter] = elapsed - recapLast[hitter] <= COMBO_GAP ? recapCombo[hitter] + 1 : 1;
 		recapLast[hitter] = elapsed;
 		recapBest[hitter] = Math.max(recapBest[hitter], recapCombo[hitter]);
+		if (source != null && source.getEntity() instanceof ServerPlayer attacker && source.getDirectEntity() == attacker) {
+			recapMelee[hitter]++;
+			if (Accuracy.isCrit(attacker)) recapCrits[hitter]++;
+		}
 		recapCombo[victim] = 0; // getting hit breaks your combo
 		if (replay != null) replay.hit(victim, amount);
 	}
@@ -832,9 +851,10 @@ public final class Duel {
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer who = player(i);
 			String used = who == null ? "" : RecapItems.describe(usedAtStart[i], RecapItems.snapshot(who));
+			String aim = Accuracy.describe(recapSwings[i], recapMelee[i], recapCrits[i]);
 			to.sendSystemMessage(Component.literal("  " + names[i] + ": ").withStyle(ChatFormatting.WHITE)
 				.append(Component.literal(recapHits[i] + (recapHits[i] == 1 ? " hit, " : " hits, ") + oneDecimal(recapDamage[i])
-					+ " damage, best combo " + recapBest[i] + (used.isEmpty() ? "" : " | " + used)).withStyle(ChatFormatting.GRAY)));
+					+ " damage, best combo " + recapBest[i] + (aim.isEmpty() ? "" : ", " + aim) + (used.isEmpty() ? "" : " | " + used)).withStyle(ChatFormatting.GRAY)));
 		}
 	}
 

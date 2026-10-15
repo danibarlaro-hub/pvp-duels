@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("accuracy")) {
+				buildAccuracy();
 			} else {
 				build();
 			}
@@ -580,6 +582,80 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: accuracy in the summary of a duel
+
+	private static void accuracySteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final int[] wait = new int[1];
+		step("accuracy: a duel starts (swinging outside a duel is harmless)", () -> {
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save aimkit");
+			check("the kit for the test was saved", KitStore.exists(a.getUUID(), "aimkit"));
+			a.getInventory().clearContent();
+			a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			check("a swing outside a duel changes nothing", duel(a) == null);
+			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("aimkit", false, WinMode.FIRST_TO, 1), false);
+			run(b, "accept Alice");
+			check("a duel started", duel(a) != null && duel(b) == duel(a));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 400);
+		step("accuracy: four swings with the sword and one that is not an attack, then a plain hit", () -> {
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			for (int i = 0; i < 4; i++) a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STONE));
+			for (int i = 0; i < 3; i++) a.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			b.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			b.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+			a.fallDistance = 0;
+			softHit(a, b, 2f);
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 4, 40);
+		step("accuracy: a hit while falling is a critical hit", () -> {
+			a.fallDistance = 3.0;
+			a.setOnGround(false);
+			softHit(a, b, 2f);
+			a.fallDistance = 0;
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 4, 40);
+		step("accuracy: the last hit ends the duel", () -> {
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("accuracy: the summary tells the swings that hit and the critical hits", () -> {
+			check("Alice: 3 of 4 sword swings hit (the stone swings do not count) and one was a critical hit", a.heard("accuracy 75% (3/4 swings), 1 crit"), "");
+			check("Bob swung once and hit nothing", a.heard("Bob: 0 hits") && a.heard("accuracy 0% (0/1 swing)"));
+			check("Bob read the same summary", b.heard("accuracy 75% (3/4 swings), 1 crit"));
+			check("the hits before it are still told as before", a.heard("Alice: 3 hits"));
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+			check("Accuracy.describe says nothing when nothing happened", describeNothing());
+		});
+	}
+
+	private static boolean describeNothing() {
+		return Accuracy.describe(0, 0, 0).isEmpty() && Accuracy.describe(2, 5, 0).equals("accuracy 100% (2/2 swings)") && Accuracy.describe(0, 1, 2).equals("2 crits");
+	}
+
+	private static void buildAccuracy() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		accuracySteps();
+		step("accuracy: done", () -> finish());
+	}
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +930,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		accuracySteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);

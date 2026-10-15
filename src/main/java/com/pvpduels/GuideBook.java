@@ -46,7 +46,7 @@ public final class GuideBook {
 			{"Rules", "In the menu you can switch off for that duel: natural regeneration, fall damage, hunger and building.\n\nFalling into the void loses the round."},
 			{"Fair play", "5 minutes without a hit: one random player is teleported next to the other.\n\n/kit load and the Quick kit keys are blocked in a duel."},
 			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."},
-			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."},
+			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, accuracy (swings that hit) and critical hits, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."},
 			{"Totems and health", "A totem of undying in either hand saves you in a duel, like in vanilla: you stay in the round with 1 heart.\n\nYou lose a round only when you really die: health plus absorption, so a golden apple counts.\n\nThe chat shows the last blow."},
 			{"Draw", "/draw offers a tie during a round (1v1 or 2v2). The rival clicks [ACCEPT] or uses /draw accept; /draw deny says no. It lasts 60 s.\n\nA tie ends the duel and breaks win streaks."},
 			{"Replays", "Every 1v1 duel against a player is recorded. /replay lists yours.\n\nAn admin has to send you one: [ASK ADMIN] or /replay ask <id>. You get a message when they answer."},
