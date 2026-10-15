@@ -68,6 +68,8 @@ public final class Duel {
 	/** A practice duel against the /botduel bot: no stats, no 5-minute rule, and it closes as soon as you leave. */
 	final boolean practice;
 	private final KitStore.Kit kit;
+	/** The second kit of a kit swap (null when there is no swap): see kitFor. */
+	private KitStore.Kit swapKit;
 	final UUID[] ids = new UUID[2];
 	/** The twist of the round that is being played (never RANDOM: that one is drawn again in every round). */
 	private Mutator mutator = Mutator.NONE;
@@ -216,9 +218,9 @@ public final class Duel {
 		return points[i] + " - " + points[1 - i];
 	}
 
-	private LayoutStore.Profile profileFor(ServerPlayer p) {
+	private LayoutStore.Profile profileFor(ServerPlayer p, KitStore.Kit playing) {
 		LayoutStore.Data data = LayoutStore.get(p.getUUID());
-		LayoutStore.Profile profile = kit.profile() == null ? null : data.profiles.get(kit.profile());
+		LayoutStore.Profile profile = playing.profile() == null ? null : data.profiles.get(playing.profile());
 		if (profile == null) profile = data.profiles.get(data.active);
 		return profile != null && LayoutStore.hasRules(profile) ? profile : null;
 	}
@@ -243,6 +245,19 @@ public final class Duel {
 		}
 		space.begin(arena);
 		mutator = config.rules().mutator().forRound(Mutator.NONE);
+		if (config.rules().swaps()) {
+			try {
+				swapKit = KitStore.read(server, kitOwner, config.rules().swapKit()).orElse(null);
+			} catch (IOException | RuntimeException e) {
+				swapKit = null;
+			}
+			if (swapKit == null) {
+				for (int i = 0; i < 2; i++) {
+					ServerPlayer p = player(i);
+					if (p != null) p.sendSystemMessage(Msg.err("  The second kit '" + config.rules().swapKit() + "' can not be read, so there is no kit swap."));
+				}
+			}
+		}
 		for (int i = 0; i < 2; i++) setupPlayer(i, arena);
 		phase = Phase.STARTING;
 		phaseTicks = 0;
@@ -265,6 +280,7 @@ public final class Duel {
 			}
 		}
 		announceMutator();
+		announceKits();
 	}
 
 	/** The twist of this round, told to both. */
@@ -286,6 +302,27 @@ public final class Duel {
 		mutator.apply(p, false);
 	}
 
+	/** The kit that duelist i plays with in this round: with a swap the two kits change hands at the start of every round. */
+	private KitStore.Kit kitFor(int i) {
+		if (swapKit == null) return kit;
+		boolean owner = ids[i].equals(kitOwner);
+		return owner == (round % 2 == 1) ? kit : swapKit;
+	}
+
+	/** The name of the kit that duelist i plays with in this round. */
+	String kitNameFor(int i) {
+		return kitFor(i) == kit ? config.kit() : config.rules().swapKit();
+	}
+
+	/** With a kit swap, each one is told which kit they have in this round. */
+	private void announceKits() {
+		if (swapKit == null) return;
+		for (int i = 0; i < 2; i++) {
+			ServerPlayer p = player(i);
+			if (p != null) p.sendSystemMessage(Msg.info("  Kit swap: in this round you play with " + kitNameFor(i) + ", " + names[1 - i] + " with " + kitNameFor(1 - i) + "."));
+		}
+	}
+
 	private void setupPlayer(int i, ServerLevel arena) {
 		ServerPlayer p = player(i);
 		if (p == null) return;
@@ -297,8 +334,8 @@ public final class Duel {
 		p.setAbsorptionAmount(0f);
 		p.getFoodData().setFoodLevel(20);
 		p.getFoodData().setSaturation(20f);
-		KitStore.give(p, kit);
-		LayoutStore.Profile profile = profileFor(p);
+		KitStore.give(p, kitFor(i));
+		LayoutStore.Profile profile = profileFor(p, kitFor(i));
 		if (profile != null) InventorySorter.sort(p, profile);
 		p.getInventory().setSelectedSlot(0);
 		resync(p);
@@ -703,6 +740,7 @@ public final class Duel {
 		noContact = 0;
 		warnedTeleport = false;
 		announceMutator();
+		announceKits();
 	}
 
 	/** /drill: this practice duel is a timed combo drill from now on (the timer runs while fighting). */
@@ -781,7 +819,7 @@ public final class Duel {
 				}
 			}
 		}
-		out.add("Kit: " + config.kit());
+		out.add("Kit: " + kitNameFor(i));
 		if (practice && i == 0) {
 			BotLevel level = BotDuel.levelOf(ids[1]);
 			out.add("");
