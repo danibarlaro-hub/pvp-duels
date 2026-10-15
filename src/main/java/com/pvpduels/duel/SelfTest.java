@@ -591,6 +591,13 @@ public final class SelfTest {
 		return null;
 	}
 
+	/** How many matches of the bracket have a result (a bye is not a match). */
+	private static int doneMatches() {
+		int n = 0;
+		for (String line : Tournament.linesForTest()) if (line.contains("  ->  ")) n++;
+		return n;
+	}
+
 	private static boolean bracketHas(String text) {
 		for (String line : Tournament.linesForTest()) if (line.contains(text)) return true;
 		return false;
@@ -705,7 +712,7 @@ public final class SelfTest {
 			for (Dummy p : pl) p.inbox.clear();
 			hit(dummyNamed(pair[0][0]), dummyNamed(pair[0][1]));
 			hit(dummyNamed(pair[1][0]), dummyNamed(pair[1][1]));
-		}, () -> noDuel(dummyNamed(pair[0][0])) && noDuel(dummyNamed(pair[0][1])) && noDuel(dummyNamed(pair[1][0])) && noDuel(dummyNamed(pair[1][1])), 800);
+		}, () -> doneMatches() >= 2, 300);
 		step("tournament: the winners go through, the others are out, nobody is offered a rematch", () -> {
 			Dummy qw = dummyNamed(pair[0][0]);
 			Dummy ql = dummyNamed(pair[0][1]);
@@ -732,7 +739,7 @@ public final class SelfTest {
 			check("they are fighting each other", duel(x) != null && duel(x) == duel(y) && duel(x).tournament);
 			for (Dummy p : pl) p.inbox.clear();
 			hit(x, y);
-		}, () -> noDuel(dummyNamed(pair[2][0])) && noDuel(dummyNamed(pair[2][1])), 800);
+		}, () -> doneMatches() >= 3, 300);
 		step("tournament: the final is ready", () -> {
 			String[] fin = openMatch("Final");
 			check("the final is ready with the two winners", fin != null && fin[0].equals(pair[2][0]) && fin[1].equals(pair[1][0]), fin == null ? "none" : fin[0] + " vs " + fin[1]);
