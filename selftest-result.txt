@@ -1,0 +1,37 @@
+--- two fake players
+--- drill: a drill starts
+PASS  no records yet
+PASS  /drill records says there is nothing yet   ([You have not done a combo drill yet: /drill starts one (10 seconds).])
+PASS  a kit that does not exist is refused
+PASS  a practice duel with the drill running   (200)
+PASS  Alice was told what the drill is   ([Bot joined the game, Duel vs Bot,   Kit: drillkit   Arena: Bot arena (radius 100),   Mode: Unlimited rounds   Use /leave to quit.,   Combo drill against Bot: once the countdown ends you have 10 seconds to hit it as many times as you can.,   It never hits back, so keep your combo going. Your hits, best combo and accuracy are counted and your records are saved (/drill records). /leave stops it. Practice doesn't count for your stats.])
+--- drill: five swings, one hit
+--- drill: a second hit
+--- drill: a third hit
+--- drill: the sidebar shows the clock and the aim
+PASS  the clock is on the sidebar   ([vs Bot,  , Alice: 0, Bot: 0,  , Round 1, Unlimited, Kit: drillkit,  , Hits: 3, Damage: 6.0, Combo: 3 (best 3), Drill: 0:10, Accuracy: 60%, Bot: Passive])
+PASS  and the accuracy   ([vs Bot,  , Alice: 0, Bot: 0,  , Round 1, Unlimited, Kit: drillkit,  , Hits: 3, Damage: 6.0, Combo: 3 (best 3), Drill: 0:10, Accuracy: 60%, Bot: Passive])
+--- drill: the time is over
+PASS  the drill told the numbers   ([Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Combo drill: 10 seconds,   Hits: 3  (0.3 per second),   Best combo: 3,   Damage: 6.0   Knockouts: 0,   Aim: accuracy 60% (3/5 swings), NEW RECORD: best combo 3 (was 0) most hits 3 (was 0),   Your records: best combo 3, most hits 3, best accuracy - (needs 20 swings), 1 drill done., Type /drill to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+PASS  and the aim: 3 of the 5 swings   ([Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Combo drill: 10 seconds,   Hits: 3  (0.3 per second),   Best combo: 3,   Damage: 6.0   Knockouts: 0,   Aim: accuracy 60% (3/5 swings), NEW RECORD: best combo 3 (was 0) most hits 3 (was 0),   Your records: best combo 3, most hits 3, best accuracy - (needs 20 swings), 1 drill done., Type /drill to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+PASS  the first drill breaks the records of combo and hits   ([Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Combo drill: 10 seconds,   Hits: 3  (0.3 per second),   Best combo: 3,   Damage: 6.0   Knockouts: 0,   Aim: accuracy 60% (3/5 swings), NEW RECORD: best combo 3 (was 0) most hits 3 (was 0),   Your records: best combo 3, most hits 3, best accuracy - (needs 20 swings), 1 drill done., Type /drill to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+PASS  accuracy needs 20 swings, so it is not a record yet   ([Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Combo drill: 10 seconds,   Hits: 3  (0.3 per second),   Best combo: 3,   Damage: 6.0   Knockouts: 0,   Aim: accuracy 60% (3/5 swings), NEW RECORD: best combo 3 (was 0) most hits 3 (was 0),   Your records: best combo 3, most hits 3, best accuracy - (needs 20 swings), 1 drill done., Type /drill to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+PASS  it ends by itself, with its own last line   ([Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Combo drill: 10 seconds,   Hits: 3  (0.3 per second),   Best combo: 3,   Damage: 6.0   Knockouts: 0,   Aim: accuracy 60% (3/5 swings), NEW RECORD: best combo 3 (was 0) most hits 3 (was 0),   Your records: best combo 3, most hits 3, best accuracy - (needs 20 swings), 1 drill done., Type /drill to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+PASS  the records are saved   (3 3 0 1)
+PASS  /drill records tells them   ([Your combo drill records,   Best combo: 3   Most hits: 3,   Best accuracy: none yet (a drill needs 20 swings of a weapon)   Drills done: 1])
+--- drill: a second drill, many swings and one hit
+--- drill: only the accuracy is a new record
+PASS  one hit in 25 swings is 4%, a record because there were 20 swings   ([Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Alice 0 - 0 Bot   |   Round 1, Combo drill: 10 seconds,   Hits: 1  (0.1 per second),   Best combo: 1,   Damage: 2.0   Knockouts: 0,   Aim: accuracy 4% (1/25 swings), NEW RECORD: best accuracy 4% (was 0%),   Your records: best combo 3, most hits 3, best accuracy 4%, 2 drills done., Type /drill to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+PASS  the combo and the hits are not records
+PASS  the records kept the better ones   (3 3 4 2)
+PASS  they are in the file: they survive a restart
+PASS  the accuracy of a drill
+--- drill: the Practice Bot menu has the drill
+PASS  the clock is in the menu
+PASS  menu has the option 'Combo drill'
+--- drill: /leave stops it and breaks no record
+PASS  the drill is running
+--- drill: clean up
+PASS  leaving does not count as a drill
+--- drill: done
+RESULT: PASS
