@@ -72,6 +72,11 @@ public final class Leaderboards {
 	private static boolean loaded;
 	private static int ticks;
 	private static int dueAt = -1;
+	/** How many boards the last refresh could not reach (their chunk is not loaded), and until when it keeps trying after a duel. */
+	private static int skipped;
+	private static int retryUntil = -1;
+	private static final int RETRY_TICKS = 100;
+	private static final int RETRY_FOR = 6000;
 
 	private Leaderboards() {}
 
@@ -264,12 +269,19 @@ public final class Leaderboards {
 	public static synchronized int refresh(MinecraftServer server) {
 		ensureLoaded();
 		int changed = 0;
+		skipped = 0;
 		Map<String, List<StatsStore.Entry>> rankings = new HashMap<>();
 		for (Board b : BOARDS) {
 			ServerLevel level = levelOf(server, b);
-			if (level == null || !level.hasChunkAt(BlockPos.containing(b.x, b.y, b.z))) continue;
+			if (level == null || !level.hasChunkAt(BlockPos.containing(b.x, b.y, b.z))) {
+				skipped++;
+				continue;
+			}
 			List<Entity> found = entitiesOf(level, b);
-			if (found.isEmpty()) continue;
+			if (found.isEmpty()) {
+				skipped++;
+				continue;
+			}
 			for (int i = 1; i < found.size(); i++) found.get(i).discard(); // two on top of each other: one is enough
 			if (!(found.get(0) instanceof Display.TextDisplay board)) continue;
 			List<StatsStore.Entry> ranking = rankings.computeIfAbsent(b.kind, k -> source.apply(k));
@@ -285,6 +297,7 @@ public final class Leaderboards {
 	/** Something changed in the rankings (a duel ended): the boards are refreshed in a couple of seconds. */
 	public static void markDirty() {
 		if (dueAt < 0) dueAt = ticks + SOON_TICKS;
+		retryUntil = ticks + RETRY_FOR;
 	}
 
 	// ------------------------------------------------------------------ for the self-test
@@ -294,6 +307,8 @@ public final class Leaderboards {
 		LAST.clear();
 		loaded = true;
 		dueAt = -1;
+		retryUntil = -1;
+		skipped = 0;
 		source = StatsStore::ranking;
 		if (worldFile != null) {
 			try {
@@ -313,6 +328,10 @@ public final class Leaderboards {
 	/** Forgets what was sent, so the next refresh writes every board again. */
 	public static synchronized void forgetLastForTest() {
 		LAST.clear();
+	}
+
+	public static synchronized int skippedForTest() {
+		return skipped;
 	}
 
 	public static synchronized int dueInForTest() {
@@ -344,6 +363,8 @@ public final class Leaderboards {
 			if (ticks % REFRESH_TICKS == 0 || (dueAt >= 0 && ticks >= dueAt)) {
 				dueAt = -1;
 				refresh(server);
+				// a board in a place nobody is near cannot be written: try again soon, for a few minutes after the duel
+				if (skipped > 0 && ticks < retryUntil) dueAt = ticks + RETRY_TICKS;
 			}
 		});
 	}

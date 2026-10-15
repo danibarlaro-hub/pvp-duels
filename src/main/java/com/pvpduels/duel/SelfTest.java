@@ -597,7 +597,14 @@ public final class SelfTest {
 		return board instanceof net.minecraft.world.entity.Display.TextDisplay td ? td.getText().getString() : "(not a text display)";
 	}
 
+	private static net.minecraft.world.entity.Entity boardAt(ServerLevel level, double x, double y, double z, String kind) {
+		var found = level.getEntities((net.minecraft.world.entity.Entity) null, new net.minecraft.world.phys.AABB(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1),
+			e -> e.entityTags().contains("pvpduels_board_" + kind));
+		return found.isEmpty() ? null : found.get(0);
+	}
+
 	private static void boardSteps() {
+		final double[] where = new double[3];
 		final ItemStack[][] saved = new ItemStack[2][41];
 		final net.minecraft.world.entity.Entity[] shown = new net.minecraft.world.entity.Entity[1];
 		step("board: what a board says", () -> {
@@ -648,7 +655,10 @@ public final class SelfTest {
 		step("board: a duel ends and the board follows", () -> {
 			var level = (ServerLevel) a.level();
 			com.pvpduels.stats.Leaderboards.resetForTest();
-			shown[0] = com.pvpduels.stats.Leaderboards.place(level, a.getX() + 4, a.getY() + 2.2, a.getZ(), "wins");
+			where[0] = a.getX() + 4;
+			where[1] = a.getY() + 2.2;
+			where[2] = a.getZ();
+			shown[0] = com.pvpduels.stats.Leaderboards.place(level, where[0], where[1], where[2], "wins");
 			check("a board of wins with the real statistics", shown[0] != null);
 			((net.minecraft.world.entity.Display.TextDisplay) shown[0]).setText(net.minecraft.network.chat.Component.literal("stale"));
 			com.pvpduels.stats.Leaderboards.forgetLastForTest();
@@ -665,11 +675,18 @@ public final class SelfTest {
 			check("a duel started", duel(a) != null);
 		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
 		step("board: Alice wins", () -> { hit(a, b); }, () -> noDuel(a) && noDuel(b), 800);
+		step("board: the board follows by itself", () -> {
+			// the chunk of the board may have been unloaded while they dueled in the arena: it is written as soon as it is loaded again
+		}, () -> {
+			var found = boardAt((ServerLevel) a.level(), where[0], where[1], where[2], "wins");
+			return found != null && boardText(found).equals(String.join("\n", com.pvpduels.stats.Leaderboards.lines("wins", StatsStore.ranking("wins"))));
+		}, 900);
 		step("board: the board shows the new ranking", () -> {
+			var found = boardAt((ServerLevel) a.level(), where[0], where[1], where[2], "wins");
 			String expected = String.join("\n", com.pvpduels.stats.Leaderboards.lines("wins", StatsStore.ranking("wins")));
-			check("the stale text was replaced by the ranking after the duel", boardText(shown[0]).equals(expected), boardText(shown[0]));
-			check("Alice, who has wins, is on it", boardText(shown[0]).contains("Alice"), boardText(shown[0]));
-			com.pvpduels.stats.Leaderboards.remove((ServerLevel) a.level(), shown[0].getX(), shown[0].getY(), shown[0].getZ(), 12);
+			check("the stale text was replaced by the ranking after the duel", found != null && boardText(found).equals(expected), found == null ? "no board" : boardText(found));
+			check("Alice, who has wins, is on it", found != null && boardText(found).contains("Alice"), found == null ? "no board" : boardText(found));
+			com.pvpduels.stats.Leaderboards.remove((ServerLevel) a.level(), where[0], where[1], where[2], 12);
 			com.pvpduels.stats.Leaderboards.resetForTest();
 			run(a, "kit delete boardkit");
 			a.getInventory().clearContent();
