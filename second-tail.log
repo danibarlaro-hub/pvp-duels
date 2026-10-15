@@ -1,0 +1,300 @@
+[08:04:40] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[08:04:47] [main/WARN] (pvpduels) SELFTEST mode 'clutch' is on (this must never happen in the game).
+[08:04:47] [main/INFO] (pvpduels) PvP Duels loaded.
+[08:04:48] [main/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[08:04:50] [main/INFO] (Minecraft) Loaded 1585 recipes
+[08:04:50] [main/INFO] (Minecraft) Loaded 1688 advancements
+[08:04:50] [main/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 66 new biomes in 1.116 ms
+[08:04:50] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.2
+[08:04:50] [Server thread/INFO] (Minecraft) Loading properties
+[08:04:50] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[08:04:50] [Server thread/INFO] (Minecraft) Generating keypair
+[08:04:50] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[08:04:50] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[08:04:50] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[08:04:50] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[08:04:50] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[08:04:50] [Server thread/INFO] (Minecraft) Preparing level "world"
+[08:04:51] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[08:04:51] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[08:04:51] [Server thread/INFO] (Minecraft) Time elapsed: 40 ms
+[08:04:51] [Server thread/INFO] (Minecraft) Done (0.221s)! For help, type "help"
+[08:04:51] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[08:04:51] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[08:04:51] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[08:04:51] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[08:04:51] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[08:04:51] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[08:04:51] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[08:04:51] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[08:04:51] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[08:04:51] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[08:04:51] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[08:04:51] [Server thread/INFO] (pvpduels) [selftest] --- two fake players
+[08:04:51] [Server thread/INFO] (Minecraft) Alice[local] logged in with entity id 1 at (0.0, 0.0, 0.0)
+[08:04:51] [Server thread/INFO] (Minecraft) Alice joined the game
+[08:04:51] [Server thread/INFO] (Minecraft) Bob[local] logged in with entity id 2 at (0.0, 0.0, 0.0)
+[08:04:51] [Server thread/INFO] (Minecraft) Bob joined the game
+[08:04:54] [Server thread/INFO] (pvpduels) [selftest] --- clutch: the command refuses what it should
+[08:04:54] [Server thread/INFO] (pvpduels) [selftest] PASS  nothing tried yet   ([You have not tried a clutch yet. /clutch [kit] [bot] starts one: two hearts, no regeneration, knock the bot out.])
+[08:04:54] [Server thread/INFO] (pvpduels) [selftest] PASS  a kit that does not exist is refused   ([You have no kit named 'nosuchkit'. Use /kit list.])
+[08:04:54] [Server thread/INFO] (pvpduels) [selftest] PASS  a bot that does not exist is refused   ([The bot can be: static, passive, easy, normal or hard.])
+[08:04:54] [Server thread/INFO] (pvpduels) [selftest] PASS  hearts are written with one decimal
+[08:04:54] [Server thread/INFO] (Minecraft) Bot[local] logged in with entity id 15 at (0.0, 0.0, 0.0)
+[08:04:54] [Server thread/INFO] (Minecraft) Bot joined the game
+[08:04:56] [Server thread/INFO] (pvpduels) Practice arena at x=4096 (radius 100) reset: 73529 blocks changed in 2154 ms
+[08:04:56] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bot (DuelConfig[kit=ckit, arena=BOT, walls=true, radius=100, mode=ROUNDS, limit=0, rules=Rules[regen=false, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[08:04:56] [Server thread/INFO] (pvpduels) [selftest] PASS  a practice duel with the clutch on   (Rules[regen=false, fallDamage=true, hunger=true, building=true])
+[08:04:56] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice was told the rules of it   ([Bot joined the game, Duel vs Bot,   Kit: ckit   Arena: Bot arena (radius 100),   Mode: Unlimited rounds   Use /leave to quit.,   Rules: No natural regeneration,   Clutch against Bot (Static): Stands still. It can't be pushed and never fights back.,   You have 2 hearts and nothing brings them back by itself. Knock Bot out once to win; if you go down it is a loss. /leave stops it.])
+[08:04:56] [Server thread/WARN] (Minecraft) Can't keep up! Is the server overloaded? Running 2213ms or 44 ticks behind
+[08:05:01] [Server thread/INFO] (pvpduels) [selftest] --- clutch: two hearts, and a win
+[08:05:01] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice has two hearts   (4.0)
+[08:05:01] [Server thread/INFO] (pvpduels) [selftest] PASS  the bot has all its health
+[08:05:01] [Server thread/INFO] (pvpduels) Duel Alice vs Bot is finishing (round 1, phase FIGHTING, practice true)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:806)
+	at knot//com.pvpduels.duel.Duel.endClutch(Duel.java:588)
+	at knot//com.pvpduels.duel.Duel.onDeath(Duel.java:560)
+	at knot//com.pvpduels.duel.DuelManager.allowDeath(DuelManager.java:190)
+	at knot//net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.lambda$static$5(ServerLivingEntityEvents.java:77)
+	at knot//net.minecraft.world.entity.LivingEntity.redirect$zem000$fabric-entity-events-v1$beforeEntityKilled(LivingEntity.java:4836)
+	at knot//net.minecraft.world.entity.LivingEntity.hurtServer(LivingEntity.java:1320)
+	at knot//net.minecraft.world.entity.player.Player.hurtServer(Player.java:767)
+	at knot//net.minecraft.server.level.ServerPlayer.hurtServer(ServerPlayer.java:1064)
+	at knot//com.pvpduels.duel.SelfTest.hit(SelfTest.java:255)
+	at knot//com.pvpduels.duel.SelfTest.lambda$clutchSteps$2(SelfTest.java:622)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zcn000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:2945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[08:05:06] [Server thread/INFO] (pvpduels) Duel Alice vs Bot closed (1 - 0).
+[08:05:06] [Server thread/INFO] (Minecraft) Bot lost connection: Test dummy removed
+[08:05:06] [Server thread/INFO] (Minecraft) Bot left the game
+[08:05:06] [Server thread/INFO] (pvpduels) [selftest] --- clutch: what the win said
+[08:05:06] [Server thread/INFO] (pvpduels) [selftest] PASS  the win with two hearts left   ([Combo 1  |  20.0 damage, CLUTCH! You knocked out Bot with 2.0 hearts left., NEW BEST FINISH: 2.0 hearts left (was 0.0)., Clutch record: 1 win in 1 try, win streak 1 (best 1), best finish 2.0 hearts left., Type /clutch to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+[08:05:06] [Server thread/INFO] (pvpduels) [selftest] PASS  the first win is the best finish   ([Combo 1  |  20.0 damage, CLUTCH! You knocked out Bot with 2.0 hearts left., NEW BEST FINISH: 2.0 hearts left (was 0.0)., Clutch record: 1 win in 1 try, win streak 1 (best 1), best finish 2.0 hearts left., Type /clutch to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+[08:05:06] [Server thread/INFO] (pvpduels) [selftest] PASS  the record line   ([Combo 1  |  20.0 damage, CLUTCH! You knocked out Bot with 2.0 hearts left., NEW BEST FINISH: 2.0 hearts left (was 0.0)., Clutch record: 1 win in 1 try, win streak 1 (best 1), best finish 2.0 hearts left., Type /clutch to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+[08:05:06] [Server thread/INFO] (pvpduels) [selftest] PASS  it does not say practice totals or that somebody left   ([Combo 1  |  20.0 damage, CLUTCH! You knocked out Bot with 2.0 hearts left., NEW BEST FINISH: 2.0 hearts left (was 0.0)., Clutch record: 1 win in 1 try, win streak 1 (best 1), best finish 2.0 hearts left., Type /clutch to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+[08:05:06] [Server thread/INFO] (pvpduels) [selftest] PASS  saved: 1 try, 1 win, streak 1   (1 1 1 4.0)
+[08:05:06] [Server thread/INFO] (Minecraft) Bot[local] logged in with entity id 78 at (0.0, 0.0, 0.0)
+[08:05:06] [Server thread/INFO] (Minecraft) Bot joined the game
+[08:05:06] [Server thread/INFO] (pvpduels) Practice arena at x=4096 (radius 100) reset: 0 blocks changed in 48 ms
+[08:05:06] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bot (DuelConfig[kit=ckit, arena=BOT, walls=true, radius=100, mode=ROUNDS, limit=0, rules=Rules[regen=false, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[08:05:11] [Server thread/INFO] (pvpduels) [selftest] --- clutch: a loss
+[08:05:11] [Server thread/INFO] (pvpduels) Duel Alice vs Bot is finishing (round 1, phase FIGHTING, practice true)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:806)
+	at knot//com.pvpduels.duel.Duel.endClutch(Duel.java:588)
+	at knot//com.pvpduels.duel.Duel.onDeath(Duel.java:573)
+	at knot//com.pvpduels.duel.DuelManager.allowDeath(DuelManager.java:190)
+	at knot//net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.lambda$static$5(ServerLivingEntityEvents.java:77)
+	at knot//net.minecraft.world.entity.LivingEntity.redirect$zem000$fabric-entity-events-v1$beforeEntityKilled(LivingEntity.java:4836)
+	at knot//net.minecraft.world.entity.LivingEntity.hurtServer(LivingEntity.java:1320)
+	at knot//net.minecraft.world.entity.player.Player.hurtServer(Player.java:767)
+	at knot//net.minecraft.server.level.ServerPlayer.hurtServer(ServerPlayer.java:1064)
+	at knot//com.pvpduels.duel.SelfTest.hit(SelfTest.java:255)
+	at knot//com.pvpduels.duel.SelfTest.lambda$clutchSteps$6(SelfTest.java:638)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zcn000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:2945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[08:05:16] [Server thread/INFO] (pvpduels) Duel Alice vs Bot closed (0 - 0).
+[08:05:16] [Server thread/INFO] (Minecraft) Bot lost connection: Test dummy removed
+[08:05:16] [Server thread/INFO] (Minecraft) Bot left the game
+[08:05:16] [Server thread/INFO] (pvpduels) [selftest] --- clutch: what the loss said
+[08:05:16] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice was told it was a loss   ([Not this time: Bot got you., Clutch record: 1 win in 2 tries, win streak 0 (best 1), best finish 2.0 hearts left., Type /clutch to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+[08:05:16] [Server thread/INFO] (pvpduels) [selftest] PASS  the record is 1 win in 2 tries and the streak is over   ([Not this time: Bot got you., Clutch record: 1 win in 2 tries, win streak 0 (best 1), best finish 2.0 hearts left., Type /clutch to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+[08:05:16] [Server thread/INFO] (pvpduels) [selftest] PASS  saved   (2 1 0)
+[08:05:16] [Server thread/INFO] (pvpduels) [selftest] PASS  it is in the file: it survives a restart
+[08:05:16] [Server thread/INFO] (pvpduels) [selftest] PASS  /clutch records says the same   ([Your clutch record,   Clutch record: 1 win in 2 tries, win streak 0 (best 1), best finish 2.0 hearts left.])
+[08:05:16] [Server thread/INFO] (Minecraft) Bot[local] logged in with entity id 155 at (0.0, 0.0, 0.0)
+[08:05:16] [Server thread/INFO] (Minecraft) Bot joined the game
+[08:05:16] [Server thread/INFO] (pvpduels) Practice arena at x=4096 (radius 100) reset: 0 blocks changed in 124 ms
+[08:05:16] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bot (DuelConfig[kit=ckit, arena=BOT, walls=true, radius=100, mode=ROUNDS, limit=0, rules=Rules[regen=false, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[08:05:21] [Server thread/INFO] (pvpduels) [selftest] --- clutch: leaving stops it and saves nothing
+[08:05:21] [Server thread/INFO] (pvpduels) Duel Alice vs Bot: Alice left (round 1, phase FIGHTING, practice true)
+[08:05:21] [Server thread/INFO] (pvpduels) Duel Alice vs Bot is finishing (round 1, phase FIGHTING, practice true)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:806)
+	at knot//com.pvpduels.duel.Duel.forfeit(Duel.java:696)
+	at knot//com.pvpduels.duel.DuelManager.leave(DuelManager.java:572)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$8(DuelCommands.java:58)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zfc000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zfb000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:239)
+	at knot//com.pvpduels.duel.SelfTest.lambda$clutchSteps$10(SelfTest.java:654)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zcn000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:2945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[08:05:21] [Server thread/INFO] (pvpduels) Duel Alice vs Bot closed right now
+
+java.lang.Throwable: who closed the duel
+	at knot//com.pvpduels.duel.Duel.closeNow(Duel.java:898)
+	at knot//com.pvpduels.duel.DuelManager.leave(DuelManager.java:575)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$8(DuelCommands.java:58)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zfc000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zfb000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:239)
+	at knot//com.pvpduels.duel.SelfTest.lambda$clutchSteps$10(SelfTest.java:654)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zcn000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:2945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[08:05:21] [Server thread/INFO] (pvpduels) Duel Alice vs Bot closed (0 - 0).
+[08:05:21] [Server thread/INFO] (Minecraft) Bot lost connection: Test dummy removed
+[08:05:21] [Server thread/INFO] (Minecraft) Bot left the game
+[08:05:21] [Server thread/INFO] (pvpduels) [selftest] --- clutch: after leaving
+[08:05:21] [Server thread/INFO] (pvpduels) [selftest] PASS  it said it was stopped and no try was added   ([Clutch stopped. Type /clutch to try again., Your inventory has been restored. You are protected for 5 seconds., Bot left the game])
+[08:05:21] [Server thread/INFO] (Minecraft) Bot[local] logged in with entity id 186 at (0.0, 0.0, 0.0)
+[08:05:21] [Server thread/INFO] (Minecraft) Bot joined the game
+[08:05:21] [Server thread/INFO] (pvpduels) Practice arena at x=4096 (radius 100) reset: 0 blocks changed in 33 ms
+[08:05:21] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bot (DuelConfig[kit=ckit, arena=BOT, walls=true, radius=100, mode=ROUNDS, limit=0, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[08:05:26] [Server thread/INFO] (pvpduels) [selftest] --- clutch: a normal practice is not a clutch
+[08:05:26] [Server thread/INFO] (pvpduels) [selftest] PASS  full health, regeneration on, not a clutch   (20.0 Rules[regen=true, fallDamage=true, hunger=true, building=true])
+[08:05:26] [Server thread/INFO] (pvpduels) Duel Alice vs Bot: Alice left (round 1, phase FIGHTING, practice true)
+[08:05:26] [Server thread/INFO] (pvpduels) Duel Alice vs Bot is finishing (round 1, phase FIGHTING, practice true)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:806)
+	at knot//com.pvpduels.duel.Duel.forfeit(Duel.java:696)
+	at knot//com.pvpduels.duel.DuelManager.leave(DuelManager.java:572)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$8(DuelCommands.java:58)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zfc000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zfb000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:239)
+	at knot//com.pvpduels.duel.SelfTest.lambda$clutchSteps$14(SelfTest.java:662)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zcn000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:2945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[08:05:26] [Server thread/INFO] (pvpduels) Duel Alice vs Bot closed right now
+
+java.lang.Throwable: who closed the duel
+	at knot//com.pvpduels.duel.Duel.closeNow(Duel.java:898)
+	at knot//com.pvpduels.duel.DuelManager.leave(DuelManager.java:575)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$8(DuelCommands.java:58)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zfc000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zfb000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:239)
+	at knot//com.pvpduels.duel.SelfTest.lambda$clutchSteps$14(SelfTest.java:662)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zcn000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:2945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[08:05:26] [Server thread/INFO] (pvpduels) Duel Alice vs Bot closed (0 - 0).
+[08:05:26] [Server thread/INFO] (Minecraft) Bot lost connection: Test dummy removed
+[08:05:26] [Server thread/INFO] (Minecraft) Bot left the game
+[08:05:26] [Server thread/INFO] (pvpduels) [selftest] --- clutch: clean up
+[08:05:26] [Server thread/INFO] (pvpduels) [selftest] --- clutch: done
+[08:05:26] [Server thread/INFO] (pvpduels) [selftest] RESULT: PASS
+[08:05:26] [Server thread/INFO] (Minecraft) Stopping server
+[08:05:26] [Server thread/INFO] (Minecraft) Saving players
+[08:05:26] [Server thread/INFO] (Minecraft) Saving worlds
+[08:05:26] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[08:05:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[08:05:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[08:05:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[08:05:27] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[08:05:27] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[08:05:27] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[08:05:27] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[08:05:27] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[08:05:27] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[08:05:27] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1792051474799.json
+
+BUILD SUCCESSFUL in 56s
+5 actionable tasks: 2 executed, 3 up-to-date
+Configuration cache entry stored.
