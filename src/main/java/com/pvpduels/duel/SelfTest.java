@@ -11,6 +11,7 @@ import com.pvpduels.arena.BuilderRank;
 import com.pvpduels.arena.Contest;
 import com.pvpduels.effects.Effects;
 import com.pvpduels.effects.LastHit;
+import com.pvpduels.util.Rivals;
 import com.pvpduels.effects.Missions;
 import com.pvpduels.effects.Particles;
 import com.pvpduels.effects.Victory;
@@ -126,6 +127,8 @@ public final class SelfTest {
 				buildArenavote();
 			} else if (mode.equals("kitview")) {
 				buildKitview();
+			} else if (mode.equals("rivals")) {
+				buildRivals();
 			} else {
 				build();
 			}
@@ -1115,6 +1118,66 @@ public final class SelfTest {
 	}
 
 	private static void buildAccuracy() {
+	// ------------------------------------------------------------------ one idea at a time: rivals
+
+	private static void rivalsSteps() {
+		step("rivals: the list", () -> {
+			Rivals.resetForTest();
+			a.inbox.clear();
+			b.inbox.clear();
+			run(a, "rival");
+			check("an empty list says how to start", a.heard("You have no rivals yet"), String.valueOf(a.inbox));
+			run(a, "rival add Alice");
+			check("you can't be your own rival", a.heard("You can't be your own rival") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
+			run(a, "rival add Nobodyhere");
+			check("a name nobody knows is refused", a.heard("I don't know a player called 'Nobodyhere'") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival add Bob");
+			check("Bob is added", a.heard("Bob is on your list now") && Rivals.isRival(a.getUUID(), b.getUUID()) && !Rivals.isRival(b.getUUID(), a.getUUID()), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival add bob");
+			check("twice is refused", a.heard("Bob is already on your list") && Rivals.of(a.getUUID()).size() == 1, String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival");
+			check("the list shows Bob online with a button", a.heard("Your rivals (1/10)") && a.heard("Bob - online") && a.heard("[CHALLENGE]"), String.valueOf(a.inbox));
+			Rivals.reloadForTest();
+			check("the list is in the file: it survives a restart", Rivals.isRival(a.getUUID(), b.getUUID()) && Rivals.nameOf(b.getUUID()).equals("Bob"));
+		});
+		step("rivals: the messages when somebody joins", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			Rivals.joined(server, b);
+			check("Alice is told her rival is online, with the button", a.heard("Your rival Bob is online.") && a.heard("[CHALLENGE]"), String.valueOf(a.inbox));
+			check("Bob, who has no rivals, hears nothing", !b.heard("Your rival"), String.valueOf(b.inbox));
+			run(b, "rival add Alice");
+			a.inbox.clear();
+			b.inbox.clear();
+			Rivals.joined(server, a);
+			check("when Alice joins, Bob is told", b.heard("Your rival Alice is online."), String.valueOf(b.inbox));
+			check("and Alice is told that Bob is here", a.heard("Your rival Bob is online."), String.valueOf(a.inbox));
+		});
+		step("rivals: remove, and the limit", () -> {
+			a.inbox.clear();
+			run(a, "rival remove Zed");
+			check("a name that is not there says so", a.heard("Zed is not on your list"), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival remove BOB");
+			check("Bob is taken off (any case)", a.heard("Bob is not on your list any more") && Rivals.of(a.getUUID()).isEmpty(), String.valueOf(a.inbox));
+			a.inbox.clear();
+			Rivals.joined(server, b);
+			check("he is not announced any more", !a.heard("Your rival"), String.valueOf(a.inbox));
+			for (int i = 0; i < Rivals.MAX; i++) Rivals.addForTest(a.getUUID(), UUID.nameUUIDFromBytes(("rival" + i).getBytes(java.nio.charset.StandardCharsets.UTF_8)), "Fake" + i);
+			a.inbox.clear();
+			run(a, "rival add Bob");
+			check("a full list refuses more", a.heard("You can have 10 rivals at most") && !Rivals.isRival(a.getUUID(), b.getUUID()), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "rival");
+			check("the offline ones are listed as offline", a.heard("Your rivals (10/10)") && a.heard("Fake0 - offline"), String.valueOf(a.inbox));
+			Rivals.resetForTest();
+		});
+	}
+
+	private static void buildRivals() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
@@ -1912,6 +1975,8 @@ public final class SelfTest {
 		step("vote: done", () -> finish());
 		kitviewSteps();
 		step("kitview: done", () -> finish());
+		rivalsSteps();
+		step("rivals: done", () -> finish());
 	}
 
 
@@ -2204,6 +2269,7 @@ public final class SelfTest {
 		lasthitSteps();
 		arenavoteSteps();
 		kitviewSteps();
+		rivalsSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);

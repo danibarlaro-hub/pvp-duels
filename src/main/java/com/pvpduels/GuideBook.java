@@ -51,6 +51,7 @@ public final class GuideBook {
 			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."},
 			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, accuracy (swings that hit) and critical hits, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."},
 			{"Totems and health", "A totem of undying in either hand saves you in a duel, like in vanilla: you stay in the round with 1 heart.\n\nYou lose a round only when you really die: health plus absorption, so a golden apple counts.\n\nThe chat shows the last blow."},
+			{"Rivals", "/rival add <player> puts a player on your list (up to 10). When they join you get a message with a [CHALLENGE] button, and when you join you see which rivals are online.\n\n/rival shows the list, /rival remove <player> takes one off."},
 			{"Draw", "/draw offers a tie during a round (1v1 or 2v2). The rival clicks [ACCEPT] or uses /draw accept; /draw deny says no. It lasts 60 s.\n\nA tie ends the duel and breaks win streaks."},
 			{"Replays", "Every 1v1 duel against a player is recorded. /replay lists yours.\n\nAn admin has to send you one: [ASK ADMIN] or /replay ask <id>. You get a message when they answer."},
 			{"Watching replays", "/replay watch <id> plays it with a camera. Buttons: [PAUSE], [0.5x] [1x] [2x], [VIEW] (4 angles), [RESTART], [STOP].\n\nBlocks and pearls are not replayed."}
