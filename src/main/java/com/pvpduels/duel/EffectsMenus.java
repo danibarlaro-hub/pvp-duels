@@ -99,7 +99,38 @@ public final class EffectsMenus {
 			if (now) MemeSounds.play(List.of(who), MemeSounds.random());
 			openMain(who);
 		});
+		MemeSounds.Meme mine = MemeSounds.of(Effects.loseSound(me));
+		b.set(21, DuelMenus.icon(Items.JUKEBOX, "Your losing sound: " + (mine == null ? "Random" : mine.name()), ChatFormatting.GOLD,
+			"The silly sound that everybody hears", "when YOU lose a duel (if they have the", "silly sounds on). Random = a different one each time.", "Click to choose it, or use /losesound <name>."), EffectsMenus::openLoseSound);
 		ChoiceMenu.open(p, Component.literal("Victory effects"), 3, b);
+	}
+
+	/** The twenty silly sounds: click one to hear it and use it for your losses. */
+	public static void openLoseSound(ServerPlayer p) {
+		UUID me = p.getUUID();
+		String chosen = Effects.loseSound(me);
+		ChoiceMenu.Builder b = new ChoiceMenu.Builder(4);
+		List<MemeSounds.Meme> all = MemeSounds.all();
+		for (int i = 0; i < all.size(); i++) {
+			MemeSounds.Meme meme = all.get(i);
+			boolean on = meme.id().equals(chosen);
+			int slot = (i / 7) * 9 + 1 + (i % 7);
+			b.set(slot, DuelMenus.icon(on ? Items.GOAT_HORN : Items.NOTE_BLOCK, meme.name(), on ? ChatFormatting.GREEN : ChatFormatting.WHITE,
+				on ? "Your losing sound right now." : "Click to hear it and use it", on ? "Click to hear it again." : "when you lose."), who -> {
+				Effects.setLoseSound(who.getUUID(), meme.id());
+				MemeSounds.play(List.of(who), meme);
+				openLoseSound(who);
+			});
+		}
+		boolean random = chosen.isEmpty() || MemeSounds.of(chosen) == null;
+		b.set(31, DuelMenus.icon(random ? Items.ENDER_EYE : Items.ENDER_PEARL, "Random", random ? ChatFormatting.GREEN : ChatFormatting.WHITE,
+			random ? "Your losses play a different sound each time." : "Click to get a different sound each time."), who -> {
+			Effects.setLoseSound(who.getUUID(), "");
+			MemeSounds.play(List.of(who), MemeSounds.random());
+			openLoseSound(who);
+		});
+		b.set(27, DuelMenus.icon(Items.ARROW, "Back", ChatFormatting.YELLOW), EffectsMenus::openMain);
+		ChoiceMenu.open(p, Component.literal("Your losing sound"), 4, b);
 	}
 
 	// ------------------------------------------------------------------ fireworks

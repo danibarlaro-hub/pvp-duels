@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -49,6 +50,15 @@ public final class MemeSounds {
 
 	public static Meme random() {
 		return ALL.get(ThreadLocalRandom.current().nextInt(ALL.size()));
+	}
+
+	/** The sound for when this player loses: the one they chose (/losesound), or a random one when they chose none (or nobody is meant). */
+	public static Meme forLoser(UUID loser) {
+		if (loser != null) {
+			Meme chosen = of(Effects.loseSound(loser));
+			if (chosen != null) return chosen;
+		}
+		return random();
 	}
 
 	public static Meme of(String id) {
