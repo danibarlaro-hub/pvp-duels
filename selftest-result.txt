@@ -1,0 +1,63 @@
+--- two fake players
+--- swap: two kits for the test
+PASS  the rules know the swap   (Kit swap with 'swapb')
+PASS  both kits were saved
+--- swap: Alice opens the duel menu
+PASS  menu has the option 'swapa'
+--- swap: arena
+PASS  menu has the option 'Flat void arena'
+--- swap: version
+PASS  menu has the option 'With walls'
+--- swap: mode
+PASS  menu has the option 'First to N points'
+--- swap: amount
+PASS  menu has the option 'First to 3'
+--- swap: the rules menu has the hopper
+PASS  it starts off
+PASS  menu has the option 'Kit swap: OFF'
+--- swap: the kit of the duel is refused as the second one
+PASS  menu has the option 'swapa'
+--- swap: and the menu comes back
+PASS  Alice was told why   ([That is the kit of the duel. Pick another one, or the swap would change nothing.])
+PASS  the rules menu is open again, still off
+PASS  menu has the option 'Kit swap: OFF'
+--- swap: she picks the other kit
+PASS  menu has the option 'swapb'
+--- swap: the hopper shows it and a click would switch it off
+PASS  it says the second kit
+PASS  menu has the option 'Kit swap: swapb'
+--- swap: switched off, then on again
+PASS  one click switched it off
+PASS  menu has the option 'Kit swap: OFF'
+--- swap: pick again
+PASS  menu has the option 'swapb'
+--- swap: continue and send
+PASS  it is on again
+PASS  menu has the option 'Continue'
+--- swap: confirm
+PASS  menu has the option 'Send the challenge'
+PASS  the invitation tells the swap   ([, Alice challenged you to a duel!,   Kit: swapa   Arena: Flat arena (with walls),   Mode: First to 3 points,   Rules: Kit swap with 'swapb',   [ACCEPT]   [DENY]   (expires in 60 seconds)])
+--- swap: round 1, Alice has the sword and Bob the axe
+PASS  the duel has the swap
+PASS  Alice has her kit, a sword   (1 minecraft:diamond_sword)
+PASS  Bob has the second kit, an axe   (1 minecraft:diamond_axe)
+PASS  both were told which kit they have   ([, Alice challenged you to a duel!,   Kit: swapa   Arena: Flat arena (with walls),   Mode: First to 3 points,   Rules: Kit swap with 'swapb',   [ACCEPT]   [DENY]   (expires in 60 seconds), Duel vs Alice,   Kit: swapa   Arena: Flat arena (with walls),   Mode: First to 3 points   Use /leave to quit.,   Rules: Kit swap with 'swapb',   Kit swap: in this round you play with swapb, Alice with swapa.])
+PASS  the sidebars say the kit of each   ([vs Alice,  , Bob: 0, Alice: 0,  , Round 1, First to 3, Kit: swapb])
+--- swap: round 2, they trade
+PASS  Alice has the axe now   (1 minecraft:diamond_axe)
+PASS  Bob has the sword now   (1 minecraft:diamond_sword)
+PASS  they were told again   ([Alice defeated Bob. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 1 - 0,   Kit swap: in this round you play with swapb, Bob with swapa.])
+--- swap: the sidebars changed too
+PASS  each one sees the kit they have now   ([vs Bob,  , Alice: 1, Bob: 0,  , Round 2, First to 3, Kit: swapb])
+--- swap: round 3, back as they started
+PASS  Alice has the sword again   (1 minecraft:diamond_sword)
+PASS  Bob has the axe again   (1 minecraft:diamond_axe)
+--- swap: a second kit that is gone is told and ignored
+PASS  a duel started
+--- swap: both play with the first kit
+PASS  Alice was told   ([Duel request sent to Bob. It expires in 60 seconds.,   The second kit 'nosuchkit' can not be read, so there is no kit swap., Duel vs Bob,   Kit: swapa   Arena: Flat arena (no walls),   Mode: First to 1 point   Use /leave to quit.,   Rules: Kit swap with 'nosuchkit'])
+PASS  both have the sword
+--- swap: clean up
+PASS  the test kits are gone
+--- swap: done
+RESULT: PASS

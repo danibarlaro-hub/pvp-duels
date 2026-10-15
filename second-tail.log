@@ -1,0 +1,257 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as configuration cache cannot be reused because the file system entry '../../../.gradle/caches/fabric-loom/mojang_versions_manifest.json.part' has been removed.
+
+> Configure project :
+Fabric Loom: 1.18.4
+
+> Task :generateLog4jConfig UP-TO-DATE
+> Task :generateDLIConfig UP-TO-DATE
+> Task :configureLaunch UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :processResources
+> Task :classes
+
+> Task :runServer
+[07:26:53] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.2 with Fabric Loader 0.19.5
+[07:26:53] [main/INFO] (FabricLoader/Mappings) Mappings not present!
+[07:26:53] [main/INFO] (FabricLoader) Loading 44 mods:
+	- fabric-advancement-api-v1 1.0.0+58719a3b9e
+	- fabric-api 0.161.0+26.2
+	- fabric-api-base 2.0.4+ece063239e
+	- fabric-api-lookup-api-v1 2.0.18+11e1c9a39e
+	- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	- fabric-block-api-v1 3.1.0+53515aab9e
+	- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	- fabric-command-api-v2 3.1.0+00cb03469e
+	- fabric-content-registries-v0 11.3.2+37b1aa249e
+	- fabric-convention-tags-v2 4.7.1+1f023a9e9e
+	- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	- fabric-creative-tab-api-v1 5.0.15+6468574f9e
+	- fabric-data-attachment-api-v1 2.2.19+515ac5339e
+	- fabric-data-generation-api-v1 25.6.0+c0da0b829e
+	- fabric-debug-api-v1 1.0.2+c792624d9e
+	- fabric-dimensions-v1 5.1.12+515ac5339e
+	- fabric-entity-events-v1 5.0.5+06488ac19e
+	- fabric-events-interaction-v0 5.2.8+515ac5339e
+	- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	- fabric-gametest-api-v1 4.0.22+4a7fa0819e
+	- fabric-item-api-v1 14.5.0+c68f6cbe9e
+	- fabric-lifecycle-events-v1 4.1.4+29b6eb019e
+	- fabric-loot-api-v3 3.0.17+06488ac19e
+	- fabric-menu-api-v1 2.0.17+086d547a9e
+	- fabric-message-api-v1 7.0.8+bb2ed3f79e
+	- fabric-networking-api-v1 6.3.4+2989c6a09e
+	- fabric-object-builder-api-v1 24.1.1+6fcd5f039e
+	- fabric-particles-v1 5.0.19+d1756aa99e
+	- fabric-permission-api-v1 1.0.5+e442d8d09e
+	- fabric-recipe-api-v1 9.0.22+11e1c9a39e
+	- fabric-registry-sync-v0 7.1.1+c7bd5b8e9e
+	- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	- fabric-resource-loader-v1 2.0.13+9edec1269e
+	- fabric-serialization-api-v1 2.0.4+11a26f319e
+	- fabric-tag-api-v1 2.1.4+515ac5339e
+	- fabric-transfer-api-v1 8.0.13+11dbb7d79e
+	- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.5
+	- java 25
+	- minecraft 26.2
+	- mixinextras 0.5.5
+	- pvpduels 0.23.0-swap
+[07:26:53] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
+[07:26:53] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[07:26:58] [main/WARN] (pvpduels) SELFTEST mode 'swap' is on (this must never happen in the game).
+[07:26:58] [main/INFO] (pvpduels) PvP Duels loaded.
+[07:26:58] [main/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[07:27:00] [main/INFO] (Minecraft) Loaded 1585 recipes
+[07:27:00] [main/INFO] (Minecraft) Loaded 1688 advancements
+[07:27:00] [main/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 66 new biomes in 1.201 ms
+[07:27:00] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.2
+[07:27:00] [Server thread/INFO] (Minecraft) Loading properties
+[07:27:00] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[07:27:00] [Server thread/INFO] (Minecraft) Generating keypair
+[07:27:00] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[07:27:00] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[07:27:00] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[07:27:00] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[07:27:00] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[07:27:00] [Server thread/INFO] (Minecraft) Preparing level "world"
+[07:27:00] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[07:27:00] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[07:27:00] [Server thread/INFO] (Minecraft) Time elapsed: 40 ms
+[07:27:00] [Server thread/INFO] (Minecraft) Done (0.256s)! For help, type "help"
+[07:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[07:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[07:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[07:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[07:27:00] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[07:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[07:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[07:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[07:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[07:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[07:27:00] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[07:27:00] [Server thread/INFO] (pvpduels) [selftest] --- two fake players
+[07:27:00] [Server thread/INFO] (Minecraft) Alice[local] logged in with entity id 1 at (0.0, 0.0, 0.0)
+[07:27:00] [Server thread/INFO] (Minecraft) Alice joined the game
+[07:27:01] [Server thread/INFO] (Minecraft) Bob[local] logged in with entity id 2 at (0.0, 0.0, 0.0)
+[07:27:01] [Server thread/INFO] (Minecraft) Bob joined the game
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: two kits for the test
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  the rules know the swap   (Kit swap with 'swapb')
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  both kits were saved
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: Alice opens the duel menu
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'swapa'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: arena
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'Flat void arena'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: version
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'With walls'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: mode
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'First to N points'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: amount
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'First to 3'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: the rules menu has the hopper
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  it starts off
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'Kit swap: OFF'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: the kit of the duel is refused as the second one
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'swapa'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: and the menu comes back
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice was told why   ([That is the kit of the duel. Pick another one, or the swap would change nothing.])
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  the rules menu is open again, still off
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'Kit swap: OFF'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: she picks the other kit
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'swapb'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: the hopper shows it and a click would switch it off
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  it says the second kit
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'Kit swap: swapb'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: switched off, then on again
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  one click switched it off
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'Kit swap: OFF'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: pick again
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'swapb'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: continue and send
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  it is on again
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'Continue'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] --- swap: confirm
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  menu has the option 'Send the challenge'
+[07:27:03] [Server thread/INFO] (pvpduels) [selftest] PASS  the invitation tells the swap   ([, Alice challenged you to a duel!,   Kit: swapa   Arena: Flat arena (with walls),   Mode: First to 3 points,   Rules: Kit swap with 'swapb',   [ACCEPT]   [DENY]   (expires in 60 seconds)])
+[07:27:03] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bob (DuelConfig[kit=swapa, arena=FLAT, walls=true, radius=0, mode=FIRST_TO, limit=3, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true, swapKit=swapb], custom=], slot 0)
+[07:27:08] [Server thread/INFO] (pvpduels) [selftest] --- swap: round 1, Alice has the sword and Bob the axe
+[07:27:08] [Server thread/INFO] (pvpduels) [selftest] PASS  the duel has the swap
+[07:27:08] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice has her kit, a sword   (1 minecraft:diamond_sword)
+[07:27:08] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob has the second kit, an axe   (1 minecraft:diamond_axe)
+[07:27:08] [Server thread/INFO] (pvpduels) [selftest] PASS  both were told which kit they have   ([, Alice challenged you to a duel!,   Kit: swapa   Arena: Flat arena (with walls),   Mode: First to 3 points,   Rules: Kit swap with 'swapb',   [ACCEPT]   [DENY]   (expires in 60 seconds), Duel vs Alice,   Kit: swapa   Arena: Flat arena (with walls),   Mode: First to 3 points   Use /leave to quit.,   Rules: Kit swap with 'swapb',   Kit swap: in this round you play with swapb, Alice with swapa.])
+[07:27:08] [Server thread/INFO] (pvpduels) [selftest] PASS  the sidebars say the kit of each   ([vs Alice,  , Bob: 0, Alice: 0,  , Round 1, First to 3, Kit: swapb])
+[07:27:14] [Server thread/INFO] (pvpduels) [selftest] --- swap: round 2, they trade
+[07:27:14] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice has the axe now   (1 minecraft:diamond_axe)
+[07:27:14] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob has the sword now   (1 minecraft:diamond_sword)
+[07:27:14] [Server thread/INFO] (pvpduels) [selftest] PASS  they were told again   ([Alice defeated Bob. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 1 - 0,   Kit swap: in this round you play with swapb, Bob with swapa.])
+[07:27:15] [Server thread/INFO] (pvpduels) [selftest] --- swap: the sidebars changed too
+[07:27:15] [Server thread/INFO] (pvpduels) [selftest] PASS  each one sees the kit they have now   ([vs Bob,  , Alice: 1, Bob: 0,  , Round 2, First to 3, Kit: swapb])
+[07:27:21] [Server thread/INFO] (pvpduels) [selftest] --- swap: round 3, back as they started
+[07:27:21] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice has the sword again   (1 minecraft:diamond_sword)
+[07:27:21] [Server thread/INFO] (pvpduels) [selftest] PASS  Bob has the axe again   (1 minecraft:diamond_axe)
+[07:27:21] [Server thread/INFO] (pvpduels) Duel Alice vs Bob: Alice left (round 3, phase FIGHTING, practice false)
+[07:27:21] [Server thread/INFO] (pvpduels) Duel Alice vs Bob is finishing (round 3, phase FIGHTING, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:811)
+	at knot//com.pvpduels.duel.Duel.forfeit(Duel.java:701)
+	at knot//com.pvpduels.duel.DuelManager.leave(DuelManager.java:572)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$8(DuelCommands.java:58)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zdl000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zdk000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:239)
+	at knot//com.pvpduels.duel.SelfTest.lambda$swapSteps$22(SelfTest.java:673)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zhj000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:3945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[07:27:21] [Server thread/INFO] (pvpduels) Replay 5xpl6 saved: Alice vs Bob, 17 seconds, 0 KB
+[07:27:26] [Server thread/INFO] (pvpduels) Duel Alice vs Bob closed (2 - 0).
+[07:27:26] [Server thread/INFO] (pvpduels) [selftest] --- swap: a second kit that is gone is told and ignored
+[07:27:26] [Server thread/INFO] (pvpduels) Duel started: Alice vs Bob (DuelConfig[kit=swapa, arena=FLAT, walls=false, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true, swapKit=nosuchkit], custom=], slot 0)
+[07:27:26] [Server thread/INFO] (pvpduels) [selftest] PASS  a duel started
+[07:27:31] [Server thread/INFO] (pvpduels) [selftest] --- swap: both play with the first kit
+[07:27:31] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice was told   ([Duel request sent to Bob. It expires in 60 seconds.,   The second kit 'nosuchkit' can not be read, so there is no kit swap., Duel vs Bob,   Kit: swapa   Arena: Flat arena (no walls),   Mode: First to 1 point   Use /leave to quit.,   Rules: Kit swap with 'nosuchkit'])
+[07:27:31] [Server thread/INFO] (pvpduels) [selftest] PASS  both have the sword
+[07:27:31] [Server thread/INFO] (pvpduels) Duel Alice vs Bob: Alice left (round 1, phase FIGHTING, practice false)
+[07:27:31] [Server thread/INFO] (pvpduels) Duel Alice vs Bob is finishing (round 1, phase FIGHTING, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:811)
+	at knot//com.pvpduels.duel.Duel.forfeit(Duel.java:701)
+	at knot//com.pvpduels.duel.DuelManager.leave(DuelManager.java:572)
+	at knot//com.pvpduels.duel.DuelCommands.lambda$register$8(DuelCommands.java:58)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable$mixinextras$wrapped$10(ContextChain.java:73)
+	at knot//com.mojang.brigadier.context.ContextChain.mixinextras$bridge$runExecutable$mixinextras$wrapped$10$11(ContextChain.java)
+	at knot//com.mojang.brigadier.context.ContextChain.wrapMethod$zdl000$fabric-entity-events-v1$onRunExecutable(ContextChain.java:1057)
+	at knot//com.mojang.brigadier.context.ContextChain.runExecutable(ContextChain.java)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:29)
+	at knot//net.minecraft.commands.execution.tasks.ExecuteCommand.execute(ExecuteCommand.java:13)
+	at knot//net.minecraft.commands.execution.UnboundEntryAction.lambda$bind$0(UnboundEntryAction.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute$mixinextras$wrapped$8(CommandQueueEntry.java:8)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.mixinextras$bridge$execute$mixinextras$wrapped$8$9(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.wrapMethod$zdk000$fabric-entity-events-v1$onExecute(CommandQueueEntry.java:549)
+	at knot//net.minecraft.commands.execution.CommandQueueEntry.execute(CommandQueueEntry.java)
+	at knot//net.minecraft.commands.execution.ExecutionContext.runCommandQueue(ExecutionContext.java:106)
+	at knot//net.minecraft.commands.Commands.executeCommandInContext(Commands.java:434)
+	at knot//net.minecraft.commands.Commands.performCommand(Commands.java:366)
+	at knot//net.minecraft.commands.Commands.performPrefixedCommand(Commands.java:352)
+	at knot//com.pvpduels.duel.SelfTest.run(SelfTest.java:239)
+	at knot//com.pvpduels.duel.SelfTest.lambda$swapSteps$26(SelfTest.java:683)
+	at knot//com.pvpduels.duel.SelfTest.tick(SelfTest.java:195)
+	at knot//com.pvpduels.duel.SelfTest.lambda$register$3(SelfTest.java:108)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zhj000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:3945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[07:27:31] [Server thread/INFO] (pvpduels) Replay 17bp0 saved: Alice vs Bob, 5 seconds, 0 KB
+[07:27:36] [Server thread/INFO] (pvpduels) Duel Alice vs Bob closed (0 - 0).
+[07:27:36] [Server thread/INFO] (pvpduels) [selftest] --- swap: clean up
+[07:27:36] [Server thread/INFO] (pvpduels) [selftest] PASS  the test kits are gone
+[07:27:36] [Server thread/INFO] (pvpduels) [selftest] --- swap: done
+[07:27:36] [Server thread/INFO] (pvpduels) [selftest] RESULT: PASS
+[07:27:36] [Server thread/INFO] (Minecraft) Stopping server
+[07:27:36] [Server thread/INFO] (Minecraft) Saving players
+[07:27:36] [Server thread/INFO] (Minecraft) Saving worlds
+[07:27:36] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[07:27:36] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[07:27:36] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[07:27:36] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[07:27:36] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[07:27:36] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[07:27:36] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[07:27:36] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[07:27:36] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[07:27:36] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[07:27:36] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1792049209233.json
+
+BUILD SUCCESSFUL in 50s
+5 actionable tasks: 2 executed, 3 up-to-date
+Configuration cache entry stored.
