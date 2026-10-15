@@ -1,0 +1,46 @@
+--- two fake players
+--- board: what a board says
+PASS  by Elo   ([TOP 10 - ELO, 1. Zed  1200 Elo, 2. Yan  1100 Elo, 3. Xia  1000 Elo])
+PASS  by wins (one win is singular)   ([TOP 10 - WINS, 1. Zed  7 wins, 2. Yan  1 win, 3. Xia  0 wins])
+PASS  by win streak
+PASS  with nobody it says so
+PASS  only the first ten, with the title that is eleven lines
+PASS  quotes and slashes of a name are dropped
+PASS  the component says the same as the lines
+PASS  three kinds and no more
+PASS  /leaderboard is hidden from a normal player and open to an admin
+--- board: place, refresh, move, remove
+PASS  a text display with the tag of the board was made   (TextDisplay['Text Display'/17, l='ServerLevel[world]', x=4.00, y=-57.80, z=0.00])
+PASS  placing it also filled it   (TOP 10 - ELO
+1. Zed  1200 Elo
+2. Yan  1100 Elo)
+PASS  it is registered
+PASS  a second refresh finds nothing new
+PASS  when the ranking changes the board is written again   (TOP 10 - ELO
+1. Wim  1300 Elo
+2. Zed  1200 Elo
+3. Yan  1100 Elo)
+PASS  a board of wins next to it   (TOP 10 - WINS
+1. Wim  9 wins
+2. Zed  7 wins
+3. Yan  1 win)
+PASS  each board keeps its own text
+PASS  the places are in the file: they survive a restart
+PASS  a board far away is not found
+PASS  the closest board goes away
+PASS  the other one too
+PASS  and with none left there is nothing to remove
+--- board: a duel ends and the board follows
+PASS  a board of wins with the real statistics
+PASS  a duel started
+--- board: Alice wins
+--- board: the board follows by itself
+--- board: the board shows the new ranking
+PASS  the stale text was replaced by the ranking after the duel   (TOP 10 - WINS
+1. Alice  1 win
+2. Bob  0 wins)
+PASS  Alice, who has wins, is on it   (TOP 10 - WINS
+1. Alice  1 win
+2. Bob  0 wins)
+--- board: done
+RESULT: PASS
