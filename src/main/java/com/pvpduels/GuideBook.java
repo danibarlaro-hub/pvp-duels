@@ -48,6 +48,7 @@ public final class GuideBook {
 			{"Round mutators", "In the rules menu, click the nether star to pick a twist that both of you get: low gravity, speed, heavy hitters, double hearts, spotlight, or a random one at the start of every round."},
 			{"Kit swap", "In the rules menu, the hopper picks a second kit. You start with the first, your rival with the second, and you trade them at the start of every round."},
 			{"Fair play", "5 minutes without a hit: one random player is teleported next to the other.\n\n/kit load and the Quick kit keys are blocked in a duel."},
+			{"Watcher tools", "While you watch: /follow sees through a duelist's eyes (/follow again switches, /follow off stops).\n\n/react sends GG, fire, wow, love, ouch or clap to the duelists, with 3 seconds between two. The duelists are told who watches."},
 			{"Watching", "/duels lists the duels now: click [WATCH].\n/spectate <player> or /watch <player> does the same.\n\n/leave stops watching and gives your things back."},
 			{"After a duel", "You get a summary: how long it lasted, hits, damage, best combo, accuracy (swings that hit) and critical hits, and the totems, pearls, golden apples and potions each of you used.\n\nYou are protected for 5 s."},
 			{"Totems and health", "A totem of undying in either hand saves you in a duel, like in vanilla: you stay in the round with 1 heart.\n\nYou lose a round only when you really die: health plus absorption, so a golden apple counts.\n\nThe chat shows the last blow."},

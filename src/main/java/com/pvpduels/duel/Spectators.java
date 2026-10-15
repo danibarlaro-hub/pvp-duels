@@ -80,6 +80,8 @@ public final class Spectators {
 		p.sendSystemMessage(Msg.title("Watching " + duel.names[0] + " vs " + duel.names[1]));
 		p.sendSystemMessage(Msg.info("  You are in spectator mode. /leave stops watching and brings you back. ")
 			.copy().append(Msg.button("[LEAVE]", net.minecraft.ChatFormatting.RED, "/leave", "Stop watching and get your things back")));
+		p.sendSystemMessage(Msg.info("  /follow sees through a duelist's eyes, /react sends a reaction (GG, fire, wow...) to the duelists."));
+		tellDuelists(duel, p.getName().getString() + " is watching.");
 		PvpDuelsMod.LOGGER.info("{} is watching the duel {} vs {}", p.getName().getString(), duel.names[0], duel.names[1]);
 		return null;
 	}
@@ -90,6 +92,41 @@ public final class Spectators {
 		double z = target.level() == level ? target.getZ() : 0;
 		p.teleportTo(level, x, y, z, Set.of(), p.getYRot(), 30f, true);
 		p.setDeltaMovement(0, 0, 0);
+	}
+
+	private static void tellDuelists(Duel duel, String text) {
+		for (int i = 0; i < 2; i++) {
+			ServerPlayer d = duel.player(i);
+			if (d != null) d.sendSystemMessage(Msg.info(text));
+		}
+	}
+
+	/**
+	 * /follow [duelist|off]: the watcher sees through the eyes of a duelist (with no name it goes to the other duelist, or to the first one).
+	 * Returns an error text, or null when it worked.
+	 */
+	public static String follow(ServerPlayer p, String name) {
+		Duel duel = WATCHING.get(p.getUUID());
+		if (duel == null) return "You are not watching a duel. /spectate <player> first.";
+		if (name != null && name.equalsIgnoreCase("off")) {
+			p.setCamera(p);
+			p.sendSystemMessage(Msg.ok("You see with your own eyes again."));
+			return null;
+		}
+		ServerPlayer target = null;
+		if (name == null) {
+			target = p.getCamera() == duel.player(0) ? duel.player(1) : duel.player(0);
+		} else {
+			for (int i = 0; i < 2; i++) {
+				ServerPlayer d = duel.player(i);
+				if (d != null && d.getName().getString().equalsIgnoreCase(name)) target = d;
+			}
+			if (target == null) return name + " is not one of the duelists you are watching (" + duel.names[0] + " and " + duel.names[1] + ").";
+		}
+		if (target == null) return "That duelist is not here right now.";
+		p.setCamera(target);
+		p.sendSystemMessage(Msg.ok("You see through the eyes of " + target.getName().getString() + ". /follow switches to the other one, /follow off stops."));
+		return null;
 	}
 
 	/** The players who are watching this duel right now. */
@@ -108,6 +145,8 @@ public final class Spectators {
 	public static void exit(ServerPlayer p) {
 		Duel duel = WATCHING.remove(p.getUUID());
 		if (duel == null) return;
+		p.setCamera(p);
+		if (!duel.closed && duel.phase != Duel.Phase.ENDED) tellDuelists(duel, p.getName().getString() + " stopped watching.");
 		Cinema.release(p);
 		PlayerBackup.restore(p.level().getServer(), p);
 		p.sendSystemMessage(Msg.ok("You stopped watching. Your inventory was restored."));
@@ -143,11 +182,22 @@ public final class Spectators {
 	}
 
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+		dispatcher.register(Commands.literal("follow")
+			.executes(ctx -> answer(ctx.getSource(), follow(ctx.getSource().getPlayerOrException(), null)))
+			.then(Commands.argument("duelist", StringArgumentType.word()).suggests(DUELISTS)
+				.executes(ctx -> answer(ctx.getSource(), follow(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "duelist"))))));
+		Reactions.registerCommands(dispatcher);
 		// Minecraft has its own /spectate (for admins); ours takes its place, /watch does the same.
 		com.pvpduels.workshop.ItemCommands.removeVanilla(dispatcher, "spectate");
 		for (String root : new String[] {"spectate", "watch"}) {
 			dispatcher.register(spectateNode(root));
 		}
+	}
+
+	private static int answer(CommandSourceStack source, String problem) {
+		if (problem == null) return 1;
+		source.sendFailure(Msg.err(problem));
+		return 0;
 	}
 
 	private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> spectateNode(String root) {

@@ -131,6 +131,8 @@ public final class SelfTest {
 				buildRivals();
 			} else if (mode.equals("clutch")) {
 				buildClutch();
+			} else if (mode.equals("watchtools")) {
+				buildWatchtools();
 			} else {
 				build();
 			}
@@ -1067,6 +1069,15 @@ public final class SelfTest {
 		final String[] bn = new String[1];
 		step("clutch: the command refuses what it should", () -> {
 			Clutch.resetForTest();
+	// ------------------------------------------------------------------ one idea at a time: tools for the people who watch
+
+	private static void watchtoolsSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final Dummy[] w = new Dummy[1];
+		final int[] t = new int[1];
+		step("watch tools: setup and what a non-watcher gets", () -> {
+			Reactions.resetForTest();
+			w[0] = spawn("Watcher");
 			for (int i = 0; i < 41; i++) {
 				saved[0][i] = a.getInventory().getItem(i).copy();
 				saved[1][i] = b.getInventory().getItem(i).copy();
@@ -1989,6 +2000,77 @@ public final class SelfTest {
 		step("clutch: clean up", () -> {
 			Clutch.resetForTest();
 			run(a, "kit delete ckit");
+			run(a, "kit save wkit");
+			a.getInventory().clearContent();
+			w[0].inbox.clear();
+			run(w[0], "follow");
+			check("follow needs a duel", w[0].heard("You are not watching a duel"), String.valueOf(w[0].inbox));
+			w[0].inbox.clear();
+			run(w[0], "react gg");
+			check("react needs a duel", w[0].heard("Only people who are watching a duel can react") && Reactions.shown() == 0, String.valueOf(w[0].inbox));
+			w[0].inbox.clear();
+			run(w[0], "react");
+			check("the menu needs a duel too", w[0].heard("Only people who are watching a duel can react") && !(w[0].containerMenu instanceof ChestMenu), String.valueOf(w[0].inbox));
+			invite(a, b, new DuelConfig("wkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1));
+			t[0] = ticks;
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING) && ticks - t[0] > 30, 800);
+		step("watch tools: the duelists are told who watches", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			w[0].inbox.clear();
+			run(w[0], "spectate Alice");
+			check("Watcher is watching", Spectators.isIn(w[0].getUUID()));
+			check("both duelists were told", a.heard("Watcher is watching.") && b.heard("Watcher is watching."), a.inbox + " / " + b.inbox);
+			check("the watcher was told about the tools", w[0].heard("/follow") && w[0].heard("/react"), String.valueOf(w[0].inbox));
+		});
+		step("watch tools: follow a duelist", () -> {
+			w[0].inbox.clear();
+			run(w[0], "follow Zed");
+			check("a name that is not a duelist is refused", w[0].heard("Zed is not one of the duelists you are watching (Alice and Bob)") && w[0].getCamera() == w[0], String.valueOf(w[0].inbox));
+			run(w[0], "follow Bob");
+			check("the camera is Bob", w[0].getCamera() == b, String.valueOf(w[0].getCamera()));
+			run(w[0], "follow");
+			check("without a name it switches to the other duelist", w[0].getCamera() == a);
+			run(w[0], "follow");
+			check("and back", w[0].getCamera() == b);
+			run(w[0], "follow off");
+			check("off gives the eyes back", w[0].getCamera() == w[0] && w[0].heard("You see with your own eyes again."), String.valueOf(w[0].inbox));
+			run(w[0], "follow alice");
+			check("any case works", w[0].getCamera() == a);
+		});
+		step("watch tools: reactions", () -> {
+			w[0].inbox.clear();
+			a.inbox.clear();
+			b.inbox.clear();
+			run(w[0], "react nosuch");
+			check("a reaction that does not exist is refused", w[0].heard("There is no reaction called 'nosuch'") && Reactions.shown() == 0, String.valueOf(w[0].inbox));
+			run(w[0], "react gg");
+			check("both duelists and the watcher see GG", a.heard("Watcher: GG!") && b.heard("Watcher: GG!") && w[0].heard("Watcher: GG!") && Reactions.shown() == 1 && Reactions.lastText().equals("Watcher: GG!"),
+				a.inbox + " / " + b.inbox);
+			w[0].inbox.clear();
+			run(w[0], "react fire");
+			check("a second one at once has to wait", w[0].heard("Wait a moment before the next reaction") && Reactions.shown() == 1, String.valueOf(w[0].inbox));
+			Reactions.waitTicks = 0;
+			run(w[0], "react fire");
+			check("with no wait it works", Reactions.shown() == 2 && Reactions.lastText().equals("Watcher: On fire!"), Reactions.shown() + " " + Reactions.lastText());
+			run(w[0], "react");
+			check("the menu has the six", menuHas(w[0], "GG!") && menuHas(w[0], "On fire!") && menuHas(w[0], "Wow!") && menuHas(w[0], "Love it!") && menuHas(w[0], "Ouch!") && menuHas(w[0], "Clap clap!"));
+			check("clicking one sends it", clickMenu(w[0], "Wow!") && Reactions.shown() == 3 && Reactions.lastText().equals("Watcher: Wow!"), Reactions.shown() + " " + Reactions.lastText());
+			a.inbox.clear();
+			run(a, "react gg");
+			check("a duelist can't react", a.heard("Only people who are watching a duel can react") && Reactions.shown() == 3, String.valueOf(a.inbox));
+		});
+		step("watch tools: leaving", () -> {
+			a.inbox.clear();
+			run(w[0], "leave");
+			check("the watcher left, with their own eyes", !Spectators.isIn(w[0].getUUID()) && w[0].getCamera() == w[0]);
+			check("the duelists were told", a.heard("Watcher stopped watching."), String.valueOf(a.inbox));
+			hit(a, b);
+		}, () -> noDuel(a) && noDuel(b), 800);
+		step("watch tools: clean up", () -> {
+			Reactions.resetForTest();
+			TestDummy.disconnect(server, w[0].getUUID());
+			run(a, "kit delete wkit");
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			for (int i = 0; i < 41; i++) {
@@ -2029,6 +2111,7 @@ public final class SelfTest {
 	private static void buildArenavote() {
 	private static void buildKitview() {
 	private static void buildClutch() {
+	private static void buildWatchtools() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
@@ -2057,6 +2140,8 @@ public final class SelfTest {
 		step("rivals: done", () -> finish());
 		clutchSteps();
 		step("clutch: done", () -> finish());
+		watchtoolsSteps();
+		step("watch tools: done", () -> finish());
 	}
 
 
@@ -2351,6 +2436,7 @@ public final class SelfTest {
 		kitviewSteps();
 		rivalsSteps();
 		clutchSteps();
+		watchtoolsSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
