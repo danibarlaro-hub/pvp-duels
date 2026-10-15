@@ -129,6 +129,8 @@ public final class SelfTest {
 				buildKitview();
 			} else if (mode.equals("rivals")) {
 				buildRivals();
+			} else if (mode.equals("clutch")) {
+				buildClutch();
 			} else {
 				build();
 			}
@@ -1058,6 +1060,13 @@ public final class SelfTest {
 	private static void kitviewSteps() {
 		final ItemStack[][] saved = new ItemStack[2][41];
 		step("kitview: a challenge has a button to look at the kit", () -> {
+	// ------------------------------------------------------------------ one idea at a time: clutch scenarios
+
+	private static void clutchSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final String[] bn = new String[1];
+		step("clutch: the command refuses what it should", () -> {
+			Clutch.resetForTest();
 			for (int i = 0; i < 41; i++) {
 				saved[0][i] = a.getInventory().getItem(i).copy();
 				saved[1][i] = b.getInventory().getItem(i).copy();
@@ -1912,6 +1921,74 @@ public final class SelfTest {
 			run(b, "duel viewkit Alice");
 			check("Bob is told the kit is gone", b.heard("The kit 'viewkit' no longer exists") && !(b.containerMenu instanceof ChestMenu), String.valueOf(b.inbox));
 			run(b, "deny Alice");
+			run(a, "kit save ckit");
+			a.getInventory().clearContent();
+			a.inbox.clear();
+			run(a, "clutch records");
+			check("nothing tried yet", a.heard("You have not tried a clutch yet"), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "clutch nosuchkit");
+			check("a kit that does not exist is refused", a.heard("You have no kit named 'nosuchkit'") && duel(a) == null, String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "clutch ckit weird");
+			check("a bot that does not exist is refused", a.heard("The bot can be: static, passive, easy, normal or hard.") && duel(a) == null, String.valueOf(a.inbox));
+			check("hearts are written with one decimal", Clutch.hearts(3f).equals("1.5") && Clutch.hearts(4f).equals("2.0") && Clutch.hearts(1f).equals("0.5"));
+			a.inbox.clear();
+			run(a, "clutch ckit static");
+			check("a practice duel with the clutch on", duel(a) != null && duel(a).practice && duel(a).clutch && !duel(a).config.rules().regen(), duel(a) == null ? "no duel" : String.valueOf(duel(a).config.rules()));
+			check("Alice was told the rules of it", a.heard("Clutch against ") && a.heard("(Static)") && a.heard("You have 2 hearts"), String.valueOf(a.inbox));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("clutch: two hearts, and a win", () -> {
+			check("Alice has two hearts", a.getHealth() == 4f, String.valueOf(a.getHealth()));
+			Dummy bot = (Dummy) duel(a).player(1);
+			check("the bot has all its health", bot.getHealth() == bot.getMaxHealth());
+			bn[0] = bot.getName().getString();
+			a.inbox.clear();
+			hit(a, bot);
+		}, () -> noDuel(a), 800);
+		step("clutch: what the win said", () -> {
+			check("the win with two hearts left", a.heard("CLUTCH! You knocked out " + bn[0] + " with 2.0 hearts left."), String.valueOf(a.inbox));
+			check("the first win is the best finish", a.heard("NEW BEST FINISH: 2.0 hearts left (was 0.0)."), String.valueOf(a.inbox));
+			check("the record line", a.heard("Clutch record: 1 win in 1 try, win streak 1 (best 1), best finish 2.0 hearts left."), String.valueOf(a.inbox));
+			check("it does not say practice totals or that somebody left", !a.heard("Practice total") && !a.heard("left the duel") && a.heard("Type /clutch to try again."), String.valueOf(a.inbox));
+			var r = Clutch.get(a.getUUID());
+			check("saved: 1 try, 1 win, streak 1", r.tries == 1 && r.wins == 1 && r.streak == 1 && r.bestStreak == 1 && r.bestLeft == 4f, r.tries + " " + r.wins + " " + r.streak + " " + r.bestLeft);
+			a.inbox.clear();
+			run(a, "clutch ckit passive");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("clutch: a loss", () -> {
+			Dummy bot = (Dummy) duel(a).player(1);
+			bn[0] = bot.getName().getString();
+			a.inbox.clear();
+			hit(bot, a);
+		}, () -> noDuel(a), 800);
+		step("clutch: what the loss said", () -> {
+			check("Alice was told it was a loss", a.heard("Not this time: " + bn[0] + " got you."), String.valueOf(a.inbox));
+			check("the record is 1 win in 2 tries and the streak is over", a.heard("Clutch record: 1 win in 2 tries, win streak 0 (best 1), best finish 2.0 hearts left."), String.valueOf(a.inbox));
+			var r = Clutch.get(a.getUUID());
+			check("saved", r.tries == 2 && r.wins == 1 && r.streak == 0 && r.bestStreak == 1, r.tries + " " + r.wins + " " + r.streak);
+			Clutch.reloadForTest();
+			check("it is in the file: it survives a restart", Clutch.get(a.getUUID()).tries == 2 && Clutch.get(a.getUUID()).bestLeft == 4f);
+			a.inbox.clear();
+			run(a, "clutch records");
+			check("/clutch records says the same", a.heard("Your clutch record") && a.heard("Clutch record: 1 win in 2 tries"), String.valueOf(a.inbox));
+			run(a, "clutch ckit static");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("clutch: leaving stops it and saves nothing", () -> {
+			a.inbox.clear();
+			run(a, "leave");
+		}, () -> noDuel(a), 600);
+		step("clutch: after leaving", () -> {
+			check("it said it was stopped and no try was added", a.heard("Clutch stopped. Type /clutch to try again.") && Clutch.get(a.getUUID()).tries == 2, String.valueOf(a.inbox));
+			run(a, "botduel ckit static");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("clutch: a normal practice is not a clutch", () -> {
+			check("full health, regeneration on, not a clutch", !duel(a).clutch && duel(a).config.rules().regen() && a.getHealth() == a.getMaxHealth(), a.getHealth() + " " + duel(a).config.rules());
+			run(a, "leave");
+		}, () -> noDuel(a), 600);
+		step("clutch: clean up", () -> {
+			Clutch.resetForTest();
+			run(a, "kit delete ckit");
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			for (int i = 0; i < 41; i++) {
@@ -1951,6 +2028,7 @@ public final class SelfTest {
 	private static void buildLasthit() {
 	private static void buildArenavote() {
 	private static void buildKitview() {
+	private static void buildClutch() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
@@ -1977,6 +2055,8 @@ public final class SelfTest {
 		step("kitview: done", () -> finish());
 		rivalsSteps();
 		step("rivals: done", () -> finish());
+		clutchSteps();
+		step("clutch: done", () -> finish());
 	}
 
 
@@ -2270,6 +2350,7 @@ public final class SelfTest {
 		arenavoteSteps();
 		kitviewSteps();
 		rivalsSteps();
+		clutchSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);

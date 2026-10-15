@@ -50,6 +50,7 @@ public final class BotDuel {
 	// ------------------------------------------------------------------ starting
 
 	private record Pending(UUID player, String kit, BotLevel level, boolean drill) {}
+	private record Pending(UUID player, String kit, BotLevel level, boolean clutch) {}
 	/** Practice duels chosen in the menu: they start at the end of this tick, once the menu click is completely handled. */
 	private static final List<Pending> PENDING = new ArrayList<>();
 
@@ -64,6 +65,8 @@ public final class BotDuel {
 	/** Same, and drill = true makes it the timed combo drill of /drill. */
 	static void startLater(ServerPlayer player, String kit, BotLevel level, boolean drill) {
 		PENDING.add(new Pending(player.getUUID(), kit, level, drill));
+	static void startLater(ServerPlayer player, String kit, BotLevel level, boolean clutch) {
+		PENDING.add(new Pending(player.getUUID(), kit, level, clutch));
 	}
 
 	/** Joins the bot and starts the duel. Returns an error text, or null (also when the reason was already told to the player). */
@@ -73,6 +76,8 @@ public final class BotDuel {
 
 	/** Same, and drill = true starts the timed combo drill (60 seconds, records, the bot never hits back). */
 	static String start(ServerPlayer player, String kit, BotLevel level, boolean drill) {
+	/** With clutch the player starts with {@link Clutch#START_HEALTH} and no regeneration, and the first KO ends the scenario (see Duel). */
+	static String start(ServerPlayer player, String kit, BotLevel level, boolean clutch) {
 		MinecraftServer server = player.level().getServer();
 		if (DuelManager.isBusy(player.getUUID())) return "You are busy: finish your duel or leave the kit workshop (/leave) first.";
 		if (!KitStore.exists(player.getUUID(), kit)) return "You have no kit named '" + kit + "'. Use /kit list.";
@@ -83,7 +88,8 @@ public final class BotDuel {
 		bot.setGameMode(GameType.SURVIVAL);
 		BOTS.put(bot.getUUID(), new Bot(name, level));
 
-		DuelConfig config = new DuelConfig(kit, ArenaKind.BOT, true, Arena.BOT_RADIUS, WinMode.ROUNDS, 0, DuelConfig.Rules.DEFAULT);
+		DuelConfig config = new DuelConfig(kit, ArenaKind.BOT, true, Arena.BOT_RADIUS, WinMode.ROUNDS, 0,
+			clutch ? new DuelConfig.Rules(false, true, true, true) : DuelConfig.Rules.DEFAULT);
 		DuelManager.startPractice(player, bot, config);
 
 		Duel duel = DuelManager.duelOf(player.getUUID());
@@ -103,6 +109,11 @@ public final class BotDuel {
 			player.sendSystemMessage(Msg.info("  Combo drill against " + name + ": once the countdown ends you have " + Duel.drillTicks / 20 + " seconds to hit it as many times as you can."));
 			player.sendSystemMessage(Msg.info("  It never hits back, so keep your combo going. Your hits, best combo and accuracy are counted and your records are saved (/drill records)."
 				+ " /leave stops it. Practice doesn't count for your stats."));
+		if (clutch) {
+			duel.clutch = true;
+			player.setHealth(Clutch.START_HEALTH);
+			player.sendSystemMessage(Msg.info("  Clutch against " + name + " (" + level.label + "): " + level.description));
+			player.sendSystemMessage(Msg.info("  You have 2 hearts and nothing brings them back by itself. Knock " + name + " out once to win; if you go down it is a loss. /leave stops it."));
 			return null;
 		}
 		player.sendSystemMessage(Msg.info("  Practice duel against " + name + " (" + level.label + "): " + level.description));
@@ -136,6 +147,7 @@ public final class BotDuel {
 				ServerPlayer who = server.getPlayerList().getPlayer(pending.player());
 				if (who == null) continue;
 				String problem = start(who, pending.kit(), pending.level(), pending.drill());
+				String problem = start(who, pending.kit(), pending.level(), pending.clutch());
 				if (problem != null) who.sendSystemMessage(Msg.err(problem));
 			}
 		}

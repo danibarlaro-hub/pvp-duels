@@ -60,6 +60,7 @@ public final class GuideBook {
 			{"Combo drill", "/drill [kit] (or the clock in the Practice Bot menu): 60 seconds against a bot that never hits back.\n\nIt counts hits, best combo and accuracy, and saves your records. /drill records shows them."},
 			{"Practice bot", "/botduel [kit] or the Practice Bot NPC. A bedrock arena, 100 blocks each way, with walls.\n\nStatic bot? Yes: it can't move. No: pick Passive, Easy, Normal or Hard."},
 			{"Practice stats", "The sidebar counts hits, damage and combo. It goes on until /leave. A bot you knock out gets up again and you get a KO.\n\nPractice doesn't count for stats."},
+			{"Clutch", "/clutch [kit] [bot] starts a practice with only 2 hearts and no regeneration. Knock the bot out once to win; go down and it is a loss.\n\n/clutch records shows your wins and your best finish."},
 			{"Test bot", "Admins: /testbot [name] [level] adds a fake player next to you that accepts every duel and /draw. Challenge it with /duel <name> to test alone.\n\n/testbot remove [name]"}
 		}),
 		new Topic("Queue", new String[][] {
