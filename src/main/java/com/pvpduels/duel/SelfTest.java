@@ -1019,7 +1019,7 @@ public final class SelfTest {
 			check("a plain setting plays itself", Mutator.SPEED.forRound(Mutator.SPEED) == Mutator.SPEED && Mutator.NONE.forRound(Mutator.NONE) == Mutator.NONE);
 			DuelConfig.Rules speedRules = new DuelConfig.Rules(true, true, true, true, Mutator.SPEED);
 			check("rules with a mutator are not the default ones, and the old constructor means none",
-				!speedRules.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault() && new DuelConfig.Rules(true, true, true, true, null).isDefault());
+				!speedRules.isDefault() && new DuelConfig.Rules(true, true, true, true).isDefault() && new DuelConfig.Rules(true, true, true, true, (Mutator) null).isDefault());
 			check("the rules tell it in words", speedRules.describe(ArenaKind.FLAT).equals("Speed mutator")
 				&& new DuelConfig.Rules(true, true, true, true, Mutator.RANDOM).describe(ArenaKind.FLAT).equals("A random mutator every round")
 				&& new DuelConfig.Rules(false, true, true, true, Mutator.HEAVY).describe(ArenaKind.FLAT).equals("No natural regeneration, heavy hitters mutator"),
@@ -1144,7 +1144,7 @@ public final class SelfTest {
 			}
 			DuelConfig.Rules swapRules = new DuelConfig.Rules(true, true, true, true, "swapb");
 			check("the rules know the swap", swapRules.swaps() && !swapRules.isDefault() && swapRules.describe(ArenaKind.FLAT).equals("Kit swap with 'swapb'")
-				&& !new DuelConfig.Rules(true, true, true, true).swaps() && new DuelConfig.Rules(true, true, true, true, null).isDefault(), swapRules.describe(ArenaKind.FLAT));
+				&& !new DuelConfig.Rules(true, true, true, true).swaps() && new DuelConfig.Rules(true, true, true, true, (String) null).isDefault(), swapRules.describe(ArenaKind.FLAT));
 			a.getInventory().clearContent();
 			b.getInventory().clearContent();
 			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
