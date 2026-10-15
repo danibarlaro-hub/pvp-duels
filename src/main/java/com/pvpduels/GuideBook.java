@@ -92,7 +92,7 @@ public final class GuideBook {
 		}),
 		new Topic("Achievements", new String[][] {
 			{"Achievements", "/achievements lists all of them: what you unlocked and how far you are from the rest.\n\nYou win them by dueling, practicing, making kits and arenas and building in the contest."},
-			{"Titles", "Some achievements give a title: Rookie, Duelist, Champion, Builder...\n\n/titles opens the ones you won: click one to wear it in front of your name (chat, tab list and name tag). /titles off takes it off."},
+			{"Titles", "Some achievements give a title: Rookie, Duelist, Champion, Builder...\n\n/titles lists them: click a won one to wear it in front of your name; the locked ones show your progress. /titles off takes it off."},
 			{"Profile", "/profile shows your Elo, wins, losses, best streak, title, how many achievements you have and your Builder rank.\n\n/profile <player> shows someone else's."}
 		}),
 		new Topic("Party & 2v2", new String[][] {

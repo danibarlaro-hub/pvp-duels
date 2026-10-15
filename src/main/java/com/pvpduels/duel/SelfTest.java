@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("titles")) {
+				buildTitles();
 			} else {
 				build();
 			}
@@ -578,6 +580,77 @@ public final class SelfTest {
 			check("and it ended by itself", Pranks.activeJobs() == 0);
 		});
 
+	}
+
+	// ------------------------------------------------------------------ one idea at a time: more titles to unlock
+
+	private static void titlesSteps() {
+		step("titles: twenty new achievements with a title, and the titles menu shows the locked ones", () -> {
+			Achievements.resetForTest();
+			UUID id = a.getUUID();
+			check("there are 60 achievements and 47 of them give a title", Achievements.all().size() == 60 && Achievements.titleCount() == 47, Achievements.all().size() + " / " + Achievements.titleCount());
+			java.util.Set<String> seen = new java.util.HashSet<>();
+			boolean unique = true;
+			for (var ach : Achievements.all()) {
+				if (!seen.add(ach.id())) unique = false;
+				if (ach.hasTitle() && ach.title().length() > 16) unique = false;
+			}
+			check("no two achievements share an id and no title is too long for a name tag", unique);
+			String[] fresh = {"duels_50", "duels_250", "wins_250", "wins_500", "streak_20", "flawless_25", "elo_1600", "elo_1800", "combo_15", "totems_50", "pearls_50", "apples_50",
+				"kits_25", "queue_50", "team_25", "spectate_25", "bot_500", "kit_50", "contest_judge", "contest_wins_3"};
+			boolean all = true;
+			for (String key : fresh) if (!Achievements.all().stream().anyMatch(x -> x.id().equals(key) && x.hasTitle())) all = false;
+			check("the twenty new ones exist and every one has a title", all);
+			check("nothing is unlocked", Achievements.unlockedCount(id) == 0 && Achievements.titlesOf(id).isEmpty() && Achievements.lockedTitlesOf(id).size() == 47);
+			Achievements.max(id, "Alice", "wins", 250);
+			check("250 wins: Warlord and everything below it, not Immortal", Achievements.has(id, "wins_250") && Achievements.has(id, "wins_100") && !Achievements.has(id, "wins_500"));
+			Achievements.max(id, "Alice", "combo", 15);
+			Achievements.max(id, "Alice", "streak", 20);
+			Achievements.add(id, "Alice", "totems", 50);
+			Achievements.max(id, "Alice", "elo", 1650);
+			check("combo 15, streak 20, 50 totems, 1650 Elo: Combo God, Godlike, Nine Lives, Grandmaster (not Mythic)",
+				Achievements.has(id, "combo_15") && Achievements.has(id, "streak_20") && Achievements.has(id, "totems_50") && Achievements.has(id, "elo_1600") && !Achievements.has(id, "elo_1800"));
+			var titles = Achievements.titlesOf(id);
+			check("the titles she won are there", titles.stream().anyMatch(x -> x.title().equals("Warlord")) && titles.stream().anyMatch(x -> x.title().equals("Combo God"))
+				&& titles.stream().anyMatch(x -> x.title().equals("Nine Lives")) && titles.stream().anyMatch(x -> x.title().equals("Grandmaster")));
+			check("won plus locked is every title", Achievements.titlesOf(id).size() + Achievements.lockedTitlesOf(id).size() == 47);
+			run(a, "titles");
+			check("the menu shows a title she won, the locked ones with a name of their own, and the count", menuHas(a, "[Warlord]") && menuHas(a, "Locked: [Immortal]") && menuHas(a, "Locked: [Mythic]")
+				&& !menuHas(a, "[Immortal]") && menuHas(a, "Titles: " + Achievements.titlesOf(id).size() + "/47"), "");
+			check("47 titles make two pages", menuHas(a, "Next page") && !menuHas(a, "Previous page"));
+			menuStep(a, "Next page");
+			check("the second page has the last titles and a way back", menuHas(a, "Previous page") && !menuHas(a, "Next page") && (menuHas(a, "Locked: [Hall of Fame]") || menuHas(a, "[Hall of Fame]")));
+			menuStep(a, "Previous page");
+			check("back on the first page", menuHas(a, "[Warlord]") && menuHas(a, "Next page"));
+			boolean progress = false;
+			for (int i = 0; i < 54; i++) {
+				ItemStack shown = a.containerMenu.getSlot(i).getItem();
+				if (shown.getHoverName().getString().equals("Locked: [Immortal]")) {
+					var lore = shown.get(net.minecraft.core.component.DataComponents.LORE);
+					progress = lore != null && lore.lines().stream().anyMatch(l -> l.getString().equals("Progress: 250/500"));
+				}
+			}
+			check("a locked title shows how far she is: Immortal 250/500 wins", progress);
+			check("click [Warlord] to wear it", clickMenu(a, "[Warlord]"));
+		});
+		step("titles: she wears the new title", () -> {
+			check("Warlord is in front of her name", a.getDisplayName().getString().contains("[Warlord] Alice") && Achievements.titleOf(a.getUUID()) != null && Achievements.titleOf(a.getUUID()).id().equals("wins_250"),
+				a.getDisplayName().getString());
+			run(a, "titles off");
+			Achievements.resetForTest();
+			check("clean again", Achievements.unlockedCount(a.getUUID()) == 0 && !a.getDisplayName().getString().contains("["));
+		});
+	}
+
+	private static void buildTitles() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		titlesSteps();
+		step("titles: done", () -> finish());
 	}
 
 	private static void buildPranks() {
@@ -3541,7 +3614,10 @@ public final class SelfTest {
 		});
 		step("achievements: the list of achievements", () -> {
 			run(carl, "achievements");
-			check("the menu shows unlocked and locked ones", menuHas(carl, "Legend") && menuHas(carl, "First Victory") && menuHas(carl, "Unstoppable") && menuHas(carl, "Bot Crusher"));
+			check("the menu shows unlocked and locked ones (60 achievements make two pages)", menuHas(carl, "Legend") && menuHas(carl, "First Victory") && menuHas(carl, "Unstoppable") && menuHas(carl, "Next page"));
+			menuStep(carl, "Next page");
+			check("the second page has the practice, kit and building ones", menuHas(carl, "Bot Crusher") && menuHas(carl, "Master Builder") && menuHas(carl, "Previous page") && !menuHas(carl, "Next page"));
+			menuStep(carl, "Previous page");
 			check("and the way to the titles", menuHas(carl, "My titles"));
 			menuStep(carl, "My titles");
 		});
@@ -3572,6 +3648,7 @@ public final class SelfTest {
 			check("/titles off takes it off", Achievements.titleOf(carl.getUUID()) == null && server.getScoreboard().getPlayersTeam(carl.getScoreboardName()) == null
 				&& !carl.getDisplayName().getString().contains("["));
 		});
+		titlesSteps();
 		step("achievements: clean up", () -> {
 			Achievements.resetForTest();
 			check("Carl has no team left", server.getScoreboard().getPlayersTeam(carl.getScoreboardName()) == null);
