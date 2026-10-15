@@ -1,0 +1,19 @@
+--- two fake players
+--- h2h: the record of every pair, from both sides
+PASS  with no duels /h2h says so
+PASS  a player she never dueled shows zero duels and a challenge button
+PASS  a name nobody knows is refused
+PASS  her own name is refused
+PASS  Alice's side: 2 wins, 1 loss, 1 tie, rounds 6-4   (View[other=faa5dca3-c3d4-354b-ae1b-dde9e5a14b3b, otherName=Bob, wins=2, losses=1, draws=1, roundsFor=6, roundsAgainst=4, last=1792048188527, lastResult=0, lastKit=pot, streak=0])
+PASS  Bob's side is the mirror, whoever challenged first   (View[other=10920508-d5d8-3eed-93d2-92f193afe7d7, otherName=Alice, wins=1, losses=2, draws=1, roundsFor=4, roundsAgainst=6, last=1792048188527, lastResult=0, lastKit=pot, streak=0])
+PASS  the last duel was a tie with the kit pot, and the tie broke the streak
+PASS  each side knows the name of the other
+PASS  two wins in a row make a streak of 2 for Alice and -2 for Bob   (2 -2)
+PASS  /h2h Bob tells the numbers, the streak and the last duel   (6)
+PASS  Bob sees it from his side (capitals are forgiven) and that Alice is winning
+PASS  /h2h lists the rivals, the one with more duels first, with buttons
+PASS  a rival who is offline can be looked up by the name saved in the file
+PASS  it is all in the file: it survives a restart   (View[other=faa5dca3-c3d4-354b-ae1b-dde9e5a14b3b, otherName=Bob, wins=4, losses=1, draws=1, roundsFor=10, roundsAgainst=5, last=1792048188538, lastResult=1, lastKit=pot, streak=2])
+PASS  ago() says it in plain words
+--- h2h: done
+RESULT: PASS
