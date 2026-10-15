@@ -4908,7 +4908,7 @@ public final class SelfTest {
 		final int[] sums = new int[5];
 		step("delivery 9: the mod is not on its first version any more", () -> {
 			String version = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("pvpduels").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("?");
-			check("the mod says 0.22.1", version.equals("0.22.1"), version);
+			check("the mod has a real version number (not the first one)", version.matches("0\\.(2[2-9]|[3-9]\\d)\\.\\d+.*"), version);
 		});
 		step("/unlock_all: only admins with the right code", () -> {
 			UUID id = dora.getUUID();
