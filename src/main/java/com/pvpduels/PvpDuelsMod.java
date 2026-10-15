@@ -9,6 +9,7 @@ import com.pvpduels.arena.ArenaStudio;
 import com.pvpduels.arena.BuilderRank;
 import com.pvpduels.arena.Contest;
 import com.pvpduels.duel.BotDuel;
+import com.pvpduels.duel.Clutch;
 import com.pvpduels.duel.Lobby;
 import com.pvpduels.duel.LobbyKit;
 import com.pvpduels.duel.Npcs;
@@ -93,6 +94,7 @@ public class PvpDuelsMod implements ModInitializer {
 			Party.registerCommands(dispatcher);
 			EffectCommands.register(dispatcher);
 			BotDuel.registerCommands(dispatcher);
+			Clutch.registerCommands(dispatcher);
 			ReplayCommands.register(dispatcher);
 			TopCommand.register(dispatcher);
 			com.pvpduels.util.BugReports.register(dispatcher);

@@ -65,6 +65,9 @@ public final class Duel {
 	final UUID kitOwner;
 	/** A practice duel against the /botduel bot: no stats, no 5-minute rule, and it closes as soon as you leave. */
 	final boolean practice;
+	/** A clutch scenario (/clutch): a practice duel where the first KO of the bot is a win and going down is a loss. */
+	boolean clutch;
+	private List<String> clutchLines = new ArrayList<>();
 	private final KitStore.Kit kit;
 	final UUID[] ids = new UUID[2];
 	/** The last blow each duelist took (it explains a round that ends by a death). */
@@ -552,6 +555,11 @@ public final class Duel {
 			lastKoTick = elapsed;
 			points[1 - i]++;
 			Achievements.add(ids[1 - i], names[1 - i], "bot_kos", 1);
+			if (clutch) {
+				ServerPlayer you = player(1 - i);
+				endClutch(true, you == null ? 0f : you.getHealth() + you.getAbsorptionAmount());
+				return;
+			}
 			p.setAbsorptionAmount(0f);
 			p.invulnerableTime = 0;
 			ServerPlayer you = player(1 - i);
@@ -561,11 +569,23 @@ public final class Duel {
 			printPracticeSummary("KO " + points[1 - i]);
 			return;
 		}
+		if (clutch && practice && i == 0) {
+			endClutch(false, 0f);
+			return;
+		}
 		Entity killer = source == null ? null : source.getEntity();
 		String reason = killer != null && killer.getUUID().equals(ids[1 - i])
 			? names[1 - i] + " defeated " + names[i] + "."
 			: names[i] + " died.";
 		endRound(1 - i, reason + blows[i].describe(p));
+	}
+
+	/** The end of a clutch scenario: the result is saved and told when the duel closes. */
+	private void endClutch(boolean won, float left) {
+		if (phase == Phase.ENDED || closed) return;
+		clutchLines = Clutch.finish(ids[0], names[0], won, left, names[1]);
+		winner = won ? 0 : 1;
+		finish();
 	}
 
 	private void endRound(int winnerIdx, String reason) {
@@ -599,6 +619,19 @@ public final class Duel {
 		roundDamage = 0f;
 		roundBest = 0;
 		combo = 0;
+	}
+
+	/** What the player sees when a clutch scenario is over (nothing was saved when they just left). */
+	private void clutchEnding(ServerPlayer p) {
+		if (clutchLines.isEmpty()) {
+			p.sendSystemMessage(Msg.info("Clutch stopped. Type /clutch to try again."));
+			return;
+		}
+		boolean won = winner == 0;
+		sendTitle(p, Component.literal(won ? "CLUTCH!" : "NOT THIS TIME").withStyle(won ? ChatFormatting.GOLD : ChatFormatting.RED, ChatFormatting.BOLD),
+			Component.literal(clutchLines.get(0)).withStyle(ChatFormatting.WHITE), 5, 80, 15);
+		for (String line : clutchLines) p.sendSystemMessage(won ? Msg.ok(line) : Msg.info(line));
+		p.sendSystemMessage(Msg.info("Type /clutch to try again."));
 	}
 
 	/** Works out whether the duel is over after the round that just ended. */
@@ -792,6 +825,10 @@ public final class Duel {
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
 			if (p == null || restored[i]) continue;
+			if (clutch) {
+				if (i == 0) clutchEnding(p);
+				continue;
+			}
 			Component title;
 			if (winner == -1) title = Component.literal("DRAW").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
 			else if (winner == i) title = Component.literal("VICTORY").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD);
