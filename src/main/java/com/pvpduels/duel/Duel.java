@@ -69,6 +69,8 @@ public final class Duel {
 	final boolean practice;
 	private final KitStore.Kit kit;
 	final UUID[] ids = new UUID[2];
+	/** The twist of the round that is being played (never RANDOM: that one is drawn again in every round). */
+	private Mutator mutator = Mutator.NONE;
 	/** The last blow each duelist took (it explains a round that ends by a death). */
 	final LastBlow[] blows = {new LastBlow(), new LastBlow()};
 	final String[] names = new String[2];
@@ -240,6 +242,7 @@ public final class Duel {
 			throw e;
 		}
 		space.begin(arena);
+		mutator = config.rules().mutator().forRound(Mutator.NONE);
 		for (int i = 0; i < 2; i++) setupPlayer(i, arena);
 		phase = Phase.STARTING;
 		phaseTicks = 0;
@@ -261,6 +264,26 @@ public final class Duel {
 						+ config.kit() + " (then /kit save " + config.kit() + ")." : "")));
 			}
 		}
+		announceMutator();
+	}
+
+	/** The twist of this round, told to both. */
+	private void announceMutator() {
+		if (mutator == Mutator.NONE) return;
+		for (int i = 0; i < 2; i++) {
+			ServerPlayer p = player(i);
+			if (p != null) p.sendSystemMessage(Msg.info("  " + mutator.announce()));
+		}
+	}
+
+	/** The mutator of the round that is being played (for the self-test). */
+	Mutator roundMutator() {
+		return mutator;
+	}
+
+	/** A totem takes every effect away: the twist of the round comes back. */
+	void mutatorAgain(ServerPlayer p) {
+		mutator.apply(p, false);
 	}
 
 	private void setupPlayer(int i, ServerLevel arena) {
@@ -281,6 +304,7 @@ public final class Duel {
 		resync(p);
 		// The arena can be dark at night, so both players always see well.
 		p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 72000, 0, false, false));
+		mutator.apply(p, true);
 		space.teleportToSpawn(p, arena, i);
 	}
 
@@ -671,12 +695,14 @@ public final class Duel {
 		}
 		if (replay != null) replay.roundStart(round);
 		space.begin(arena);
+		mutator = config.rules().mutator().forRound(mutator);
 		for (int i = 0; i < 2; i++) setupPlayer(i, arena);
 		phase = Phase.STARTING;
 		phaseTicks = 0;
 		countdownTotal = ROUND_COUNTDOWN;
 		noContact = 0;
 		warnedTeleport = false;
+		announceMutator();
 	}
 
 	/** /drill: this practice duel is a timed combo drill from now on (the timer runs while fighting). */

@@ -38,6 +38,7 @@ public final class DuelMenus {
 		boolean fallDamage = true;
 		boolean hunger = true;
 		boolean building = true;
+		Mutator mutator = Mutator.NONE;
 		WinMode mode = WinMode.ROUNDS;
 		int limit = 3;
 
@@ -366,6 +367,11 @@ public final class DuelMenus {
 				rules(who, setup);
 			});
 		}
+		b.set(4, icon(Items.NETHER_STAR, "Round mutator: " + setup.mutator.label(), setup.mutator == Mutator.NONE ? ChatFormatting.GRAY : ChatFormatting.LIGHT_PURPLE,
+			setup.mutator.about(), "A twist that both of you get, every round.", "Click to change"), who -> {
+			setup.mutator = setup.mutator.next();
+			rules(who, setup);
+		});
 		b.set(22, icon(Items.EMERALD, "Continue", ChatFormatting.GREEN), who -> confirm(who, setup));
 		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> amount(who, setup));
 		ChoiceMenu.open(p, Component.literal("Duel: rules"), 3, b);
@@ -376,10 +382,10 @@ public final class DuelMenus {
 	private static DuelConfig config(Setup setup) {
 		if (setup.arena == ArenaKind.CUSTOM) {
 			return DuelConfig.inCustomArena(setup.kit, setup.custom, setup.mode, setup.limit,
-				new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
+				new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building, setup.mutator));
 		}
 		return new DuelConfig(setup.kit, setup.arena, setup.walls, setup.arena == ArenaKind.CIRCLE ? setup.radius : 0, setup.mode, setup.limit,
-			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
+			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building, setup.mutator));
 	}
 
 	private static void confirm(ServerPlayer p, Setup setup) {
