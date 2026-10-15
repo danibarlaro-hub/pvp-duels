@@ -356,10 +356,25 @@ public final class Queue {
 				rivals = first.getName().getString() + " & " + firstMate.getName().getString();
 			}
 			p.sendSystemMessage(Msg.title("Match found!"));
-			p.sendSystemMessage(Msg.info("  " + (team ? "2v2 against " : "") + rivals + " - kit " + kitName + " (" + source + "). Flat arena, first to 3 "
-				+ (team ? "rounds." : "points.")));
+			p.sendSystemMessage(Msg.info("  " + (team ? "2v2 against " : "") + rivals + " - kit " + kitName + " (" + source + "). "
+				+ (ArenaVote.enabled ? "First to 3 " : "Flat arena, first to 3 ") + (team ? "rounds." : "points.")));
 		}
-		DuelConfig config = new DuelConfig(kitName, true, WinMode.FIRST_TO, 3);
+		if (ArenaVote.enabled) {
+			// the players choose the arena first; the vote calls launch when it is over
+			List<ServerPlayer> mates = new ArrayList<>();
+			if (team) {
+				mates.add(firstMate);
+				mates.add(secondMate);
+			}
+			ArenaVote.begin(server, first, second, mates, kitOwner, kitName, kit);
+			return;
+		}
+		launch(server, everybody, first, second, kitOwner, new DuelConfig(kitName, true, WinMode.FIRST_TO, 3), kit);
+	}
+
+	/** Starts the duel of a match (after the arena was chosen). */
+	static void launch(MinecraftServer server, List<ServerPlayer> everybody, ServerPlayer first, ServerPlayer second, UUID kitOwner, DuelConfig config, KitStore.Kit kit) {
+		for (ServerPlayer p : everybody) leave(p, false); // somebody may have joined a queue while the vote was going on
 		if (!DuelManager.startMatched(server, first, second, kitOwner, config, kit)) {
 			for (ServerPlayer p : everybody) p.sendSystemMessage(Msg.err("The duel could not start. Join the queue again."));
 		}
@@ -456,6 +471,7 @@ public final class Queue {
 
 	public static void register() {
 		ServerTickEvents.END_SERVER_TICK.register(Queue::onTick);
+		ArenaVote.register();
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> leave(handler.player, false));
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> ENTRIES.clear());
 	}
@@ -489,6 +505,7 @@ public final class Queue {
 	}
 
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+		ArenaVote.registerCommands(dispatcher);
 		dispatcher.register(Commands.literal("queue")
 			.executes(ctx -> {
 				openMenu(ctx.getSource().getPlayerOrException());

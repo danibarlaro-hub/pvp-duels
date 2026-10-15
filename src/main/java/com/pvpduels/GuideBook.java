@@ -61,7 +61,8 @@ public final class GuideBook {
 			{"Test bot", "Admins: /testbot [name] [level] adds a fake player next to you that accepts every duel and /draw. Challenge it with /duel <name> to test alone.\n\n/testbot remove [name]"}
 		}),
 		new Topic("Queue", new String[][] {
-			{"Queue", "/queue opens the menu. Wait for somebody and the duel starts by itself: flat arena with walls, first to 3 points.\n\nIn a party you wait together and meet another party (2v2).\n\nLeave with /queue leave or the [LEAVE QUEUE] button."},
+			{"Queue", "/queue opens the menu. Wait for somebody; when you match you vote for the arena and the duel starts by itself: first to 3 points.\n\nIn a party you wait together and meet another party (2v2).\n\nLeave with /queue leave or the [LEAVE QUEUE] button."},
+			{"Arena vote", "When the queue finds a match, 3 random arenas appear in the chat. Click one, or use /arenavote 1, 2 or 3 (/arenavote alone opens a menu).\n\nThe most votes wins; a tie is random. You can change your vote for 15 seconds."},
 			{"Three queues", "Public: pick a public kit (or a random one) and match with somebody who picked the same.\n\nRandom: the kit is a surprise.\n\nOwn kit: offer one of your kits; you both fight with it."},
 			{"Queue commands", "/queue public [kit]\n/queue random\n/queue own <kit>\n/queue take <player>\n/queue list\n/queue leave"}
 		}),
