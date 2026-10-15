@@ -1,0 +1,97 @@
+--- a moment for the world
+--- tournament: five new players
+--- tournament: nothing is open, so the commands say so
+PASS  the public kit for the matches exists
+PASS  start with nothing open   ([PvP Duels is active. Type /guide to see the commands., Building contest: "mountain fortress" (4 days left to build). /contest, Uma joined the game, Vera joined the game, Wade joined the game, Xena joined the game, Saved kit 'tkit' from your inventory: 1 item stack in the file. See it with /kit show tkit., [+ Also make a layout from this], Kit 'tkit' is now public. Everybody can copy it with /kit take tkit. Use /unpublish tkit to take it back., There is no tournament. /tournament create opens one.])
+PASS  join with nothing open
+PASS  leave with nothing open
+PASS  a kit that is not public is refused   ([There is no public kit named 'nosuchkit'. Use random, or one of the public kits (/publicate puts a kit on the shelf).])
+PASS  the plain command explains how to open one
+PASS  the seeds of a bracket of 8 pair 1-8, 4-5, 2-7, 3-6
+--- tournament: Tina opens it and the others join
+PASS  it is open with Tina alone
+PASS  everybody was told, with a button   ([Tina opened a tournament!,   Up to 8 players, first to 1, kit tkit.  [JOIN]])
+PASS  a second one can't be opened
+PASS  alone she can't start   ([At least 3 players are needed (now 1).])
+PASS  Uma joined and Tina heard it
+PASS  twice is refused
+PASS  only the host starts it   ([Only Tina (or an admin) can start it.])
+PASS  Wade left before the start   ([Wade left the tournament (3/8).])
+PASS  five players
+PASS  the sign-up list shows everybody   ([Tournament of Tina (signing up 5/8),   First to 1, kit tkit.,   Players: Tina, Uma, Vera, Wade, Xena,   [JOIN] [START]])
+--- tournament: it starts and the best seeds get the byes
+PASS  running, with a bracket of 8
+PASS  three byes in the first round   ([Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?])
+PASS  the rounds have their names   ([Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?])
+PASS  two matches are ready: a quarterfinal and a semifinal   (2)
+PASS  the quarterfinal is seed 4 against seed 5   (4 / 5)
+PASS  the semifinal is seed 2 against seed 3   (2 / 3)
+PASS  everybody was told it started
+PASS  seed 1 was told about the bye   (Xena)
+--- tournament: the two matches start by themselves
+PASS  pair 0 is in a duel together
+PASS  it is a first-to-1 tournament duel with the kit
+PASS  both were told   ([The tournament started! 5 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], Quarterfinals: you play Uma in 2 s., You are seed 4 of 5., Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?, Tournament: you play Uma in 2 s, Tournament: you play Uma in 2 s, Tournament: you play Uma in 1 s, Tournament: you play Uma in 1 s, Duel vs Uma,   Kit: tkit   Arena: Flat arena (with walls),   Mode: First to 1 point   Use /leave to quit., Quarterfinals: Vera vs Uma  (first to 1, kit tkit),   Semifinals: Wade vs Tina has started. [WATCH]])
+PASS  pair 1 is in a duel together
+PASS  it is a first-to-1 tournament duel with the kit
+PASS  both were told   ([The tournament started! 5 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], You have a bye in the first round: you go straight to the Semifinals., Semifinals: you play Tina in 2 s., You are seed 2 of 5., Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?, Tournament: you play Tina in 2 s, Tournament: you play Tina in 2 s, Tournament: you play Tina in 1 s, Tournament: you play Tina in 1 s,   Quarterfinals: Vera vs Uma has started. [WATCH], Duel vs Tina,   Kit: tkit   Arena: Flat arena (with walls),   Mode: First to 1 point   Use /leave to quit., Semifinals: Wade vs Tina  (first to 1, kit tkit)])
+PASS  the bracket shows them fighting
+PASS  seed 1 can watch the matches   ([The tournament started! 5 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], You have a bye in the first round: you go straight to the Semifinals., You are seed 1 of 5., Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera vs Uma  starts in 2 s,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs ?,   Wade vs Tina  starts in 2 s, Final:,   ? vs ?,   Quarterfinals: Vera vs Uma has started. [WATCH],   Semifinals: Wade vs Tina has started. [WATCH]])
+--- tournament: the first player of each pair wins
+--- tournament: the winners go through, the others are out, nobody is offered a rematch
+PASS  the quarterfinal winner goes to the semifinal   ([Vera defeated Uma. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 1 - 0,   Quarterfinals: Vera beat Uma 1-0., You go through to the Semifinals., Semifinals: you play Xena in 2 s., Duel finished: Vera 1 - 0 Uma, Summary (0:08 long, 1 round),   Vera: 1 hit, 20.0 damage, best combo 1,   Uma: 0 hits, 0.0 damage, best combo 0, Elo: 1000 -> 1016 (+16), Elo with kit tkit: 1000 -> 1016 (+16)  /top kit tkit,   Semifinals: Wade beat Tina 1-0.])
+PASS  the quarterfinal loser is out   ([Vera defeated Uma. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 0 - 1,   Quarterfinals: Vera beat Uma 1-0., You are out of the tournament (Quarterfinals). You can still watch: /duels., Duel finished: Vera 1 - 0 Uma, Summary (0:08 long, 1 round),   Vera: 1 hit, 20.0 damage, best combo 1,   Uma: 0 hits, 0.0 damage, best combo 0, Elo: 1000 -> 984 (-16), Elo with kit tkit: 1000 -> 984 (-16)  /top kit tkit,   Semifinals: Wade beat Tina 1-0.])
+PASS  the semifinal winner goes to the final   ([Wade defeated Tina. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  Score: 1 - 0,   Quarterfinals: Vera beat Uma 1-0.,   Semifinals: Wade beat Tina 1-0., You go through to the Final., Duel finished: Wade 1 - 0 Tina, Summary (0:08 long, 1 round),   Wade: 1 hit, 20.0 damage, best combo 1,   Tina: 0 hits, 0.0 damage, best combo 0, Elo: 1000 -> 1016 (+16), Elo with kit tkit: 1000 -> 1016 (+16)  /top kit tkit])
+PASS  the semifinal loser is out
+PASS  everybody in it heard the result
+PASS  the bracket has the scores   ([Tournament - 5 players, first to 1, kit tkit, Quarterfinals:,   Xena goes through (bye),   Vera 1 - 0 Uma  ->  Vera,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena vs Vera  starts in 2 s,   Wade 1 - 0 Tina  ->  Wade, Final:,   ? vs Wade])
+PASS  no [REMATCH] for a tournament match
+PASS  they can't ask /again either   ([You have no previous duel to repeat.])
+PASS  the other semifinal is ready: seed 1 against the quarterfinal winner   (Xena vs Vera)
+--- tournament: seed 1 wins the second semifinal
+PASS  they are fighting each other
+--- tournament: the final is ready
+PASS  the final is ready with the two winners   (Xena vs Wade)
+PASS  the semifinal loser is out
+--- tournament: a tie in the final is played again
+PASS  the final is a duel
+PASS  both heard it was a tie and that it is played again   ([It was a tie, so the match is played again in 2 s., Duel finished: Xena 0 - 0 Wade, Summary (0:05 long, 1 round),   Xena: 0 hits, 0.0 damage, best combo 0,   Wade: 0 hits, 0.0 damage, best combo 0, Elo: 1017 -> 1017 (+0), Elo with kit tkit: 1017 -> 1017 (+0)  /top kit tkit])
+PASS  the final is ready again
+--- tournament: the second player wins the final
+PASS  a new duel, not the old one
+--- tournament: the champion
+PASS  the champion is the second player of the final   (Wade)
+PASS  everybody was told
+PASS  the champion got a title on screen and the others the winner's name
+PASS  the bracket is complete   ([Tournament - finished, Quarterfinals:,   Xena goes through (bye),   Vera 1 - 0 Uma  ->  Vera,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena 1 - 0 Vera  ->  Xena,   Wade 1 - 0 Tina  ->  Wade, Final:,   Xena 0 - 1 Wade  ->  Wade])
+PASS  one title saved
+PASS  it is in the file
+PASS  /tournament top lists the champion   ([Tournament champions,   1. Wade: 1 title, 1 in the final, 1 played,   2. Xena: 0 titles, 1 in the final, 1 played,   3. Tina: 0 titles, 0 in the final, 1 played,   4. Uma: 0 titles, 0 in the final, 1 played,   5. Vera: 0 titles, 0 in the final, 1 played, Last tournaments,   Wade won (second Xena), 5 players, first to 1, tkit])
+PASS  the plain command shows the last bracket   ([There is no tournament right now. /tournament create [players 3-8] [first to 1-5] [kit|random] opens one for your friends., The last one:, Tournament - finished, Quarterfinals:,   Xena goes through (bye),   Vera 1 - 0 Uma  ->  Vera,   Wade goes through (bye),   Tina goes through (bye), Semifinals:,   Xena 1 - 0 Vera  ->  Xena,   Wade 1 - 0 Tina  ->  Wade, Final:,   Xena 0 - 1 Wade  ->  Wade])
+--- tournament: three players, one quits before his match
+PASS  the arenas are free again
+PASS  it was full, so it started by itself
+PASS  they were told
+PASS  one semifinal is ready
+PASS  he quit and was told
+--- tournament: the other one goes through without playing
+PASS  he was told   ([Tina opened a tournament!,   Up to 3 players, first to 1, kit tkit.  [JOIN],   When 3 or more are in, /tournament start begins it (it starts by itself when it is full)., Uma joined the tournament (2/3)., Vera joined the tournament (3/3)., The tournament is full, so it starts now., The tournament started! 3 players, first to 1, kit tkit.,   Follow it with /tournament, watch a match with /duels. [BRACKET], Semifinals: you play Uma in 2 s., You are seed 2 of 3., Tournament - 3 players, first to 1, kit tkit, Semifinals:,   Vera goes through (bye),   Tina vs Uma  starts in 2 s, Final:,   Vera vs ?, Uma quit the tournament.,   Semifinals: Tina beat Uma (walkover)., You go through to the Final., Final: you play Vera in 2 s., Tournament: you play Vera in 2 s])
+PASS  the quitter is out
+PASS  the final is seed 1 against him   (Vera vs Tina)
+PASS  the finalist with the better seed left the game
+--- tournament: whoever is missing loses on time
+PASS  the one who stayed is the champion   (Tina)
+PASS  the bracket says forfeit   ([Tournament - finished, Semifinals:,   Vera goes through (bye),   Tina 0 - 0 Uma  ->  Tina (walkover), Final:,   Vera 0 - 0 Tina  ->  Tina (forfeit)])
+PASS  he was warned that the match would be lost   ([Vera left the game, Tournament: you play Vera in 2 s, Tournament: you play Vera in 1 s, Tournament: you play Vera in 1 s, Your tournament match is waiting: Vera is not online. 9 s left before the match is lost.,   Final: Tina beat Vera (forfeit)., TOURNAMENT OVER: Tina is the champion!,   Second place: Vera. Tina has won 1 tournament.  /tournament top])
+PASS  two titles are kept for two different players
+--- tournament: the host cancels, and the host leaving cancels
+PASS  first to 2 with random kits   ([Wade opened a tournament!,   Up to 4 players, first to 2, random kits.  [JOIN]])
+PASS  only the host cancels   ([Only Wade (or an admin) can cancel it.])
+PASS  the host cancelled it and Xena was told   ([Wade cancelled the tournament.])
+PASS  an admin can cancel anything
+--- tournament: the host left
+PASS  when the host leaves the game it is cancelled   ([Wade left the game, Wade (the host) left, so the tournament was cancelled.])
+--- tournament: clean up
+PASS  nobody is left and the arenas are free
+--- tournament: done
+RESULT: PASS
