@@ -1,0 +1,206 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as configuration cache cannot be reused because the file system entry '../../../.gradle/caches/fabric-loom/mojang_versions_manifest.json.part' has been removed.
+
+> Configure project :
+Fabric Loom: 1.18.4
+
+> Task :generateLog4jConfig UP-TO-DATE
+> Task :generateDLIConfig UP-TO-DATE
+> Task :configureLaunch UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :processResources
+> Task :classes
+
+> Task :runServer
+[08:17:57] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.2 with Fabric Loader 0.19.5
+[08:17:57] [main/INFO] (FabricLoader/Mappings) Mappings not present!
+[08:17:57] [main/INFO] (FabricLoader) Loading 44 mods:
+	- fabric-advancement-api-v1 1.0.0+58719a3b9e
+	- fabric-api 0.161.0+26.2
+	- fabric-api-base 2.0.4+ece063239e
+	- fabric-api-lookup-api-v1 2.0.18+11e1c9a39e
+	- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	- fabric-block-api-v1 3.1.0+53515aab9e
+	- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	- fabric-command-api-v2 3.1.0+00cb03469e
+	- fabric-content-registries-v0 11.3.2+37b1aa249e
+	- fabric-convention-tags-v2 4.7.1+1f023a9e9e
+	- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	- fabric-creative-tab-api-v1 5.0.15+6468574f9e
+	- fabric-data-attachment-api-v1 2.2.19+515ac5339e
+	- fabric-data-generation-api-v1 25.6.0+c0da0b829e
+	- fabric-debug-api-v1 1.0.2+c792624d9e
+	- fabric-dimensions-v1 5.1.12+515ac5339e
+	- fabric-entity-events-v1 5.0.5+06488ac19e
+	- fabric-events-interaction-v0 5.2.8+515ac5339e
+	- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	- fabric-gametest-api-v1 4.0.22+4a7fa0819e
+	- fabric-item-api-v1 14.5.0+c68f6cbe9e
+	- fabric-lifecycle-events-v1 4.1.4+29b6eb019e
+	- fabric-loot-api-v3 3.0.17+06488ac19e
+	- fabric-menu-api-v1 2.0.17+086d547a9e
+	- fabric-message-api-v1 7.0.8+bb2ed3f79e
+	- fabric-networking-api-v1 6.3.4+2989c6a09e
+	- fabric-object-builder-api-v1 24.1.1+6fcd5f039e
+	- fabric-particles-v1 5.0.19+d1756aa99e
+	- fabric-permission-api-v1 1.0.5+e442d8d09e
+	- fabric-recipe-api-v1 9.0.22+11e1c9a39e
+	- fabric-registry-sync-v0 7.1.1+c7bd5b8e9e
+	- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	- fabric-resource-loader-v1 2.0.13+9edec1269e
+	- fabric-serialization-api-v1 2.0.4+11a26f319e
+	- fabric-tag-api-v1 2.1.4+515ac5339e
+	- fabric-transfer-api-v1 8.0.13+11dbb7d79e
+	- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.5
+	- java 25
+	- minecraft 26.2
+	- mixinextras 0.5.5
+	- pvpduels 0.23.0-replaycam
+[08:17:57] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/5f66cc9f59b8efaa942155a3d5a30599bf6640dd/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=SERVER
+[08:17:58] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[08:18:04] [main/WARN] (pvpduels) SELFTEST mode 'replaycam' is on (this must never happen in the game).
+[08:18:04] [main/INFO] (pvpduels) PvP Duels loaded.
+[08:18:05] [main/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[08:18:07] [main/INFO] (Minecraft) Loaded 1585 recipes
+[08:18:07] [main/INFO] (Minecraft) Loaded 1688 advancements
+[08:18:07] [main/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 66 new biomes in 1.512 ms
+[08:18:07] [Server thread/INFO] (Minecraft) Starting minecraft server version 26.2
+[08:18:07] [Server thread/INFO] (Minecraft) Loading properties
+[08:18:07] [Server thread/INFO] (Minecraft) Default game type: SURVIVAL
+[08:18:07] [Server thread/INFO] (Minecraft) Generating keypair
+[08:18:07] [Server thread/INFO] (Minecraft) Starting Minecraft server on *:25565
+[08:18:07] [Server thread/WARN] (Minecraft) **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[08:18:07] [Server thread/WARN] (Minecraft) The server will make no attempt to authenticate usernames. Beware.
+[08:18:07] [Server thread/WARN] (Minecraft) While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[08:18:07] [Server thread/WARN] (Minecraft) To change this, set "online-mode" to "true" in the server.properties file.
+[08:18:07] [Server thread/INFO] (Minecraft) Preparing level "world"
+[08:18:07] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[08:18:08] [Server thread/INFO] (Minecraft) Preparing spawn area: 100%
+[08:18:08] [Server thread/INFO] (Minecraft) Time elapsed: 54 ms
+[08:18:08] [Server thread/INFO] (Minecraft) Done (0.307s)! For help, type "help"
+[08:18:08] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[08:18:08] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[08:18:08] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[08:18:08] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[08:18:08] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[08:18:08] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[08:18:08] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[08:18:08] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[08:18:08] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[08:18:08] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[08:18:08] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[08:18:08] [Server thread/INFO] (pvpduels) [selftest] --- two fake players
+[08:18:08] [Server thread/INFO] (Minecraft) Alice[local] logged in with entity id 1 at (0.0, 0.0, 0.0)
+[08:18:08] [Server thread/INFO] (Minecraft) Alice joined the game
+[08:18:08] [Server thread/INFO] (Minecraft) Bob[local] logged in with entity id 2 at (0.0, 0.0, 0.0)
+[08:18:08] [Server thread/INFO] (Minecraft) Bob joined the game
+[08:18:11] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: a short duel against the test bot is recorded
+[08:18:11] [Server thread/INFO] (Minecraft) TestBot[local] logged in with entity id 16 at (0.0, 0.0, 0.0)
+[08:18:11] [Server thread/INFO] (Minecraft) TestBot joined the game
+[08:18:11] [Server thread/INFO] (pvpduels) Test dummy 'TestBot' created by Alice
+[08:18:11] [Server thread/INFO] (pvpduels) [selftest] PASS  the bot was created   (null)
+[08:18:11] [Server thread/INFO] (pvpduels) Duel started: Alice vs TestBot (DuelConfig[kit=rkit, arena=FLAT, walls=false, radius=0, mode=FIRST_TO, limit=1, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=], slot 0)
+[08:18:11] [Server thread/INFO] (pvpduels) [selftest] PASS  the bot accepted by itself
+[08:18:16] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: the fight goes on for a while
+[08:18:24] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: Alice knocks it out
+[08:18:24] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice won
+[08:18:27] [Server thread/INFO] (pvpduels) Duel Alice vs TestBot is finishing (round 1, phase ROUND_END, practice false)
+
+java.lang.Throwable: who finished the duel
+	at knot//com.pvpduels.duel.Duel.finish(Duel.java:773)
+	at knot//com.pvpduels.duel.Duel.tick(Duel.java:305)
+	at knot//com.pvpduels.duel.DuelManager.onTick(DuelManager.java:136)
+	at knot//net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.lambda$static$3(ServerTickEvents.java:55)
+	at knot//net.minecraft.server.MinecraftServer.handler$zig000$fabric-lifecycle-events-v1$onEndTick(MinecraftServer.java:4945)
+	at knot//net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025)
+	at knot//net.minecraft.server.dedicated.DedicatedServer.tickServer(DedicatedServer.java:278)
+	at knot//net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1034)
+	at knot//net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:773)
+	at knot//net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:320)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[08:18:27] [Server thread/INFO] (pvpduels) Replay 7qzzn saved: Alice vs TestBot, 16 seconds, 0 KB
+[08:18:32] [Server thread/INFO] (pvpduels) Duel Alice vs TestBot closed (1 - 0).
+[08:18:32] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: let the end of the duel settle
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: Alice watches the replay
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] PASS  one replay was kept   (1)
+[08:18:34] [Server thread/INFO] (pvpduels) Alice is watching the replay 7qzzn (Alice vs TestBot)
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] PASS  the replay started
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: two lines of buttons
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] PASS  the first line has pause, the jumps, the pictures and the speeds   ([Replay: Alice vs TestBot  (rkit, Flat arena (no walls)),   Score 1 - 0, 16 seconds. Blocks, pearls and crystals are not repeated, only the players.,   [PAUSE] [<5s] [5s>] [<F] [F>] [0.25x] [0.5x] [1x] [2x],   [VIEW] [FREE] [CAMERA] [RESTART] [STOP]])
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] PASS  the second line has the views and the ways out
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] PASS  five views and the last one is the free flight
+[08:18:34] [Server thread/INFO] (pvpduels) [selftest] PASS  the recording is long enough to jump around in   (329)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: one picture at a time
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  it is playing   (16.0)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  one picture forward, paused   (16.0 -> 17.0)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is told which picture   ([Picture 17 of 328 (paused).])
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  three forward   (16.0 -> 19.0)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  one back   (16.0 -> 18.0)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: jumps are quiet and keep the pause
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  the picture stayed where it was while paused   (16.0 -> 18.0)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  two seconds forward   (18.0 -> 58.0)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is told   ([Forward 2 s.])
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  one second back   (38.0)
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  far back is the start   (0.0 [Back 1000 s.])
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  at the start it says so   ([Already at the start.])
+[08:18:35] [Server thread/INFO] (pvpduels) [selftest] PASS  and there is no picture before the first   ([This is the first picture.])
+[08:18:36] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: the events skipped by a jump were not played
+[08:18:36] [Server thread/INFO] (pvpduels) [selftest] PASS  no event was played by the jumps   (1 / 1)
+[08:18:36] [Server thread/INFO] (pvpduels) [selftest] PASS  quarter speed plays again
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: quarter speed is four times slower
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] PASS  about 5 pictures in 20 ticks   (5.0)
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] PASS  somebody who is not watching gets an error for the jump
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] PASS  and for the picture
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] PASS  and for the free flight
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: free flight
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] PASS  the view is the free flight   (4)
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice looks through her own eyes now
+[08:18:37] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice is told how to go back   ([Free flight: fly where you want. [VIEW] or [FREE] put the camera back.])
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: the picture goes on while she flies
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  the replay kept playing   (5.0 -> 10.0)
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  she is still in the replay
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  jumps work in free flight
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  [VIEW] puts the camera back   (0 false)
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: the camera button also ends the free flight
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  free again
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  [CAMERA] gives the camera back   (0 false)
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  [FREE] twice is a round trip
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  and now she flies for the end
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: the last seconds, played for real (the hit that ended it is in there)
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  the picture is 120 ticks before the end   (208.0 / 208 / 328)
+[08:18:38] [Server thread/INFO] (pvpduels) [selftest] PASS  the jump did not play anything   (1 / 1)
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: it ended while she was flying and put everything back
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] PASS  the events after the jump were played   (3 / 1)
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] PASS  the title named the winner
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] PASS  Alice has her own eyes, her mode and her things
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] PASS  nothing of the replay is left and the arena is free
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: clean up for the next tests
+[08:18:49] [Server thread/INFO] (Minecraft) TestBot lost connection: Test dummy removed
+[08:18:49] [Server thread/INFO] (Minecraft) TestBot left the game
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] PASS  the test bot is removed
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] PASS  the kit is gone and the replay store is empty
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] --- replay camera: done
+[08:18:49] [Server thread/INFO] (pvpduels) [selftest] RESULT: PASS
+[08:18:49] [Server thread/INFO] (Minecraft) Stopping server
+[08:18:49] [Server thread/INFO] (Minecraft) Saving players
+[08:18:49] [Server thread/INFO] (Minecraft) Saving worlds
+[08:18:49] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[08:18:50] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:void_arena
+[08:18:50] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[08:18:50] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/pvpduels:normal_arena
+[08:18:50] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[08:18:50] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (world): All chunks are saved
+[08:18:50] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (void_arena): All chunks are saved
+[08:18:50] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[08:18:50] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (normal_arena): All chunks are saved
+[08:18:50] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[08:18:50] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_3-1792052272275.json
+
+BUILD SUCCESSFUL in 1m 2s
+5 actionable tasks: 2 executed, 3 up-to-date
+Configuration cache entry stored.

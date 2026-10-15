@@ -1,0 +1,65 @@
+--- two fake players
+--- replay camera: a short duel against the test bot is recorded
+PASS  the bot was created   (null)
+PASS  the bot accepted by itself
+--- replay camera: the fight goes on for a while
+--- replay camera: Alice knocks it out
+PASS  Alice won
+--- replay camera: let the end of the duel settle
+--- replay camera: Alice watches the replay
+PASS  one replay was kept   (1)
+PASS  the replay started
+--- replay camera: two lines of buttons
+PASS  the first line has pause, the jumps, the pictures and the speeds   ([Replay: Alice vs TestBot  (rkit, Flat arena (no walls)),   Score 1 - 0, 16 seconds. Blocks, pearls and crystals are not repeated, only the players.,   [PAUSE] [<5s] [5s>] [<F] [F>] [0.25x] [0.5x] [1x] [2x],   [VIEW] [FREE] [CAMERA] [RESTART] [STOP]])
+PASS  the second line has the views and the ways out
+PASS  five views and the last one is the free flight
+PASS  the recording is long enough to jump around in   (329)
+--- replay camera: one picture at a time
+PASS  it is playing   (16.0)
+PASS  one picture forward, paused   (16.0 -> 17.0)
+PASS  Alice is told which picture   ([Picture 17 of 328 (paused).])
+PASS  three forward   (16.0 -> 19.0)
+PASS  one back   (16.0 -> 18.0)
+--- replay camera: jumps are quiet and keep the pause
+PASS  the picture stayed where it was while paused   (16.0 -> 18.0)
+PASS  two seconds forward   (18.0 -> 58.0)
+PASS  Alice is told   ([Forward 2 s.])
+PASS  one second back   (38.0)
+PASS  far back is the start   (0.0 [Back 1000 s.])
+PASS  at the start it says so   ([Already at the start.])
+PASS  and there is no picture before the first   ([This is the first picture.])
+--- replay camera: the events skipped by a jump were not played
+PASS  no event was played by the jumps   (1 / 1)
+PASS  quarter speed plays again
+--- replay camera: quarter speed is four times slower
+PASS  about 5 pictures in 20 ticks   (5.0)
+PASS  somebody who is not watching gets an error for the jump
+PASS  and for the picture
+PASS  and for the free flight
+--- replay camera: free flight
+PASS  the view is the free flight   (4)
+PASS  Alice looks through her own eyes now
+PASS  Alice is told how to go back   ([Free flight: fly where you want. [VIEW] or [FREE] put the camera back.])
+--- replay camera: the picture goes on while she flies
+PASS  the replay kept playing   (5.0 -> 10.0)
+PASS  she is still in the replay
+PASS  jumps work in free flight
+PASS  [VIEW] puts the camera back   (0 false)
+--- replay camera: the camera button also ends the free flight
+PASS  free again
+PASS  [CAMERA] gives the camera back   (0 false)
+PASS  [FREE] twice is a round trip
+PASS  and now she flies for the end
+--- replay camera: the last seconds, played for real (the hit that ended it is in there)
+PASS  the picture is 120 ticks before the end   (208.0 / 208 / 328)
+PASS  the jump did not play anything   (1 / 1)
+--- replay camera: it ended while she was flying and put everything back
+PASS  the events after the jump were played   (3 / 1)
+PASS  the title named the winner
+PASS  Alice has her own eyes, her mode and her things
+PASS  nothing of the replay is left and the arena is free
+--- replay camera: clean up for the next tests
+PASS  the test bot is removed
+PASS  the kit is gone and the replay store is empty
+--- replay camera: done
+RESULT: PASS
