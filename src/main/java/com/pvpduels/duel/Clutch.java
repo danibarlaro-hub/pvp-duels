@@ -176,11 +176,11 @@ public final class Clutch {
 			final BotLevel chosen = level;
 			DuelMenus.pickKit(p, "Clutch: pick a kit", 0, (who, name) -> {
 				who.closeContainer();
-				BotDuel.startLater(who, name, chosen, true);
+				BotDuel.startLater(who, name, chosen, BotDuel.Mode.CLUTCH);
 			});
 			return 1;
 		}
-		String problem = BotDuel.start(p, kit, level, true);
+		String problem = BotDuel.start(p, kit, level, BotDuel.Mode.CLUTCH);
 		if (problem != null) {
 			source.sendFailure(Msg.err(problem));
 			return 0;

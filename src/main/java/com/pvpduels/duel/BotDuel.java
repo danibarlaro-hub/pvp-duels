@@ -49,8 +49,10 @@ public final class BotDuel {
 
 	// ------------------------------------------------------------------ starting
 
-	private record Pending(UUID player, String kit, BotLevel level, boolean drill) {}
-	private record Pending(UUID player, String kit, BotLevel level, boolean clutch) {}
+	/** What a bot duel is for: plain practice, the timed combo drill (/drill) or the two-hearts scenario (/clutch). */
+	enum Mode { PRACTICE, DRILL, CLUTCH }
+
+	private record Pending(UUID player, String kit, BotLevel level, Mode mode) {}
 	/** Practice duels chosen in the menu: they start at the end of this tick, once the menu click is completely handled. */
 	private static final List<Pending> PENDING = new ArrayList<>();
 
@@ -59,25 +61,26 @@ public final class BotDuel {
 	 * client thought the click did), so the kit and the teleport must wait until that is over.
 	 */
 	static void startLater(ServerPlayer player, String kit, BotLevel level) {
-		startLater(player, kit, level, false);
+		startLater(player, kit, level, Mode.PRACTICE);
 	}
 
-	/** Same, and drill = true makes it the timed combo drill of /drill. */
-	static void startLater(ServerPlayer player, String kit, BotLevel level, boolean drill) {
-		PENDING.add(new Pending(player.getUUID(), kit, level, drill));
-	static void startLater(ServerPlayer player, String kit, BotLevel level, boolean clutch) {
-		PENDING.add(new Pending(player.getUUID(), kit, level, clutch));
+	/** Same, and the mode makes it the timed combo drill of /drill or the clutch scenario of /clutch. */
+	static void startLater(ServerPlayer player, String kit, BotLevel level, Mode mode) {
+		PENDING.add(new Pending(player.getUUID(), kit, level, mode));
 	}
 
 	/** Joins the bot and starts the duel. Returns an error text, or null (also when the reason was already told to the player). */
 	static String start(ServerPlayer player, String kit, BotLevel level) {
-		return start(player, kit, level, false);
+		return start(player, kit, level, Mode.PRACTICE);
 	}
 
-	/** Same, and drill = true starts the timed combo drill (60 seconds, records, the bot never hits back). */
-	static String start(ServerPlayer player, String kit, BotLevel level, boolean drill) {
-	/** With clutch the player starts with {@link Clutch#START_HEALTH} and no regeneration, and the first KO ends the scenario (see Duel). */
-	static String start(ServerPlayer player, String kit, BotLevel level, boolean clutch) {
+	/**
+	 * Same, and the mode DRILL starts the timed combo drill (60 seconds, records, the bot never hits back); with CLUTCH the player starts
+	 * with {@link Clutch#START_HEALTH} and no regeneration, and the first KO ends the scenario (see Duel).
+	 */
+	static String start(ServerPlayer player, String kit, BotLevel level, Mode mode) {
+		boolean drill = mode == Mode.DRILL;
+		boolean clutch = mode == Mode.CLUTCH;
 		MinecraftServer server = player.level().getServer();
 		if (DuelManager.isBusy(player.getUUID())) return "You are busy: finish your duel or leave the kit workshop (/leave) first.";
 		if (!KitStore.exists(player.getUUID(), kit)) return "You have no kit named '" + kit + "'. Use /kit list.";
@@ -109,6 +112,8 @@ public final class BotDuel {
 			player.sendSystemMessage(Msg.info("  Combo drill against " + name + ": once the countdown ends you have " + Duel.drillTicks / 20 + " seconds to hit it as many times as you can."));
 			player.sendSystemMessage(Msg.info("  It never hits back, so keep your combo going. Your hits, best combo and accuracy are counted and your records are saved (/drill records)."
 				+ " /leave stops it. Practice doesn't count for your stats."));
+			return null;
+		}
 		if (clutch) {
 			duel.clutch = true;
 			player.setHealth(Clutch.START_HEALTH);
@@ -146,8 +151,7 @@ public final class BotDuel {
 				PENDING.remove(pending);
 				ServerPlayer who = server.getPlayerList().getPlayer(pending.player());
 				if (who == null) continue;
-				String problem = start(who, pending.kit(), pending.level(), pending.drill());
-				String problem = start(who, pending.kit(), pending.level(), pending.clutch());
+				String problem = start(who, pending.kit(), pending.level(), pending.mode());
 				if (problem != null) who.sendSystemMessage(Msg.err(problem));
 			}
 		}
@@ -213,7 +217,7 @@ public final class BotDuel {
 			source.sendFailure(Msg.err("You have no kit named '" + kit + "'. Use /kit list."));
 			return 0;
 		}
-		String problem = start(p, kit, BotLevel.PASSIVE, true);
+		String problem = start(p, kit, BotLevel.PASSIVE, Mode.DRILL);
 		if (problem != null) {
 			source.sendFailure(Msg.err(problem));
 			return 0;

@@ -165,7 +165,7 @@ public final class DuelMenus {
 		b.set(22, icon(Items.CLOCK, "Combo drill", ChatFormatting.AQUA, Duel.drillTicks / 20 + " seconds against a bot that never hits back.",
 			"It counts your hits, best combo and accuracy,", "and keeps your records (/drill records).", "Click to start"), who -> {
 			who.closeContainer();
-			BotDuel.startLater(who, kit, BotLevel.PASSIVE, true);
+			BotDuel.startLater(who, kit, BotLevel.PASSIVE, BotDuel.Mode.DRILL);
 		});
 		if (canGoBack) b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), DuelMenus::botKits);
 		ChoiceMenu.open(p, Component.literal("Static bot?"), 3, b);
@@ -188,7 +188,7 @@ public final class DuelMenus {
 	static void openDrill(ServerPlayer p) {
 		pickKit(p, "Combo drill: choose a kit", 0, (who, name) -> {
 			who.closeContainer();
-			BotDuel.startLater(who, name, BotLevel.PASSIVE, true);
+			BotDuel.startLater(who, name, BotLevel.PASSIVE, BotDuel.Mode.DRILL);
 		});
 	}
 

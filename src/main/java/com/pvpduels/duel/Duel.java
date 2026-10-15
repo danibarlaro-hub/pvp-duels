@@ -982,6 +982,8 @@ public final class Duel {
 			if (p == null || restored[i]) continue;
 			if (drillDone) {
 				if (i == 0) p.sendSystemMessage(Msg.info("Type /drill to try again."));
+				continue;
+			}
 			if (clutch) {
 				if (i == 0) clutchEnding(p);
 				continue;
