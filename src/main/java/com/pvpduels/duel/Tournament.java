@@ -473,10 +473,7 @@ public final class Tournament {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			if (phase != Phase.SIGNUP) return;
 			Entrant e = find(handler.player.getUUID());
-			if (e == null) return;
-			ENTRANTS.remove(e);
-			if (e.id.equals(host)) cancel(server, hostName + " (the host) left, so the tournament was cancelled.");
-			else tellEntrants(server, Msg.info(e.name + " left the game, so they are out of the tournament (" + ENTRANTS.size() + "/" + maxPlayers + ")."));
+			if (e != null) leftTheGame(server, e);
 		});
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			phase = null;
@@ -485,11 +482,26 @@ public final class Tournament {
 		});
 	}
 
+	/** Somebody who was signed up is not in the game any more: the host's leaving cancels it, the others are crossed off. */
+	private static void leftTheGame(MinecraftServer server, Entrant e) {
+		ENTRANTS.remove(e);
+		if (e.id.equals(host)) cancel(server, hostName + " (the host) left, so the tournament was cancelled.");
+		else tellEntrants(server, Msg.info(e.name + " left the game, so they are out of the tournament (" + ENTRANTS.size() + "/" + maxPlayers + ")."));
+	}
+
 	private static void onTick(MinecraftServer server) {
 		tick++;
 		if (phase == null || tick % 10 != 0) return;
 		if (phase == Phase.SIGNUP) {
-			if (tick - openedAt > SIGNUP_TIMEOUT) cancel(server, "Nobody started the tournament in 10 minutes, so it was cancelled.");
+			if (tick - openedAt > SIGNUP_TIMEOUT) {
+				cancel(server, "Nobody started the tournament in 10 minutes, so it was cancelled.");
+				return;
+			}
+			// Whoever is not in the game any more (whatever the way they left) is crossed off the list.
+			for (Entrant e : new ArrayList<>(ENTRANTS)) {
+				if (phase != Phase.SIGNUP) return;
+				if (player(server, e) == null && find(e.id) != null) leftTheGame(server, e);
+			}
 			return;
 		}
 		boolean anybody = false;
