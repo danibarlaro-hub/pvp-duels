@@ -38,7 +38,7 @@ public final class GuideBook {
 			{"Lobby commands", "/lobby: go there\n/lobby return on|off: after a duel go to the lobby or back where you were\n\nAdmins: /setlobby, /lobby protect <radius|off>, /lobby clear"}
 		}),
 		new Topic("Duels", new String[][] {
-			{"Challenge", "/duel <player> opens menus: kit, arena, version and how it is decided.\n\nThe other player gets [ACCEPT] / [DENY] (or /accept, /deny). It expires in 60 s."},
+			{"Challenge", "/duel <player> opens menus: kit, arena, version and how it is decided.\n\nThe other player gets [ACCEPT] / [DENY] (or /accept, /deny) and [VIEW KIT] to look at the kit first. It expires in 60 s."},
 			{"During a duel", "Both use the challenger's kit; your own inventory comes back after.\n\n/leave quits\n/again asks for a rematch\n/duels lists the duels now, with [WATCH]"},
 			{"How it is decided", "Rounds (max 100)\nFirst to N points\nTimed (max 30 min, a tie plays an extra round)\n\nUnlimited: it ends with /leave and the most points wins."},
 			{"Arenas", "Flat: 21x21 bedrock over the void, with or without walls.\n\nCircular (radius 100/150/200): flat grassy terrain in invisible barriers. Build freely, it resets every round."},

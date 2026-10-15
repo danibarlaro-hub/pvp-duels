@@ -377,6 +377,8 @@ public final class DuelManager {
 			.append(button("[ACCEPT]", ChatFormatting.GREEN, "/accept " + fromName, "Click to accept the duel"))
 			.append(Component.literal("   "))
 			.append(button("[DENY]", ChatFormatting.RED, "/deny " + fromName, "Click to deny the duel"))
+			.append(Component.literal("   "))
+			.append(button("[VIEW KIT]", ChatFormatting.AQUA, "/duel viewkit " + fromName, "Look at the kit before you decide"))
 			.append(Msg.info("   (expires in 60 seconds)"));
 		to.sendSystemMessage(buttons);
 
@@ -409,6 +411,26 @@ public final class DuelManager {
 		Invite invite = found.get();
 		INVITES.remove(invite);
 		start(to.level().getServer(), invite);
+	}
+
+	/** The [VIEW KIT] button of a request: opens the kit of the challenger as a look-only chest. The request stays. */
+	public static void viewKit(ServerPlayer to, String fromName) {
+		Optional<Invite> found = findInvite(to.getUUID(), fromName);
+		if (found.isEmpty()) {
+			to.sendSystemMessage(Msg.err(fromName == null ? "You have no pending duel requests." : "You have no duel request from " + fromName + "."));
+			return;
+		}
+		Invite invite = found.get();
+		try {
+			Optional<KitStore.Kit> read = KitStore.read(to.level().getServer(), invite.kitOwner(), invite.config().kit());
+			if (read.isEmpty()) {
+				to.sendSystemMessage(Msg.err("The kit '" + invite.config().kit() + "' no longer exists."));
+				return;
+			}
+			KitView.open(to, invite.config().kit(), read.get().slots());
+		} catch (IOException | RuntimeException e) {
+			to.sendSystemMessage(Msg.err("Could not read the kit: " + e.getMessage()));
+		}
 	}
 
 	public static void deny(ServerPlayer to, String fromName) {

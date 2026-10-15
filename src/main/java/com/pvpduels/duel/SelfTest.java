@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("kitview")) {
+				buildKitview();
 			} else {
 				build();
 			}
@@ -580,6 +582,83 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: look at the kit before accepting
+
+	private static void kitviewSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("kitview: a challenge has a button to look at the kit", () -> {
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			a.getInventory().setItem(1, new ItemStack(Items.GOLDEN_APPLE, 5));
+			a.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+			run(a, "kit save viewkit");
+			a.getInventory().clearContent();
+			a.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+			check("the kit exists", KitStore.exists(a.getUUID(), "viewkit"));
+			b.inbox.clear();
+			run(b, "duel viewkit Alice");
+			check("without a request there is nothing to look at", b.heard("You have no duel request from Alice") && !(b.containerMenu instanceof ChestMenu), String.valueOf(b.inbox));
+			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("viewkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1), false);
+			check("Bob got the request with the new button", b.heard("[VIEW KIT]") && b.heard("[ACCEPT]") && b.heard("[DENY]"), String.valueOf(b.inbox));
+			run(b, "duel viewkit Alice");
+		});
+		step("kitview: the kit is a look-only chest", () -> {
+			AbstractContainerMenu menu = b.containerMenu;
+			boolean chest = menu instanceof ChestMenu c && c.getRowCount() == 6;
+			check("a 6-row chest opened for Bob", chest);
+			if (!chest) return;
+			check("the sword, the apples and the helmet are there", menu.getSlot(KitView.where(0)).getItem().is(Items.DIAMOND_SWORD) && menu.getSlot(KitView.where(1)).getItem().getCount() == 5
+				&& menu.getSlot(KitView.where(39)).getItem().is(Items.IRON_HELMET));
+			menu.clicked(KitView.where(0), 0, ContainerInput.PICKUP, b);
+			check("nothing can be taken", b.containerMenu.getCarried().isEmpty() && b.getInventory().getItem(0).isEmpty());
+			b.closeContainer();
+			b.inbox.clear();
+			run(b, "duel viewkit");
+			check("without a name it shows the latest request", b.containerMenu instanceof ChestMenu, String.valueOf(b.inbox));
+			b.closeContainer();
+			run(b, "duel viewkit Zed");
+			check("a request that does not exist says so", b.heard("You have no duel request from Zed"), String.valueOf(b.inbox));
+		});
+		step("kitview: looking does not answer the request", () -> {
+			b.inbox.clear();
+			run(b, "deny Alice");
+			check("the request was still there to deny", b.heard("You denied the duel request from Alice"), String.valueOf(b.inbox));
+			run(b, "duel viewkit Alice");
+			check("and now it is gone", b.heard("You have no duel request from Alice") && !(b.containerMenu instanceof ChestMenu), String.valueOf(b.inbox));
+		});
+		step("kitview: a kit that was deleted", () -> {
+			DuelManager.sendInvite(a, b, a.getUUID(), new DuelConfig("viewkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1), false);
+			run(a, "kit delete viewkit");
+			b.inbox.clear();
+			run(b, "duel viewkit Alice");
+			check("Bob is told the kit is gone", b.heard("The kit 'viewkit' no longer exists") && !(b.containerMenu instanceof ChestMenu), String.valueOf(b.inbox));
+			run(b, "deny Alice");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildKitview() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		kitviewSteps();
+		step("kitview: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +933,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		kitviewSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
