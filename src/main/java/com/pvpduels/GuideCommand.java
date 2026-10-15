@@ -11,6 +11,7 @@ public final class GuideCommand {
 		"NPCS in the lobby: click the Practice Bot (practice menu), the Kit Workshop (make kits), the Arena Builder (arenas) or the Explosion Dummy (watch your explosions land on it, as many times as you want). They appear by themselves in front of the lobby spawn when an admin is there. Admins: /npc setup puts the missing ones in front of you, /npc add bot|kit|arena|preview puts one where you stand, /npc remove deletes the closest, /npc list",
 		"/duels  - the duels running right now, each with a [WATCH] button",
 		"DUELS: /duel <player>  - choose kit, arena, version and how the duel is decided, then send the challenge",
+		"HEAD START: in the rules menu of /duel <player> (1v1 only) the golden apple button gives extra yellow hearts at the start of every round to the weaker player: none, the rival gets 1, 2, 3 or 5 hearts, or you get 1, 2, 3 or 5. Click it to go to the next one. It shows in the challenge and ends with the duel",
 		"/accept [player] or /duel accept [player]  - accept a challenge (you can also click [ACCEPT] in the chat); /deny [player]  - deny it. Requests expire after 60 seconds",
 		"A totem of undying in either hand saves you in a duel like in vanilla (you stay in the round with 1 heart), and you only lose a round when you really die: health plus absorption, so a golden apple counts",
 		"After every duel you get a summary: how long it lasted and, for each of you, hits, damage, best combo and the totems, ender pearls, golden apples and potions used",
