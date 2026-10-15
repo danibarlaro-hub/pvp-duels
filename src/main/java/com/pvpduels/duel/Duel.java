@@ -721,6 +721,7 @@ public final class Duel {
 		if (TestDummy.accepts(ids[0]) || TestDummy.accepts(ids[1])) return;
 		eloInfo = StatsStore.recordDuel(ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
 		kitEloInfo = StatsStore.recordKitDuel(config.kit(), ids[0], names[0], ids[1], names[1], winner, points[0], points[1]);
+		com.pvpduels.stats.HeadToHead.record(ids[0], names[0], ids[1], names[1], winner, points[0], points[1], config.kit());
 		recordAchievements();
 	}
 
@@ -817,6 +818,11 @@ public final class Duel {
 				int after = kitEloInfo[2 * i + 1];
 				p.sendSystemMessage(Msg.info("Elo with kit " + config.kit() + ": " + before + " -> " + after + " (" + (after >= before ? "+" : "") + (after - before)
 					+ ")  /top kit " + config.kit()));
+			}
+			com.pvpduels.stats.HeadToHead.View h2h = com.pvpduels.stats.HeadToHead.view(ids[i], ids[1 - i]);
+			if (h2h.total() > 0) {
+				p.sendSystemMessage(Msg.info("Against " + names[1 - i] + ": you " + h2h.wins() + " - " + h2h.losses() + " " + names[1 - i]
+					+ (h2h.draws() > 0 ? " (" + h2h.draws() + (h2h.draws() == 1 ? " tie)" : " ties)") : "") + "  /h2h " + names[1 - i]));
 			}
 			p.sendSystemMessage(Msg.info("Rematch? ").copy().append(Component.literal("[REMATCH]").withStyle(style -> style.withColor(ChatFormatting.GREEN).withBold(true)
 				.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/again"))

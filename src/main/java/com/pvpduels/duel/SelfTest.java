@@ -99,6 +99,8 @@ public final class SelfTest {
 				buildPranks();
 			} else if (mode.equals("bugs")) {
 				buildBugs();
+			} else if (mode.equals("h2h")) {
+				buildH2h();
 			} else {
 				build();
 			}
@@ -661,6 +663,67 @@ public final class SelfTest {
 	}
 
 	private static void buildBugs() {
+	// ------------------------------------------------------------------ one idea at a time: /h2h, head to head against every friend
+
+	private static void h2hSteps() {
+		step("h2h: the record of every pair, from both sides", () -> {
+			com.pvpduels.stats.HeadToHead.resetForTest();
+			UUID ia = a.getUUID();
+			UUID ib = b.getUUID();
+			a.inbox.clear();
+			run(a, "h2h");
+			check("with no duels /h2h says so", a.heard("have not dueled anybody"));
+			a.inbox.clear();
+			run(a, "h2h Bob");
+			check("a player she never dueled shows zero duels and a challenge button", a.heard("Alice vs Bob") && a.heard("0 duels") && a.heard("[CHALLENGE Bob]"));
+			a.inbox.clear();
+			run(a, "h2h Nobodyhere");
+			check("a name nobody knows is refused", a.heard("do not know a player called"));
+			a.inbox.clear();
+			run(a, "h2h alice");
+			check("her own name is refused", a.heard("That is you"));
+			com.pvpduels.stats.HeadToHead.record(ia, "Alice", ib, "Bob", 0, 2, 1, "pot");
+			com.pvpduels.stats.HeadToHead.record(ia, "Alice", ib, "Bob", 0, 2, 0, "pot");
+			com.pvpduels.stats.HeadToHead.record(ib, "Bob", ia, "Alice", 0, 2, 1, "sword");
+			com.pvpduels.stats.HeadToHead.record(ia, "Alice", ib, "Bob", -1, 1, 1, "pot");
+			var va = com.pvpduels.stats.HeadToHead.view(ia, ib);
+			var vb = com.pvpduels.stats.HeadToHead.view(ib, ia);
+			check("Alice's side: 2 wins, 1 loss, 1 tie, rounds 6-4", va.wins() == 2 && va.losses() == 1 && va.draws() == 1 && va.roundsFor() == 6 && va.roundsAgainst() == 4 && va.total() == 4,
+				va.toString());
+			check("Bob's side is the mirror, whoever challenged first", vb.wins() == 1 && vb.losses() == 2 && vb.draws() == 1 && vb.roundsFor() == 4 && vb.roundsAgainst() == 6, vb.toString());
+			check("the last duel was a tie with the kit pot, and the tie broke the streak", va.lastResult() == 0 && vb.lastResult() == 0 && va.lastKit().equals("pot") && va.streak() == 0);
+			check("each side knows the name of the other", va.otherName().equals("Bob") && vb.otherName().equals("Alice"));
+			com.pvpduels.stats.HeadToHead.record(ib, "Bob", ia, "Alice", 1, 0, 2, "pot");
+			com.pvpduels.stats.HeadToHead.record(ia, "Alice", ib, "Bob", 0, 2, 1, "pot");
+			va = com.pvpduels.stats.HeadToHead.view(ia, ib);
+			vb = com.pvpduels.stats.HeadToHead.view(ib, ia);
+			check("two wins in a row make a streak of 2 for Alice and -2 for Bob", va.streak() == 2 && vb.streak() == -2 && va.lastResult() == 1 && vb.lastResult() == -1, va.streak() + " " + vb.streak());
+			a.inbox.clear();
+			run(a, "h2h Bob");
+			check("/h2h Bob tells the numbers, the streak and the last duel", a.heard("Alice vs Bob") && a.heard("6 duels") && a.heard("you won 4, Bob won 1, 1 tie") && a.heard("won the last 2 duels against Bob")
+				&& a.heard("Last duel: you won") && a.heard("kit pot") && a.heard("[CHALLENGE Bob]") && a.heard("win rate against Bob: 80%"), "" + a.inbox.size());
+			b.inbox.clear();
+			run(b, "h2h ALICE");
+			check("Bob sees it from his side (capitals are forgiven) and that Alice is winning", b.heard("Bob vs Alice") && b.heard("you won 1, Alice won 4") && b.heard("Alice has won the last 2 duels against you"));
+			UUID carl = UUID.nameUUIDFromBytes("OfflinePlayer:CarlOld".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			com.pvpduels.stats.HeadToHead.record(ia, "Alice", carl, "CarlOld", 1, 0, 2, "sword");
+			a.inbox.clear();
+			run(a, "h2h");
+			check("/h2h lists the rivals, the one with more duels first, with buttons", a.heard("Your rivals (2)") && a.heard("Bob  4 - 1 (1 tie)") && a.heard("CarlOld  0 - 1") && a.heard("[DETAILS]")
+				&& a.inbox.stream().filter(s -> s.contains("Bob  4")).findFirst().isPresent());
+			a.inbox.clear();
+			run(a, "h2h carlold");
+			check("a rival who is offline can be looked up by the name saved in the file", a.heard("Alice vs CarlOld") && a.heard("CarlOld won 1"));
+			com.pvpduels.stats.HeadToHead.reloadForTest();
+			var again = com.pvpduels.stats.HeadToHead.view(ia, ib);
+			check("it is all in the file: it survives a restart", again.wins() == 4 && again.losses() == 1 && again.draws() == 1 && again.streak() == 2 && again.lastKit().equals("pot"), again.toString());
+			check("ago() says it in plain words", com.pvpduels.stats.HeadToHead.ago(0, 30_000).equals("just now") && com.pvpduels.stats.HeadToHead.ago(0, 5 * 60_000).equals("5 minutes ago")
+				&& com.pvpduels.stats.HeadToHead.ago(0, 3_600_000).equals("1 hour ago") && com.pvpduels.stats.HeadToHead.ago(0, 3 * 86_400_000L).equals("3 days ago"));
+			com.pvpduels.stats.HeadToHead.resetForTest();
+		});
+	}
+
+	private static void buildH2h() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
 		step("two fake players", () -> {
@@ -669,6 +732,8 @@ public final class SelfTest {
 		}, () -> ticks > 60, 300);
 		bugsSteps();
 		step("bugs: done", () -> finish());
+		h2hSteps();
+		step("h2h: done", () -> finish());
 	}
 
 	private static void buildPranks() {
@@ -945,6 +1010,11 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		step("h2h: the real duels of Alice and Bob were recorded and the summary says so", () -> {
+			var v = com.pvpduels.stats.HeadToHead.view(a.getUUID(), b.getUUID());
+			check("the duels between Alice and Bob are in the head to head", v.total() >= 1, v.toString());
+			check("the summary of the duel told Alice how she stands against Bob", a.heard("Against Bob: you "));
+		});
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
@@ -5580,6 +5650,8 @@ public final class SelfTest {
 
 		// ---------------------------------------------------------------- /bugs
 		bugsSteps();
+		// ---------------------------------------------------------------- /h2h
+		h2hSteps();
 
 		step("sanity: commands from outside a duel", () -> {
 			run(a, "leave");
