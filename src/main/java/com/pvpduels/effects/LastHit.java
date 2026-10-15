@@ -30,7 +30,7 @@ public final class LastHit {
 	/** The finishing blows. "none" is the default: nothing plays until a player picks one. */
 	public enum Style {
 		NONE("none", "None", Items.BARRIER, "Nothing plays when you end a round."),
-		LIGHTNING("lightning", "Lightning", Items.LIGHTNING_ROD, "A bolt falls on the player you hit.", "It is only drawn: nothing burns."),
+		LIGHTNING("lightning", "Lightning", Items.BLAZE_ROD, "A bolt falls on the player you hit.", "It is only drawn: nothing burns."),
 		SHATTER("shatter", "Shatter", Items.GLASS, "The player you hit breaks like glass."),
 		FIREWORK("firework", "Firework", Items.FIREWORK_ROCKET, "A burst of sparks and a bang."),
 		SOUL("soul", "Soul", Items.SOUL_LANTERN, "Souls rise from the player you hit."),
