@@ -615,7 +615,7 @@ public final class SelfTest {
 			a.fallDistance = 0;
 			softHit(a, b, 2f);
 			wait[0] = ticks;
-		}, () -> ticks >= wait[0] + 4, 40);
+		}, () -> ticks >= wait[0] + 20, 80); // the weapon needs to charge again after she swapped items, or it is not a critical hit
 		step("accuracy: a hit while falling is a critical hit", () -> {
 			a.fallDistance = 3.0;
 			a.setOnGround(false);
@@ -627,7 +627,9 @@ public final class SelfTest {
 			hit(a, b);
 		}, () -> noDuel(a) && noDuel(b), 600);
 		step("accuracy: the summary tells the swings that hit and the critical hits", () -> {
-			check("Alice: 3 of 4 sword swings hit (the stone swings do not count) and one was a critical hit", a.heard("accuracy 75% (3/4 swings), 1 crit"), "");
+			String aliceLine = "";
+			for (String line : a.inbox) if (line.contains("Alice: ") && line.contains("hit")) aliceLine = line;
+			check("Alice: 3 of 4 sword swings hit (the stone swings do not count) and one was a critical hit", a.heard("accuracy 75% (3/4 swings), 1 crit"), aliceLine);
 			check("Bob swung once and hit nothing", a.heard("Bob: 0 hits") && a.heard("accuracy 0% (0/1 swing)"));
 			check("Bob read the same summary", b.heard("accuracy 75% (3/4 swings), 1 crit"));
 			check("the hits before it are still told as before", a.heard("Alice: 3 hits"));
