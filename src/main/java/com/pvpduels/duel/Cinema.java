@@ -414,7 +414,7 @@ public final class Cinema {
 				ids[i] = who[i];
 				names[i] = called[i];
 			}
-			this.meme = com.pvpduels.effects.MemeSounds.forLoser(ids[1 - win]);
+			this.meme = com.pvpduels.effects.MemeSounds.forLoser(win == 0 || win == 1 ? ids[1 - win] : null); // a tie has no loser
 			stage[0] = stage0;
 			stage[1] = stage1;
 			center = new Vec3((stage[0].x + stage[1].x) / 2, Math.min(stage[0].y, stage[1].y), (stage[0].z + stage[1].z) / 2);
