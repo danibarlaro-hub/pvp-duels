@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("seasons")) {
+				buildSeasons();
 			} else {
 				build();
 			}
@@ -580,6 +582,180 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: Elo seasons
+
+	private static UUID seasonPlayer(String name) {
+		return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+	}
+
+	private static void seasonsSteps() {
+		final long day = 24L * 60 * 60 * 1000;
+		final long[] now = {1_800_000_000_000L};
+		final ItemStack[][] saved = new ItemStack[2][41];
+		step("seasons: a new season starts", () -> {
+			Effects.resetForTest();
+			com.pvpduels.stats.Seasons.setServerForTest(server);
+			com.pvpduels.stats.Seasons.setClockForTest(() -> now[0]);
+			com.pvpduels.stats.Seasons.resetForTest();
+			check("season 1 has 28 days", com.pvpduels.stats.Seasons.number() == 1 && com.pvpduels.stats.Seasons.days() == 28 && com.pvpduels.stats.Seasons.millisLeft() == 28 * day);
+			check("the time is told in words", com.pvpduels.stats.Seasons.timeLeft(90 * 60_000L).equals("1 hour 30 minutes") && com.pvpduels.stats.Seasons.timeLeft(30_000).equals("under a minute")
+				&& com.pvpduels.stats.Seasons.timeLeft(2 * day + 3 * 3_600_000L).equals("2 days 3 hours") && com.pvpduels.stats.Seasons.timeLeft(day + 3_600_000L).equals("1 day 1 hour"));
+			a.inbox.clear();
+			run(a, "season");
+			check("a new season: the time left, nothing played, an empty podium", a.heard("Season 1") && a.heard("Ends in 28 days 0 hours") && a.heard("You have not played this season")
+				&& a.heard("The podium is empty"), String.valueOf(a.inbox));
+			var season = server.getCommands().getDispatcher().getRoot().getChild("season");
+			check("anybody can read the season, only an admin can end it or change its length", season != null && season.getChild("top").canUse(a.createCommandSourceStack())
+				&& season.getChild("history").canUse(a.createCommandSourceStack()) && !season.getChild("end").canUse(a.createCommandSourceStack())
+				&& !season.getChild("days").canUse(a.createCommandSourceStack()) && season.getChild("end").canUse(server.createCommandSourceStack()));
+		});
+		step("seasons: duels move the season rating", () -> {
+			UUID ia = a.getUUID();
+			UUID ib = b.getUUID();
+			UUID zed = seasonPlayer("SeasonZed");
+			UUID carlS = seasonPlayer("SeasonCarl");
+			UUID dave = seasonPlayer("SeasonDave");
+			UUID erin = seasonPlayer("SeasonErin");
+			for (int i = 0; i < 5; i++) com.pvpduels.stats.Seasons.record(ia, "Alice", 16, zed, "Zed", -16);
+			for (int i = 0; i < 5; i++) com.pvpduels.stats.Seasons.record(carlS, "Carl", 8, dave, "Dave", 4);
+			for (int i = 0; i < 2; i++) com.pvpduels.stats.Seasons.record(ib, "Bob", 100, erin, "Erin", -100);
+			var mine = com.pvpduels.stats.Seasons.mine(ia);
+			check("Alice: 1080 after five duels", mine.elo == 1080 && mine.duels == 5, mine.elo + " / " + mine.duels);
+			check("Bob: 1200 after two", com.pvpduels.stats.Seasons.mine(ib).elo == 1200 && com.pvpduels.stats.Seasons.mine(ib).duels == 2);
+			check("somebody who did not play has the default", com.pvpduels.stats.Seasons.mine(seasonPlayer("SeasonNobody")).elo == 1000 && com.pvpduels.stats.Seasons.mine(seasonPlayer("SeasonNobody")).duels == 0);
+			var rows = com.pvpduels.stats.Seasons.ranking();
+			StringBuilder order = new StringBuilder();
+			for (var r : rows) order.append(r.name()).append(' ');
+			check("the ranking is by season Elo", order.toString().equals("Bob Alice Carl Dave Zed Erin "), order.toString());
+			var podium = com.pvpduels.stats.Seasons.podium();
+			check("the podium needs five duels: Bob (2 duels) is left out", podium.size() == 3 && podium.get(0).name().equals("Alice") && podium.get(1).name().equals("Carl")
+				&& podium.get(2).name().equals("Dave"));
+			a.inbox.clear();
+			run(a, "season");
+			check("Alice sees her place and the podium", a.heard("You: 1080 season Elo, 5 duels, #2 of 6") && a.heard("1st: Alice  -  1080 Elo, 5 duels") && a.heard("2nd: Carl  -  1040 Elo, 5 duels")
+				&& a.heard("3rd: Dave  -  1020 Elo, 5 duels") && a.heard("Prizes:") && !a.heard("more duel"), String.valueOf(a.inbox));
+			b.inbox.clear();
+			run(b, "season");
+			check("Bob is told how many duels he needs", b.heard("You: 1200 season Elo, 2 duels, #1 of 6") && b.heard("Play 3 more duels to be able to win a place"), String.valueOf(b.inbox));
+			a.inbox.clear();
+			run(a, "season top");
+			check("/season top shows who is not on the podium yet", a.heard("Bob  -  1200 Elo  (2 duels, not on the podium yet)") && a.heard("Alice  -  1080 Elo  (5 duels)")
+				&& a.heard("Season 1: top 6"), String.valueOf(a.inbox));
+			now[0] += 10 * day + 5 * 3_600_000L;
+			a.inbox.clear();
+			run(a, "season");
+			check("ten days later it says the time left", a.heard("Ends in 17 days 19 hours"), String.valueOf(a.inbox));
+		});
+		step("seasons: the end of season 1 gives the prizes", () -> {
+			UUID ia = a.getUUID();
+			UUID carlS = seasonPlayer("SeasonCarl");
+			UUID dave = seasonPlayer("SeasonDave");
+			Effects.grantExplosion(ia, "domain_void");
+			check("Alice already has the explosion that would be her first prize", Effects.ownsExplosion(ia, "domain_void") && !Effects.ownsExplosion(ia, "domain_swords"));
+			a.inbox.clear();
+			b.inbox.clear();
+			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "season end");
+			check("Alice got the next one of her group", Effects.ownsExplosion(ia, "domain_swords"));
+			check("Carl (2nd) got a big film explosion and Dave (3rd) one of the newest", Effects.ownsExplosion(carlS, "tesseract") && Effects.ownsExplosion(dave, "tornado"));
+			check("Bob, with only two duels, got nothing", Effects.ownedExplosions(b.getUUID()).isEmpty());
+			check("everybody online was told the podium", b.heard("Season 1 is over!") && b.heard("1st: Alice  -  1080 Elo, 5 duels  -  prize: Domain: Field of Swords")
+				&& b.heard("2nd: Carl  -  1040 Elo, 5 duels  -  prize: Tesseract") && b.heard("3rd: Dave  -  1020 Elo, 5 duels  -  prize: Tornado") && b.heard("Season 2 starts now"),
+				String.valueOf(b.inbox));
+			check("Alice, who is online, read her own prize at once", a.heard("Season 1 is over and you finished 1st with 1080 season Elo!") && a.heard("Domain: Field of Swords") && a.heard("[EFFECTS]"),
+				String.valueOf(a.inbox));
+			check("the prizes of the two who are offline wait for them", com.pvpduels.stats.Seasons.pendingFor(ia) == 0 && com.pvpduels.stats.Seasons.pendingFor(carlS) == 1
+				&& com.pvpduels.stats.Seasons.pendingFor(dave) == 1);
+			check("a new season, empty", com.pvpduels.stats.Seasons.number() == 2 && com.pvpduels.stats.Seasons.ranking().isEmpty() && com.pvpduels.stats.Seasons.mine(ia).duels == 0
+				&& com.pvpduels.stats.Seasons.millisLeft() == 28 * day);
+			var past = com.pvpduels.stats.Seasons.history();
+			check("the history has season 1 with its podium", past.size() == 1 && past.get(0).number == 1 && past.get(0).podium.size() == 3 && past.get(0).podium.get(0).name.equals("Alice")
+				&& past.get(0).podium.get(0).prize.equals("domain_swords"));
+			a.inbox.clear();
+			run(a, "season history");
+			check("/season history tells it", a.heard("Season 1: 1st Alice (1080), 2nd Carl (1040), 3rd Dave (1020)"), String.valueOf(a.inbox));
+		});
+		step("seasons: a prize waits for a winner who is offline", () -> {
+			UUID ia = a.getUUID();
+			UUID zed = seasonPlayer("SeasonZed");
+			for (int i = 0; i < 5; i++) com.pvpduels.stats.Seasons.record(ia, "Alice", 16, zed, "Zed", -16);
+			com.pvpduels.stats.Seasons.setServerForTest(null);
+			a.inbox.clear();
+			com.pvpduels.stats.Seasons.endSeason();
+			check("nobody was told, the prizes wait", com.pvpduels.stats.Seasons.pendingFor(ia) == 1 && com.pvpduels.stats.Seasons.pendingFor(zed) == 1 && !a.heard("Season 2 is over"));
+			check("Alice got the next explosion of her group, Zed the third of the films", Effects.ownsExplosion(ia, "domain_frost") && Effects.ownsExplosion(zed, "eclipse"));
+			com.pvpduels.stats.Seasons.setServerForTest(server);
+			com.pvpduels.stats.Seasons.deliver(a);
+			check("when she is there she reads it", a.heard("Season 2 is over and you finished 1st with 1080 season Elo!") && a.heard("Domain: Frozen Abyss") && com.pvpduels.stats.Seasons.pendingFor(ia) == 0,
+				String.valueOf(a.inbox));
+			a.inbox.clear();
+			com.pvpduels.stats.Seasons.deliver(a);
+			check("and she is not told twice", a.inbox.isEmpty());
+		});
+		step("seasons: a season ends by itself when its time is over", () -> {
+			UUID ia = a.getUUID();
+			UUID ib = b.getUUID();
+			check("season 3 is running", com.pvpduels.stats.Seasons.number() == 3);
+			now[0] += 28 * day + 60_000;
+			check("no time left", com.pvpduels.stats.Seasons.millisLeft() == 0);
+			b.inbox.clear();
+			com.pvpduels.stats.Seasons.record(ia, "Alice", 16, ib, "Bob", -16);
+			check("recording a duel ended it first, and the duel counts for season 4", com.pvpduels.stats.Seasons.number() == 4 && com.pvpduels.stats.Seasons.mine(ia).duels == 1
+				&& com.pvpduels.stats.Seasons.mine(ia).elo == 1016 && com.pvpduels.stats.Seasons.mine(ib).elo == 984 && com.pvpduels.stats.Seasons.history().size() == 3);
+			check("nobody had enough duels, and everybody was told so", b.heard("Season 3 is over!") && b.heard("Nobody played at least 5 duels") && b.heard("Season 4 starts now"), String.valueOf(b.inbox));
+			server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "season days 7");
+			check("an admin can change the length", com.pvpduels.stats.Seasons.days() == 7 && com.pvpduels.stats.Seasons.millisLeft() == 7 * day);
+			com.pvpduels.stats.Seasons.setDays(500);
+			check("it is at most 90 days", com.pvpduels.stats.Seasons.days() == 90);
+			com.pvpduels.stats.Seasons.setDays(28);
+			com.pvpduels.stats.Seasons.reloadForTest();
+			check("it is all in the file: it survives a restart", com.pvpduels.stats.Seasons.number() == 4 && com.pvpduels.stats.Seasons.history().size() == 3 && com.pvpduels.stats.Seasons.mine(ia).duels == 1
+				&& com.pvpduels.stats.Seasons.pendingFor(seasonPlayer("SeasonCarl")) == 1 && com.pvpduels.stats.Seasons.days() == 28);
+		});
+		step("seasons: a real duel moves the season rating", () -> {
+			com.pvpduels.stats.Seasons.setClockForTest(null);
+			com.pvpduels.stats.Seasons.resetForTest();
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save seasonkit");
+			a.getInventory().clearContent();
+			invite(a, b, new DuelConfig("seasonkit", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("seasons: Alice wins it", () -> { hit(a, b); }, () -> noDuel(a) && noDuel(b), 800);
+		step("seasons: the duel counted for the season", () -> {
+			var ma = com.pvpduels.stats.Seasons.mine(a.getUUID());
+			var mb = com.pvpduels.stats.Seasons.mine(b.getUUID());
+			check("both have one duel, the winner went up and the loser went down", ma.duels == 1 && mb.duels == 1 && ma.elo > 1000 && mb.elo < 1000,
+				ma.elo + " / " + mb.elo);
+			run(a, "kit delete seasonkit");
+			com.pvpduels.stats.Seasons.resetForTest();
+			Effects.resetForTest();
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildSeasons() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		seasonsSteps();
+		step("seasons: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +1030,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		seasonsSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);
