@@ -1,0 +1,47 @@
+--- two fake players
+--- seasons: a new season starts
+PASS  season 1 has 28 days
+PASS  the time is told in words
+PASS  a new season: the time left, nothing played, an empty podium   ([Season 1,   Ends in 28 days 0 hours. Every duel against a player moves your season rating, which starts at 1000.,   You have not played this season. Win duels to climb.,   The podium is empty: it needs players with at least 5 duels.,   Prizes: 1st a Domain Expansion, 2nd one of the big explosion films, 3rd one of the newest explosions (one you do not have yet).,   [TOP]  [HISTORY]])
+PASS  anybody can read the season, only an admin can end it or change its length
+--- seasons: duels move the season rating
+PASS  Alice: 1080 after five duels   (1080 / 5)
+PASS  Bob: 1200 after two
+PASS  somebody who did not play has the default
+PASS  the ranking is by season Elo   (Bob Alice Carl Dave Zed Erin )
+PASS  the podium needs five duels: Bob (2 duels) is left out
+PASS  Alice sees her place and the podium   ([Season 1,   Ends in 28 days 0 hours. Every duel against a player moves your season rating, which starts at 1000.,   You: 1080 season Elo, 5 duels, #2 of 6,   1st: Alice  -  1080 Elo, 5 duels,   2nd: Carl  -  1040 Elo, 5 duels,   3rd: Dave  -  1020 Elo, 5 duels,   Prizes: 1st a Domain Expansion, 2nd one of the big explosion films, 3rd one of the newest explosions (one you do not have yet).,   [TOP]  [HISTORY]])
+PASS  Bob is told how many duels he needs   ([Season 1,   Ends in 28 days 0 hours. Every duel against a player moves your season rating, which starts at 1000.,   You: 1200 season Elo, 2 duels, #1 of 6,   Play 3 more duels to be able to win a place on the podium.,   1st: Alice  -  1080 Elo, 5 duels,   2nd: Carl  -  1040 Elo, 5 duels,   3rd: Dave  -  1020 Elo, 5 duels,   Prizes: 1st a Domain Expansion, 2nd one of the big explosion films, 3rd one of the newest explosions (one you do not have yet).,   [TOP]  [HISTORY]])
+PASS  /season top shows who is not on the podium yet   ([Season 1: top 6,  1. Bob  -  1200 Elo  (2 duels, not on the podium yet),  2. Alice  -  1080 Elo  (5 duels),  3. Carl  -  1040 Elo  (5 duels),  4. Dave  -  1020 Elo  (5 duels),  5. Zed  -  920 Elo  (5 duels),  6. Erin  -  800 Elo  (2 duels, not on the podium yet)])
+PASS  ten days later it says the time left   ([Season 1,   Ends in 17 days 19 hours. Every duel against a player moves your season rating, which starts at 1000.,   You: 1080 season Elo, 5 duels, #2 of 6,   1st: Alice  -  1080 Elo, 5 duels,   2nd: Carl  -  1040 Elo, 5 duels,   3rd: Dave  -  1020 Elo, 5 duels,   Prizes: 1st a Domain Expansion, 2nd one of the big explosion films, 3rd one of the newest explosions (one you do not have yet).,   [TOP]  [HISTORY]])
+--- seasons: the end of season 1 gives the prizes
+PASS  Alice already has the explosion that would be her first prize
+PASS  Alice got the next one of her group
+PASS  Carl (2nd) got a big film explosion and Dave (3rd) one of the newest
+PASS  Bob, with only two duels, got nothing
+PASS  everybody online was told the podium   ([Season 1 is over!,   1st: Alice  -  1080 Elo, 5 duels  -  prize: Domain: Field of Swords,   2nd: Carl  -  1040 Elo, 5 duels  -  prize: Tesseract,   3rd: Dave  -  1020 Elo, 5 duels  -  prize: Tornado,   Season 2 starts now, from 1000 for everybody. /season shows how it goes.])
+PASS  Alice, who is online, read her own prize at once   ([Season 1 is over!,   1st: Alice  -  1080 Elo, 5 duels  -  prize: Domain: Field of Swords,   2nd: Carl  -  1040 Elo, 5 duels  -  prize: Tesseract,   3rd: Dave  -  1020 Elo, 5 duels  -  prize: Tornado,   Season 2 starts now, from 1000 for everybody. /season shows how it goes., Season 1 is over and you finished 1st with 1080 season Elo! Your prize is the explosion Domain: Field of Swords: equip it in /effects. [EFFECTS]])
+PASS  the prizes of the two who are offline wait for them
+PASS  a new season, empty
+PASS  the history has season 1 with its podium
+PASS  /season history tells it   ([Seasons that are over,   Season 1: 1st Alice (1080), 2nd Carl (1040), 3rd Dave (1020)])
+--- seasons: a prize waits for a winner who is offline
+PASS  nobody was told, the prizes wait
+PASS  Alice got the next explosion of her group, Zed the third of the films
+PASS  when she is there she reads it   ([Season 2 is over and you finished 1st with 1080 season Elo! Your prize is the explosion Domain: Frozen Abyss: equip it in /effects. [EFFECTS]])
+PASS  and she is not told twice
+--- seasons: a season ends by itself when its time is over
+PASS  season 3 is running
+PASS  no time left
+PASS  recording a duel ended it first, and the duel counts for season 4
+PASS  nobody had enough duels, and everybody was told so   ([Season 3 is over!,   Nobody played at least 5 duels in it, so there is no podium.,   Season 4 starts now, from 1000 for everybody. /season shows how it goes.])
+PASS  an admin can change the length
+PASS  it is at most 90 days
+PASS  it is all in the file: it survives a restart
+--- seasons: a real duel moves the season rating
+PASS  a duel started
+--- seasons: Alice wins it
+--- seasons: the duel counted for the season
+PASS  both have one duel, the winner went up and the loser went down   (1016 / 984)
+--- seasons: done
+RESULT: PASS
