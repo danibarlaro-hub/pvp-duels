@@ -1483,8 +1483,18 @@ public final class SelfTest {
 			double y = a.getY() + 2.2;
 			double z = a.getZ();
 			var elo = com.pvpduels.stats.Leaderboards.place(level, x, y, z, "elo");
+			String why = "";
+			if (elo == null) {
+				try {
+					int r = server.getCommands().getDispatcher().execute(String.format(java.util.Locale.ROOT, "summon minecraft:text_display %.2f %.2f %.2f", x, y + 20, z), server.createCommandSourceStack().withLevel(level));
+					why = " plain summon gave " + r;
+				} catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+					why = " plain summon failed: " + e.getMessage();
+				}
+				why += " | Alice in " + level.dimension().identifier() + " at " + where(a) + " alive=" + a.isAlive() + " chunk=" + level.hasChunk(a.blockPosition().getX() >> 4, a.blockPosition().getZ() >> 4);
+			}
 			check("a text display with the tag of the board was made", elo instanceof net.minecraft.world.entity.Display.TextDisplay && elo.entityTags().contains("pvpduels_board_elo"),
-				String.valueOf(elo));
+				String.valueOf(elo) + why);
 			check("placing it also filled it", boardText(elo).equals("TOP 10 - ELO\n1. Zed  1200 Elo\n2. Yan  1100 Elo"), boardText(elo));
 			check("it is registered", com.pvpduels.stats.Leaderboards.count() == 1 && com.pvpduels.stats.Leaderboards.describe().get(0).startsWith("elo at "));
 			check("a second refresh finds nothing new", com.pvpduels.stats.Leaderboards.refresh(server) == 0);
