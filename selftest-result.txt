@@ -1,0 +1,2954 @@
+--- the arena dimension exists
+loaded dimensions: minecraft:overworld minecraft:the_nether pvpduels:normal_arena pvpduels:void_arena minecraft:the_end 
+PASS  dimension pvpduels:void_arena is loaded in this (already existing) world
+PASS  dimension pvpduels:normal_arena is loaded too
+--- create two fake players
+PASS  both fake players are in the player list
+PASS  a new player gets the guide book
+PASS  a new player sees the sidebar with their stats   ([Elo: 1000, Wins: 0, Losses: 0, Win rate: -, Win streak: 0 (best 0), Rounds: 0 - 0, Duels played: 0,  , /sidebar to hide])
+--- prepare Alice's kit and the marker items
+PASS  /kit save created the kit
+Alice starts at minecraft:overworld 0.0 -60.0 0.0, Bob at minecraft:overworld 0.0 -60.0 0.0
+--- /duel menu flow
+PASS  menu has the option 'testkit'
+--- menu: arena
+PASS  menu has the option 'Flat void arena'
+--- menu: version
+PASS  menu has the option 'With walls'
+--- menu: mode
+PASS  menu has the option 'First to N points'
+--- menu: amount
+PASS  menu has the option 'First to 2'
+--- menu: rules
+PASS  menu has the option 'Continue'
+--- menu: confirm and send
+PASS  menu has the option 'Send the challenge'
+PASS  Bob got the invitation
+PASS  the invitation text has the clickable buttons
+--- Bob accepts with /accept
+PASS  a duel exists for Alice and Bob
+PASS  both players are in the arena dimension   (pvpduels:void_arena -7.5 101.0 0.5 / pvpduels:void_arena 8.5 101.0 0.5)
+PASS  Bob is in survival now
+PASS  backups were written to disk
+PASS  Bob received Alice's kit sword
+PASS  Bob received the kit armor
+PASS  Bob received the kit offhand item
+PASS  Alice's old marker item is gone during the duel
+PASS  her game was sent the whole kit (what a real client would show)
+PASS  Bob's old marker item is gone during the duel
+PASS  arena floor is bedrock
+PASS  arena has walls in the 'with walls' version
+PASS  there is void outside the floor
+PASS  config is 'first to 2' with walls
+--- rules while fighting
+PASS  placing a normal block is refused   (Block{minecraft:air})
+PASS  placing TNT is refused
+PASS  placing water is refused
+PASS  placing a chest (block entity) is allowed   (Block{minecraft:chest}[facing=west,type=single,waterlogged=false])
+PASS  breaking the bedrock floor is refused
+PASS  breaking the placed chest is allowed
+PASS  /kit load is blocked during a duel
+PASS  loadKit() (Quick kit keys) returns false during a duel
+--- round 1: Alice kills Bob
+PASS  round ended, Alice has 1 point   (ROUND_END 1-0)
+PASS  Bob did not really die   (health=20.0)
+--- round 2 started clean
+PASS  this is round 2   (round=2)
+PASS  the sidebar shows the duel score   ([vs Bob,  , Alice: 1, Bob: 0,  , Round 2, First to 2, Kit: testkit])
+PASS  the sidebar shows the win condition   ([vs Bob,  , Alice: 1, Bob: 0,  , Round 2, First to 2, Kit: testkit])
+PASS  the chest left in round 1 was removed
+PASS  both players are back at their spawn   (pvpduels:void_arena -7.5 101.0 0.5 / pvpduels:void_arena 8.5 101.0 0.5)
+PASS  both have full kits again
+--- round 2: Bob falls into the void
+PASS  the void fall gave Alice the 2nd point   (ROUND_END 2-0)
+--- duel ends and everybody gets their stuff back
+PASS  winner is Alice   (winner=0)
+PASS  Alice was told about the rematch
+--- check restored state
+PASS  Alice is back in the overworld near where she was   (minecraft:overworld 0.0 -60.0 0.0)
+PASS  Bob is back in the overworld near where he was   (minecraft:overworld 0.0 -60.0 0.0)
+PASS  Alice has her old items back
+PASS  Alice's kit items are gone
+PASS  Bob has his old items back
+PASS  Bob's kit items are gone
+PASS  Bob's game mode is back to creative
+PASS  the night vision effect is gone
+PASS  backups are deleted
+--- /again and /leave
+PASS  /again sent a rematch invitation
+PASS  rematch started
+--- Alice types /leave
+PASS  Alice got her inventory back right away   (minecraft:overworld 0.0 -60.0 0.0)
+PASS  Bob is declared winner by forfeit
+--- Bob restored after the forfeit
+PASS  Bob is back in the overworld with his items   (minecraft:overworld 0.0 -60.0 0.0)
+--- timed duel with the no-contact rule
+PASS  timed duel started
+--- nobody fights: one player is teleported next to the other
+PASS  players start far apart   (distance=16.0)
+--- the no-contact teleport kept both at full health
+PASS  nobody lost health
+PASS  Alice leads 1-0   (1-0 timedOut=false)
+--- wait for the time limit
+--- time is up: Bob equalises, tiebreak round
+PASS  1-1 after time is up: no winner, tiebreak round   (1-1 tiebreak=true winner=-2)
+--- tiebreak round decides
+PASS  Alice wins the tiebreak, 2-1   (2-1)
+--- timed duel closes
+--- disconnect in the middle of a duel
+PASS  Bob is in the overworld before   (minecraft:overworld 0.0 -60.0 0.0)
+--- Bob's connection drops
+--- after the disconnect
+PASS  Alice wins by forfeit   (ENDED winner=0)
+PASS  Bob's backup stays on disk
+--- Bob joins again
+PASS  Bob's backup is still there after the duel closed
+--- Bob got everything back on joining
+PASS  Bob is in the overworld with his items   (minecraft:overworld 0.0 -60.0 0.0)
+PASS  Bob heard that his inventory was restored
+--- unlimited duel
+PASS  unlimited duel started
+--- unlimited: Alice scores, the duel goes on
+PASS  the duel is not decided after one round   (ROUND_END winner=-2)
+--- unlimited: Bob leaves
+PASS  leaving an unlimited duel is decided by score (Alice ahead)   (ENDED winner=0)
+--- test dummy: only admins can use the command
+PASS  a normal player can't use /test_dummy
+--- test dummy: spawn, auto-accept
+PASS  the dummy was created   (null)
+PASS  a bad name is refused
+PASS  a duplicate name is refused
+PASS  the dummy stands next to the owner   (2.5)
+PASS  the dummy accepted the challenge by itself
+--- test dummy: Alice wins
+PASS  first to 1 point: Alice beats the dummy   (1-0 winner=0)
+--- test dummy: /again is accepted by the dummy
+PASS  the rematch started without anybody clicking
+--- test dummy: removing it in the middle of a duel
+PASS  the dummy was removed
+PASS  the duel ends in Alice's favour   (ENDED winner=0)
+PASS  duels against a test dummy don't count in the statistics   (5 vs 5)
+PASS  the dummy is not auto-accepting any more
+--- workshop: enter
+PASS  Alice is in the workshop world   (pvpduels:void_arena 8192.5 101.0 0.5)
+PASS  she is in creative mode
+PASS  her own items are out of the way
+PASS  her inventory was backed up to disk
+PASS  there is a stone platform under her   (Block{minecraft:stone})
+PASS  she can't open the workshop twice
+PASS  a duel request to somebody in the workshop is refused
+--- workshop: nothing can be placed or broken
+PASS  placing a block is refused
+PASS  placing a chest is refused too
+PASS  breaking the platform is refused
+--- workshop: /enchant and /infinite
+PASS  a normal player can enchant with level 255 in the workshop   (ItemEnchantments{enchantments={Reference{ResourceKey[minecraft:enchantment / minecraft:sharpness]=Enchantment Sharpness}=>255}})
+PASS  any enchantment goes on any item   (ItemEnchantments{enchantments={Reference{ResourceKey[minecraft:enchantment / minecraft:fire_protection]=Enchantment Fire Protection}=>3, Reference{ResourceKey[minecraft:enchantment / minecraft:sharpness]=Enchantment Sharpness}=>255}})
+PASS  level 256 is refused
+PASS  /ench works too
+PASS  /infinite 64 on a totem   (count=64)
+PASS  /infinite 99 on a totem   (count=99)
+PASS  more than 99 is refused
+PASS  items with durability can't be stacked
+PASS  the saved kit keeps the 99 totems   (count=99)
+PASS  the saved kit keeps the enchantments
+--- workshop: leave
+PASS  Alice is back in the overworld with her own items   (minecraft:overworld 0.0 -60.0 0.0)
+PASS  her old game mode is back
+PASS  the backup was deleted
+PASS  the workshop kit stays saved
+PASS  outside the workshop /enchant is refused for normal players
+PASS  outside the workshop /infinite is refused too
+--- workshop: edit an existing kit and leave with /kit exit
+PASS  the kit was loaded for editing
+PASS  /kit exit leaves the workshop
+PASS  an unknown kit is refused
+--- workshop: disconnect inside it
+--- workshop: the backup stays on disk after the disconnect
+PASS  the backup is still there
+--- workshop: joining again brings everything back
+PASS  Alice is in the overworld with her items   (minecraft:overworld 0.0 -60.0 0.0)
+PASS  and in survival
+--- circular arena: menus
+PASS  menu has the option 'testkit'
+--- circular arena: menu arena
+PASS  menu has the option 'Circular arena'
+--- circular arena: menu radius
+PASS  menu has the option 'Radius 100'
+--- circular arena: menu mode
+PASS  menu has the option 'First to N points'
+--- circular arena: menu amount
+PASS  menu has the option 'First to 2'
+--- circular arena: menu rules
+PASS  menu has the option 'Continue'
+--- circular arena: send and accept
+PASS  menu has the option 'Send the challenge'
+PASS  the invitation names the circular arena
+PASS  a circular duel exists
+--- circular arena: the terrain has the right layers
+PASS  both players are in the normal arena dimension   (pvpduels:normal_arena -15.5 71.0 0.5 / pvpduels:normal_arena 16.5 71.0 0.5)
+PASS  Terrain keeps one arena open   (1)
+PASS  y70 is grass
+PASS  y69 is dirt
+PASS  y66 is dirt (4 blocks of dirt under the grass)
+PASS  y65 is stone
+PASS  y0 is stone
+PASS  y-1 is deepslate
+PASS  y-59 is deepslate
+PASS  y-60 is bedrock
+PASS  y-61 is air
+PASS  y71 is air
+PASS  the players stand on the grass   (pvpduels:normal_arena -15.5 71.0 0.5 / pvpduels:normal_arena 16.5 71.0 0.5)
+PASS  they are 32 blocks apart   (32.0)
+--- circular arena: the barrier ring is drawn as its chunks load
+--- circular arena: the ring has the right shape
+PASS  the ring is closed right at the radius
+PASS  inside the ring is free
+PASS  the ring goes down to the bedrock layer
+PASS  the ring goes up to the build limit
+PASS  nothing below the bedrock layer
+PASS  the ring is also there on the diagonal
+PASS  the diagonal inside the circle is free
+--- circular arena: normal blocks can be placed and dug
+PASS  a stone block can be placed   (Block{minecraft:stone})
+PASS  a chest can be placed
+PASS  the ground can be dug
+PASS  the tracked changes exist
+PASS  round 1 went to Alice   (1-0 ROUND_END)
+--- circular arena: round 2 started on clean terrain
+PASS  the stone block is gone   (Block{minecraft:air})
+PASS  the dug hole is filled again   (Block{minecraft:grass_block}[snowy=false])
+PASS  the obsidian inside the ground is gone
+PASS  the TNT on the surface is gone
+PASS  the chest is gone
+PASS  the ring is still there
+PASS  round 2 is on
+--- circular arena: leaving the circle loses the round
+--- circular arena: Alice won and the arena closes
+PASS  Alice won 2-0   (0 2-0)
+PASS  Alice was told that Bob left the arena
+--- circular arena: closed
+PASS  Terrain has no open arena any more   (0)
+PASS  both players are back in the overworld   (minecraft:overworld 0.0 -60.0 0.0 / minecraft:overworld 0.0 -60.0 0.0)
+PASS  the ring is removed from chunks that are still loaded
+--- unlimited arena: start
+PASS  an unlimited duel exists
+--- unlimited arena: players are in the normal terrain far from the other arenas
+PASS  both are in the normal arena dimension
+PASS  the arena is centered at x=1000000   (pvpduels:normal_arena 999984.5 71.0 0.5)
+PASS  no barrier ring here
+PASS  Bob is farther than 100 blocks from Alice   (166.0)
+--- unlimited arena: the 100 block rule fires
+--- unlimited arena: Bob lost half of his health, Alice is untouched
+PASS  Bob has about half of his health   (health=10.0)
+PASS  Alice kept all her health   (health=20.0)
+PASS  they were told
+PASS  the duel goes on and nobody lost a round
+--- unlimited arena: nothing left open
+PASS  Terrain has no open arena   (0)
+PASS  both are back in the overworld   (minecraft:overworld 0.0 -60.0 0.0 / minecraft:overworld 0.0 -60.0 0.0)
+--- sharing: /publicate and /kit public
+PASS  an unknown kit can't be published
+PASS  the kit is on the public shelf
+PASS  the other players hear about it
+PASS  /kit public lists the kit and its author
+PASS  only the owner can unpublish
+--- sharing: /kit take
+PASS  Bob copied the public kit
+PASS  the copy has the sword and the armor   (1 minecraft:diamond_sword)
+PASS  taking it twice is refused
+PASS  two public kits can't share a name
+PASS  an unknown public kit is refused
+--- sharing: /unpublish
+PASS  the owner took it off the shelf
+PASS  the copy Bob already took stays with him
+--- sharing: /private gives a locked copy
+PASS  Bob got the kit under a new name because he already had 'testkit'
+PASS  his own 'testkit' was not overwritten
+PASS  the gift is locked
+PASS  Bob was told
+PASS  the gift keeps the author and the content
+PASS  an offline player is refused
+PASS  you can't give a kit to yourself
+--- sharing: a locked kit can be used but not shared or edited
+PASS  a locked kit can't be published
+PASS  a locked kit can't be given away
+PASS  a locked kit can't be overwritten
+PASS  a locked kit can't be opened in the workshop
+PASS  a locked kit can be loaded
+PASS  /kit list marks the gift
+--- rules: menu toggles
+PASS  menu has the option 'testkit'
+--- rules: arena
+PASS  menu has the option 'Circular arena'
+--- rules: radius
+PASS  menu has the option 'Radius 100'
+--- rules: mode
+PASS  menu has the option 'First to N points'
+--- rules: amount
+PASS  menu has the option 'First to 1'
+--- rules: switch regeneration off
+PASS  menu has the option 'Natural regeneration: ON'
+--- rules: switch fall damage off
+PASS  the regeneration toggle now says OFF
+PASS  menu has the option 'Fall damage: ON'
+--- rules: switch building off
+PASS  menu has the option 'Building: ON'
+--- rules: continue and send
+PASS  menu has the option 'Continue'
+--- rules: confirm
+PASS  menu has the option 'Send the challenge'
+PASS  the invitation lists the changed rules
+PASS  the duel has the rules   (Rules[regen=false, fallDamage=false, hunger=true, building=false])
+--- rules: no building, no fall damage, no regeneration
+PASS  placing a block is refused when building is off   (Block{minecraft:air})
+PASS  placing a chest is refused too
+PASS  digging is refused
+PASS  fall damage does nothing when it is off   (health=20.0)
+PASS  other damage still works   (health=8.0)
+--- rules: health does not come back by itself
+PASS  no natural regeneration for 6 seconds   (8.0 -> 8.0)
+PASS  the food bar is held at 17   (food=17)
+--- rules: protection after the duel
+PASS  Alice got a few seconds of protection after being put back
+PASS  Bob too
+--- rules: hunger off in the flat arena
+PASS  the duel started
+--- rules: the food bar stays full
+--- rules: hunger duel ends
+PASS  the food bar was refilled
+--- spectate: setup
+--- spectate: errors
+PASS  an unknown player is refused
+PASS  you can't watch yourself
+PASS  /duels lists the running duel with a [WATCH] button
+--- spectate: watch the duel
+PASS  Carl is watching
+PASS  Carl is in spectator mode
+PASS  Carl is in the duel world   (pvpduels:void_arena -7.5 105.0 0.5)
+PASS  Carl's inventory was backed up
+PASS  Carl got a [LEAVE] button
+PASS  a spectator can't start a duel
+--- spectate: /leave
+PASS  Carl's sidebar shows the score   ([vs Spectating,  , Alice: 0, Bob: 0,  , Round 1, Flat arena (no walls),  , /leave to stop])
+PASS  Carl is back in the overworld in survival   (minecraft:overworld 0.0 -60.0 0.0 SURVIVAL)
+PASS  the backup is deleted
+PASS  he can watch again (through the other player)
+--- spectate: the duel ends and the spectator goes back by himself
+--- spectate: after the duel
+PASS  Carl is back in the overworld in survival   (minecraft:overworld 0.0 -60.0 0.0 SURVIVAL)
+PASS  no backup is left
+PASS  both duelists got the summary of the duel
+PASS  the summary counted the hit that decided it   (Alice heard the summary: true)
+PASS  the rematch button is there
+PASS  /duels says when nobody is dueling
+--- lobby: only admins can set it
+PASS  a normal player can't set the lobby
+PASS  /lobby without a lobby says so
+PASS  the lobby is set
+--- lobby: finishing a duel sends everybody to the lobby
+--- lobby: both are at the lobby
+PASS  Alice is at the lobby   (minecraft:overworld 50.5 -60.0 50.5)
+PASS  Bob is at the lobby   (minecraft:overworld 50.5 -60.0 50.5)
+PASS  they were told
+PASS  Alice turned the lobby off for herself
+--- lobby: with 'return off' you go back to where you were
+--- lobby: Alice went back, Bob to the lobby
+PASS  Alice is where she was before the duel   (minecraft:overworld -30.5 -60.0 -30.5)
+PASS  Bob is at the lobby again   (minecraft:overworld 50.5 -60.0 50.5)
+PASS  /lobby takes you there   (minecraft:overworld 50.5 -60.0 50.5)
+PASS  and Alice turned it on again
+PASS  the lobby file is inside the world folder
+PASS  the lobby is not protected by default
+--- lobby items: everybody in the lobby gets them
+PASS  Carl is in the lobby too   (minecraft:overworld 50.5 -60.0 50.5)
+--- lobby items: what is in each slot
+PASS  slot 1 is Send Duel (a sword)   (1 minecraft:diamond_sword)
+PASS  Send Duel is green
+PASS  slot 2 is the Leave barrier   (1 minecraft:barrier)
+PASS  slot 8 is the Create+ grass block   (1 minecraft:grass_block)
+PASS  slot 9 is the guide book   (1 minecraft:written_book)
+PASS  the other hotbar slots are not touched
+PASS  the stash is on disk
+PASS  the game on Alice's side sees them too
+PASS  the book has the content
+PASS  the book has 78 pages   (78)
+PASS  every topic ends with a blank page   (13 blank pages for 13 topics)
+PASS  no page has too much text   (0 long pages)
+PASS  page 1 is the index with a link to every topic   (13 links)
+PASS  the book mentions /duels
+PASS  the book mentions /npc
+PASS  the book mentions /queue
+PASS  the book mentions /top kit
+PASS  the book mentions Send Duel
+PASS  the book mentions Create+
+PASS  the book mentions /botduel
+PASS  the book mentions /kit save
+PASS  the book mentions /layout
+PASS  the book mentions /top
+PASS  the book mentions /spectate
+PASS  the book mentions About this server
+PASS  the book mentions /effects
+PASS  the book mentions /missions
+--- lobby items: they can't be moved, swapped or thrown
+PASS  picking up the sword does nothing   (0 minecraft:air)
+PASS  shift-clicking the barrier does nothing
+PASS  throwing the book out does nothing
+PASS  swapping with the number key does nothing   (1 minecraft:grass_block / 5 minecraft:stone)
+PASS  the barrier stays when a number key is pressed
+PASS  double-click collecting does nothing
+PASS  Q on the sword drops nothing
+PASS  Q on the book drops nothing
+PASS  the sword was not thrown into the world
+PASS  an ordinary slot can still be picked up   (7 minecraft:cobblestone)
+PASS  and put down again
+--- lobby items: broken ones are repaired
+PASS  the barrier is back in slot 2
+PASS  the copy in the wrong slot is gone
+PASS  the dirt that was in the barrier's slot was not lost   (0=minecraft:diamond_sword 1=minecraft:barrier 2=minecraft:dirt 3=minecraft:cobblestone 4=minecraft:air 5=minecraft:air 6=minecraft:air 7=minecraft:grass_block 8=minecraft:written_book 9=minecraft:air 10=minecraft:air 11=minecraft:air )
+PASS  the game on Alice's side agrees
+--- lobby items: your own things come back when you leave the lobby
+PASS  no lobby item is left after strip
+PASS  the stash file is gone
+--- lobby items: they hide Alice's items
+PASS  Alice has them again
+PASS  the item next to them is untouched
+PASS  saving a kit in the lobby works
+PASS  the kit has Alice's own items, not the lobby ones   (1 minecraft:iron_sword 5 minecraft:golden_apple 3 minecraft:ender_pearl 20 minecraft:cooked_beef)
+PASS  no lobby item went into the kit
+PASS  the kit has exactly the 5 stacks   (5)
+--- lobby items: walking out of the lobby gives them back
+--- lobby items: Alice has her own things
+PASS  the lobby items are gone
+PASS  the iron sword, apples, pearls and beef are back in their slots   (1 minecraft:iron_sword 5 minecraft:golden_apple 3 minecraft:ender_pearl 20 minecraft:cooked_beef)
+PASS  the stash file is gone
+PASS  the game on Alice's side agrees
+--- lobby items: back in the lobby, then a crash (the memory is lost)
+PASS  Alice has them again
+PASS  only the file on disk remembers her things
+PASS  the things come back from the file   (1 minecraft:iron_sword 5 minecraft:golden_apple 3 minecraft:ender_pearl 20 minecraft:cooked_beef)
+PASS  and the file is deleted
+--- lobby items: Send Duel opens the player list
+PASS  Alice has the items again
+PASS  right-clicking the sword opens a menu
+PASS  it lists Bob
+PASS  it doesn't list Alice
+PASS  menu has the option 'Bob'
+PASS  choosing Bob starts the duel menus (kit first)
+PASS  hitting Bob with the sword opens the duel menus instead of hurting him   (Success[swingSource=CLIENT, itemContext=ItemContext[wasItemInteraction=true, heldItemTransformedTo=null]])
+--- lobby items: Leave cancels requests and goes to the lobby spawn
+PASS  Bob has a request from Alice
+PASS  the request is cancelled
+PASS  Alice is back at the lobby spawn   (minecraft:overworld 50.5 -60.0 50.5)
+PASS  and was told
+--- lobby items: Create+ opens the kit and arena menu
+PASS  right-clicking the grass block opens the Create+ menu
+PASS  menu has the option 'Create Arena'
+PASS  somebody who is not a Builder sees why they can't
+PASS  menu has the option 'Create Kit'
+PASS  Create Kit offers a new kit
+PASS  and Alice's kits to edit
+PASS  menu has the option 'New kit'
+PASS  Alice is in the kit workshop
+PASS  and got a [LEAVE] button
+PASS  the lobby items are not in the workshop
+--- lobby items: leaving the workshop brings Alice back to the lobby with them
+PASS  Alice left the workshop
+--- lobby items: all fine after the workshop
+PASS  Alice is in the lobby with the items
+PASS  the game on Alice's side agrees
+--- npc: only admins can place one
+PASS  a normal player can't place an NPC
+--- npc: place the four NPCs
+PASS  the Practice Bot NPC exists
+PASS  it is a mannequin, invulnerable, with the tag   (entity.minecraft.mannequin [pvpduels_npc_bot])
+PASS  its name is shown   (literal{Practice Bot}[style={color=green,bold}])
+skin of the bot NPC: Patch[body=Optional[ResourceTexture[id=minecraft:entity/player/wide/kai, texturePath=minecraft:textures/entity/player/wide/kai.png]], cape=Optional.empty, elytra=Optional.empty, model=Optional.empty]
+PASS  the Kit Workshop NPC exists
+PASS  it is a mannequin, invulnerable, with the tag   (entity.minecraft.mannequin [pvpduels_npc_kit])
+PASS  its name is shown   (literal{Kit Workshop}[style={color=aqua,bold}])
+skin of the kit NPC: Patch[body=Optional[ResourceTexture[id=minecraft:entity/player/wide/noor, texturePath=minecraft:textures/entity/player/wide/noor.png]], cape=Optional.empty, elytra=Optional.empty, model=Optional.empty]
+PASS  the Arena Builder NPC exists
+PASS  it is a mannequin, invulnerable, with the tag   (entity.minecraft.mannequin [pvpduels_npc_arena])
+PASS  its name is shown   (literal{Arena Builder}[style={color=gold,bold}])
+skin of the arena NPC: Patch[body=Optional[ResourceTexture[id=minecraft:entity/player/wide/zuri, texturePath=minecraft:textures/entity/player/wide/zuri.png]], cape=Optional.empty, elytra=Optional.empty, model=Optional.empty]
+PASS  the Explosion Dummy NPC exists
+PASS  it is a mannequin, invulnerable, with the tag   (entity.minecraft.mannequin [pvpduels_npc_preview])
+PASS  its name is shown   (literal{Explosion Dummy}[style={color=red,bold}])
+skin of the preview NPC: Patch[body=Optional[ResourceTexture[id=minecraft:entity/player/wide/sunny, texturePath=minecraft:textures/entity/player/wide/sunny.png]], cape=Optional.empty, elytra=Optional.empty, model=Optional.empty]
+PASS  four NPCs in total   (4)
+--- npc: clicking them opens the menus
+PASS  the Practice Bot opens the bot menu
+PASS  the click is used up (bot)   (Success[swingSource=CLIENT, itemContext=ItemContext[wasItemInteraction=true, heldItemTransformedTo=null]])
+PASS  hitting does not hurt it (bot)   (Fail[])
+PASS  the Kit Workshop opens the kit menu
+PASS  the click is used up (kit)   (Success[swingSource=CLIENT, itemContext=ItemContext[wasItemInteraction=true, heldItemTransformedTo=null]])
+PASS  hitting does not hurt it (kit)   (Fail[])
+PASS  the Arena Builder opens the arena menu
+PASS  the click is used up (arena)   (Success[swingSource=CLIENT, itemContext=ItemContext[wasItemInteraction=true, heldItemTransformedTo=null]])
+PASS  hitting does not hurt it (arena)   (Fail[])
+PASS  the Explosion Dummy opens the try-out menu
+PASS  the click is used up (preview)   (Success[swingSource=CLIENT, itemContext=ItemContext[wasItemInteraction=true, heldItemTransformedTo=null]])
+PASS  hitting does not hurt it (preview)   (Fail[])
+PASS  holding Send Duel, the Practice Bot still opens its menu
+PASS  a normal player can't remove one
+--- npc: they are saved with the world and can be removed
+PASS  an NPC is closest to Carl
+PASS  no NPC is left
+--- npc: they appear by themselves in front of the lobby spawn
+PASS  a new lobby has no NPCs yet
+--- npc: four of them stand in a row in front of the spawn
+PASS  four NPCs   (4)
+PASS  one Practice Bot   (1)
+PASS  one Kit Workshop   (1)
+PASS  one Arena Builder   (1)
+PASS  one Explosion Dummy   (1)
+PASS  they stand 4.5 blocks in front of the spawn, 3 apart   ([Mannequin['Explosion Dummy'/474, l='ServerLevel[world]', x=46.00, y=-60.00, z=55.00], Mannequin['Practice Bot'/471, l='ServerLevel[world]', x=55.00, y=-60.00, z=55.00], Mannequin['Kit Workshop'/472, l='ServerLevel[world]', x=52.00, y=-60.00, z=55.00], Mannequin['Arena Builder'/473, l='ServerLevel[world]', x=49.00, y=-60.00, z=55.00]])
+PASS  the admin was told   ([The lobby NPCs are in front of the spawn: Practice Bot, Kit Workshop, Arena Builder and Explosion Dummy. /npc remove deletes the closest one, /npc setup puts the missing ones back.])
+PASS  the lobby remembers it
+PASS  setup again places nothing   (SetupResult[placed=0, failed=0])
+PASS  only the missing one is put back   (SetupResult[placed=1, failed=0])
+PASS  a normal player can't run /npc setup
+PASS  moving the lobby asks for NPCs again
+PASS  every NPC is removed so the next tests are not disturbed
+--- lobby protection: a platform in the air
+PASS  a normal player cannot protect the lobby
+PASS  the protection is on
+--- lobby protection: nothing can be broken, placed or hit
+PASS  protected radius and the lobby spot are saved
+PASS  breaking a block in the lobby does nothing   (Block{minecraft:stone})
+PASS  placing a block in the lobby does nothing   (Block{minecraft:air})
+PASS  players cannot hurt each other in the lobby   (20.0 -> 20.0)
+PASS  the protection tells you why
+--- lobby protection: outside the protected area everything works
+PASS  a block can be broken outside of it   (Block{minecraft:air})
+PASS  and a block can be placed   (Block{minecraft:dirt})
+PASS  and players can hurt each other   (20.0 -> 16.0)
+--- lobby protection: somebody who falls off is brought back
+PASS  Alice was brought back to the lobby   (minecraft:overworld 50.5 100.0 50.5)
+PASS  and was told
+PASS  the protection is off
+PASS  the lobby is gone
+--- auto layout: three kits
+--- auto layout: /layout auto
+PASS  without kits there is nothing to look at
+PASS  Dora has three kits
+PASS  the layout 'auto' exists
+PASS  slot 1 wants the diamond sword first, then any sword   ([minecraft:diamond_sword, sword])
+PASS  slot 2 wants the golden apple   ([minecraft:golden_apple, food, gapple])
+PASS  slot 3 wants the ender pearl (2 of 3 kits)   ([minecraft:ender_pearl, pearl])
+PASS  slot 4 gets nothing (the pearl was there only once)   (null)
+PASS  slot 9 wants the cooked beef   ([minecraft:cooked_beef, food])
+PASS  items that are in only one kit get no rule
+PASS  the sorter puts everything where your kits keep it
+PASS  another name makes another layout
+PASS  an existing layout with rules is not overwritten
+--- bot duel: /botduel asks which kit
+PASS  the kit list opens
+PASS  menu has the option 'testkit'
+--- bot duel: the question 'Static bot?'
+PASS  the question has a Yes and a No
+PASS  menu has the option 'No'
+PASS  No leads to the bot types
+PASS  menu has the option 'Back'
+PASS  Back returns to the question
+PASS  closing the menu starts nothing
+--- bot duel: static bot, answer Yes
+PASS  an unknown kit is refused
+PASS  an unknown bot type is refused and nothing starts
+PASS  with a kit name the question opens right away
+PASS  menu has the option 'Yes'
+--- bot duel: the duel with the static bot
+PASS  a practice duel exists   (DuelConfig[kit=testkit, arena=BOT, walls=true, radius=100, mode=ROUNDS, limit=0, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=])
+PASS  the opponent is the bot
+PASS  Yes made it a static bot
+PASS  the bot is in the player list
+PASS  both are in the arena dimension   (pvpduels:void_arena 4088.5 101.0 0.5 / pvpduels:void_arena 4104.5 101.0 0.5)
+PASS  both have the kit sword
+PASS  Alice's old marker item is gone during the duel
+PASS  Alice's inventory is saved on disk
+PASS  the invitation text names the bot arena
+PASS  the player is told what the bot does
+PASS  floor: center, and the four corners at 100 blocks
+PASS  the floor ends at 100: nothing at 101 on the floor level except the wall
+PASS  the wall is 40 blocks high
+PASS  the inside is empty and there is void under the floor
+PASS  the mess is there
+--- bot duel: the static bot is pushed away
+PASS  the bot stands at its spawn point   (pvpduels:void_arena 4104.5 101.0 0.5)
+PASS  Alice stands at hers   (pvpduels:void_arena 4088.5 101.0 0.5)
+--- bot duel: the static bot is back where it was
+PASS  the bot cannot be moved   (pvpduels:void_arena 4104.5 101.0 0.5)
+PASS  still the same round with no points
+--- bot duel: standing in the far corner is fine
+--- bot duel: hit 1
+PASS  the far corner did not lose the round   (FIGHTING 0-0)
+PASS  the first hit was counted   (1 hits, 3.0 damage)
+--- bot duel: hit 2
+--- bot duel: hit 3 makes a combo
+PASS  three quick hits make a combo of 3   (3 hits, best combo 3)
+--- bot duel: a late hit starts a new combo
+PASS  four hits, and the best combo is still 3   (4 hits, best combo 3)
+--- bot duel: the sidebar shows the counters
+PASS  the sidebar has hits, damage, combo and the bot type   ([vs Bot,  , Alice: 0, Bot: 0,  , Round 1, Unlimited, Kit: testkit,  , Hits: 4, Damage: 12.0, Combo: 1 (best 3), Bot: Static])
+PASS  a static bot has no 'hits taken' line
+--- bot duel: Alice knocks the bot out
+PASS  a KO is a point for Alice and nothing else changes   (FIGHTING 1-0 round 1)
+PASS  the killing blow is counted too   (5)
+PASS  the KO summary was sent
+PASS  the bot got up again at full health   (20.0)
+--- bot duel: after the KO the practice goes on
+PASS  still the same fight: no countdown, no new round   (FIGHTING round 1 1-0)
+PASS  the bot has not been moved to its spawn point by a reset   (pvpduels:void_arena 4104.5 101.0 0.5)
+PASS  it can be hit again   (6)
+--- bot duel: falling loses the round
+PASS  the bot got the point   (1-1)
+--- bot duel: round 2 started clean
+PASS  the chest in the far corner is gone
+PASS  the hole in the floor is closed
+PASS  the block under the floor is gone
+PASS  the block in the middle of the air is gone
+PASS  the block high above the walls is gone
+PASS  the block above the wall top but below the sky is gone
+PASS  the hole in the wall is closed
+PASS  the bot is at its spawn point again   (pvpduels:void_arena 4104.5 101.0 0.5)
+PASS  the sidebar shows the score against the bot   ([vs Bot,  , Alice: 1, Bot: 1,  , Round 2, Unlimited, Kit: testkit,  , Hits: 6, Damage: 35.0, Combo: 0 (best 3), Bot: Static])
+PASS  the sidebar says unlimited   ([vs Bot,  , Alice: 1, Bot: 1,  , Round 2, Unlimited, Kit: testkit,  , Hits: 6, Damage: 35.0, Combo: 0 (best 3), Bot: Static])
+--- bot duel: /leave closes everything
+PASS  Alice is out of the duel
+PASS  she got her inventory back
+PASS  the backup is deleted
+PASS  the practice total was shown
+PASS  the practice duel is not counted for the stats   (12 vs 12)
+--- bot duel: the bot is gone
+PASS  no bot is left and no arena is in use   (duels=0)
+PASS  the bot's id is forgotten
+--- passive bot: start from the command
+PASS  a passive bot duel started
+PASS  the bot was created
+--- passive bot: a push moves it
+PASS  it stands at its spawn point   (pvpduels:void_arena 4104.5 101.0 0.5)
+--- passive bot: it flew and landed
+passive bot moved 5.7298575785043795 blocks; now at pvpduels:void_arena 4110.2 101.0 0.5
+PASS  a push moves a passive bot away   (moved 5.7298575785043795)
+PASS  it landed on the floor of the arena   (pvpduels:void_arena 4110.2 101.0 0.5)
+PASS  and it stopped   ((0.0, -0.0784000015258789, 0.0))
+--- passive bot: a hit knocks it back
+a real blow moved the passive bot 1.9886287253657429 blocks
+PASS  a blow from a player pushes it away from her   (moved 1.9886287253657429)
+PASS  it was really hurt   (15.700001 hp, hits 1)
+PASS  a passive bot never fights back
+--- passive bot: the duel is still going after 45 seconds
+PASS  an unlimited duel does not end by itself   (FIGHTING, round 1)
+PASS  it is still in its fighting phase   (FIGHTING)
+--- hard bot: start from the command
+PASS  a hard bot duel started
+PASS  the bot was created
+hard bot starts at pvpduels:void_arena 4104.5 101.0 0.5, Alice at pvpduels:void_arena 4088.5 101.0 0.5
+--- hard bot: it walks up to Alice and hits her
+--- hard bot: it was next to Alice
+hard bot at pvpduels:void_arena 4090.6 101.0 -1.5, Alice at pvpduels:void_arena 4088.5 101.0 0.5, hits taken 1
+PASS  the bot hit Alice   (hits taken 1)
+PASS  the bot came close to Alice   (distance 2.8801036)
+--- hard bot: the duel is still going after 45 seconds
+PASS  an unlimited duel against a fighting bot does not end by itself   (FIGHTING, round 2)
+after 45 s: round 2, Alice 0 - Bot 1
+--- bots: all gone
+PASS  no bot is left
+PASS  and Alice's stats still don't count the practice
+--- statistics, sidebar and guide book
+PASS  Alice's wins and losses were counted   (11W 1L of 12)
+PASS  Bob's wins were counted   (1W 11L)
+PASS  the best streak is at least the streak
+PASS  the ratings of two players who only played each other add up to 2000   (1110 + 890)
+PASS  Alice, who won more, has the higher rating   (1110 vs 890)
+PASS  /top shows the ranking with both players
+PASS  /top wins works
+PASS  /top streak works
+PASS  a wrong ranking name is refused
+PASS  /sidebar off hides it
+PASS  /sidebar on shows her stats again   ([Elo: 1110, Wins: 11, Losses: 1, Win rate: 92%, Win streak: 10 (best 10), Rounds: 12 - 1, Duels played: 12,  , /sidebar to hide])
+PASS  the sidebar shows the Elo rating   ([Elo: 1110, Wins: 11, Losses: 1, Win rate: 92%, Win streak: 10 (best 10), Rounds: 12 - 1, Duels played: 12,  , /sidebar to hide])
+PASS  /sidebar alone toggles
+PASS  and toggles back
+PASS  /guide book gives the guide book
+PASS  a saved kit never contains the guide book (but keeps other items)
+--- queue: setup
+PASS  the kits exist
+PASS  qkit is on the public shelf
+PASS  nobody is in a queue
+--- queue: /queue opens the menu with the three queues
+PASS  the menu has the public queue
+PASS  the menu has the random queue
+PASS  the menu has the own kit queue
+PASS  there is no leave button while she is not in a queue
+PASS  menu has the option 'Public queue'
+--- queue: the public kit menu
+PASS  it offers a random public kit
+PASS  it offers qkit
+PASS  menu has the option 'qkit'
+--- queue: Alice waits in the public queue
+PASS  Alice is in the queue
+PASS  she was told, with a leave button
+PASS  the menu closed
+PASS  /queue list shows her
+PASS  an unknown public kit is refused and she keeps waiting
+PASS  an unknown own kit is refused
+PASS  the menu offers to leave now
+--- queue: a different queue does not match
+PASS  Bob is in the random queue
+PASS  both wait and there is no duel
+PASS  Bob left
+PASS  leaving twice says so
+PASS  a kit that is not public can't be picked there
+PASS  taking a kit nobody offers is refused
+--- queue: Bob picks the same public kit and the duel starts
+PASS  both left the queue
+PASS  a duel exists for both
+PASS  they were told
+PASS  the kit is qkit
+PASS  flat arena with walls, first to 3
+--- queue: the duel runs with the public kit; nobody can queue in a duel
+PASS  Bob got the sword of the kit
+PASS  somebody in a duel can't join a queue
+--- queue: the ranking of the kit
+PASS  Bob won with the kit and gained 16   (1W elo 1016)
+PASS  Alice lost with it and lost 16   (1L elo 984)
+PASS  another kit has no numbers
+PASS  the duel told them the Elo with the kit
+PASS  /top kit lists qkit
+PASS  /top kit qkit shows both players
+PASS  /top kit works with wins and any case
+PASS  a kit nobody played says so
+PASS  a wrong ranking name is refused
+--- queue: where the random kit can come from
+PASS  Dora waits with dk1
+PASS  it can be a public kit
+PASS  it can be one of Alice's
+PASS  it can be one of Bob's
+PASS  it is never one offered in the own kit queue by somebody else
+PASS  Dora left
+--- queue: the random queue matches two players
+PASS  Alice waits
+PASS  they got a duel
+PASS  the kit came from the random queue
+--- queue: the random duel ends
+PASS  both have a kit in their hands
+--- queue: the own kit queue, Alice offers a kit
+PASS  menu has the option 'Own kit queue'
+--- queue: nobody offers anything yet
+PASS  it says so
+PASS  menu has the option 'Offer one of my kits'
+--- queue: Alice picks the kit to offer
+PASS  her kits are listed
+PASS  menu has the option 'qkit'
+--- queue: Bob sees the offer
+PASS  Alice waits with qkit in the own kit queue
+PASS  menu has the option 'Own kit queue'
+--- queue: Bob takes the kit and they fight with it
+PASS  Bob sees Alice's kit
+PASS  menu has the option 'Alice's kit: qkit'
+PASS  they got a duel
+PASS  with Alice's kit
+--- queue: the own kit duel ends
+PASS  Bob has Alice's sword
+--- queue: both duels counted for the kit
+PASS  the kit has more duels now   (3 / 3)
+PASS  the Elo with the kit adds up to 2000   (1017 + 983)
+--- queue: back in the lobby
+PASS  the lobby is set
+--- queue: the Leave barrier takes her out of the queue
+PASS  Alice waits
+PASS  she is not in the queue any more
+PASS  she was told
+--- queue: clean up
+PASS  nobody is left in a queue
+--- builder: Alice is not a Builder
+PASS  Alice has no rank
+PASS  /builder says how to get it
+PASS  she can't open the studio
+PASS  the menu explains the rank
+PASS  a normal player can't give the rank
+--- builder: the rank lasts three weeks
+PASS  Alice is a Builder
+PASS  21 days left   (21 days left)
+PASS  12 hours left on day 20 and a half   (12 hours left)
+PASS  after three weeks it is over
+PASS  a week is added to the rank that is running   (28 days left)
+PASS  it can be taken away
+PASS  with the real clock it works too
+PASS  /builder tells her
+--- studio: Bob is not a Builder, Alice starts from the flat template
+PASS  Bob is refused
+PASS  Alice is in the studio and busy
+PASS  in the duel world, in creative   (pvpduels:void_arena 16384.5 101.0 0.5)
+PASS  her things are backed up
+PASS  grass floor, dirt and bedrock like the template
+PASS  the corners of the box are in the plot
+PASS  air above the floor
+PASS  she can't queue while building
+--- studio: building only works inside the box
+PASS  placing inside is allowed
+PASS  placing outside is refused
+PASS  placing on the edge, into the next block outside, is refused
+PASS  breaking inside is allowed
+PASS  breaking outside is refused
+PASS  the break event also says no outside
+--- studio: spawn points
+PASS  spawn 1 was set
+PASS  a spawn outside the box is refused
+PASS  spawn 2 was set
+--- studio: somebody who walks away is brought back
+PASS  Alice is inside the box area again   (pvpduels:void_arena 16384.5 101.0 0.5)
+--- studio: saving the arena
+PASS  'draft' is reserved
+PASS  saved as 'castle' (any case)
+PASS  the publish button was offered
+PASS  it can be read back
+PASS  the obsidian is in the file
+PASS  so is the high block
+PASS  and the grass
+PASS  the owner is Alice
+PASS  both spawns are saved (relative to the center)
+--- arena: list, publish and the shelf
+PASS  /arena list shows castle as private
+PASS  Bob has no such arena
+PASS  Alice published it
+PASS  the shelf shows castle by Alice
+PASS  only the owner can take it off
+PASS  /arena list now says public
+--- studio: /leave keeps a draft and cleans the plot
+PASS  Alice left the studio
+PASS  back in the overworld in survival   (minecraft:overworld 50.5 -60.0 50.5 SURVIVAL)
+PASS  her backup is gone
+PASS  a draft was kept
+PASS  the plot is empty again
+PASS  the draft is not listed as an arena
+--- studio: editing the saved arena
+PASS  Alice is in the studio again
+PASS  the arena was pasted: grass, obsidian and the high block
+PASS  left
+PASS  an unknown arena is refused
+--- studio: the Create Arena menu for a Builder
+PASS  it offers the three templates
+PASS  and to continue the draft
+PASS  and to edit an arena
+PASS  menu has the option 'Edit one of my arenas'
+--- studio: the list of her arenas
+PASS  castle is listed
+PASS  the draft is not
+PASS  the void template is just a bedrock pad
+PASS  the box template has a floor and walls
+PASS  a template arena can be saved at once (it has default spawns)
+PASS  an arena can be deleted
+PASS  the draft can't be deleted like an arena
+--- custom arena: Alice picks it in the /duel menu
+PASS  menu has the option 'qkit'
+--- custom arena: menu, the arena step
+PASS  the arena step offers custom arenas
+PASS  menu has the option 'Custom arena'
+--- custom arena: menu, the list
+PASS  her castle is listed
+PASS  menu has the option 'castle'
+--- custom arena: menu, how it is decided
+PASS  menu has the option 'First to N points'
+--- custom arena: menu, amount
+PASS  menu has the option 'First to 2'
+--- custom arena: menu, rules
+PASS  building can be switched
+PASS  menu has the option 'Continue'
+--- custom arena: menu, send
+PASS  the summary names the arena
+PASS  menu has the option 'Send the challenge'
+PASS  Bob got the request naming the arena
+--- custom arena: Bob accepts
+PASS  a duel started
+--- custom arena: the duel is in her arena
+PASS  it is a custom arena duel   (DuelConfig[kit=qkit, arena=CUSTOM, walls=false, radius=0, mode=FIRST_TO, limit=2, rules=Rules[regen=true, fallDamage=true, hunger=true, building=true], custom=10920508-d5d8-3eed-93d2-92f193afe7d7/castle])
+PASS  they are in the duel world   (pvpduels:void_arena 3.5 101.0 2.5 / pvpduels:void_arena 12.5 101.0 -3.5)
+PASS  the arena was pasted: grass, the high block
+PASS  Alice is at spawn 1 and Bob at spawn 2   (pvpduels:void_arena 3.5 101.0 2.5 / pvpduels:void_arena 12.5 101.0 -3.5)
+PASS  building is on, so she can place a block
+PASS  round 1 went to Alice   (1-0 ROUND_END)
+--- custom arena: round 2 started on a clean arena
+PASS  the stone she placed is gone
+PASS  the block somebody left in the air is gone
+PASS  the arena itself is still there
+PASS  this is round 2
+--- custom arena: falling loses the round and the arena closes
+PASS  Alice won 2-0   (0 2-0)
+PASS  Alice was told that Bob fell
+--- custom arena: nothing is left in the duel world
+PASS  the arena is cleaned away
+PASS  both are back in the overworld   (minecraft:overworld 50.5 -60.0 50.5 / minecraft:overworld -20.5 -60.0 -30.5)
+--- custom arena: Bob sees Alice's public arena
+PASS  menu has the option 'bqkit'
+--- custom arena: Bob's menu
+PASS  menu has the option 'Custom arena'
+--- custom arena: Bob's list
+PASS  castle is there as a public arena
+--- custom arena: deleting an arena
+PASS  it is gone, also from the shelf
+PASS  a challenge to a deleted arena does not start
+--- contest: it starts by itself with a category
+PASS  no contest yet
+PASS  a contest is running   (giant statue)
+PASS  /contest tells Alice what to build
+PASS  and that she has no build
+PASS  five days to build   (5 days left)
+--- contest: Alice (not a Builder) builds her entry
+PASS  Alice is not a Builder
+PASS  she is on a contest plot
+PASS  the flat template is there
+PASS  the arena commands don't work here
+PASS  with nothing built it is refused
+PASS  with 25 blocks it is saved
+PASS  she left and the plot is clean
+PASS  her entry is kept
+PASS  /contest says she handed in a build
+--- contest: Bob builds, Carl builds nothing
+PASS  Bob's entry was kept when he left
+PASS  Carl is on a plot
+PASS  a plot with nothing built is not an entry
+PASS  two builds so far   (2)
+PASS  nobody can vote yet
+--- contest: Dora is still building when the time is up
+PASS  after four days she can still build
+PASS  after five days the voting is open
+PASS  Dora was taken out of her plot   (minecraft:overworld 0.0 -60.0 0.0)
+PASS  and her tower is a build too: three in the gallery   (3)
+PASS  two days to vote   (2 days left)
+PASS  everybody was told
+PASS  nobody can build any more
+--- contest: the gallery
+PASS  every build has a number from 1 to 3
+PASS  Carl (no build) has none
+PASS  Carl sees the three builds without names
+PASS  Alice sees which one is hers
+PASS  Carl clicks Alice's build
+--- contest: Carl looks at Alice's build
+PASS  Carl is looking at it
+PASS  her stone bricks are in his plot
+PASS  in the duel world, in creative to fly around   (pvpduels:void_arena 16384.5 101.0 0.5)
+PASS  the vote button is there
+PASS  he can't place anything
+PASS  he can't break anything
+PASS  he can't start building while looking
+PASS  he moved on to Bob's build
+--- contest: voting
+PASS  Carl votes for Alice
+PASS  you can't vote for your own build
+PASS  a build that doesn't exist
+PASS  Dora changed her vote
+PASS  Alice looks at Bob's build
+PASS  and votes for it
+PASS  Alice has 3 votes, Bob 1, Dora's tower 0   (3/1/0 2)
+PASS  /contest shows Carl his vote
+PASS  Alice left the gallery
+--- contest: the voting ends and the winners are Builders
+PASS  Carl is still looking at a build
+PASS  the contest is over and the two-week break starts   (REST 1 14 days left)
+PASS  nobody can build during the break
+PASS  everybody was told about the break
+PASS  Carl was taken out of the gallery
+PASS  Alice is a Builder   (21 days left)
+PASS  so is Bob
+PASS  Dora (no votes) and Carl (no build) are not
+PASS  the results were announced
+PASS  the winners were told
+PASS  the last contest is remembered
+PASS  the builds were thrown away
+PASS  /contest results prints them
+PASS  /contest says when the next one starts
+PASS  nobody can enter during the break
+--- contest: the winner can make arenas now
+PASS  Alice is in the arena studio
+PASS  and left
+PASS  Carl still can't
+--- contest: after the break a new contest starts
+PASS  a second before the break ends there is still no contest   (REST)
+PASS  two weeks after the results the contest #2 starts   (BUILD 2)
+PASS  it was announced
+--- contest: with one build only the contest is cancelled
+PASS  one build
+PASS  the contest was cancelled and a new one (#3) started   (BUILD 3)
+PASS  everybody was told
+PASS  nobody won
+PASS  a normal player can't end a contest
+--- contest: an admin's category, and a contest where nobody votes
+PASS  the admin's category is used   (giant pizza 4)
+PASS  two builds
+PASS  skipping the building time opens the voting   (The building time is over.)
+PASS  skipping the voting ends the contest and starts the break   (The voting is over. REST)
+PASS  with no votes nobody wins
+PASS  an admin can end the break early   (A new contest started. BUILD)
+--- contest: clean up
+PASS  nobody is left on a plot
+--- kits: every item of the game is saved and read back the same
+kit round trip: 1539 stacks in 38 batches, 0 problems
+PASS  all 1539 item stacks of the game are saved and come back identical
+--- kits: /kit save says what it saved and never writes a blank kit
+PASS  an empty inventory is not saved as a blank kit
+PASS  /kit save tells how many stacks are in the file (3)
+PASS  an empty inventory does not wipe a good kit   (stacks=3)
+--- kits: /kit show opens the kit as a look-only chest
+--- kits: the chest shows the kit and nothing can be taken
+PASS  a 6-row chest opened
+PASS  the hotbar sword is in the bottom row
+PASS  the apples keep their count
+PASS  the helmet is in the armor corner
+PASS  clicking an item does not take it
+PASS  the kit file was not touched by looking
+--- kits: /kit load puts the whole kit in the game of the player
+PASS  the kit replaced the inventory
+PASS  /kit load tells how many stacks it loaded
+--- kits: the game of the player shows the loaded kit
+PASS  her game was sent the whole kit
+--- kits: /kit save <name> layout makes the kit AND its layout in one go
+PASS  a plain /kit save offers the one-click button for the layout
+PASS  a plain /kit save does not make a layout
+PASS  the layout was created   ([default, onelay])
+PASS  the sword is the rule of slot 1 and the apples of slot 2   ({1=[minecraft:diamond_sword], 2=[minecraft:golden_apple]})
+PASS  the kit exists and is linked to the layout   (onelay)
+PASS  the second kit went in at priority 2
+PASS  slot 1 now has both swords, in order   ([minecraft:diamond_sword, minecraft:netherite_sword])
+PASS  with no layout named it goes into the active one (default)
+PASS  the priority can be chosen
+PASS  a bad layout name leaves the kit saved and says so
+PASS  /layout inventorycopy still works
+--- kits: a layout straight from a saved kit, with nothing in the inventory
+PASS  an empty inventory says what the server sees and points to /kit layout   ([Your inventory is empty (that is what the server sees: hotbar 0, backpack 0, armor 0, offhand 0 - the lobby items and the guide book don't count), so nothing was saved. Put your items in first, then run /kit save emptyone again. (To make a layout from a kit you already saved, without loading it: /kit layout <kit> [layout] [priority].)])
+PASS  a new layout was made from the saved kit   ([Copied kit 'goodkit' (2 items) into new layout 'fromk' at priority 1. Armor and offhand are not in layouts. The kit will be sorted with this layout when you load it.])
+PASS  the sword is the rule of slot 1 and the apples of slot 2   ({1=[minecraft:diamond_sword], 2=[minecraft:golden_apple]})
+PASS  the kit is linked to the layout   (fromk)
+PASS  the inventory was not touched
+PASS  the priority can be chosen   ([Copied kit 'goodkit' (2 items) into layout 'fromk' at priority 3. Armor and offhand are not in layouts. The kit will be sorted with this layout when you load it.])
+PASS  /layout fromkit does the same, at the next free priority   ([Copied kit 'goodkit' (2 items) into layout 'fromk' at priority 4. Armor and offhand are not in layouts. The kit will be sorted with this layout when you load it.])
+PASS  an unknown kit says so and lists the kits   ([You don't have a kit named 'nosuchkit'. Your kits: goodkit, lobbykit, onestep, onestep2, onestep3, onestep4, onestep5, qkit, qkit-b, testkit, withbook, wk])
+--- kits: a stack that is too big or unreadable is rescued, not lost
+PASS  a stack bigger than its maximum still ends up in the kit   (5 minecraft:diamond_sword)
+over-full stack: 5 minecraft:diamond_sword / told: false
+PASS  a kit with a broken stack still loads the rest
+PASS  the item with broken data comes back as the plain item   (1 minecraft:diamond_sword)
+PASS  an item that does not exist is reported   ([hotbar 1 (Diamond Sword): only the plain item could be read (Value must be non-negative: -5 missed input: {"minecraft:damage":-5})., hotbar 6: could not be read (Unknown registry key in ResourceKey[minecraft:root / minecraft:item]: minecraft:not_an_item).])
+PASS  /kit load tells which slots could not be read
+--- kits: items taken in the creative menu are in the saved kit
+PASS  Alice is in the workshop
+PASS  the server took the creative picks (sword, apples, helmet, shield)   (1 minecraft:netherite_sword)
+PASS  /kit save counts 4 stacks
+PASS  the kit has the creative picks   (stacks=4)
+--- kits: leaving the workshop after the creative picks
+PASS  Alice left the workshop
+--- armor: Sort puts on the best armor and never a Curse of Binding piece
+PASS  Alice is in the workshop
+PASS  the netherite chestplate got Curse of Binding
+PASS  the best helmet (diamond) is on   (1 minecraft:diamond_helmet)
+PASS  the diamond chestplate is on, not the cursed netherite one   (1 minecraft:diamond_chestplate)
+PASS  the worn cursed leggings were not replaced   (1 minecraft:diamond_leggings)
+PASS  the best boots (iron) are on   (1 minecraft:iron_boots)
+PASS  nothing was lost: the helmet slot got swapped (the iron one is still in the inventory)
+PASS  elytra and pumpkin are never worn by Sort
+PASS  it says what it put on
+PASS  it says the cursed piece was left out
+PASS  a second Sort puts on the remaining boots (the golden ones)   (1 minecraft:golden_boots)
+PASS  Sort changes nothing more when the best armor is already on
+--- armor: /layout armor off, a better worn piece and Protection
+PASS  /layout armor off says so
+PASS  with it off Sort leaves your armor alone
+PASS  /layout armor on says so
+PASS  a better worn piece is kept
+PASS  and the worse one stays in the backpack
+PASS  a helmet with Protection X beats a plain netherite one   (1 minecraft:diamond_helmet)
+PASS  Alice left the workshop
+PASS  her armor slots are back to what she had
+--- party: nobody is in a party at first
+PASS  all four are free
+PASS  nobody is in a party
+PASS  /party says so
+PASS  there is nothing to accept
+PASS  you can't be your own partner
+PASS  you can't leave what you are not in
+--- party: an invitation can be denied
+PASS  Alice is told it was sent
+PASS  Bob gets the invitation with buttons
+PASS  Bob denied
+PASS  nobody is in a party
+PASS  a denied invitation is gone
+--- party: an invitation can be accepted
+PASS  Bob waits in the random queue
+PASS  joining a party takes you out of the queue
+PASS  they are partners
+PASS  Alice is the leader
+PASS  both were told
+PASS  /party shows the partner
+--- party: a third player can't join
+PASS  Carl can't invite somebody who has a party
+PASS  Alice's party is full
+PASS  Carl got nothing to accept
+PASS  a party queues together
+PASS  the partner can take the whole party out
+--- party: an invitation runs out after a minute
+PASS  Dora is invited
+PASS  too late: no party
+PASS  in time: Carl and Dora are partners
+--- party: a party only duels another party
+PASS  leaving ends the party for both
+PASS  a single player can't challenge a party
+PASS  a party can't challenge a single player
+PASS  a player can't challenge their own partner
+PASS  none of those left an invitation to accept
+PASS  Carl and Dora are a party again
+--- 2v2: Alice challenges Carl, who accepts
+PASS  Carl is told it is a 2v2
+PASS  a 2v2 exists for the four
+PASS  it is not a 1v1
+PASS  team 0 is Alice and Bob, team 1 is Carl and Dora
+PASS  they are all in a duel
+PASS  they were told the rules
+PASS  the party can't end while it plays
+--- 2v2: the four are in the arena with the kit
+PASS  all four are in the arena world   (pvpduels:void_arena -7.5 101.0 -0.7 / pvpduels:void_arena 8.5 101.0 1.7)
+PASS  teammates start next to each other   (2.4 / 2.4)
+PASS  the teams start far from each other   (16.178999)
+PASS  everybody got the sword of the kit
+PASS  the cobblestone of their own inventory is not there
+PASS  score 0 - 0 in round 1
+PASS  Alice's sidebar   ([2v2 with Bob, vs Carl & Dora,  , Your team: 0, Them: 0,  , Round 1, Alive: 2 vs 2, First to 2, Kit: qkit])
+PASS  Carl's sidebar   ([2v2 with Dora, vs Alice & Bob,  , Your team: 0, Them: 0,  , Round 1, Alive: 2 vs 2, First to 2, Kit: qkit])
+PASS  /duels lists the 2v2
+PASS  busy players can't be challenged
+--- 2v2: no friendly fire
+PASS  Bob and Dora are fine
+PASS  nobody is out
+--- 2v2: a partner can't end the party in the middle of a duel
+PASS  a partner can't leave in the middle of a duel
+--- 2v2: a totem in hand saves Carl from the knockout
+PASS  Carl popped the totem and is still in the fight   (0 minecraft:air 1.0)
+PASS  and the round goes on with four alive   ([2v2 with Bob, vs Carl & Dora,  , Your team: 0, Them: 0,  , Round 1, Alive: 2 vs 2, First to 2, Kit: qkit])
+--- 2v2: Alice knocks Carl out; the round goes on
+PASS  Carl is a spectator now
+PASS  the round is still on
+PASS  they were told who did it
+PASS  and what the last blow was   ([PvP Duels is active. Type /guide to see the commands., Building contest: "city skyline" (4 days left to build). /contest, Saved kit 'dk1' from your inventory: 5 item stacks in the file. See it with /kit show dk1., [+ Also make a layout from this], Saved kit 'dk2' from your inventory: 5 item stacks in the file. See it with /kit show dk2., [+ Also make a layout from this], Saved kit 'dk3' from your inventory: 4 item stacks in the file. See it with /kit show dk3., [+ Also make a layout from this], Looked at 3 kits: layout 'auto' now has rules for 4 slots. Use it with /layout use auto, see it with /layout show, sort with your Sort key., Looked at 3 kits: layout 'mine' now has rules for 4 slots. Use it with /layout use mine, see it with /layout show, sort with your Sort key., Layout 'mine' already has rules. Use another name, or /layout clear first., Bot joined the game, Bot has made the advancement [Suit Up], Achievement unlocked: Kit Maker - Save your first kit., Achievement: Kit Maker, Bot left the game, Bot joined the game, Bot left the game, Bot joined the game, Bot left the game, Alice shared the kit 'qkit'  [TAKE], You joined the own kit (dk1) queue.  [LEAVE QUEUE], Waiting for somebody to take your kit 'dk1'. Others see it in /queue., You left the own kit (dk1) queue., Building contest #1: giant statue,   Everybody can build "giant statue" for 5 days, then everybody votes. The top 3 become Builders for 3 weeks and can make their own arenas. [JOIN], Building contest: giant statue,   Build "giant statue" in the box around you. 5 days left to finish.,   Your build is kept as your entry when you leave (change at least 20 blocks). /contest save keeps it without leaving. [LEAVE], You left your plot. Your inventory was restored. Your build is your entry in the contest., Building contest #1: time to vote!,   3 builds of "giant statue". Visit them and vote for the best one: 2 days. [VOTE], Your vote goes to build #3. You can change it until the voting ends., Your vote goes to build #1 (you changed your vote). You can change it until the voting ends., Building contest #1 (giant statue) results,   1st: Alice - 3 votes,   2nd: Bob - 1 vote,   They are Builders for 3 weeks. 3 builds, 4 voters., The next building contest starts in 14 days., Building contest #1 (giant statue),   1st: Alice - 3 votes,   2nd: Bob - 1 vote,   They are Builders for 3 weeks. 3 builds, 4 voters., There is no building contest right now. The next one starts in 14 days. /contest results shows the last one., There is no building contest to build for right now. /contest tells you more., Building contest #2: waterfall,   Everybody can build "waterfall" for 5 days, then everybody votes. The top 3 become Builders for 3 weeks and can make their own arenas. [JOIN], Building contest #2 (waterfall) was cancelled: not enough builds. A new one starts now., Building contest #3: cozy cafe,   Everybody can build "cozy cafe" for 5 days, then everybody votes. The top 3 become Builders for 3 weeks and can make their own arenas. [JOIN], Building contest #4: giant pizza,   Everybody can build "giant pizza" for 5 days, then everybody votes. The top 3 become Builders for 3 weeks and can make their own arenas. [JOIN], Building contest #4: time to vote!,   2 builds of "giant pizza". Visit them and vote for the best one: 2 days. [VOTE], Building contest #4 (giant pizza) results,   Nobody voted, so nobody won the Builder rank., The next building contest starts in 14 days., Building contest #5: castle,   Everybody can build "castle" for 5 days, then everybody votes. The top 3 become Builders for 3 weeks and can make their own arenas. [JOIN], Alice has made the advancement [Cover Me with Diamonds], Alice has reached the goal [Sky's the Limit], Carl wants you as a partner for 2v2 duels. [ACCEPT] [DENY], You have no party invitation (or it expired)., Carl wants you as a partner for 2v2 duels. [ACCEPT] [DENY], You are in a party with Carl. Challenge another pair with /duel <player>, or wait for one in /queue., You left the party., Carl wants you as a partner for 2v2 duels. [ACCEPT] [DENY], You are in a party with Carl. Challenge another pair with /duel <player>, or wait for one in /queue., 2v2: Carl & Dora vs Alice & Bob,   Kit: qkit   Arena: Flat arena (no walls),   Mode: First to 2 points   Use /leave to quit (your team forfeits).,   A round is won when both players of the other team are out. No friendly fire., Building contest #1: castle,   Everybody can build "castle" for 5 days, then everybody votes. The top 3 become Builders for 3 weeks and can make their own arenas. [JOIN], Achievement unlocked: Contestant - Hand in a build to the weekly contest., Achievement: Contestant, Alice defeated Carl. Last blow: 1000.0 damage before armor, against 20.0 health + 0.0 absorption.  (2 vs 1 alive)])
+PASS  a player who is out can't be hit again or lose a round twice
+--- 2v2: Bob knocks Dora out; Alice and Bob win round 1
+PASS  round 1 goes to team 0
+PASS  everybody was told
+PASS  Carl's score line is the other way round
+PASS  no clutch: nobody of the winners was out
+--- 2v2: round 2 starts with everybody back in the fight
+PASS  Carl is not a spectator any more
+PASS  all have full health and the kit again
+PASS  teams are apart again   (16.178999)
+PASS  Alice is out
+PASS  round 2 goes to Carl and Dora: 1 - 1   (1-1 ROUND_END)
+PASS  they were told
+PASS  Carl and Dora clutched nothing: both were alive
+--- 2v2: round 3, Alice wins it alone
+PASS  Bob is out
+PASS  one rival to go
+PASS  the match is decided: team 0 wins 2 - 1   (2-1 winner 0)
+PASS  Alice clutched, Bob did not   (1 / 0)
+--- 2v2: the end of the match
+PASS  the final score was told
+PASS  the winners have the win, the losers do not
+PASS  Better Together and Clutch
+PASS  a 2v2 does not touch the Elo or the 1v1 numbers   (1110 / 1000 / 16)
+PASS  the sidebar says who won   ([2v2 with Bob, vs Carl & Dora,  , Your team: 2, Them: 1,  , Round 3, Alive: 1 vs 0, First to 2, Kit: qkit, You won!])
+PASS  the two winners' fireworks went up and the losers' did not   (2 / 2)
+PASS  Carl got himself back
+PASS  the others are still there until it closes
+PASS  a 2v2 can't be watched yet
+--- 2v2: everybody got their things back
+PASS  Alice, Bob and Dora have their cobblestone again
+PASS  and the kit is gone
+PASS  all in survival again
+PASS  no duel is left
+PASS  the parties are still there
+--- 2v2: a player who leaves makes their team forfeit
+PASS  a new 2v2 started
+--- 2v2: Dora types /leave
+PASS  the duel is over
+PASS  Dora is out and the others were told
+PASS  Alice and Bob won it
+PASS  Carl lost it
+PASS  Carl can leave too
+--- 2v2: a draw offer
+PASS  a new 2v2 started
+--- 2v2: Carl's team accepts Alice's team's draw
+PASS  both of the other team got the offer
+PASS  Alice's own partner did not get it
+PASS  her partner can't accept it for the rival
+PASS  Dora accepts: the 2v2 ends in a tie   (-1 ENDED)
+--- 2v2 queue: the party waits together
+PASS  both parties are still there and qkit is public
+PASS  Bob's party is in the queue, both of them
+PASS  both were told   ([Bob put your party in the 2v2 public (qkit) queue.  [LEAVE QUEUE]])
+PASS  /queue list shows the pair   ([Bob put your party in the 2v2 public (qkit) queue.  [LEAVE QUEUE], In the queues (1),   Bob & Alice: 2v2 public (qkit)])
+PASS  a different queue does not match
+PASS  Dora took her whole party out and Bob's stays
+PASS  only an own kit offer can be taken
+--- 2v2 queue: the other party joins and the match starts
+PASS  a 2v2 started for the four
+PASS  Bob's party waited, so it is team 0   (Bob & Alice / Carl & Dora)
+PASS  nobody is in the queue any more
+PASS  all four were told who they play   ([Bob put your party in the 2v2 public (qkit) queue.  [LEAVE QUEUE], In the queues (1),   Bob & Alice: 2v2 public (qkit), Match found!,   2v2 against Carl & Dora - kit qkit (public kit). Flat arena, first to 3 rounds., 2v2: Bob & Alice vs Carl & Dora,   Kit: qkit   Arena: Flat arena (with walls),   Mode: First to 3 points   Use /leave to quit (your team forfeits).,   A round is won when both players of the other team are out. No friendly fire.])
+--- 2v2 queue: the public kit is in everybody's hands; nobody can queue in a 2v2
+PASS  all four have the sword of qkit
+PASS  a 2v2 player can't join a queue
+--- 2v2: the parties can be ended
+PASS  the arena is free
+PASS  Alice's party waits again
+PASS  ending the party takes it out of the queue
+PASS  Alice left, so the party is over for both
+PASS  everything is reset
+--- achievements: the duels, kits and builds of this whole test already counted
+PASS  Alice has First Steps and First Victory
+PASS  her win counter is her real number of wins   (14 vs 14)
+PASS  Bob played too
+PASS  Alice won 2-0 in her own arena: Flawless
+PASS  she has dueled in at least two kinds of arena   (4)
+PASS  she saved a kit
+PASS  she saved and shared an arena
+PASS  she won the building contest
+PASS  Bob was second: podium but not the win
+PASS  Carl voted once   (1)
+--- achievements: counters unlock achievements
+PASS  nothing is unlocked
+PASS  1 win: First Victory, but not Duelist
+PASS  6 + 4 bot KOs: Bot Buster
+PASS  the same kit twice counts once
+PASS  three different kits: Versatile
+PASS  a lower value never lowers a max counter
+PASS  1050 Elo is not enough
+PASS  1210 Elo: Rising Star and Expert, not Master
+PASS  100 wins: all the win achievements
+PASS  Alice, whose data was thrown away, has nothing
+--- achievements: the player is told a few seconds later
+PASS  not told yet
+--- achievements: what the message says
+PASS  it names the title and offers [WEAR]
+PASS  nothing is left to tell
+--- achievements: the list of achievements
+PASS  the menu shows unlocked and locked ones
+PASS  and the way to the titles
+PASS  menu has the option 'My titles'
+--- achievements: wearing a title
+PASS  the titles menu has the won ones only
+PASS  click [Legend]
+--- achievements: the title is in front of the name
+PASS  Carl is in a title team   (no team)
+PASS  its prefix is [Legend]   ([Legend] )
+PASS  so the name shown in chat has it   ([Legend] Carl)
+PASS  the game remembers it
+PASS  a title you haven't won is refused
+PASS  another one can be worn   ([Rookie] Carl)
+PASS  /profile shows the title
+PASS  /profile counts them
+--- achievements: it is saved in the file
+PASS  the unlocked achievements are still there
+PASS  so is the title
+PASS  /titles off takes it off
+--- achievements: clean up
+PASS  Carl has no team left
+--- effects: the catalog of things to win
+PASS  there are many particles (115)
+PASS  flame and the colored dust exist
+PASS  the ones that cover the screen do not
+PASS  no two particles share an id or a name
+PASS  23 firework things: 16 colors, 5 shapes, the trail and the twinkle
+PASS  32 explosions with a name each
+PASS  every explosion has a unique id, and the seven domains and the films are known
+PASS  the menus have a place for each, inside the six rows
+PASS  3 fireworks, 2 floor slots, 4 arena slots, 5 colors
+PASS  the chances are the ones asked for
+--- effects: a new player owns almost nothing
+PASS  only the white color and the small ball
+PASS  white is on the firework behind you, the other two are empty
+PASS  no particles and no explosions
+PASS  every particle slot is empty
+PASS  no explosion is equipped and other players' effects are shown
+--- effects: the reward of a mission
+PASS  with a 100% firework chance a mission gives one new firework thing   ([Gained[kind=firework, id=color:cyan, label=Firework color Cyan, duplicate=false]])
+PASS  21 missions give 21 different things, so everything gets unlocked   (21 23)
+PASS  when there is nothing left to unlock the firework roll becomes a particle   ([Gained[kind=particle, id=gust, label=Particle: Gust, duplicate=false]])
+PASS  a mission that rolls nothing still gives a particle   ([Gained[kind=particle, id=campfire_signal_smoke, label=Particle: Campfire Signal Smoke, duplicate=false]])
+PASS  both rolls can hit: a firework thing and a particle   ([Gained[kind=firework, id=color:black, label=Firework color Black, duplicate=false], Gained[kind=particle, id=underwater, label=Particle: Underwater, duplicate=false]])
+PASS  lucky missions give every different explosion   ([railgun, orbital_wither, shooting_star, domain_expansion, gungnir, rift_storm, domain_ocean, soul_reaper, cronos, black_hole, sculk_awakening, zeus, supernova, spore_bloom, tesseract, crystal_burst, solar_flare, eclipse, domain_swords, titan_fist, domain_garden, tornado, dragon_strike, prism_beams, fire_pillars, domain_inferno, meteor_shower, seven_stars, domain_frost, domain_void, orbital_strike, moonfall])
+PASS  with all of them owned a lucky roll gives a particle instead   ([Gained[kind=particle, id=white_ash, label=Particle: White Ash, duplicate=false]])
+PASS  the third mission without luck gives the explosion for sure (pity), then it starts over   ([false, false, true, false, false])
+PASS  a repeated particle is a new copy, and the message says so   ([Gained[kind=particle, id=warped_spore, label=Particle: Warped Spore (now x4), duplicate=true]] 345->346)
+PASS  /effects unlockall style: 3 copies of every particle
+--- effects: what can be equipped
+PASS  a locked color is refused
+PASS  a color that does not exist is refused
+PASS  white and four more make 5 colors on one firework   ([white, red, yellow, blue, green])
+PASS  a sixth color is refused   (A firework has up to 5 colors. Take one off first.)
+PASS  taking one off makes room
+PASS  the same color can be on two fireworks
+PASS  a locked shape is refused
+PASS  an unlocked shape goes to that firework only
+PASS  a shape that does not exist is refused
+PASS  the trail and the twinkle are locked at first
+PASS  and switch on and off after that
+PASS  a particle you don't have is refused
+PASS  with one copy it fits in one slot
+PASS  a second slot is refused with one copy   (You only have 1 copy of that particle and all of them are equipped.)
+PASS  the same slot again is fine
+PASS  a duplicate gives a second slot
+PASS  and a third one is refused
+PASS  a slot that does not exist is refused
+PASS  an empty id empties the slot
+PASS  you can own up to 6 copies
+PASS  a locked explosion is refused
+PASS  an explosion that does not exist is refused
+PASS  an unlocked explosion can be equipped and taken off
+PASS  equipping an explosion cleared the colors and the particles, which is the rule
+--- effects: effects OR an explosion, never both
+PASS  a new player has the first firework and no explosion
+PASS  a color and a particle go on
+PASS  equipping an explosion takes every color and every particle off
+PASS  but everything stays owned
+PASS  with an explosion on, the fireworks and particles are not played
+PASS  another explosion replaces the first
+PASS  equipping a color takes the explosion off
+PASS  equipping a particle takes it off too
+PASS  taking an explosion off leaves nothing equipped
+PASS  it is saved like that
+--- effects: it is saved in the file
+PASS  the colors are still on the fireworks
+PASS  so are the shape, the trail and the twinkle
+PASS  the particles and their copies
+PASS  the explosion you own and the option to hide others
+PASS  what a new player gets is saved too
+--- missions: the six missions of a day
+PASS  5 fixed missions and 1 bonus
+PASS  the five of every day, in order
+PASS  with the goals you asked for (100 hearts, combo 15, 40 foods, 10 potions, 3 wins)
+PASS  the sixth is the bonus of the date
+PASS  the bonus changes every day and a week shows all 7 of them   ([kits2, apples5, team1, pearls5, rounds10, hits100, duels5])
+PASS  the same date always has the same bonus
+--- missions: progress, rewards and no double payment
+PASS  nothing is complete after the first duel
+PASS  the progress adds up (hearts, foods, potions), keeps the best (combo) and counts the win run
+PASS  the second duel completes four missions   ([combo15, eat40, heal100, potions10])
+PASS  each one paid a reward
+PASS  so the player owns 4 new firework things   (6)
+PASS  four are done today and the win run is 2
+PASS  a loss ends the win run
+PASS  and a mission that is done never pays twice
+PASS  two wins: 2 of 3
+PASS  a tie breaks the run
+PASS  two wins after the tie: 2 of 3
+PASS  the third win in a row completes it
+PASS  and gives its reward
+PASS  five rewards wait to be told   (5)
+--- missions: a new day starts from zero
+PASS  nothing is done and there is no progress
+PASS  what was won stays
+PASS  the win run starts again
+PASS  the bonus of the new day is another one
+--- missions: every bonus mission can be completed
+PASS  bonus 'Play 5 duels': not done before the last duel, done after it
+PASS  bonus 'Land 100 hits in duels': not done before the last duel, done after it
+PASS  bonus 'Throw 5 ender pearls in duels': not done before the last duel, done after it
+PASS  bonus 'Eat 5 golden apples in duels': not done before the last duel, done after it
+PASS  bonus 'Win 10 rounds in duels': not done before the last duel, done after it
+PASS  bonus 'Win with 2 different kits': not done before the last duel, done after it
+PASS  bonus 'Win a 2v2 duel': not done before the last duel, done after it
+--- missions: the player is told a few seconds later
+PASS  Carl completed the combo mission
+PASS  he has a reward to be told about, but not yet
+--- missions: what the message says
+PASS  it names the reward and offers [EFFECTS]
+PASS  nothing is left to tell
+--- victory: Alice gets her effects ready and plays for the third win in a row
+PASS  Alice equipped everything without errors
+PASS  three fireworks with 3, 5 and 1 colors, a star with trail in the middle
+PASS  she has won twice in a row today
+PASS  Bob has nothing but the first things
+--- victory: Alice wins the duel
+--- victory: the fireworks went up
+PASS  Alice's three fireworks went up and Bob's did not   (3 / 1)
+PASS  the rockets are flying in the arena   (3)
+PASS  the particles are playing
+--- victory: both of them saw the particles
+PASS  Alice saw them   (38 vs 2)
+PASS  Bob, in the same arena, saw them too   (28 vs 0)
+--- victory: the show ends by itself
+PASS  no show is left
+--- victory: the third win completed a mission
+PASS  'Win 3 duels in a row' is done   (1 done)
+PASS  its reward was one new firework thing   (12 -> 13)
+PASS  Bob lost: his run is 0 and he got nothing
+PASS  only Alice's fireworks went up
+--- victory: the reward message
+PASS  it has the reward and the button
+PASS  nothing is left to tell
+PASS  Bob heard nothing about missions
+--- effects: /effects preview, and who sees it
+PASS  Alice, Bob and Carl are in the same world   (minecraft:overworld 50.5 -60.0 50.5 / minecraft:overworld 53.5 -60.0 50.5 / minecraft:overworld 50.5 -60.0 53.5)
+PASS  the preview started her three fireworks and her show   (3 / 1 / 1)
+--- effects: Bob hides other players' effects
+PASS  Alice saw her own particles
+PASS  Carl, next to her, saw them
+PASS  Bob hid other players' effects: he saw none   (3293 vs 3293)
+--- menus: Alice's fireworks (some are locked)
+PASS  the main menu has its options
+PASS  menu has the option 'Fireworks'
+PASS  the three fireworks
+PASS  menu has the option 'Left'
+PASS  10 of the 23 things are still locked   (10)
+PASS  the unlocked colors and shapes are there
+--- menus: a sixth color does not fit
+PASS  menu has the option 'Orange'
+PASS  she was told why
+PASS  and the firework did not change
+PASS  menu has the option 'Yellow'
+PASS  taking a color off
+PASS  menu has the option 'Orange'
+PASS  then the new one fits
+PASS  menu has the option 'Trail: on'
+PASS  the trail switches off from the menu
+PASS  menu has the option 'Back'
+PASS  Back goes to the three fireworks
+PASS  menu has the option 'Back'
+PASS  and Back again to the main menu
+--- menus: Alice's explosions and missions
+PASS  menu has the option 'Explosions'
+PASS  she owns the Orbital Strike Cannon, the others are still unknown   (31)
+PASS  menu has the option 'Orbital Strike Cannon'
+PASS  clicking an explosion equips it and takes her fireworks and particles off
+PASS  and she was told why
+PASS  menu has the option 'Orbital Strike Cannon'
+PASS  clicking an equipped explosion takes it off
+PASS  the six missions of the day
+PASS  and the five weekly ones
+PASS  the one she completed is an emerald, the others are not
+--- menus: an admin unlocks everything for Bob
+PASS  a normal player can't unlock everything
+PASS  the console (an admin) can
+PASS  every particle with 3 copies
+PASS  and every explosion
+PASS  Bob was told
+PASS  menu has the option 'Fireworks'
+PASS  menu has the option 'Right'
+PASS  nothing is locked for him
+PASS  menu has the option 'Light Blue'
+PASS  menu has the option 'Creeper'
+PASS  menu has the option 'Twinkle: off'
+PASS  Right firework: light blue, creeper, twinkle
+PASS  menu has the option 'Back'
+PASS  menu has the option 'Back'
+--- menus: Bob's particles
+PASS  menu has the option 'Particles'
+PASS  six empty slots
+PASS  menu has the option 'Floor 1: empty'
+PASS  the picker has the first page in alphabetical order and a way to the next
+PASS  menu has the option 'Next page'
+PASS  page 2 starts where page 1 stopped
+PASS  menu has the option 'Previous page'
+PASS  menu has the option 'Angry Villager'
+PASS  picking a particle puts it in the slot and goes back
+PASS  menu has the option 'Arena 2: empty'
+PASS  menu has the option 'Angry Villager'
+PASS  the same particle in a second slot (he has 3 copies)
+PASS  menu has the option 'Floor 1: Angry Villager'
+PASS  menu has the option 'Empty this slot'
+PASS  a slot can be emptied
+PASS  menu has the option 'Back'
+--- menus: Bob's explosions, the switch for other players, the missions and the preview
+PASS  menu has the option 'Explosions'
+PASS  nothing is unknown to Bob
+PASS  menu has the option 'Orbital Wither Cannon'
+PASS  Orbital Wither Cannon is equipped and his colors are off
+PASS  menu has the option 'Back'
+PASS  menu has the option 'Other players' effects: shown'
+PASS  the switch hides other players' effects
+PASS  menu has the option 'Other players' effects: hidden'
+PASS  and shows them again
+PASS  menu has the option 'Missions'
+PASS  the missions show Bob's progress
+PASS  menu has the option 'Back'
+PASS  menu has the option 'Preview'
+PASS  Preview closes the menu and plays only his explosion (no fireworks, he has an explosion on)   (0 / 1)
+PASS  the menu is closed
+--- effects: clean up
+PASS  everything is reset
+--- weekly: five missions that last a week
+PASS  5 weekly missions with the goals 15, 4, 5, 500 and 3
+PASS  the weekly ones are marked and the daily ones are not
+PASS  the week starts on Monday
+PASS  explosion chances: 0.8% for a daily mission, 1.5% for a weekly one
+--- weekly: they fill up over several wins and pay the weekly explosion chance
+PASS  5 wins in a row with 4 kits and 500 hits complete three weekly missions   ([w_hits500, w_kits4, w_run5])
+PASS  each one paid an explosion (weekly chance 100%)   ([gungnir, rift_storm, domain_ocean])
+PASS  the daily 'Win 3 duels in a row' is done too
+PASS  the 15th win completes 'Win 15 duels'
+PASS  three 2v2 wins complete the last one: 5 of 5
+--- weekly: they last all week, the daily ones do not, and a new week starts from zero
+PASS  on Sunday the weekly progress is still there   (15.0)
+PASS  but the daily missions of Wednesday are gone
+PASS  on the next Monday the week starts again
+PASS  the first win of the new week counts once
+PASS  and what was won stays (the explosions of the week)   (5 vs 5)
+--- midnight: a duel counts for the day it started
+PASS  it completes the combo mission of the day it started and pays the reward   ([Completion[mission=Def[id=combo15, text=Land a 15-hit combo in one duel, goal=15.0, kind=BEST, icon=minecraft:diamond_sword], rewards=[Gained[kind=firework, id=shape:burst, label=Firework shape Burst, duplicate=false]]]])
+PASS  the new day shows nothing
+PASS  the day it started shows the mission done and the win in the run
+PASS  a duel that starts on the new day counts for the new day
+--- finale: Alice has the Domain Expansion and Carl will watch
+PASS  Alice equips the Domain Expansion
+--- finale: Carl watches and Alice wins
+PASS  Carl is watching the duel
+--- finale: it is a Domain Expansion, with a camera and a double of each player
+PASS  a finale of the Domain Expansion kind for Alice (the Crimson Shrine)
+PASS  a camera exists
+PASS  each player has a double (a mannequin) where they started   ((-7.5, 101.0, 0.5) (-7.5, 101.0, 0.5))
+PASS  the doubles face the middle
+PASS  both doubles are tagged so they can be found and removed   (2 / 1)
+PASS  the duel waits for the finale before it closes
+PASS  Alice saw VICTORY and Bob saw DEFEAT first, as always
+--- finale: everybody looks through the camera, the winner's hands are joined
+PASS  Alice and Bob see through the camera entity
+PASS  and so does Carl, who is watching
+PASS  all in spectator mode, so nothing can touch them
+PASS  the camera was given to three viewers   (3)
+PASS  the game was told to switch the camera
+PASS  the winner's double has the hands joined (the crouching pose), the loser's stands
+PASS  the camera starts at the floor in the middle of the arena   ((0.5, 101.3, 0.5))
+PASS  the viewers' bodies are where the camera is   ((0.5, 101.3, 0.5) (0.5, 101.3, 0.5))
+PASS  Alice's fireworks do not go up: she has an explosion, not effects
+--- finale: the title reached everybody and the hands come apart
+PASS  the title 'Domain Expansion: Crimson Shrine' reached Alice, Bob and Carl
+PASS  1.5 seconds passed with the hands joined
+PASS  the camera has risen a little by now   (104.32404207362885 vs 101.3)
+PASS  the dome is being drawn (many particles reach the players)   (3682 / 3655)
+PASS  and it is made of display entities: the dome (4 turned cubes) and the floor (8 slabs) are in the world   (12 / 12)
+--- finale: the camera ends 7 blocks up, to the side and toward the winner's end
+PASS  it rose about 7 blocks   (6.945003756573996)
+PASS  it curved to the side of the arena   ((-2.8135237200129617, 107.945003756574, -7.474629939478608) half 8.0)
+PASS  and bent toward the winner's end (Alice started on the west side)   ((-2.8135237200129617, 107.945003756574, -7.474629939478608) center (0.5, 101.0, 0.5))
+PASS  it looks down at the arena   (34.117367)
+PASS  the camera sent many position packets   (174)
+PASS  the double of the winner stands again
+--- finale: the duel closes and everything is put back
+--- finale: after it
+PASS  the finale lasted longer than a normal end (more than 8 seconds from the win)   (301 ticks)
+PASS  nobody is looking through the camera any more
+PASS  nobody is left in spectator mode (Carl stopped watching too)
+PASS  the camera, the doubles and the whole domain are gone   (0 / 0 / 0 / 0)
+PASS  she won, so her streak went up   (5 vs 4)
+--- tie: both with normal effects, nothing happens
+PASS  Alice has a win streak before the tie   (5)
+--- tie: the duel just ends, with no finale
+PASS  no finale for a tie of normal effects
+PASS  the DRAW title, nothing else
+PASS  it is a draw in the stats and it broke Alice's win streak   (0 / 1)
+PASS  the players stay in their bodies
+--- tie: one Domain Expansion and one normal player, nothing happens either
+--- tie: the duel just ends
+PASS  no finale, no domain
+PASS  nobody was moved
+--- tie: two Domain Expansions clash
+PASS  Bob equips the Domain Expansion too
+--- tie: the clash starts
+PASS  a clash finale starts
+--- tie: both domains grow and meet
+PASS  both players ride the camera
+PASS  both doubles join their hands
+--- tie: the domains push each other
+PASS  the two domains are drawn (the red one, the blue one and the dark gray line)   (3122 / 3123)
+PASS  the doubles stand again
+--- tie: they get tired and the title says it is a tie
+PASS  both heard 'I guess it's a tie'
+PASS  the clash was longer than 9 seconds   (181 ticks)
+--- tie: everything is put back
+PASS  nobody looks through the camera and nobody is in spectator mode
+PASS  no camera and no doubles are left
+--- finale: Bob wins with three fireworks (the duel started before midnight)
+PASS  Bob puts red and blue on the left and right fireworks
+--- finale: midnight passes and Bob wins
+--- finale: the three fireworks stand in a row behind Bob, the middle one a block higher
+PASS  a normal finale for Bob
+PASS  three rockets are flying near Bob's place   (3)
+PASS  all of them are behind him
+PASS  in a row: one in front of him and two 2.5 blocks to each side   (5.0)
+PASS  the middle one started a block higher   (1.0)
+PASS  Alice did not get fireworks and Bob's explosion slot is empty, so only fireworks
+--- finale: Alice leaves during the finale
+PASS  Alice has her own eyes back at once
+PASS  Bob still watches the show
+--- finale: Bob's duel counted for the day it started
+PASS  Bob is back in his own eyes
+PASS  no finale is left
+PASS  on the day after, Bob's win run is empty
+PASS  on the day the duel started, it counts as his first win   (1.0)
+--- finale star: Alice has the Shooting Star
+PASS  Alice equips the Shooting Star
+--- finale star: Alice wins
+--- finale star: a low shot from the side, with the winner looking up
+PASS  a finale of the Shooting Star film for Alice
+PASS  Alice and Bob ride the camera
+PASS  the camera is low and to the side of the arena   ((-6.7, 103.2, -16.5) center (0.5, 101.0, 0.5) half 8.0)
+PASS  Alice's double looks up to make a wish   (-40.0)
+PASS  Alice's fireworks do not go up: she has an explosion
+--- finale star: the star is crossing the sky and the camera follows it
+PASS  display entities were made (the star, its halo and its tail)   (5 made)
+PASS  and they are in the world
+PASS  the camera looks up at the star   (-20.54377)
+PASS  the camera has moved toward the loser's end   ((1.5994864220737783, 106.62804873955221, -11.087291463864926) center (0.5, 101.0, 0.5))
+PASS  the camera sent many position packets   (202 moves)
+PASS  the title 'Make a wish' reached Alice
+--- finale star: it landed, with a flash and a title
+PASS  the title SHOOTING STAR reached Alice and Bob
+PASS  the pillar and the pentagram stand on the loser's place   (39)
+PASS  the camera circles up above the landing   ((6.018237539168484, 109.33333333333333, -12.939723477785474))
+PASS  lots of particles reached Alice (tail, flash, shock waves)   (3360)
+PASS  the double stopped looking up   (0.0)
+--- finale star: everything is put back and nothing is left
+PASS  the finale lasted about eleven seconds   (322 ticks)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0)
+--- finale domain_void: Alice has it
+PASS  Alice equips it
+--- finale domain_void: Alice wins
+--- finale domain_void: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (221)
+--- finale domain_void: its world stands in the middle of the film
+PASS  display entities were made   (112 made)
+PASS  and they are in the world   (112 / 112)
+PASS  the camera has been moving all the time   (202 moves)
+PASS  the camera stays near the arena   ((5.938781622256941, 105.9491584, -9.404548690298885) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (3263)
+--- finale domain_void: the film ends
+--- finale domain_void: the last props leave the world
+--- finale domain_void: everything is put back and nothing is left
+PASS  the title Domain Expansion: Infinite Void reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (302 ticks)
+PASS  the explosion has its own melody and all of it was played   (22 notes of 8 (last tune falling))
+PASS  a sad tune followed it   (falling)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale domain_swords: Alice has it
+PASS  Alice equips it
+--- finale domain_swords: Alice wins
+--- finale domain_swords: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (221)
+--- finale domain_swords: its world stands in the middle of the film
+PASS  display entities were made   (190 made)
+PASS  and they are in the world   (190 / 190)
+PASS  the camera has been moving all the time   (202 moves)
+PASS  the camera stays near the arena   ((0.3696959786255951, 110.21430903790088, -8.271717098836103) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1996)
+--- finale domain_swords: the film ends
+--- finale domain_swords: the last props leave the world
+--- finale domain_swords: everything is put back and nothing is left
+PASS  the title Domain Expansion: Field of Swords reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (302 ticks)
+PASS  the explosion has its own melody and all of it was played   (26 notes of 13 (last tune music_box))
+PASS  a sad tune followed it   (music_box)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale domain_frost: Alice has it
+PASS  Alice equips it
+--- finale domain_frost: Alice wins
+--- finale domain_frost: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (221)
+--- finale domain_frost: its world stands in the middle of the film
+PASS  display entities were made   (61 made)
+PASS  and they are in the world   (61 / 61)
+PASS  the camera has been moving all the time   (202 moves)
+PASS  the camera stays near the arena   ((0.07159036300806632, 109.49644314868804, -8.262218051551356) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (2231)
+--- finale domain_frost: the film ends
+--- finale domain_frost: the last props leave the world
+--- finale domain_frost: everything is put back and nothing is left
+PASS  the title Domain Expansion: Frozen Abyss reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (302 ticks)
+PASS  the explosion has its own melody and all of it was played   (22 notes of 14 (last tune womp_womp))
+PASS  a sad tune followed it   (womp_womp)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale domain_inferno: Alice has it
+PASS  Alice equips it
+--- finale domain_inferno: Alice wins
+--- finale domain_inferno: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (221)
+--- finale domain_inferno: its world stands in the middle of the film
+PASS  display entities were made   (87 made)
+PASS  and they are in the world   (87 / 87)
+PASS  the camera has been moving all the time   (202 moves)
+PASS  the camera stays near the arena   ((-5.561813533028561, 106.62497959183673, -5.8414837925198375) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (2324)
+--- finale domain_inferno: the film ends
+--- finale domain_inferno: the last props leave the world
+--- finale domain_inferno: everything is put back and nothing is left
+PASS  the title Domain Expansion: Infernal Throne reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (302 ticks)
+PASS  the explosion has its own melody and all of it was played   (28 notes of 15 (last tune music_box))
+PASS  a sad tune followed it   (music_box)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale domain_garden: Alice has it
+PASS  Alice equips it
+--- finale domain_garden: Alice wins
+--- finale domain_garden: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (221)
+--- finale domain_garden: its world stands in the middle of the film
+PASS  display entities were made   (133 made)
+PASS  and they are in the world   (133 / 133)
+PASS  the camera has been moving all the time   (202 moves)
+PASS  the camera stays near the arena   ((-0.8183802728344991, 109.73573177842566, -8.173054447897858) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (2300)
+--- finale domain_garden: the film ends
+--- finale domain_garden: the last props leave the world
+--- finale domain_garden: everything is put back and nothing is left
+PASS  the title Domain Expansion: Cherry Garden reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (302 ticks)
+PASS  the explosion has its own melody and all of it was played   (21 notes of 15 (last tune fail_horn))
+PASS  a sad tune followed it   (fail_horn)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale domain_ocean: Alice has it
+PASS  Alice equips it
+--- finale domain_ocean: Alice wins
+--- finale domain_ocean: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (221)
+--- finale domain_ocean: its world stands in the middle of the film
+PASS  display entities were made   (82 made)
+PASS  and they are in the world   (82 / 82)
+PASS  the camera has been moving all the time   (202 moves)
+PASS  the camera stays near the arena   ((-5.342741231919106, 109.25715451895043, -6.043880721470432) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (2479)
+--- finale domain_ocean: the film ends
+--- finale domain_ocean: the last props leave the world
+--- finale domain_ocean: everything is put back and nothing is left
+PASS  the title Domain Expansion: Abyssal Sea reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (302 ticks)
+PASS  the explosion has its own melody and all of it was played   (21 notes of 14 (last tune sad_trombone))
+PASS  a sad tune followed it   (sad_trombone)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale gungnir: Alice has it
+PASS  Alice equips it
+--- finale gungnir: Alice wins
+--- finale gungnir: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (208)
+--- finale gungnir: its world stands in the middle of the film
+PASS  display entities were made   (6 made)
+PASS  and they are in the world   (6 / 6)
+PASS  the camera has been moving all the time   (130 moves)
+PASS  the camera stays near the arena   ((1.42, 103.4, -17.5) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (360)
+--- finale gungnir: the film ends
+--- finale gungnir: the last props leave the world
+--- finale gungnir: everything is put back and nothing is left
+PASS  the title GUNGNIR reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (289 ticks)
+PASS  the explosion has its own melody and all of it was played   (21 notes of 8 (last tune music_box))
+PASS  a sad tune followed it   (music_box)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale railgun: Alice has it
+PASS  Alice equips it
+--- finale railgun: Alice wins
+--- finale railgun: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (234)
+--- finale railgun: its world stands in the middle of the film
+PASS  display entities were made   (115 made)
+PASS  and they are in the world   (109 / 109)
+PASS  the camera has been moving all the time   (242 moves)
+PASS  the camera stays near the arena   ((8.39253035447198, 104.27339818940771, -6.965520491710974) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1384)
+--- finale railgun: the film ends
+--- finale railgun: the last props leave the world
+--- finale railgun: everything is put back and nothing is left
+PASS  the title RAILGUN reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (315 ticks)
+PASS  the explosion has its own melody and all of it was played   (18 notes of 10 (last tune womp_womp))
+PASS  a sad tune followed it   (womp_womp)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale tesseract: Alice has it
+PASS  Alice equips it
+--- finale tesseract: Alice wins
+--- finale tesseract: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (220)
+--- finale tesseract: its world stands in the middle of the film
+PASS  display entities were made   (82 made)
+PASS  and they are in the world   (81 / 81)
+PASS  the camera has been moving all the time   (254 moves)
+PASS  the camera stays near the arena   ((23.524402051462094, 110.12777400490221, -0.5474513608003171) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1346)
+--- finale tesseract: the film ends
+--- finale tesseract: the last props leave the world
+--- finale tesseract: everything is put back and nothing is left
+PASS  the title TESSERACT reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (301 ticks)
+PASS  the explosion has its own melody and all of it was played   (19 notes of 11 (last tune womp_womp))
+PASS  a sad tune followed it   (womp_womp)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale eclipse: Alice has it
+PASS  Alice equips it
+--- finale eclipse: Alice wins
+--- finale eclipse: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (214)
+--- finale eclipse: its world stands in the middle of the film
+PASS  display entities were made   (146 made)
+PASS  and they are in the world   (115 / 115)
+PASS  the camera has been moving all the time   (234 moves)
+PASS  the camera stays near the arena   ((-0.5121636842876128, 106.3590325686186, -22.16986504017542) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1379)
+--- finale eclipse: the film ends
+--- finale eclipse: the last props leave the world
+--- finale eclipse: everything is put back and nothing is left
+PASS  the title ECLIPSE reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (295 ticks)
+PASS  the explosion has its own melody and all of it was played   (20 notes of 12 (last tune womp_womp))
+PASS  a sad tune followed it   (womp_womp)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale moonfall: Alice has it
+PASS  Alice equips it
+--- finale moonfall: Alice wins
+--- finale moonfall: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (238)
+--- finale moonfall: its world stands in the middle of the film
+PASS  display entities were made   (164 made)
+PASS  and they are in the world   (154 / 154)
+PASS  the camera has been moving all the time   (246 moves)
+PASS  the camera stays near the arena   ((3.0070500825831825, 105.07766239364143, -30.748163851963735) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (934)
+--- finale moonfall: the film ends
+--- finale moonfall: the last props leave the world
+--- finale moonfall: everything is put back and nothing is left
+PASS  the title MOONFALL reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (319 ticks)
+PASS  the explosion has its own melody and all of it was played   (13 notes of 9 (last tune bruh))
+PASS  a sad tune followed it   (bruh)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale cronos: Alice has it
+PASS  Alice equips it
+--- finale cronos: Alice wins
+--- finale cronos: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (220)
+--- finale cronos: its world stands in the middle of the film
+PASS  display entities were made   (138 made)
+PASS  and they are in the world   (137 / 137)
+PASS  the camera has been moving all the time   (266 moves)
+PASS  the camera stays near the arena   ((9.337289642528841, 103.72631578947367, -8.778085986480157) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (393)
+--- finale cronos: the film ends
+--- finale cronos: the last props leave the world
+--- finale cronos: everything is put back and nothing is left
+PASS  the title CRONOS CLOCK reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (301 ticks)
+PASS  the explosion has its own melody and all of it was played   (17 notes of 9 (last tune womp_womp))
+PASS  a sad tune followed it   (womp_womp)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale zeus: Alice has it
+PASS  Alice equips it
+--- finale zeus: Alice wins
+--- finale zeus: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (240)
+--- finale zeus: its world stands in the middle of the film
+PASS  display entities were made   (799 made)
+PASS  and they are in the world   (247 / 247)
+PASS  the camera has been moving all the time   (294 moves)
+PASS  the camera stays near the arena   ((22.317794909300805, 105.5403070526609, -11.693744565245979) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1053)
+--- finale zeus: the film ends
+--- finale zeus: the last props leave the world
+--- finale zeus: everything is put back and nothing is left
+PASS  the title ZEUS STORM reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (321 ticks)
+PASS  the explosion has its own melody and all of it was played   (26 notes of 12 (last tune falling))
+PASS  a sad tune followed it   (falling)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale orbital_strike: Alice has it
+PASS  Alice equips it
+--- finale orbital_strike: Alice wins
+--- finale orbital_strike: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (170)
+--- finale orbital_strike: its world stands in the middle of the film
+PASS  display entities were made   (19 made)
+PASS  and they are in the world   (18 / 18)
+PASS  the camera has been moving all the time   (114 moves)
+PASS  the camera stays near the arena   ((2.219065529368961, 103.5167048170158, -15.837002275302519) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1777)
+--- finale orbital_strike: the film ends
+--- finale orbital_strike: the last props leave the world
+--- finale orbital_strike: everything is put back and nothing is left
+PASS  the title ORBITAL STRIKE reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (251 ticks)
+PASS  the explosion has its own melody and all of it was played   (22 notes of 9 (last tune music_box))
+PASS  a sad tune followed it   (music_box)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale orbital_wither: Alice has it
+PASS  Alice equips it
+--- finale orbital_wither: Alice wins
+--- finale orbital_wither: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (170)
+--- finale orbital_wither: its world stands in the middle of the film
+PASS  display entities were made   (19 made)
+PASS  and they are in the world   (18 / 18)
+PASS  the camera has been moving all the time   (114 moves)
+PASS  the camera stays near the arena   ((2.298967393065962, 103.52823726302462, -15.808660542052685) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1778)
+--- finale orbital_wither: the film ends
+--- finale orbital_wither: the last props leave the world
+--- finale orbital_wither: everything is put back and nothing is left
+PASS  the title WITHER CANNON reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (251 ticks)
+PASS  the explosion has its own melody and all of it was played   (22 notes of 8 (last tune falling))
+PASS  a sad tune followed it   (falling)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale black_hole: Alice has it
+PASS  Alice equips it
+--- finale black_hole: Alice wins
+--- finale black_hole: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (194)
+--- finale black_hole: its world stands in the middle of the film
+PASS  display entities were made   (28 made)
+PASS  and they are in the world   (19 / 19)
+PASS  the camera has been moving all the time   (186 moves)
+PASS  the camera stays near the arena   ((9.446542818128044, 106.45081018518519, -18.549070649173217) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (3395)
+--- finale black_hole: the film ends
+--- finale black_hole: the last props leave the world
+--- finale black_hole: everything is put back and nothing is left
+PASS  the title BLACK HOLE reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (275 ticks)
+PASS  the explosion has its own melody and all of it was played   (27 notes of 14 (last tune music_box))
+PASS  a sad tune followed it   (music_box)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale meteor_shower: Alice has it
+PASS  Alice equips it
+--- finale meteor_shower: Alice wins
+--- finale meteor_shower: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (204)
+--- finale meteor_shower: its world stands in the middle of the film
+PASS  display entities were made   (125 made)
+PASS  and they are in the world   (35 / 35)
+PASS  the camera has been moving all the time   (186 moves)
+PASS  the camera stays near the arena   ((5.570065727427053, 106.36751643185676, -21.5) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1067)
+--- finale meteor_shower: the film ends
+--- finale meteor_shower: the last props leave the world
+--- finale meteor_shower: everything is put back and nothing is left
+PASS  the title METEOR SHOWER reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (285 ticks)
+PASS  the explosion has its own melody and all of it was played   (25 notes of 11 (last tune falling))
+PASS  a sad tune followed it   (falling)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale seven_stars: Alice has it
+PASS  Alice equips it
+--- finale seven_stars: Alice wins
+--- finale seven_stars: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (272)
+--- finale seven_stars: its world stands in the middle of the film
+PASS  display entities were made   (86 made)
+PASS  and they are in the world   (64 / 64)
+PASS  the camera has been moving all the time   (230 moves)
+PASS  the camera stays near the arena   ((28.10658003469503, 119.9609375, -7.9653509861426315) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (199)
+--- finale seven_stars: Bob presses sneak and skips the film
+PASS  Bob still rides the camera before he sneaks
+--- finale seven_stars: Bob has his body back and Alice still sees the film
+PASS  Bob looks through his own eyes again, no longer a spectator
+PASS  Alice is still in the camera and the film goes on
+PASS  the world of the film still stands
+--- finale seven_stars: the film ends
+--- finale seven_stars: the last props leave the world
+--- finale seven_stars: everything is put back and nothing is left
+PASS  the title SEVEN STARS reached Alice
+PASS  the film lasted more than seven seconds from the win   (353 ticks)
+PASS  the explosion has its own melody and all of it was played   (16 notes of 9 (last tune sad_trombone))
+PASS  a sad tune followed it   (sad_trombone)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale fire_pillars: Alice has it
+PASS  Alice equips it
+--- finale fire_pillars: Alice wins
+--- finale fire_pillars: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (204)
+--- finale fire_pillars: its world stands in the middle of the film
+PASS  display entities were made   (49 made)
+PASS  and they are in the world   (49 / 49)
+PASS  the camera has been moving all the time   (214 moves)
+PASS  the camera stays near the arena   ((17.770793332271047, 103.54082363701544, -15.104914227887987) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1783)
+--- finale fire_pillars: the film ends
+--- finale fire_pillars: the last props leave the world
+--- finale fire_pillars: everything is put back and nothing is left
+PASS  the title PILLARS OF FIRE reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (285 ticks)
+PASS  the explosion has its own melody and all of it was played   (23 notes of 17 (last tune fail_horn))
+PASS  a sad tune followed it   (fail_horn)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale tornado: Alice has it
+PASS  Alice equips it
+--- finale tornado: Alice wins
+--- finale tornado: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (208)
+--- finale tornado: its world stands in the middle of the film
+PASS  display entities were made   (44 made)
+PASS  and they are in the world   (33 / 33)
+PASS  the camera has been moving all the time   (230 moves)
+PASS  the camera stays near the arena   ((17.891314776374358, 103.64226815335718, -15.16021381059759) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (3437)
+--- finale tornado: the film ends
+--- finale tornado: the last props leave the world
+--- finale tornado: everything is put back and nothing is left
+PASS  the title TORNADO reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (289 ticks)
+PASS  the explosion has its own melody and all of it was played   (29 notes of 15 (last tune falling))
+PASS  a sad tune followed it   (falling)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale crystal_burst: Alice has it
+PASS  Alice equips it
+--- finale crystal_burst: Alice wins
+--- finale crystal_burst: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (192)
+--- finale crystal_burst: its world stands in the middle of the film
+PASS  display entities were made   (58 made)
+PASS  and they are in the world   (52 / 52)
+PASS  the camera has been moving all the time   (166 moves)
+PASS  the camera stays near the arena   ((14.134014640199863, 104.46355448722815, -13.295410531360968) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (2114)
+--- finale crystal_burst: the film ends
+--- finale crystal_burst: the last props leave the world
+--- finale crystal_burst: everything is put back and nothing is left
+PASS  the title CRYSTAL BURST reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (273 ticks)
+PASS  the explosion has its own melody and all of it was played   (21 notes of 13 (last tune womp_womp))
+PASS  a sad tune followed it   (womp_womp)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale rift_storm: Alice has it
+PASS  Alice equips it
+--- finale rift_storm: Alice wins
+--- finale rift_storm: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (208)
+--- finale rift_storm: its world stands in the middle of the film
+PASS  display entities were made   (94 made)
+PASS  and they are in the world   (29 / 29)
+PASS  the camera has been moving all the time   (206 moves)
+PASS  the camera stays near the arena   ((17.421054644994104, 103.85701301970121, -15.611275006123329) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (491)
+--- finale rift_storm: the film ends
+--- finale rift_storm: the last props leave the world
+--- finale rift_storm: everything is put back and nothing is left
+PASS  the title RIFT STORM reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (289 ticks)
+PASS  the explosion has its own melody and all of it was played   (17 notes of 13 (last tune bruh))
+PASS  a sad tune followed it   (bruh)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale dragon_strike: Alice has it
+PASS  Alice equips it
+--- finale dragon_strike: Alice wins
+--- finale dragon_strike: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (208)
+--- finale dragon_strike: its world stands in the middle of the film
+PASS  display entities were made   (43 made)
+PASS  and they are in the world   (28 / 28)
+PASS  the camera has been moving all the time   (234 moves)
+PASS  the camera stays near the arena   ((24.648285088654795, 113.22995370487223, -24.857443755275977) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (156)
+--- finale dragon_strike: the film ends
+--- finale dragon_strike: the last props leave the world
+--- finale dragon_strike: everything is put back and nothing is left
+PASS  the title DRAGON STRIKE reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (289 ticks)
+PASS  the explosion has its own melody and all of it was played   (20 notes of 14 (last tune fail_horn))
+PASS  a sad tune followed it   (fail_horn)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale titan_fist: Alice has it
+PASS  Alice equips it
+--- finale titan_fist: Alice wins
+--- finale titan_fist: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (198)
+--- finale titan_fist: its world stands in the middle of the film
+PASS  display entities were made   (61 made)
+PASS  and they are in the world   (61 / 61)
+PASS  the camera has been moving all the time   (174 moves)
+PASS  the camera stays near the arena   ((14.82804332250163, 104.40742603439209, -13.457054110346538) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (380)
+--- finale titan_fist: the film ends
+--- finale titan_fist: the last props leave the world
+--- finale titan_fist: everything is put back and nothing is left
+PASS  the title TITAN FIST reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (279 ticks)
+PASS  the explosion has its own melody and all of it was played   (15 notes of 9 (last tune fail_horn))
+PASS  a sad tune followed it   (fail_horn)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale soul_reaper: Alice has it
+PASS  Alice equips it
+--- finale soul_reaper: Alice wins
+--- finale soul_reaper: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (204)
+--- finale soul_reaper: its world stands in the middle of the film
+PASS  display entities were made   (15 made)
+PASS  and they are in the world   (15 / 15)
+PASS  the camera has been moving all the time   (214 moves)
+PASS  the camera stays near the arena   ((23.485585610215615, 113.11030336595702, -25.533737439404636) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (564)
+--- finale soul_reaper: the film ends
+--- finale soul_reaper: the last props leave the world
+--- finale soul_reaper: everything is put back and nothing is left
+PASS  the title SOUL REAPER reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (285 ticks)
+PASS  the explosion has its own melody and all of it was played   (25 notes of 11 (last tune falling))
+PASS  a sad tune followed it   (falling)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale solar_flare: Alice has it
+PASS  Alice equips it
+--- finale solar_flare: Alice wins
+--- finale solar_flare: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (212)
+--- finale solar_flare: its world stands in the middle of the film
+PASS  display entities were made   (117 made)
+PASS  and they are in the world   (22 / 22)
+PASS  the camera has been moving all the time   (234 moves)
+PASS  the camera stays near the arena   ((20.3408832854925, 115.05793057629566, -18.115519919292783) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (3117)
+--- finale solar_flare: the film ends
+--- finale solar_flare: the last props leave the world
+--- finale solar_flare: everything is put back and nothing is left
+PASS  the title SOLAR FLARE reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (293 ticks)
+PASS  the explosion has its own melody and all of it was played   (28 notes of 14 (last tune falling))
+PASS  a sad tune followed it   (falling)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale supernova: Alice has it
+PASS  Alice equips it
+--- finale supernova: Alice wins
+--- finale supernova: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (218)
+--- finale supernova: its world stands in the middle of the film
+PASS  display entities were made   (46 made)
+PASS  and they are in the world   (34 / 34)
+PASS  the camera has been moving all the time   (230 moves)
+PASS  the camera stays near the arena   ((18.00759096368143, 103.76342179916938, -14.699095926392554) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (3847)
+--- finale supernova: the film ends
+--- finale supernova: the last props leave the world
+--- finale supernova: everything is put back and nothing is left
+PASS  the title SUPERNOVA reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (299 ticks)
+PASS  the explosion has its own melody and all of it was played   (22 notes of 15 (last tune sad_trombone))
+PASS  a sad tune followed it   (sad_trombone)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale prism_beams: Alice has it
+PASS  Alice equips it
+--- finale prism_beams: Alice wins
+--- finale prism_beams: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (208)
+--- finale prism_beams: its world stands in the middle of the film
+PASS  display entities were made   (44 made)
+PASS  and they are in the world   (44 / 44)
+PASS  the camera has been moving all the time   (230 moves)
+PASS  the camera stays near the arena   ((16.372720816866476, 104.65365626377523, -12.233286674167164) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (895)
+--- finale prism_beams: the film ends
+--- finale prism_beams: the last props leave the world
+--- finale prism_beams: everything is put back and nothing is left
+PASS  the title PRISM BEAMS reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (289 ticks)
+PASS  the explosion has its own melody and all of it was played   (20 notes of 12 (last tune womp_womp))
+PASS  a sad tune followed it   (womp_womp)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale spore_bloom: Alice has it
+PASS  Alice equips it
+--- finale spore_bloom: Alice wins
+--- finale spore_bloom: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (208)
+--- finale spore_bloom: its world stands in the middle of the film
+PASS  display entities were made   (100 made)
+PASS  and they are in the world   (58 / 58)
+PASS  the camera has been moving all the time   (230 moves)
+PASS  the camera stays near the arena   ((16.59790955432683, 104.66791340788264, -12.259625647227308) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (1150)
+--- finale spore_bloom: the film ends
+--- finale spore_bloom: the last props leave the world
+--- finale spore_bloom: everything is put back and nothing is left
+PASS  the title SPORE BLOOM reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (289 ticks)
+PASS  the explosion has its own melody and all of it was played   (18 notes of 14 (last tune bruh))
+PASS  a sad tune followed it   (bruh)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- finale sculk_awakening: Alice has it
+PASS  Alice equips it
+--- finale sculk_awakening: Alice wins
+--- finale sculk_awakening: the film starts with a camera and two doubles
+PASS  a finale of the right film for Alice
+PASS  Alice and Bob ride the camera, in spectator mode
+PASS  each player has a double
+PASS  the film is long (more than 7 seconds of camera)   (208)
+--- finale sculk_awakening: its world stands in the middle of the film
+PASS  display entities were made   (50 made)
+PASS  and they are in the world   (32 / 32)
+PASS  the camera has been moving all the time   (230 moves)
+PASS  the camera stays near the arena   ((17.94040790054804, 103.84922944270568, -14.507491727589587) center (0.5, 101.0, 0.5))
+PASS  lots of particles reached Alice   (628)
+--- finale sculk_awakening: the film ends
+--- finale sculk_awakening: the last props leave the world
+--- finale sculk_awakening: everything is put back and nothing is left
+PASS  the title SCULK AWAKENING reached Alice
+PASS  and Bob
+PASS  the film lasted more than seven seconds from the win   (289 ticks)
+PASS  the explosion has its own melody and all of it was played   (15 notes of 11 (last tune bruh))
+PASS  a sad tune followed it   (bruh)
+PASS  nobody is looking through the camera and nobody is a spectator
+PASS  no camera, no double and no display entity is left   (0 / 0 / 0 / 0 / waited 0 / swept 0 / tagged 0 )
+--- sounds: every explosion has its own tune and the toggle works
+PASS  all the explosions have their own melody
+PASS  fireworks and particles share the common one
+PASS  six sad tunes, none longer than 26 ticks
+PASS  a listener gets the sound of the first note
+PASS  the effects menu has the sounds button, on
+PASS  menu has the option 'Win and lose sounds: on'
+PASS  it turns them off for her
+PASS  and she hears nothing
+PASS  menu has the option 'Win and lose sounds: off'
+PASS  another click turns them on again
+--- silly sounds: twenty real sound files, a toggle, and the sound goes to the ones who want it
+PASS  there are twenty silly sounds with different names
+PASS  every one is an ogg file in the jar and is listed in sounds.json
+PASS  they are on by default
+PASS  she gets the Fahhh sound by its name
+PASS  the effects menu has the silly sounds button, on
+PASS  menu has the option 'Silly losing sounds: on'
+PASS  it turns them off for her
+PASS  with them off she is in the group of the sad tune
+PASS  menu has the option 'Silly losing sounds: off'
+PASS  another click turns them on and plays one for her to hear
+PASS  turning every win and lose sound off turns the silly ones off too
+--- try-out: Dora watches the film of her Shooting Star on the dummy
+PASS  the film is possible for her
+PASS  an explosion she does not own is refused
+PASS  it starts
+PASS  a second one has to wait
+PASS  she is busy while it plays
+--- try-out: she rides the camera and her double stands on the far side
+PASS  a film of the Shooting Star with Dora as the winner, and no duel
+PASS  Dora rides the camera, in spectator mode
+PASS  she has a double and the dummy has none (it is the real NPC)
+PASS  the winner's side is as far from the dummy as in an arena   (13.0)
+--- try-out: the star landed with a title and a flash
+PASS  the title SHOOTING STAR reached her
+PASS  display entities were made   (48 made)
+PASS  the camera has been moving   (135 moves)
+PASS  lots of particles reached her   (3527)
+--- try-out: the film ended and she is back in her body
+PASS  her own eyes and game mode are back
+PASS  she did not move   ((0.0, -60.0, 0.0) vs (0.0, -60.0, 0.0))
+PASS  she is free again
+PASS  the melody of the Shooting Star played, and a sad tune after it   (17 fail_horn)
+PASS  the silly sound of the loser played, by its name, for her (they are on by default)
+--- try-out: the last props leave the world
+--- try-out: the menu of the dummy starts a film, and sneaking skips it
+PASS  nothing is left from the first film
+PASS  the menu offers the Frozen Abyss
+PASS  menu has the option 'Domain: Frozen Abyss'
+PASS  a film started and the menu closed
+--- try-out: Dora presses sneak
+PASS  she rides the camera before she sneaks
+--- try-out: she has her body back, the film goes on without her
+PASS  her own eyes and game mode are back
+PASS  she did not move   ((0.0, -60.0, 0.0) vs (0.0, -60.0, 0.0))
+PASS  she is free, but the film still plays
+--- try-out: the last props of the Frozen Abyss leave the world
+--- try-out: the preview command asks for the film
+PASS  she equips the Meteor Shower
+--- try-out: the preview command starts it, and the film can be stopped
+PASS  a film of the Meteor Shower started for her   (can=true busy=true scenes=1 shows=0 at (0.0, -60.0, 0.0) spawn[])
+PASS  the winner's double stands where she stands   ((0.0, -60.0, 0.0) vs (0.0, -60.0, 0.0))
+--- free camera: she rides the camera and presses the free camera key
+PASS  she rides the camera of the film
+--- free camera: she flies by herself and the film goes on
+PASS  the key gave her a free camera
+PASS  her own eyes are back and she flies as a spectator
+PASS  she started where the camera was   ((21.31301896596871, -57.4, 8.874413927480399) vs (21.31301896596871, -57.4, 8.874413927480399))
+PASS  the film goes on without her
+--- free camera: too far away she is put back at the edge, and /freecam gives her the camera back
+PASS  she cannot fly farther than the edge   (70.0)
+PASS  the command gave her the camera of the film again
+PASS  and the command frees it again
+PASS  the key gives her the camera back too
+PASS  and frees it again
+--- free camera: the skip key from the free camera puts her back, and the film goes on
+PASS  she is in her own body again, in her old place   ((0.0, -60.0, 0.0) vs (0.0, -60.0, 0.0))
+PASS  she is not free any more, and the film still plays
+PASS  the keys do nothing once she is out of the film
+--- bug report: /bugreport saves what the player wrote in a file
+PASS  the report was saved
+PASS  the file says who, when, where and the bug   (=== Bug #1 ===
+When: 2026-10-15 07:53:22 UTC+00:00
+Who: Dora (8cbfccd5-45c0-3ec0-b3aa-1c06ebdbcdd4)
+Mod: PvP Duels 0.22.1
+Where: minecraft:overworld at 0.0 -60.0 0.0, game mode survival
+State: free, explosion meteor_shower
+Bug: The kit menu showed my old kit after I changed it
+
+)
+PASS  she is told it was saved
+PASS  a second report right away waits
+PASS  a report with almost no words is refused
+PASS  a very long report is cut
+--- free camera: stopping the film puts her back where she stood
+PASS  stopping it gives her back her eyes
+PASS  she is where she was before the film   ((0.0, -60.0, 0.0) vs (0.0, -60.0, 0.0))
+PASS  she is not free any more
+PASS  /freecam with no film says so and changes nothing
+--- finale: clean up
+PASS  everything is reset and the older tests see the plain end of a duel again
+--- delivery 9: the mod is not on its first version any more
+PASS  the mod has a real version number (not the first one)   (0.22.1)
+--- /unlock_all: only admins with the right code
+PASS  Dora starts with nothing
+PASS  a normal player can't use /unlock_all, not even with the right code
+PASS  a wrong code unlocks nothing and says so
+PASS  the code without the ! is wrong too
+PASS  the right code unlocks every cosmetic   (32 / 23)
+PASS  and she is told
+--- quality: five levels and a click to change
+PASS  Potato, Low, Mid, High and Ultra Pro Max
+PASS  a new player is on High
+PASS  the main menu shows the level
+PASS  menu has the option 'Effect quality: High'
+PASS  one click goes up to Ultra Pro Max
+PASS  menu has the option 'Effect quality: Ultra Pro Max'
+PASS  then it starts again at Potato
+PASS  menu has the option 'Effect quality: Potato'
+PASS  menu has the option 'Effect quality: Low'
+PASS  menu has the option 'Effect quality: Mid'
+PASS  Low, Mid and High again
+--- quality: the number of particles a player receives
+PASS  High sends all of them   (2000)
+PASS  Ultra Pro Max sends twice as many   (4000)
+PASS  Potato about a tenth   (200)
+PASS  Low about a third   (700)
+PASS  Mid about two thirds   (1300)
+--- explosions: orbital_strike plays
+PASS  Alice equips it
+PASS  a show started
+--- explosions: orbital_strike has its solid parts in the middle of the show
+PASS  the show is still on
+PASS  display entities were made (orbital_strike)   (19 made)
+PASS  and they are in the world   (9 / 9)
+--- explosions: orbital_strike reached Alice and left nothing behind
+PASS  a lot of particles reached her (orbital_strike)   (2010 in 1934 packets)
+PASS  the show ended by itself
+PASS  no display entity is left   (0 / 0)
+--- explosions: orbital_wither plays
+PASS  Alice equips it
+PASS  a show started
+--- explosions: orbital_wither has its solid parts in the middle of the show
+PASS  the show is still on
+PASS  display entities were made (orbital_wither)   (19 made)
+PASS  and they are in the world   (12 / 12)
+--- explosions: orbital_wither reached Alice and left nothing behind
+PASS  a lot of particles reached her (orbital_wither)   (2012 in 1933 packets)
+PASS  the show ended by itself
+PASS  no display entity is left   (0 / 0)
+--- explosions: shooting_star plays
+PASS  Alice equips it
+PASS  a show started
+--- explosions: shooting_star has its solid parts in the middle of the show
+PASS  the show is still on
+PASS  display entities were made (shooting_star)   (32 made)
+PASS  and they are in the world   (27 / 27)
+--- explosions: shooting_star reached Alice and left nothing behind
+PASS  a lot of particles reached her (shooting_star)   (1623 in 1790 packets)
+PASS  the show ended by itself
+PASS  no display entity is left   (0 / 0)
+--- explosions: black_hole plays
+PASS  Alice equips it
+PASS  a show started
+--- explosions: black_hole has its solid parts in the middle of the show
+PASS  the show is still on
+PASS  display entities were made (black_hole)   (26 made)
+PASS  and they are in the world   (22 / 22)
+--- explosions: black_hole reached Alice and left nothing behind
+PASS  a lot of particles reached her (black_hole)   (3528 in 3688 packets)
+PASS  the show ended by itself
+PASS  no display entity is left   (0 / 0)
+--- explosions: meteor_shower plays
+PASS  Alice equips it
+PASS  a show started
+--- explosions: meteor_shower has its solid parts in the middle of the show
+PASS  the show is still on
+PASS  display entities were made (meteor_shower)   (95 made)
+PASS  and they are in the world   (47 / 47)
+--- explosions: meteor_shower reached Alice and left nothing behind
+PASS  a lot of particles reached her (meteor_shower)   (2818 in 2559 packets)
+PASS  the show ended by itself
+PASS  no display entity is left   (0 / 0)
+--- explosions: fireworks burst in the sky of the big ones
+PASS  the shows launched real firework bursts   (75)
+PASS  the sweep finds nothing to clean
+--- explosions: on Potato the solid parts are taken off the screen
+--- explosions: Potato got the remove-entity packets and High did not
+PASS  every prop was removed from her screen the moment it appeared   (19)
+--- explosions: High keeps them
+PASS  on High far fewer were taken off (only the cleanup, in batches)   (0 vs 19)
+--- explosions: back to normal
+PASS  Alice has no explosion equipped
+--- dummy: Dora tries a Shooting Star on the Explosion Dummy
+PASS  Dora owns every explosion   (32)
+PASS  an explosion nobody owns can't be tried
+PASS  an owned one starts
+PASS  a second one while the first plays has to wait
+--- dummy: the solid parts are in the world in the middle of the show
+PASS  display entities were made   (29 made)
+PASS  and they are in the world
+--- dummy: the star reached Dora, left nothing behind, and the menu starts the Domain Expansion
+PASS  a lot of particles reached her   (1591 in 1780 packets)
+PASS  no display entity is left
+PASS  the dummy's menu shows her explosions
+PASS  menu has the option 'Domain: Crimson Shrine'
+PASS  a click starts it and closes the menu
+--- dummy: the Crimson Shrine is on the way
+--- dummy: the dome stands, made of display entities
+PASS  the shrine made many display entities (the dome, the floor, the circle, the pagoda)   (73 made)
+PASS  and they are in the world   (71 / 71)
+--- dummy: the dome reached Dora and is gone
+PASS  the shrine sent a lot of particles   (2430)
+PASS  the show ended by itself and nothing is left
+--- quick Gungnir: Dora tries it on the dummy
+PASS  it starts
+--- quick Gungnir: its solid parts stand in the world
+PASS  Gungnir made display entities   (65 made)
+PASS  and they are in the world   (36 / 36)
+--- quick Gungnir: it ended and nothing is left
+PASS  lots of particles reached Dora   (1638)
+PASS  no display entity is left   (0 / 0)
+--- quick Seven Stars: Dora tries it on the dummy
+PASS  it starts
+--- quick Seven Stars: its solid parts stand in the world
+PASS  Seven Stars made display entities   (82 made)
+PASS  and they are in the world   (62 / 62)
+--- quick Seven Stars: it ended and nothing is left
+PASS  lots of particles reached Dora   (419)
+PASS  no display entity is left   (0 / 0)
+--- quick Railgun: Dora tries it on the dummy
+PASS  it starts
+--- quick Railgun: its solid parts stand in the world
+PASS  Railgun made display entities   (66 made)
+PASS  and they are in the world   (29 / 29)
+--- quick Railgun: it ended and nothing is left
+PASS  lots of particles reached Dora   (1307)
+PASS  no display entity is left   (0 / 0)
+--- quick Tesseract: Dora tries it on the dummy
+PASS  it starts
+--- quick Tesseract: its solid parts stand in the world
+PASS  Tesseract made display entities   (68 made)
+PASS  and they are in the world   (68 / 68)
+--- quick Tesseract: it ended and nothing is left
+PASS  lots of particles reached Dora   (687)
+PASS  no display entity is left   (0 / 0)
+--- quick Eclipse: Dora tries it on the dummy
+PASS  it starts
+--- quick Eclipse: its solid parts stand in the world
+PASS  Eclipse made display entities   (46 made)
+PASS  and they are in the world   (46 / 46)
+--- quick Eclipse: it ended and nothing is left
+PASS  lots of particles reached Dora   (1065)
+PASS  no display entity is left   (0 / 0)
+--- quick Moonfall: Dora tries it on the dummy
+PASS  it starts
+--- quick Moonfall: its solid parts stand in the world
+PASS  Moonfall made display entities   (83 made)
+PASS  and they are in the world   (83 / 83)
+--- quick Moonfall: it ended and nothing is left
+PASS  lots of particles reached Dora   (568)
+PASS  no display entity is left   (0 / 0)
+--- quick Cronos Clock: Dora tries it on the dummy
+PASS  it starts
+--- quick Cronos Clock: its solid parts stand in the world
+PASS  Cronos Clock made display entities   (124 made)
+PASS  and they are in the world   (124 / 124)
+--- quick Cronos Clock: it ended and nothing is left
+PASS  lots of particles reached Dora   (415)
+PASS  no display entity is left   (0 / 0)
+--- quick Zeus Storm: Dora tries it on the dummy
+PASS  it starts
+--- quick Zeus Storm: its solid parts stand in the world
+PASS  Zeus Storm made display entities   (135 made)
+PASS  and they are in the world   (66 / 66)
+--- quick Zeus Storm: it ended and nothing is left
+PASS  lots of particles reached Dora   (1337)
+PASS  no display entity is left   (0 / 0)
+--- quick Domain: Infinite Void: Dora tries it on the dummy
+PASS  it starts
+--- quick Domain: Infinite Void: its solid parts stand in the world
+PASS  Domain: Infinite Void made display entities   (59 made)
+PASS  and they are in the world   (59 / 59)
+--- quick Domain: Infinite Void: it ended and nothing is left
+PASS  lots of particles reached Dora   (2760)
+PASS  no display entity is left   (0 / 0)
+--- quick Domain: Field of Swords: Dora tries it on the dummy
+PASS  it starts
+--- quick Domain: Field of Swords: its solid parts stand in the world
+PASS  Domain: Field of Swords made display entities   (112 made)
+PASS  and they are in the world   (112 / 112)
+--- quick Domain: Field of Swords: it ended and nothing is left
+PASS  lots of particles reached Dora   (1694)
+PASS  no display entity is left   (0 / 0)
+--- quick Domain: Frozen Abyss: Dora tries it on the dummy
+PASS  it starts
+--- quick Domain: Frozen Abyss: its solid parts stand in the world
+PASS  Domain: Frozen Abyss made display entities   (48 made)
+PASS  and they are in the world   (48 / 48)
+--- quick Domain: Frozen Abyss: it ended and nothing is left
+PASS  lots of particles reached Dora   (2942)
+PASS  no display entity is left   (0 / 0)
+--- quick Domain: Infernal Throne: Dora tries it on the dummy
+PASS  it starts
+--- quick Domain: Infernal Throne: its solid parts stand in the world
+PASS  Domain: Infernal Throne made display entities   (65 made)
+PASS  and they are in the world   (65 / 65)
+--- quick Domain: Infernal Throne: it ended and nothing is left
+PASS  lots of particles reached Dora   (2910)
+PASS  no display entity is left   (0 / 0)
+--- quick Domain: Cherry Garden: Dora tries it on the dummy
+PASS  it starts
+--- quick Domain: Cherry Garden: its solid parts stand in the world
+PASS  Domain: Cherry Garden made display entities   (91 made)
+PASS  and they are in the world   (91 / 91)
+--- quick Domain: Cherry Garden: it ended and nothing is left
+PASS  lots of particles reached Dora   (2860)
+PASS  no display entity is left   (0 / 0)
+--- quick Domain: Abyssal Sea: Dora tries it on the dummy
+PASS  it starts
+--- quick Domain: Abyssal Sea: its solid parts stand in the world
+PASS  Domain: Abyssal Sea made display entities   (82 made)
+PASS  and they are in the world   (82 / 82)
+--- quick Domain: Abyssal Sea: it ended and nothing is left
+PASS  lots of particles reached Dora   (3432)
+PASS  no display entity is left   (0 / 0)
+--- quick Pillars of Fire: Dora tries it on the dummy
+PASS  it starts
+--- quick Pillars of Fire: its solid parts stand in the world
+PASS  Pillars of Fire made display entities   (37 made)
+PASS  and they are in the world   (37 / 37)
+--- quick Pillars of Fire: it ended and nothing is left
+PASS  lots of particles reached Dora   (2227)
+PASS  no display entity is left   (0 / 0)
+--- quick Tornado: Dora tries it on the dummy
+PASS  it starts
+--- quick Tornado: its solid parts stand in the world
+PASS  Tornado made display entities   (46 made)
+PASS  and they are in the world   (33 / 33)
+--- quick Tornado: it ended and nothing is left
+PASS  lots of particles reached Dora   (1728)
+PASS  no display entity is left   (0 / 0)
+--- quick Crystal Burst: Dora tries it on the dummy
+PASS  it starts
+--- quick Crystal Burst: its solid parts stand in the world
+PASS  Crystal Burst made display entities   (38 made)
+PASS  and they are in the world   (32 / 32)
+--- quick Crystal Burst: it ended and nothing is left
+PASS  lots of particles reached Dora   (994)
+PASS  no display entity is left   (0 / 0)
+--- quick Rift Storm: Dora tries it on the dummy
+PASS  it starts
+--- quick Rift Storm: its solid parts stand in the world
+PASS  Rift Storm made display entities   (49 made)
+PASS  and they are in the world   (22 / 22)
+--- quick Rift Storm: it ended and nothing is left
+PASS  lots of particles reached Dora   (653)
+PASS  no display entity is left   (0 / 0)
+--- quick Dragon Strike: Dora tries it on the dummy
+PASS  it starts
+--- quick Dragon Strike: its solid parts stand in the world
+PASS  Dragon Strike made display entities   (38 made)
+PASS  and they are in the world   (28 / 28)
+--- quick Dragon Strike: it ended and nothing is left
+PASS  lots of particles reached Dora   (728)
+PASS  no display entity is left   (0 / 0)
+--- quick Titan Fist: Dora tries it on the dummy
+PASS  it starts
+--- quick Titan Fist: its solid parts stand in the world
+PASS  Titan Fist made display entities   (43 made)
+PASS  and they are in the world   (43 / 43)
+--- quick Titan Fist: it ended and nothing is left
+PASS  lots of particles reached Dora   (322)
+PASS  no display entity is left   (0 / 0)
+--- quick Soul Reaper: Dora tries it on the dummy
+PASS  it starts
+--- quick Soul Reaper: its solid parts stand in the world
+PASS  Soul Reaper made display entities   (15 made)
+PASS  and they are in the world   (15 / 15)
+--- quick Soul Reaper: it ended and nothing is left
+PASS  lots of particles reached Dora   (471)
+PASS  no display entity is left   (0 / 0)
+--- quick Solar Flare: Dora tries it on the dummy
+PASS  it starts
+--- quick Solar Flare: its solid parts stand in the world
+PASS  Solar Flare made display entities   (67 made)
+PASS  and they are in the world   (27 / 27)
+--- quick Solar Flare: it ended and nothing is left
+PASS  lots of particles reached Dora   (3042)
+PASS  no display entity is left   (0 / 0)
+--- quick Supernova: Dora tries it on the dummy
+PASS  it starts
+--- quick Supernova: its solid parts stand in the world
+PASS  Supernova made display entities   (40 made)
+PASS  and they are in the world   (28 / 28)
+--- quick Supernova: it ended and nothing is left
+PASS  lots of particles reached Dora   (2450)
+PASS  no display entity is left   (0 / 0)
+--- quick Prism Beams: Dora tries it on the dummy
+PASS  it starts
+--- quick Prism Beams: its solid parts stand in the world
+PASS  Prism Beams made display entities   (44 made)
+PASS  and they are in the world   (44 / 44)
+--- quick Prism Beams: it ended and nothing is left
+PASS  lots of particles reached Dora   (838)
+PASS  no display entity is left   (0 / 0)
+--- quick Spore Bloom: Dora tries it on the dummy
+PASS  it starts
+--- quick Spore Bloom: its solid parts stand in the world
+PASS  Spore Bloom made display entities   (76 made)
+PASS  and they are in the world   (46 / 46)
+--- quick Spore Bloom: it ended and nothing is left
+PASS  lots of particles reached Dora   (1594)
+PASS  no display entity is left   (0 / 0)
+--- quick Sculk Awakening: Dora tries it on the dummy
+PASS  it starts
+--- quick Sculk Awakening: its solid parts stand in the world
+PASS  Sculk Awakening made display entities   (34 made)
+PASS  and they are in the world   (22 / 22)
+--- quick Sculk Awakening: it ended and nothing is left
+PASS  lots of particles reached Dora   (245)
+PASS  no display entity is left   (0 / 0)
+--- test bot: the command is for admins and the bot has a level
+PASS  a normal player can't use /testbot
+PASS  the first free name is TestBot
+PASS  the bot was created next to Alice   (null)
+PASS  it remembers its level and accepts duels
+PASS  the next free name is TestBot2
+PASS  a second bot with another level
+PASS  it has the level Easy
+PASS  /testbot remove takes it away
+--- test bot: Alice challenges it
+PASS  the bot accepted by itself
+--- test bot: the fight goes on for a while (it is being recorded)
+--- test bot: Alice kills it
+PASS  first to 1: Alice wins
+--- replay: the duel was recorded and kept
+PASS  one replay is in the store   (1)
+PASS  with the players, the score and the winner   (Alice TestBot 0)
+PASS  it lasted a few seconds and the file is on disk   (11 s 318 bytes)
+PASS  the file reads back with a picture of every tick   (229)
+PASS  with the kit and the rounds
+PASS  the two players start on different sides   (-7.5 / 8.5)
+PASS  the recording is not just one picture repeated (Alice moved or turned)
+--- replay: the list, asking an admin and the answers
+PASS  Alice sees her replay with a button to ask an admin
+PASS  Bob took no part: his list is empty
+PASS  without permission she can't watch it
+PASS  Bob can't ask for a duel he did not play
+PASS  Alice asks for her latest replay
+PASS  asking twice does not make a second request
+PASS  the request is in a file: it survives a restart
+PASS  an admin says no: Alice is told and nothing is waiting
+PASS  after a no she can ask again
+PASS  an answer given while she is away waits for her
+PASS  she hears it when she is back, only once
+PASS  an admin sends it: Alice is told with a button and can watch
+PASS  Bob still can't
+--- replay: Alice watches it
+PASS  the replay started
+PASS  she is a spectator and her inventory is saved
+PASS  it takes an arena, like a duel
+PASS  she was told the controls
+--- replay: it plays
+PASS  she looks through the camera
+PASS  a double of each player and a camera exist   (2 / 1)
+PASS  normal speed, not paused
+--- replay: pause
+PASS  the picture moved on   (1.0 -> 13.0)
+PASS  the heads-up line (vida, tiempo, velocidad) is being sent
+PASS  paused
+--- replay: speed, view and restart
+PASS  while paused the picture stays   (13.0 -> 13.0)
+PASS  a speed makes it play again
+PASS  the view changes
+PASS  restart goes back to the start   (0.0)
+--- replay: twice as fast
+PASS  about 20 pictures in 10 ticks   (20.0)
+PASS  somebody who is not watching gets an error
+PASS  /leave stops the replay
+PASS  Alice has her own eyes and mode back
+--- replay: after /leave nothing is left
+PASS  her inventory was given back, the camera and the doubles are gone, the arena is free   (false 0 0)
+--- replay: to the end at 8x
+PASS  watching again works
+--- replay: it ended by itself and put everything back
+PASS  the title named the winner
+PASS  Alice is back to normal
+PASS  nothing is left
+--- replay: an admin watches without asking
+PASS  a player with no permission can't
+PASS  an admin can
+PASS  two people can watch at the same time   (2 / 2)
+PASS  both leave with /leave
+--- replay: the arenas are free again
+PASS  no camera, no doubles, no arena taken   (0 0)
+--- replay: delete
+PASS  it is gone from the store and from the disk
+PASS  and it can't be watched
+--- draw: the test bot accepts a draw right away
+PASS  a duel with the bot
+--- draw: Alice offers
+PASS  the bot agreed and the duel is a tie   (ENDED -1)
+--- draw: the replay of a tie says so, and bot duels don't change the stats
+PASS  one replay, a draw
+PASS  no draw in the statistics (it was a bot)   (3 vs 3)
+PASS  TestBot is removed with /testbot remove
+--- draw: Alice and Bob, the countdown first
+PASS  a duel started
+PASS  during the countdown a draw can't be offered
+--- draw: an offer, a no, and a second offer
+PASS  nothing to accept yet
+PASS  Bob got the offer with the buttons
+PASS  Alice was told it was sent
+PASS  offering twice only reminds her
+PASS  you can't accept your own offer
+PASS  Bob says no: Alice is told and the fight goes on
+PASS  nobody offered now
+PASS  a new offer
+--- draw: an offer that was not answered runs out
+PASS  too late: it expired
+PASS  accepted: the duel ends in a tie
+--- draw: the stats
+PASS  it counts as a draw for both   (4 / 4)
+PASS  and breaks the win streak
+PASS  the replay of that duel is a tie
+PASS  no offer is left behind
+--- totems: a duel to try them in
+PASS  a duel started
+--- totems: a lethal blow pops the totem and the round goes on
+PASS  the round did not end   (FIGHTING 0-0)
+PASS  the totem is gone from the off hand   (0 minecraft:air)
+PASS  Alice is alive with 1 health   (1.0)
+PASS  the totem effects are on
+PASS  the use of the totem counts in her statistics   (1 vs 0.0)
+PASS  with no totem left the next lethal blow ends the round   (ROUND_END 0-1)
+PASS  Alice is told what the last blow was   ([Duel request sent to Bob. It expires in 60 seconds., Duel vs Bob,   Kit: qkit   Arena: Flat arena (no walls),   Mode: First to 5 points   Use /leave to quit., Bob defeated Alice. Last blow: 1000.0 damage before armor, against 1.0 health + 8.0 absorption.  Score: 0 - 1])
+--- totems: in round 2 a totem in the main hand also counts
+PASS  Alice is whole again   (20.0)
+PASS  Bob popped one of two totems   (1 minecraft:totem_of_undying FIGHTING)
+PASS  and then the second   (0 minecraft:air FIGHTING)
+PASS  with none left Alice wins the round   (ROUND_END 1-1)
+--- notch: eating an enchanted golden apple gives absorption and regeneration
+PASS  the apple gave absorption and regeneration   (16.0 true)
+PASS  a blow that would be lethal on 6 health alone does not end the round: the absorption takes it   (FIGHTING 1 health 6.0 abs 4.8)
+PASS  the health did not go down   (6.0 vs 6.0)
+PASS  the blow was taken by the absorption   (4.8)
+--- notch: only when health and absorption are used up the round ends
+PASS  two ticks later the apple still protects her   (FIGHTING true)
+PASS  a huge blow ends the round   (ROUND_END 2)
+PASS  and the chat says what she had when it landed   ([Bob defeated Alice. Last blow: 1000.0 damage before armor, against 7.0 health + 4.8 absorption.  Score: 1 - 2])
+--- totems: a blow that ignores totems (kill) still ends the round
+PASS  the round ended and the totem was not used   (ROUND_END 3 1 minecraft:totem_of_undying)
+--- homes: a player called Dibitss joins
+--- homes: only Dibitss has them
+PASS  another player can't set a home (the command is not even there for them)
+PASS  the command is hidden from them
+PASS  Dibitss sets a home   ([base])
+PASS  the homes are saved in the world folder
+PASS  /home base takes her there   (60.5 60.5)
+PASS  and looks where she looked   (90.0)
+PASS  nothing at all appears in her chat   ([PvP Duels is active. Type /guide to see the commands., Building contest: "castle" (4 days left to build). /contest, Home 'base' set here.])
+PASS  nothing appears in anybody else's chat
+PASS  /home with one home and no name goes to it (no error)
+PASS  with two homes /home asks which one   ([Which one? /home <name>. Your homes: base, other])
+PASS  an unknown home says so
+PASS  /homes lists them
+PASS  /delhome removes one
+PASS  the homes are read back from the file   ([base])
+PASS  no homes inside the workshop   ([Not now: you are in a duel, a queue, the workshop or a film. Use /leave first.])
+--- homes: Dibitss is back from the workshop
+PASS  she left the workshop
+--- pranks: only Dibitss can use them (not even an admin)
+PASS  Alice (not an admin) can't annoy anybody   (0)
+PASS  /annoy is hidden from a normal player and open to Dibitss
+PASS  /annoy is closed even to the server itself (an admin with every permission)
+PASS  /spam is hidden from a normal player and open to Dibitss
+PASS  /spam is closed even to the server itself (an admin with every permission)
+PASS  /haunt is hidden from a normal player and open to Dibitss
+PASS  /haunt is closed even to the server itself (an admin with every permission)
+PASS  /jumpscare is hidden from a normal player and open to Dibitss
+PASS  /jumpscare is closed even to the server itself (an admin with every permission)
+PASS  /fakeop is hidden from a normal player and open to Dibitss
+PASS  /fakeop is closed even to the server itself (an admin with every permission)
+PASS  /annoystop is hidden from a normal player and open to Dibitss
+PASS  /annoystop is closed even to the server itself (an admin with every permission)
+PASS  there is no /pranks off any more
+PASS  /annoy sends the silly sound to that player only   (1 / 1)
+PASS  and the sender is told   ([Not now: you are in a duel, a queue, the workshop or a film. Use /leave first., You left the workshop. Your inventory was restored., Played 'Fahhh' to 1 player. (People in a duel are left alone.)])
+PASS  and nobody else sees it in the chat
+PASS  /annoy all reaches everybody   (5)
+PASS  an unknown sound says so
+PASS  an unknown player says so
+PASS  /jumpscare is three sounds and a big BOO   (3)
+PASS  /fakeop shows the fake line to Bob only
+PASS  /annoy spawn needs a lobby and says so when there is none   ([There is no lobby (spawn) yet: set it with the lobby command first.])
+--- pranks: /spam goes on for a while and then stops by itself
+PASS  the spam is running
+--- pranks: the spam sent several sounds and ended
+PASS  Bob got several silly sounds in 3 seconds   (5)
+PASS  and it ended by itself
+PASS  two sprees run at once
+PASS  /annoystop <who> stops only that one
+PASS  /annoystop stops everything
+PASS  /haunt wants one player
+PASS  the haunting is running
+--- pranks: the haunting goes on for two seconds
+--- pranks: the haunting played spooky sounds around Bob and ended
+PASS  Bob heard spooky sounds   (2)
+PASS  and it ended by itself
+--- sanity: commands from outside a duel
+PASS  /leave outside a duel gives an error
+PASS  you can't duel yourself
+--- shutdown while somebody is in the workshop
+PASS  Alice is in the workshop when the server stops
+RESULT: PASS
