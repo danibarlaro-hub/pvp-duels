@@ -1,0 +1,18 @@
+--- two fake players
+--- kitview: a challenge has a button to look at the kit
+PASS  the kit exists
+PASS  without a request there is nothing to look at   ([You have no duel request from Alice.])
+PASS  Bob got the request with the new button   ([You have no duel request from Alice., , Alice challenged you to a duel!,   Kit: viewkit   Arena: Flat arena (no walls),   Mode: First to 1 point,   [ACCEPT]   [DENY]   [VIEW KIT]   (expires in 60 seconds)])
+--- kitview: the kit is a look-only chest
+PASS  a 6-row chest opened for Bob
+PASS  the sword, the apples and the helmet are there
+PASS  nothing can be taken
+PASS  without a name it shows the latest request   ([])
+PASS  a request that does not exist says so   ([You have no duel request from Zed.])
+--- kitview: looking does not answer the request
+PASS  the request was still there to deny   ([You denied the duel request from Alice.])
+PASS  and now it is gone   ([You denied the duel request from Alice., You have no duel request from Alice.])
+--- kitview: a kit that was deleted
+PASS  Bob is told the kit is gone   ([The kit 'viewkit' no longer exists.])
+--- kitview: done
+RESULT: PASS
