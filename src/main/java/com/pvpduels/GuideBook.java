@@ -53,6 +53,7 @@ public final class GuideBook {
 			{"Watching replays", "/replay watch <id> plays it with a camera. Buttons: [PAUSE], [0.5x] [1x] [2x], [VIEW] (4 angles), [RESTART], [STOP].\n\nBlocks and pearls are not replayed."}
 		}),
 		new Topic("Practice", new String[][] {
+			{"Combo drill", "/drill [kit] (or the clock in the Practice Bot menu): 60 seconds against a bot that never hits back.\n\nIt counts hits, best combo and accuracy, and saves your records. /drill records shows them."},
 			{"Practice bot", "/botduel [kit] or the Practice Bot NPC. A bedrock arena, 100 blocks each way, with walls.\n\nStatic bot? Yes: it can't move. No: pick Passive, Easy, Normal or Hard."},
 			{"Practice stats", "The sidebar counts hits, damage and combo. It goes on until /leave. A bot you knock out gets up again and you get a KO.\n\nPractice doesn't count for stats."},
 			{"Test bot", "Admins: /testbot [name] [level] adds a fake player next to you that accepts every duel and /draw. Challenge it with /duel <name> to test alone.\n\n/testbot remove [name]"}

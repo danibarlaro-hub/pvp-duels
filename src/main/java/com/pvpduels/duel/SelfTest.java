@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("drill")) {
+				buildDrill();
 			} else if (mode.equals("accuracy")) {
 				buildAccuracy();
 			} else {
@@ -658,6 +660,126 @@ public final class SelfTest {
 		step("accuracy: done", () -> finish());
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: the combo drill
+
+	private static void swings(Dummy who, int n) {
+		for (int i = 0; i < n; i++) who.connection.handleAnimate(new net.minecraft.network.protocol.game.ServerboundSwingPacket(InteractionHand.MAIN_HAND));
+	}
+
+	private static void drillSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final int[] wait = new int[1];
+		final int oldTicks = Duel.drillTicks;
+		step("drill: a drill starts", () -> {
+			Drill.resetForTest();
+			Duel.drillTicks = 200;
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save drillkit");
+			a.getInventory().clearContent();
+			check("no records yet", Drill.get(a.getUUID()).drills == 0);
+			a.inbox.clear();
+			run(a, "drill records");
+			check("/drill records says there is nothing yet", a.heard("You have not done a combo drill yet"), String.valueOf(a.inbox));
+			a.inbox.clear();
+			run(a, "drill nosuchkit");
+			check("a kit that does not exist is refused", a.heard("You have no kit named 'nosuchkit'") && duel(a) == null);
+			a.inbox.clear();
+			run(a, "drill drillkit");
+			check("a practice duel with the drill running", duel(a) != null && duel(a).practice && duel(a).drillLeft == 200, duel(a) == null ? "no duel" : String.valueOf(duel(a).drillLeft));
+			check("Alice was told what the drill is", a.heard("Combo drill against Bot") && a.heard("10 seconds"), String.valueOf(a.inbox));
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("drill: five swings, one hit", () -> {
+			Dummy bot = (Dummy) duel(a).player(1);
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			swings(a, 5);
+			softHit(a, bot, 2f);
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 4, 40);
+		step("drill: a second hit", () -> {
+			softHit(a, (Dummy) duel(a).player(1), 2f);
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 4, 40);
+		step("drill: a third hit", () -> {
+			softHit(a, (Dummy) duel(a).player(1), 2f);
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 16, 60);
+		step("drill: the sidebar shows the clock and the aim", () -> {
+			check("the clock is on the sidebar", sidebarHas(a, "Drill: 0:"), String.valueOf(sidebar(a)));
+			check("and the accuracy", sidebarHas(a, "Accuracy: 60%"), String.valueOf(sidebar(a)));
+			a.inbox.clear();
+		}, () -> noDuel(a), 600);
+		step("drill: the time is over", () -> {
+			check("the drill told the numbers", a.heard("Combo drill: 10 seconds") && a.heard("Hits: 3  (0.3 per second)") && a.heard("Best combo: 3") && a.heard("Damage: ") && a.heard("Knockouts: 0"),
+				String.valueOf(a.inbox));
+			check("and the aim: 3 of the 5 swings", a.heard("Aim: accuracy 60% (3/5 swings)"), String.valueOf(a.inbox));
+			check("the first drill breaks the records of combo and hits", a.heard("NEW RECORD: best combo 3 (was 0) most hits 3 (was 0)"), String.valueOf(a.inbox));
+			check("accuracy needs 20 swings, so it is not a record yet", !a.heard("best accuracy 60%") && a.heard("best accuracy - (needs 20 swings), 1 drill done."), String.valueOf(a.inbox));
+			check("it ends by itself, with its own last line", a.heard("Type /drill to try again.") && !a.heard("left the duel") && !a.heard("Practice total") && !a.heard("no longer in the game"), String.valueOf(a.inbox));
+			var rec = Drill.get(a.getUUID());
+			check("the records are saved", rec.combo == 3 && rec.hits == 3 && rec.accuracy == 0 && rec.drills == 1, rec.combo + " " + rec.hits + " " + rec.accuracy + " " + rec.drills);
+			a.inbox.clear();
+			run(a, "drill records");
+			check("/drill records tells them", a.heard("Your combo drill records") && a.heard("Best combo: 3   Most hits: 3") && a.heard("Drills done: 1"), String.valueOf(a.inbox));
+			run(a, "drill drillkit");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("drill: a second drill, many swings and one hit", () -> {
+			Dummy bot = (Dummy) duel(a).player(1);
+			a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+			swings(a, 25);
+			softHit(a, bot, 2f);
+			a.inbox.clear();
+		}, () -> noDuel(a), 600);
+		step("drill: only the accuracy is a new record", () -> {
+			check("one hit in 25 swings is 4%, a record because there were 20 swings", a.heard("Aim: accuracy 4% (1/25 swings)") && a.heard("NEW RECORD: best accuracy 4% (was 0%)"), String.valueOf(a.inbox));
+			check("the combo and the hits are not records", !a.heard("best combo 1") && !a.heard("most hits 1"));
+			var rec = Drill.get(a.getUUID());
+			check("the records kept the better ones", rec.combo == 3 && rec.hits == 3 && rec.accuracy == 4 && rec.drills == 2, rec.combo + " " + rec.hits + " " + rec.accuracy + " " + rec.drills);
+			Drill.reloadForTest();
+			check("they are in the file: they survive a restart", Drill.get(a.getUUID()).combo == 3 && Drill.get(a.getUUID()).accuracy == 4 && Drill.get(a.getUUID()).drills == 2);
+			check("the accuracy of a drill", Drill.percent(0, 0) == 0 && Drill.percent(10, 5) == 50 && Drill.percent(4, 9) == 100);
+			run(a, "botduel drillkit");
+		});
+		step("drill: the Practice Bot menu has the drill", () -> {
+			check("the clock is in the menu", menuHas(a, "Combo drill"));
+			menuStep(a, "Combo drill");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("drill: /leave stops it and breaks no record", () -> {
+			check("the drill is running", duel(a) != null && duel(a).drillLeft > 0);
+			a.inbox.clear();
+			run(a, "leave");
+		}, () -> noDuel(a), 600);
+		step("drill: clean up", () -> {
+			check("leaving does not count as a drill", Drill.get(a.getUUID()).drills == 2 && !a.heard("NEW RECORD"));
+			Duel.drillTicks = oldTicks;
+			Drill.resetForTest();
+			run(a, "kit delete drillkit");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+		});
+	}
+
+	private static void buildDrill() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		drillSteps();
+		step("drill: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -933,6 +1055,7 @@ public final class SelfTest {
 		}, () -> noDuel(a) && noDuel(b), 600);
 
 		accuracySteps();
+		drillSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);

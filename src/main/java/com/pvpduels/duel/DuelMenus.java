@@ -158,6 +158,11 @@ public final class DuelMenus {
 			"No: a bot that takes knockback. You pick how it behaves."));
 		b.set(11, icon(Items.EMERALD, "Yes", ChatFormatting.GREEN, "Static bot: it can't be moved."), who -> startBot(who, kit, BotLevel.STATIC));
 		b.set(15, icon(Items.BARRIER, "No", ChatFormatting.RED, "The bot can be pushed (knockback)."), who -> botLevels(who, kit, canGoBack));
+		b.set(22, icon(Items.CLOCK, "Combo drill", ChatFormatting.AQUA, Duel.drillTicks / 20 + " seconds against a bot that never hits back.",
+			"It counts your hits, best combo and accuracy,", "and keeps your records (/drill records).", "Click to start"), who -> {
+			who.closeContainer();
+			BotDuel.startLater(who, kit, BotLevel.PASSIVE, true);
+		});
 		if (canGoBack) b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), DuelMenus::botKits);
 		ChoiceMenu.open(p, Component.literal("Static bot?"), 3, b);
 	}
@@ -173,6 +178,14 @@ public final class DuelMenus {
 		}
 		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> botQuestion(who, kit, canGoBack));
 		ChoiceMenu.open(p, Component.literal("How should the bot behave?"), 3, b);
+	}
+
+	/** /drill without a kit: choose one, then the drill starts. */
+	static void openDrill(ServerPlayer p) {
+		pickKit(p, "Combo drill: choose a kit", 0, (who, name) -> {
+			who.closeContainer();
+			BotDuel.startLater(who, name, BotLevel.PASSIVE, true);
+		});
 	}
 
 	private static void startBot(ServerPlayer who, String kit, BotLevel level) {

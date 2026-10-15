@@ -91,6 +91,12 @@ public final class Duel {
 	/** The tick of the last KO of the practice bot (the death event can be reported twice for one blow). */
 	private int lastKoTick = -1;
 	int bestCombo;
+	/** The combo drill (/drill): ticks left of it (counted only while fighting), or -1 when this is not a drill. */
+	int drillLeft = -1;
+	private boolean drillDone;
+	private int drillKos;
+	/** How long a drill lasts, in ticks. Public so the self-test can shorten it. */
+	public static int drillTicks = 60 * 20;
 	float damage;
 	float damageTaken;
 	private int combo;
@@ -375,6 +381,10 @@ public final class Duel {
 	private void tickFighting(ServerPlayer a, ServerPlayer b) {
 		phaseTicks++;
 		noContact++;
+		if (drillLeft > 0 && --drillLeft == 0) {
+			endDrill();
+			return;
+		}
 		for (int i = 0; i < 2; i++) {
 			float health = player(i).getHealth();
 			if (lastHealth[i] >= 0 && health > lastHealth[i]) healed[i] += health - lastHealth[i];
@@ -492,7 +502,7 @@ public final class Duel {
 
 	/** Same, with the damage source (to tell a melee hit from an arrow or an explosion, and to see a critical hit). */
 	void onHit(int victim, float amount, net.minecraft.world.damagesource.DamageSource source) {
-		if (practice) onPracticeHit(victim, amount);
+		if (practice) onPracticeHit(victim, amount, source);
 		else onRealHit(victim, amount, source);
 	}
 
@@ -522,7 +532,7 @@ public final class Duel {
 	}
 
 	/** A hit between the player and the bot. "victim" is the duelist who was hurt; amount is the damage it did. */
-	void onPracticeHit(int victim, float amount) {
+	void onPracticeHit(int victim, float amount, net.minecraft.world.damagesource.DamageSource source) {
 		if (!practice || phase != Phase.FIGHTING || amount <= 0f) return;
 		if (lastCountedTick == elapsed && lastCountedVictim == victim) return; // the same blow reported twice
 		lastCountedTick = elapsed;
@@ -537,6 +547,10 @@ public final class Duel {
 			bestCombo = Math.max(bestCombo, combo);
 			roundBest = Math.max(roundBest, combo);
 			ServerPlayer attacker = player(1 - victim);
+			if (attacker != null && source != null && source.getEntity() == attacker && source.getDirectEntity() == attacker) {
+				recapMelee[1 - victim]++;
+				if (Accuracy.isCrit(attacker)) recapCrits[1 - victim]++;
+			}
 			if (attacker != null) {
 				attacker.sendOverlayMessage(Component.literal("Combo " + combo + "  |  " + oneDecimal(amount) + " damage").withStyle(ChatFormatting.AQUA));
 			}
@@ -570,6 +584,7 @@ public final class Duel {
 			if (lastKoTick == elapsed) return; // the same blow reported twice
 			lastKoTick = elapsed;
 			points[1 - i]++;
+			drillKos++;
 			Achievements.add(ids[1 - i], names[1 - i], "bot_kos", 1);
 			p.setAbsorptionAmount(0f);
 			p.invulnerableTime = 0;
@@ -662,13 +677,47 @@ public final class Duel {
 		warnedTeleport = false;
 	}
 
+	/** /drill: this practice duel is a timed combo drill from now on (the timer runs while fighting). */
+	void startDrill() {
+		drillLeft = drillTicks;
+	}
+
+	/** The time of the drill is over: the numbers, the records, and the practice closes. */
+	private void endDrill() {
+		ServerPlayer you = player(0);
+		drillDone = true;
+		drillLeft = 0;
+		if (you != null) {
+			int seconds = Math.max(1, drillTicks / 20);
+			Drill.Outcome result = Drill.submit(ids[0], names[0], hits, bestCombo, recapSwings[0], recapMelee[0]);
+			you.sendSystemMessage(Msg.title("Combo drill: " + seconds + " seconds"));
+			you.sendSystemMessage(Msg.info("  Hits: " + hits + "  (" + oneDecimal(hits / (float) seconds) + " per second)"));
+			you.sendSystemMessage(Msg.info("  Best combo: " + bestCombo + (hitsTaken > 0 ? "   Hits taken: " + hitsTaken : "")));
+			you.sendSystemMessage(Msg.info("  Damage: " + oneDecimal(damage) + "   Knockouts: " + drillKos));
+			String aim = Accuracy.describe(recapSwings[0], recapMelee[0], recapCrits[0]);
+			if (!aim.isEmpty()) you.sendSystemMessage(Msg.info("  Aim: " + aim));
+			if (result.any()) {
+				StringBuilder sb = new StringBuilder("  NEW RECORD: ");
+				if (result.combo()) sb.append("best combo ").append(bestCombo).append(" (was ").append(result.wasCombo()).append(") ");
+				if (result.hits()) sb.append("most hits ").append(hits).append(" (was ").append(result.wasHits()).append(") ");
+				if (result.accuracy()) sb.append("best accuracy ").append(result.accuracyNow()).append("% (was ").append(result.wasAccuracy()).append("%) ");
+				you.sendSystemMessage(Msg.ok(sb.toString().trim()));
+			}
+			Drill.Rec rec = Drill.get(ids[0]);
+			you.sendSystemMessage(Msg.info("  Your records: best combo " + rec.combo + ", most hits " + rec.hits + ", best accuracy "
+				+ (rec.accuracy > 0 ? rec.accuracy + "%" : "- (needs " + Drill.MIN_SWINGS + " swings)") + ", " + rec.drills + (rec.drills == 1 ? " drill" : " drills") + " done."));
+		}
+		forfeit(1);
+		closeNow();
+	}
+
 	/** Someone left, disconnected, or typed /leave. */
 	void forfeit(int idx) {
 		if (phase == Phase.ENDED || closed) return;
 		PvpDuelsMod.LOGGER.info("Duel {} vs {}: {} left (round {}, phase {}, practice {})", names[0], names[1], names[idx], round, phase, practice);
 		// Always say why the duel is ending, so nobody is left guessing.
 		ServerPlayer other = player(1 - idx);
-		if (other != null) {
+		if (other != null && !drillDone) {
 			other.sendSystemMessage(Msg.info(BotDuel.isBot(ids[idx])
 				? names[idx] + " (the bot) is no longer in the game, so the practice is over."
 				: names[idx] + " left the duel."));
@@ -711,6 +760,11 @@ public final class Duel {
 			out.add("Hits: " + hits);
 			out.add("Damage: " + oneDecimal(damage));
 			out.add("Combo: " + currentCombo() + " (best " + bestCombo + ")");
+			if (drillLeft >= 0) {
+				int left = (drillLeft + 19) / 20;
+				out.add(String.format(java.util.Locale.ROOT, "Drill: %d:%02d", left / 60, left % 60));
+				if (recapSwings[0] > 0) out.add("Accuracy: " + Drill.percent(recapSwings[0], recapMelee[0]) + "%");
+			}
 			if (level != null && level.fights) out.add("Hits taken: " + hitsTaken);
 			if (level != null) out.add("Bot: " + level.label);
 		}
@@ -811,6 +865,10 @@ public final class Duel {
 		for (int i = 0; i < 2; i++) {
 			ServerPlayer p = player(i);
 			if (p == null || restored[i]) continue;
+			if (drillDone) {
+				if (i == 0) p.sendSystemMessage(Msg.info("Type /drill to try again."));
+				continue;
+			}
 			Component title;
 			if (winner == -1) title = Component.literal("DRAW").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
 			else if (winner == i) title = Component.literal("VICTORY").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD);
