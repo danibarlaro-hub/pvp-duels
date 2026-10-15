@@ -88,6 +88,7 @@ public final class GuideBook {
 		}),
 		new Topic("Ranking", new String[][] {
 			{"Ranking", "/top shows the best by Elo. /top wins and /top streak sort by wins or best win streak.\n\nEveryone starts at 1000 Elo. Practice duels don't count."},
+			{"Seasons", "A season lasts 28 days. /season shows the time left, your season Elo (it starts at 1000) and the top 3.\n\nAt the end, with 5 duels or more, the top 3 win an explosion they do not have. Then it starts again from zero."},
 			{"Ranking per kit", "/top kit lists the kits that have a ranking.\n/top kit <name> [elo|wins|streak] ranks the players with that kit.\n\nAfter a duel you also see your Elo with the kit."},
 			{"Head to head", "/h2h lists the players you dueled and how you stand against each one.\n\n/h2h <player> shows the wins, losses, ties, rounds, the streak and the last duel. After every duel the chat tells you too."},
 			{"Sidebar", "/sidebar turns the scoreboard on the right on or off: your Elo, wins, losses, streak and the duel score.\n\n/guide lists every command in chat."}
