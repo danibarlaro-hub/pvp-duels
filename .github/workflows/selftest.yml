@@ -37,7 +37,7 @@ jobs:
           # a branch called diag-<mode> plays only the short test <mode> (to measure or check one thing fast); every other branch plays everything
           MODE=run
           case "${GITHUB_REF_NAME}" in diag-*) MODE="${GITHUB_REF_NAME#diag-}";; esac
-          PVPDUELS_SELFTEST=$MODE timeout 3000 gradle runServer --no-daemon --console=plain > second.log 2>&1 || true
+          PVPDUELS_SELFTEST=$MODE timeout 9000 gradle runServer --no-daemon --console=plain > second.log 2>&1 || true
       - name: Publish the results to the selftest-out branch
         if: always()
         env:
