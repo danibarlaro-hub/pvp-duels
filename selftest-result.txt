@@ -1,0 +1,27 @@
+--- two fake players
+--- lasthit: the command and the menus
+PASS  nobody has a finishing blow at the start
+PASS  a name that does not exist is refused   ([There is no finishing blow called 'nosuch'. Choose one of: none, lightning, shatter, firework, soul, totem, poof, slime, surprise.])
+PASS  a name picks it and says so   ([Finishing blow: Totem pop. It plays on the player you hit when you end a round.])
+PASS  and shows it once, only to the player   (1 totem 1)
+PASS  none turns it off and plays nothing   ([No finishing blow.])
+PASS  the menu has all of them
+PASS  clicking one chooses it and shows it   (SOUL 2)
+PASS  the choice is in the file: it survives a restart
+PASS  the effects menu has the sword with the choice
+PASS  every style can be shown
+PASS  the names of the command are the ids of the styles
+PASS  a duel to four started
+--- lasthit: a round ended with nothing chosen plays nothing
+PASS  no finishing blow was played   (0)
+--- lasthit: Alice picked the totem and everybody near sees it
+PASS  it played once   (1 totem)
+PASS  both players in the arena saw it   (2)
+--- lasthit: Bob hid the effects of others and Alice picked a surprise
+PASS  it played once and it was one of the real styles   (1 totem)
+PASS  only Alice, who chose it, saw it   (1)
+--- lasthit: a death with no killer plays nothing
+PASS  Bob died on his own and nothing was played, even though both chose one   (0 )
+--- lasthit: clean up
+--- lasthit: done
+RESULT: PASS
