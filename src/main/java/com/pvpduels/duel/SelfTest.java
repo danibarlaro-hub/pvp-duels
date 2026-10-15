@@ -2861,6 +2861,9 @@ public final class SelfTest {
 			run(guest, "tournament join");
 			guest.inbox.clear();
 			TestDummy.disconnect(server, host.getUUID());
+		}, () -> Tournament.phaseForTest().equals("none"), 100);
+		step("tournament: the host left", () -> {
+			Dummy guest = dummyNamed("Xena");
 			check("when the host leaves the game it is cancelled", Tournament.phaseForTest().equals("none") && guest.heard("the host) left"), String.valueOf(guest.inbox));
 		});
 		step("tournament: clean up", () -> {
