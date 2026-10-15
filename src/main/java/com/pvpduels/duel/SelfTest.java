@@ -97,6 +97,8 @@ public final class SelfTest {
 				STEPS.add(new Step("boot only", () -> log("Server booted; stopping."), () -> ticks > 40, 200));
 			} else if (mode.equals("pranks")) {
 				buildPranks();
+			} else if (mode.equals("swap")) {
+				buildSwap();
 			} else {
 				build();
 			}
@@ -580,6 +582,131 @@ public final class SelfTest {
 
 	}
 
+	// ------------------------------------------------------------------ one idea at a time: kit swap
+
+	private static void swapSteps() {
+		final ItemStack[][] saved = new ItemStack[2][41];
+		final int[] wait = new int[1];
+		step("swap: two kits for the test", () -> {
+			for (int i = 0; i < 41; i++) {
+				saved[0][i] = a.getInventory().getItem(i).copy();
+				saved[1][i] = b.getInventory().getItem(i).copy();
+			}
+			DuelConfig.Rules swapRules = new DuelConfig.Rules(true, true, true, true, "swapb");
+			check("the rules know the swap", swapRules.swaps() && !swapRules.isDefault() && swapRules.describe(ArenaKind.FLAT).equals("Kit swap with 'swapb'")
+				&& !new DuelConfig.Rules(true, true, true, true).swaps() && new DuelConfig.Rules(true, true, true, true, null).isDefault(), swapRules.describe(ArenaKind.FLAT));
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+			run(a, "kit save swapa");
+			a.getInventory().clearContent();
+			a.getInventory().setItem(0, new ItemStack(Items.DIAMOND_AXE));
+			run(a, "kit save swapb");
+			a.getInventory().clearContent();
+			check("both kits were saved", KitStore.exists(a.getUUID(), "swapa") && KitStore.exists(a.getUUID(), "swapb"));
+		});
+		step("swap: Alice opens the duel menu", () -> {
+			run(a, "duel Bob");
+			menuStep(a, "swapa");
+		});
+		step("swap: arena", () -> { menuStep(a, "Flat void arena"); });
+		step("swap: version", () -> { menuStep(a, "With walls"); });
+		step("swap: mode", () -> { menuStep(a, "First to N points"); });
+		step("swap: amount", () -> { menuStep(a, "First to 3"); });
+		step("swap: the rules menu has the hopper", () -> {
+			check("it starts off", menuHas(a, "Kit swap: OFF"));
+			menuStep(a, "Kit swap: OFF");
+		});
+		step("swap: the kit of the duel is refused as the second one", () -> {
+			a.inbox.clear();
+			menuStep(a, "swapa");
+		});
+		step("swap: and the menu comes back", () -> {
+			check("Alice was told why", a.heard("That is the kit of the duel"), String.valueOf(a.inbox));
+			check("the rules menu is open again, still off", menuHas(a, "Kit swap: OFF"));
+			menuStep(a, "Kit swap: OFF");
+		});
+		step("swap: she picks the other kit", () -> { menuStep(a, "swapb"); });
+		step("swap: the hopper shows it and a click would switch it off", () -> {
+			check("it says the second kit", menuHas(a, "Kit swap: swapb"));
+			menuStep(a, "Kit swap: swapb");
+		});
+		step("swap: switched off, then on again", () -> {
+			check("one click switched it off", menuHas(a, "Kit swap: OFF"));
+			menuStep(a, "Kit swap: OFF");
+		});
+		step("swap: pick again", () -> { menuStep(a, "swapb"); });
+		step("swap: continue and send", () -> {
+			check("it is on again", menuHas(a, "Kit swap: swapb"));
+			menuStep(a, "Continue");
+		});
+		step("swap: confirm", () -> {
+			a.inbox.clear();
+			b.inbox.clear();
+			menuStep(a, "Send the challenge");
+			check("the invitation tells the swap", b.heard("Rules: Kit swap with 'swapb'"), String.valueOf(b.inbox));
+			run(b, "accept Alice");
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("swap: round 1, Alice has the sword and Bob the axe", () -> {
+			check("the duel has the swap", duel(a) != null && duel(a).config.rules().swaps() && duel(a).config.rules().swapKit().equals("swapb"));
+			check("Alice has her kit, a sword", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(a.getInventory().getItem(0)));
+			check("Bob has the second kit, an axe", b.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(b.getInventory().getItem(0)));
+			check("both were told which kit they have", a.heard("you play with swapa, Bob with swapb") && b.heard("you play with swapb, Alice with swapa"), String.valueOf(b.inbox));
+			check("the sidebars say the kit of each", sidebarHas(a, "Kit: swapa") && sidebarHas(b, "Kit: swapb"), String.valueOf(sidebar(b)));
+			a.inbox.clear();
+			b.inbox.clear();
+			hit(a, b);
+		}, () -> roundIs(a, 2), 600);
+		step("swap: round 2, they trade", () -> {
+			check("Alice has the axe now", a.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(a.getInventory().getItem(0)));
+			check("Bob has the sword now", b.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(b.getInventory().getItem(0)));
+			check("they were told again", a.heard("you play with swapb, Bob with swapa") && b.heard("you play with swapa, Alice with swapb"), String.valueOf(a.inbox));
+			wait[0] = ticks;
+		}, () -> ticks >= wait[0] + 10, 100);
+		step("swap: the sidebars changed too", () -> {
+			check("each one sees the kit they have now", sidebarHas(a, "Kit: swapb") && sidebarHas(b, "Kit: swapa"), String.valueOf(sidebar(a)));
+			hit(a, b);
+		}, () -> roundIs(a, 3), 600);
+		step("swap: round 3, back as they started", () -> {
+			check("Alice has the sword again", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD), String.valueOf(a.getInventory().getItem(0)));
+			check("Bob has the axe again", b.getInventory().getItem(0).is(Items.DIAMOND_AXE), String.valueOf(b.getInventory().getItem(0)));
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("swap: a second kit that is gone is told and ignored", () -> {
+			a.inbox.clear();
+			invite(a, b, new DuelConfig("swapa", ArenaKind.FLAT, false, 0, WinMode.FIRST_TO, 1, new DuelConfig.Rules(true, true, true, true, "nosuchkit")));
+			check("a duel started", duel(a) != null);
+		}, () -> phaseIs(a, Duel.Phase.FIGHTING), 600);
+		step("swap: both play with the first kit", () -> {
+			check("Alice was told", a.heard("can not be read, so there is no kit swap"), String.valueOf(a.inbox));
+			check("both have the sword", a.getInventory().getItem(0).is(Items.DIAMOND_SWORD) && b.getInventory().getItem(0).is(Items.DIAMOND_SWORD));
+			run(a, "leave");
+		}, () -> noDuel(a) && noDuel(b), 600);
+		step("swap: clean up", () -> {
+			run(a, "kit delete swapa");
+			run(a, "kit delete swapb");
+			a.getInventory().clearContent();
+			b.getInventory().clearContent();
+			for (int i = 0; i < 41; i++) {
+				a.getInventory().setItem(i, saved[0][i]);
+				b.getInventory().setItem(i, saved[1][i]);
+			}
+			check("the test kits are gone", !KitStore.exists(a.getUUID(), "swapa") && !KitStore.exists(a.getUUID(), "swapb"));
+		});
+	}
+
+	private static void buildSwap() {
+		Cinema.enabled = false;
+		Npcs.autoPlace = false;
+		step("two fake players", () -> {
+			a = spawn("Alice");
+			b = spawn("Bob");
+		}, () -> ticks > 60, 300);
+		swapSteps();
+		step("swap: done", () -> finish());
+	}
+
+
 	private static void buildPranks() {
 		Cinema.enabled = false;
 		Npcs.autoPlace = false;
@@ -854,6 +981,7 @@ public final class SelfTest {
 				d == null ? "no duel" : d.phase + " winner=" + d.winner);
 		}, () -> noDuel(a) && noDuel(b), 600);
 
+		swapSteps();
 		step("test dummy: only admins can use the command", () -> {
 			run(a, "test_dummy gate");
 			check("a normal player can't use /test_dummy", server.getPlayerList().getPlayerByName("gate") == null);

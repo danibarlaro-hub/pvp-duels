@@ -38,6 +38,7 @@ public final class DuelMenus {
 		boolean fallDamage = true;
 		boolean hunger = true;
 		boolean building = true;
+		String swapKit = "";
 		WinMode mode = WinMode.ROUNDS;
 		int limit = 3;
 
@@ -353,6 +354,24 @@ public final class DuelMenus {
 				rules(who, setup);
 			});
 		}
+		if (setup.swapKit.isEmpty()) {
+			b.set(6, icon(Items.HOPPER, "Kit swap: OFF", ChatFormatting.RED, "Pick a second kit: you play with the first one, your rival with the second,",
+				"and you trade them at the start of every round.", "Click to choose the second kit"), who -> pickKit(who, "Kit swap: choose the second kit", 0, (w, name) -> {
+					if (name.equals(setup.kit)) {
+						w.sendSystemMessage(Msg.err("That is the kit of the duel. Pick another one, or the swap would change nothing."));
+						rules(w, setup);
+						return;
+					}
+					setup.swapKit = name;
+					rules(w, setup);
+				}));
+		} else {
+			b.set(6, icon(Items.HOPPER, "Kit swap: " + setup.swapKit, ChatFormatting.GREEN, "You start with " + setup.kit + ", your rival with " + setup.swapKit + ".",
+				"You trade them at the start of every round.", "Click to switch it off"), who -> {
+				setup.swapKit = "";
+				rules(who, setup);
+			});
+		}
 		b.set(22, icon(Items.EMERALD, "Continue", ChatFormatting.GREEN), who -> confirm(who, setup));
 		b.set(18, icon(Items.ARROW, "Back", ChatFormatting.YELLOW), who -> amount(who, setup));
 		ChoiceMenu.open(p, Component.literal("Duel: rules"), 3, b);
@@ -363,10 +382,10 @@ public final class DuelMenus {
 	private static DuelConfig config(Setup setup) {
 		if (setup.arena == ArenaKind.CUSTOM) {
 			return DuelConfig.inCustomArena(setup.kit, setup.custom, setup.mode, setup.limit,
-				new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
+				new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building, setup.swapKit));
 		}
 		return new DuelConfig(setup.kit, setup.arena, setup.walls, setup.arena == ArenaKind.CIRCLE ? setup.radius : 0, setup.mode, setup.limit,
-			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building));
+			new DuelConfig.Rules(setup.regen, setup.fallDamage, setup.hunger, setup.building, setup.swapKit));
 	}
 
 	private static void confirm(ServerPlayer p, Setup setup) {

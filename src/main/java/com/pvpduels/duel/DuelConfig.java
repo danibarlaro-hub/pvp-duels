@@ -7,9 +7,24 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 	 * Rules the challenger can switch off for one duel.
 	 * regen: natural health regeneration. fallDamage: damage from falling. hunger: the food bar goes down.
 	 * building: placing and breaking blocks in the circular and unlimited arenas (the flat arena has its own rules).
+	 * swapKit: the name of a second kit of the challenger ("" = no swap). The challenger starts with the kit of the duel and the
+	 * rival with this one, and they trade them at the start of every round.
 	 */
-	public record Rules(boolean regen, boolean fallDamage, boolean hunger, boolean building) {
-		public static final Rules DEFAULT = new Rules(true, true, true, true);
+	public record Rules(boolean regen, boolean fallDamage, boolean hunger, boolean building, String swapKit) {
+		public static final Rules DEFAULT = new Rules(true, true, true, true, "");
+
+		public Rules {
+			if (swapKit == null) swapKit = "";
+		}
+
+		/** Without a kit swap. */
+		public Rules(boolean regen, boolean fallDamage, boolean hunger, boolean building) {
+			this(regen, fallDamage, hunger, building, "");
+		}
+
+		public boolean swaps() {
+			return !swapKit.isEmpty();
+		}
 
 		public boolean isDefault() {
 			return equals(DEFAULT);
@@ -22,6 +37,7 @@ public record DuelConfig(String kit, ArenaKind arena, boolean walls, int radius,
 			if (!fallDamage) parts.add("no fall damage");
 			if (!hunger && regen) parts.add("no hunger loss");
 			if (!building && (arena == ArenaKind.CIRCLE || arena == ArenaKind.UNLIMITED || arena == ArenaKind.CUSTOM)) parts.add("no building");
+			if (swaps()) parts.add("kit swap with '" + swapKit + "'");
 			if (parts.isEmpty()) return "default rules";
 			String text = String.join(", ", parts);
 			return Character.toUpperCase(text.charAt(0)) + text.substring(1);
