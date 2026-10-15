@@ -88,6 +88,7 @@ public final class GuideBook {
 		new Topic("Ranking", new String[][] {
 			{"Ranking", "/top shows the best by Elo. /top wins and /top streak sort by wins or best win streak.\n\nEveryone starts at 1000 Elo. Practice duels don't count."},
 			{"Ranking per kit", "/top kit lists the kits that have a ranking.\n/top kit <name> [elo|wins|streak] ranks the players with that kit.\n\nAfter a duel you also see your Elo with the kit."},
+			{"Head to head", "/h2h lists the players you dueled and how you stand against each one.\n\n/h2h <player> shows the wins, losses, ties, rounds, the streak and the last duel. After every duel the chat tells you too."},
 			{"Sidebar", "/sidebar turns the scoreboard on the right on or off: your Elo, wins, losses, streak and the duel score.\n\n/guide lists every command in chat."}
 		}),
 		new Topic("Achievements", new String[][] {

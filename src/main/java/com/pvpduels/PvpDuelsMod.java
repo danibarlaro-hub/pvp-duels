@@ -95,6 +95,7 @@ public class PvpDuelsMod implements ModInitializer {
 			BotDuel.registerCommands(dispatcher);
 			ReplayCommands.register(dispatcher);
 			TopCommand.register(dispatcher);
+			com.pvpduels.stats.HeadToHead.register(dispatcher);
 			com.pvpduels.util.BugReports.register(dispatcher);
 			com.pvpduels.util.Homes.register(dispatcher);
 			com.pvpduels.effects.Pranks.register(dispatcher);
