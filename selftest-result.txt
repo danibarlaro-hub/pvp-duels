@@ -1,0 +1,23 @@
+--- two fake players
+--- titles: twenty new achievements with a title, and the titles menu shows the locked ones
+PASS  there are 60 achievements and 47 of them give a title   (60 / 47)
+PASS  no two achievements share an id and no title is too long for a name tag
+PASS  the twenty new ones exist and every one has a title
+PASS  nothing is unlocked
+PASS  250 wins: Warlord and everything below it, not Immortal
+PASS  combo 15, streak 20, 50 totems, 1650 Elo: Combo God, Godlike, Nine Lives, Grandmaster (not Mythic)
+PASS  the titles she won are there
+PASS  won plus locked is every title
+PASS  the menu shows a title she won, the locked ones with a name of their own, and the count
+PASS  47 titles make two pages
+PASS  menu has the option 'Next page'
+PASS  the second page has the last titles and a way back
+PASS  menu has the option 'Previous page'
+PASS  back on the first page
+PASS  a locked title shows how far she is: Immortal 250/500 wins
+PASS  click [Warlord] to wear it
+--- titles: she wears the new title
+PASS  Warlord is in front of her name   ([Warlord] Alice)
+PASS  clean again
+--- titles: done
+RESULT: PASS
