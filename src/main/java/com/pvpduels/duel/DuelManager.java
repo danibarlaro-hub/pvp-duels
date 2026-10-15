@@ -167,7 +167,13 @@ public final class DuelManager {
 		Duel duel = BY_PLAYER.get(victim.getUUID());
 		if (duel == null || source == null || source.getEntity() == null) return;
 		int vi = duel.indexOf(victim.getUUID());
-		if (vi >= 0 && source.getEntity().getUUID().equals(duel.ids[1 - vi])) duel.onHit(vi, amount);
+		if (vi >= 0 && source.getEntity().getUUID().equals(duel.ids[1 - vi])) duel.onHit(vi, amount, source);
+	}
+
+	/** An arm swing of any player (counted from the packet): in a duel it is one swing more for the accuracy. */
+	public static void onSwing(ServerPlayer p) {
+		Duel duel = BY_PLAYER.get(p.getUUID());
+		if (duel != null) duel.onSwing(duel.indexOf(p.getUUID()), p);
 	}
 
 	/** Duelists never really die: the round ends instead. */
