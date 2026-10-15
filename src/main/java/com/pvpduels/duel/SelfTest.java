@@ -720,14 +720,15 @@ public final class SelfTest {
 			run(a, "replay free");
 			check("and now she flies for the end", s.view == ReplayPlayer.FREE && a.getCamera() == a);
 		});
-		step("replay camera: the last seconds, played for real", () -> {
+		step("replay camera: the last seconds, played for real (the hit that ended it is in there)", () -> {
 			ReplayPlayer s = ref[0];
 			a.inbox.clear();
 			p[2] = s.played;
 			int last = s.data.frames - 1;
 			run(a, "replay speed 1");
-			run(a, "replay seek " + ((last - 30 - s.pos) / 20.0));
-			check("the picture is 30 ticks before the end", Math.abs(s.pos - (last - 30)) < 0.01, s.pos + " / " + last);
+			int from = Math.max(0, last - 120);
+			run(a, "replay seek " + ((from - s.pos) / 20.0));
+			check("the picture is 120 ticks before the end", Math.abs(s.pos - from) < 0.01, s.pos + " / " + from + " / " + last);
 			check("the jump did not play anything", s.played == (int) p[2], s.played + " / " + (int) p[2]);
 		}, () -> !ReplayPlayer.isIn(a.getUUID()), 500);
 		step("replay camera: it ended while she was flying and put everything back", () -> {
